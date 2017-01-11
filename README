@@ -16,3 +16,31 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+PLEASE NOTE: DMCE is of today only verfied for clang version 3.4
+             For ubuntu:
+             $ sudo apt-get install clang-3.4
+
+PLEASE NOTE: The -d option is currently not functional. 
+
+Example of typical usage:
+
+$ git clone https://github.com/patrikAAberg/dmce
+$ git clone https://github.com/me/mygit
+$ cd dmce
+$ ./dmce-install
+$ cd ..
+$ cd mygit
+$ ../dmce/dmce-launcher -n 5 
+$ mytest.sh 2> outstderr.log 
+$ ../dmce/dmce-summary outstderr.log
+
+The above do the following:
+
+1. Clones the dmce git
+2. Clones the git to be played around with
+3. Puts together a default .dmceconfig file and put it in your home directory. Use this file to control dmce behaviour.
+4. Probes the 5 latest commits in "mygitrepo"
+5. Runs a module test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
+6. Summarizes the results.
+

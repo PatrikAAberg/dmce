@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Copyright (c) 2016 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Main entry point for running DMCE from a git
+# To be executed from within the git repo root:
+# $ cd /path/to/git/repo
+# $ dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c ]
+
+function usage {
+  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c ] [--skip]"
+  exit 1
+}
+
+# change the output format for the built in bash command 'time'
+TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
+
+time {
+  echo "Restoring old probe state if needed"
+  dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
+  [ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
+  wait
+}
+
+if [ "$1" == "-c" ]; then
+  echo "Done"
+  exit 0
+fi
+
+# Variable set up and config
+
+git_root=$PWD
+
+# Find out what config file to use. Start with the one in the git
+
+if [ -e $git_root/.dmceconfig ]; then
+  USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
+elif [ -e $HOME/.dmceconfig ]; then
+  USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
+else
+  echo "Could not find a valid dmce config file. Did you run install?"
+  exit 1
+fi
+
+echo "DMCE Launcher: [args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
+while read dmceconfig; do
+  validconfig=$(echo $dmceconfig | egrep -v \#)
+  if [ "$validconfig" != ""  ]; then
+    conf_var=$(echo $validconfig | cut -d: -f1)
+    conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
+    eval $conf_var=\'$conf_val\'
+    export $conf_var
+  fi
+done < $USE_DMCE_CONFIG_FILE
+
+if ! echo $@ | grep -q '\-\-skip'; then
+  echo "Set up DMCE include directory"
+  chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
+  rm -rf $DMCE_WORK_PATH/inc &> /dev/null
+  mkdir -p $DMCE_WORK_PATH/inc
+  find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/ {} + &>/dev/null || :
+
+  echo "Removing relative paths in include files"
+  pushd $DMCE_WORK_PATH/inc &>/dev/null
+  $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
+  popd &>/dev/null
+
+  echo "Clean out probe database"
+  rm -rf $DMCE_WORK_PATH/global_probedata.dmce
+  touch $DMCE_WORK_PATH/global_probedata.dmce
+fi
+
+echo "Initialize log"
+logfile=$(basename $0 .sh)-$(basename $git_root)-$(date '+%Y%m%d-%H%M%S').log
+mkdir -p $DMCE_LOG_FILES
+exec > >(tee -i $DMCE_LOG_FILES/$logfile)
+exec 2>&1
+
+if [ "$1" == "-d" ]; then
+  echo "Search by date"
+  head=$(git log -n 1 --before=$2.weeks | head -n 1 | cut -d' ' -f2)
+  baseline=$(git log -n 1 --before=$3.weeks | head -n 1 | cut -d' ' -f2)
+elif [ "$1" == "-n" ]; then
+  echo "Search by number of commits"
+  head=$(git log --oneline -$2 | cut -d' ' -f1 | head -1)
+  baseline=$(git log --oneline -$2 | cut -d' ' -f1 | tail -1)
+else
+  usage
+fi
+
+echo "DMCE launcher: $git_root executing on $head (head) to $baseline (base)"
+
+time {
+if ! $DMCE_EXEC_PATH/dmce.sh $git_root $head $baseline; then
+  echo "---"
+  echo "error: dmce.sh failed - check logs"
+  echo "---"
+  exit 1
+fi
+}

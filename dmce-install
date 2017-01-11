@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Copyright (c) 2016 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+install_path=$PWD
+
+echo "DMCE installer"
+echo "Consider adding the following to $HOME/.profile"
+echo "PATH=\"$install_path \$PATH\""
+echo "Creating .dmceconfig file in $HOME" 
+echo "DMCE installed"
+echo
+# Add dmce git repo to path so that we can call dmce-launcher from within gits
+PATH="$install_path $PATH"
+export PATH
+
+# Remove old config
+[ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
+
+# Create config file in home directory
+cat > $HOME/.dmceconfig <<- NoWord
+# DMCE install path
+DMCE_EXEC_PATH:$install_path
+
+# Working directory root
+DMCE_WORK_PATH:/tmp/$USER/dmce
+
+# config files path. (dmce.exclude, dmce.include etc.)
+DMCE_CONFIG_PATH:$install_path
+
+# Command line lookup hook (builds list of individual compile commands per file if not enough with the default ones)
+DMCE_CMD_LOOKUP_HOOK:$install_path/cmdlookuphook.sh
+
+# Default compiler command line for c files
+DMCE_DEFAULT_C_COMMAND_LINE:gcc -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
+
+# Default compiler command line for cpp files
+DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 /usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
+
+# Probe definition c file
+DMCE_PROBE_SOURCE:$install_path/dmce-probe-user.c
+
+# Log files
+DMCE_LOG_FILES:/tmp/$USER/dmce
+NoWord

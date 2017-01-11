@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (c) 2016 Ericsson AB
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -16,3 +18,37 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# $1 = <some-path>/<file>.cc.clang.filtereddiff
+
+CLANG_FILE=$(dirname $1)/$(basename $1 .filtereddiff)
+CLANG_FILE_FILTERED=$1
+
+# @@ -76356,7 +76366 @@ IntegerLiteralHexnumber  'int' 0
+
+SED_EXP=""
+
+# rows starting with "@@"
+while read -r line ; do
+	arrIN=(${line//+/ })
+	ADD=${arrIN[2]}
+
+	# Multi or single line?
+	if [[ "$ADD" =~ "," ]]; then
+		# Multi line add. Example: "126903,8"
+		arrOUT=(${ADD//,/ })
+		START_POS=${arrOUT[0]}
+		NUM_LINES=${arrOUT[1]}
+	else
+		# Single line change. Example: "127505"
+		START_POS=$ADD
+		NUM_LINES=1
+	fi
+
+	SED_EXP+="$START_POS","$(($START_POS+$NUM_LINES-1))""{s/\(.*\)/+\1/};"
+done <<< "$(grep -n "^@@.*@@" $1)"
+
+# Sanity check
+[ "$ADD" == "" ] && exit
+
+sed -e "$SED_EXP" $CLANG_FILE > "$CLANG_FILE""diff"
