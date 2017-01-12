@@ -10,6 +10,6 @@ static void dmce_probe_body(unsigned int probenbr)
   if (dmce_probes[probenbr] != 1)
   {
     dmce_probes[probenbr] = 1;
-    syslog(LOG_INFO, "\nDMCE_PROBE(%d)\n ",probenbr);
+    syslog(LOG_INFO, "\nDMCE_PROBE(%u)\n ",probenbr);
   }
 }
