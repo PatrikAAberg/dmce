@@ -183,7 +183,7 @@ re_lvalue                   = re.compile(".*lvalue.*")
 re_regret_insertion         = re.compile(".*case.*DMCE.*:.*")
 
 re_sections_to_skip = []
-re_sections_to_skip.append(re.compile(r'.*VarDecl Hexnumber.*'))
+re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*EnumDecl Hexnumber.*'))
 

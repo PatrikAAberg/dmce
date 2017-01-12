@@ -17,10 +17,6 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-PLEASE NOTE: DMCE is of today only verfied for clang version 3.4
-             For ubuntu:
-             $ sudo apt-get install clang-3.4
-
 PLEASE NOTE: The -d option is currently not functional. 
 
 Example of typical usage:
