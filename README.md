@@ -4,7 +4,7 @@ Code test coverage tool component for Linux. Probes c expressions added between 
 
 dmce is primarily intended for embedded systems where the level of intrusion must be kept low. Only code delta is probed and probes are lightweight!
 
-dmce focus on code delta coverage, test teams are kept on their toes keeping up with the latest feature development!
+As dmce focus on code delta coverage, test teams are kept on their toes keeping up with the latest feature development!
 
 #### Examples of use:
 
@@ -51,14 +51,13 @@ A simple example for the git "mygit" with the test suite "mytest.sh"
 The above do the following:
 
 1. Clone the git to be played around with, in this case "mygit".
-2. Put together a default .dmceconfig file and put it in your home directory. Use this file to control dmce behaviour.
-3. Probe the 5 latest commits in "mygit"
-4. Run a module test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
-5. Summarizes the results.
+2. Probe the 5 latest commits in "mygit"
+3. Run a module test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
+4. Summarize the results.
 
 ### Configuration
 
-dmce search for ".dmceconfig" in two places; first it looks in the root of the git being probed and if not found there in the user's home directory. During installation, a default .dmceconfig will be put in the user's home directory.
+Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory. This way, in a multi-git project, each git can have its own dmce configuratioon. During installation, a default .dmceconfig will be put in the user's home directory.
 
 #### The configurable parameters  
 
