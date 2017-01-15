@@ -2,17 +2,17 @@
 
 Code test coverage tool component for Linux. Probes c expressions added between two source code revisions. Consists of a bunch of bash and python scripts. No need to build, runs out of the box.
 
-dmce is primarily intended for embedded systems where the level of intrusion must be kept low. 
+dmce is primarily intended for embedded systems where the level of intrusion must be kept low. Only code delta is probed and probes are lightweight!
 
-dmce focus on delta code coverage, which means that test teams are kept on their toes keeping up with the latest feature development!
+dmce focus on code delta coverage, test teams are kept on their toes keeping up with the latest feature development!
 
 #### Examples of use:
 
-* Typically used in a continious integration / continious delivery environment 
-* Patch upload test for git / gerrit / jenkins setups. Instead of getting "pass/fail", you can now get "pass/fail/executed"
-* Identify redundant test runs to optimize lab usage cost
+* Typically used in a continuous integration / continuous delivery environment 
+* Patch upload test for git / gerrit / jenkins setups. Instead of getting "pass / fail", you get "pass / fail / executed"
+* Identify redundant test runs to optimize lab cost
 * Data source for test development / product development adherence metrics
-* What is the c code test coverage for the patches added the last month?  
+* What is the c code test coverage for the features added the last month?  
 
 ### Dependencies
 
@@ -55,6 +55,41 @@ The above do the following:
 3. Probe the 5 latest commits in "mygit"
 4. Run a module test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
 5. Summarizes the results.
+
+### Configuration
+
+dmce search for ".dmceconfig" in two places; first it looks in the root of the git being probed and if not found there in the user's home directory. During installation, a default .dmceconfig will be put in the user's home directory.
+
+#### The configurable parameters  
+
+Location of the dmce scripts:
+
+        DMCE_EXEC_PATH
+
+Location of dmce temporary files:
+
+        DMCE_WORK_PATH
+
+Directory where dmce look for the files constructs.exclude, dmce.include and dmce.exclude:
+
+        DMCE_CONFIG_PATH
+
+If you whant to import compiler commands, e.g. from a makefile or similar, point to your import script here:
+
+        DMCE_CMD_LOOKUP_HOOK
+
+Default command line parameters if not using a lookup hook:
+
+        DMCE_DEFAULT_C_COMMAND_LINE
+        DMCE_DEFAULT_CPP_COMMAND_LINE
+
+Select what probe to use (currently 3 available):
+    
+        DMCE_PROBE_SOURCE
+
+Log files will end up here:
+
+        DMCE_LOG_FILES
 
 
 ### Contact
