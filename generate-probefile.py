@@ -117,6 +117,7 @@ linestotal=rawlinestotal
 srcline = 0
 srccol = 0
 
+# Used for c expression recognition
 exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
@@ -159,9 +160,8 @@ cf_len = len(pbuf)
 if do_print == 1: print "!!!" + parsed_c_file + "!!!"
 
 
-# regular expression objects
+# Used for parsing the textual AST
 
-# Used for c expression recognition
 re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
 re_c_file_start             = re.compile(".*<" + parsed_c_file_exp + ".*")
 re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
