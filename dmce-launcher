@@ -22,10 +22,10 @@
 # Main entry point for running DMCE from a git
 # To be executed from within the git repo root:
 # $ cd /path/to/git/repo
-# $ dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c ]
+# $ dmce-launcher ...
 
 function usage {
-  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c ] [--skip]"
+  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c | -r old-SHA-1 new-SHA-1 ] [--skip]"
   exit 1
 }
 
@@ -101,6 +101,10 @@ elif [ "$1" == "-n" ]; then
   echo "Search by number of commits"
   head=$(git log --oneline -$2 | cut -d' ' -f1 | head -1)
   baseline=$(git log --oneline -$2 | cut -d' ' -f1 | tail -1)
+elif [ "$1" == "-r" ]; then
+  echo "Search from $2 to $3"
+  head=$2
+  baseline=$3
 else
   usage
 fi
