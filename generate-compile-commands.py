@@ -39,7 +39,7 @@ except IOError:
 defaultcmdline_c = os.environ.get('DMCE_DEFAULT_C_COMMAND_LINE')
 
 #default cmd line cpp
-defaultcmdline_c = os.environ.get('DMCE_DEFAULT_C_COMMAND_LINE')
+defaultcmdline_cpp = os.environ.get('DMCE_DEFAULT_CPP_COMMAND_LINE')
 
 # Read from stdin
 linebuf = sys.stdin.readlines()
