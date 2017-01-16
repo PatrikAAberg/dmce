@@ -16,13 +16,13 @@ As dmce focus on code delta coverage, test teams are kept on their toes keeping 
 
 ### Dependencies
 
-clang 3.4-8
+clang 3.4
 
-git 2.10+
+git 2.10
 
-bash
+bash 4
 
-python 2
+python 2.7
 
 ### Download
 
@@ -52,12 +52,12 @@ The above do the following:
 
 1. Clone the git to be played around with, in this case "mygit".
 2. Probe the 5 latest commits in "mygit"
-3. Run a module test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
+3. Run a unit test called "mytest.sh" using stderr to catch the output from the dmce-probe-user.c probe.
 4. Summarize the results.
 
 ### Configuration
 
-Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory. This way, in a multi-git project, each git can have its own dmce configuratioon. During installation, a default .dmceconfig will be put in the user's home directory.
+Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory. This way, in a multi-git project, each git can have its own dmce configuration. During installation, a default .dmceconfig will be put in the user's home directory.
 
 #### The configurable parameters  
 
@@ -98,5 +98,3 @@ For questions, issues, usage scenario discussions, suggestions for improvement o
 patrik.aberg@ericsson.com
 
 magnus.templing@ericsson.com
-
-
