@@ -60,7 +60,7 @@ expdb_elineend = []
 expdb_ecolend = []
 expdb_in_c_file= []
 expdb_tab = []
-
+expdb_exppatternmode = []
 expdb_index = 0
 
 cur_lend = 0
@@ -475,7 +475,7 @@ while (lineindex<linestotal):
                    expdb_exptext.append(linebuf[lineindex])
                    expdb_in_c_file.append(in_parsed_c_file)
                    expdb_tab.append(tab)
-
+                   expdb_exppatternmode.append(1)
                    expdb_index +=1
 
                # Need to look for last sub expression
@@ -491,6 +491,7 @@ while (lineindex<linestotal):
                    expdb_ecolend.append(int(cend))
                    expdb_exptext.append(linebuf[lineindex])
                    expdb_in_c_file.append(in_parsed_c_file)
+                   expdb_exppatternmode.append(2)
 #                   if do_print == 1: print "START: (" + lstart + "," + cstart + ")"
                    inside_expression = lineindex
 
@@ -532,7 +533,12 @@ while (i < expdb_index):
     le = expdb_lineend[i] - 1
     ce = expdb_colend[i] #- 1
     ele = expdb_elineend[i] - 1
-    ece = expdb_ecolend[i] #- 1
+
+    if (expdb_exppatternmode[i] == 2 ):
+        ece = expdb_ecolend[i]
+    else:
+        ece = expdb_ecolend[i] - 1
+
     tab = expdb_tab[i]
 
     # Sanity check input
