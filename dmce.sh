@@ -19,6 +19,24 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
+# Summary
+nbr_of_files=0
+files_probed=0
+files_skipped=0
+nbrofprobesinserted=0
+
+function summary
+{
+  echo "==============================================="
+  echo "Files examined          $nbr_of_files"
+  echo "Files probed            $files_probed"
+  echo "Files skipped           $files_skipped"
+  echo "Probes inserted         $nbrofprobesinserted"
+  echo "==============================================="
+  echo
+}
+
 # Usage
 if [ "$#" -ne 3 ]; then
   echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id>"
@@ -72,7 +90,7 @@ echo
 time {
   git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | egrep '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
   # Sanity check
-  [ "$(wc -c < $dmcepath/latest.cache)" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && exit 1
+  [ "$(wc -c < $dmcepath/latest.cache)" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
   nbr_of_files=$(cat $dmcepath/latest.cache | wc -l)
   echo "git found $nbr_of_files modified and changed files"
 }
@@ -468,11 +486,4 @@ echo $PWD
 if ! [ -z ${DMCE_VERBOSE_OUTPUT+x} ]; then
   git --no-pager show --stat $oldsha..$newsha --oneline
 fi
-echo "=============================================="
-echo "DMCE"
-echo "Files examined          $nbr_of_files"
-echo "Files probed            $files_probed"
-echo "Files skipped           $files_skipped"
-echo "Probes inserted         $nbrofprobesinserted"
-echo "==============================================="
-echo
+summary
