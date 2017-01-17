@@ -144,7 +144,7 @@ for exp in exppatternlist:
 # Modes:
 #  1 - Contained space, use as is
 #  2 - Free, need to look for next
-exppatternmode = [1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 
 # Escape some characters
 parsed_c_file_exp = re.sub("\/", "\/", parsed_c_file_exp)
