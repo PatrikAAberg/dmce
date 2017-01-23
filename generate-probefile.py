@@ -590,6 +590,9 @@ while (i < expdb_index):
                 if ("#define" in line):
                     bail_out=1
 
+                # Filter out escaped backslash
+                line = re.sub(r'\\\\', "xx", line)
+
                 # Filter out escaped quotation mark and escaped apostrophe
                 line = re.sub(r'\\"', "xx", line)
                 line = re.sub(r"\\'", "xx", line)
