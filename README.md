@@ -6,12 +6,15 @@ dmce is primarily intended for embedded systems where the level of intrusion mus
 
 As dmce focus on code delta coverage, test teams are kept on their toes keeping up with the latest feature development!
 
+Ever noticed that code coverage gets less interesting the more code is added to the project? The latest additions affect test code coverage much less than the earlier ones. Code delta coverage keeps relevant!
+
 #### Examples of use:
 
 * Typically used in a continuous integration / continuous delivery environment 
 * Patch upload test for git / gerrit / jenkins setups. Instead of getting "pass / fail", you get "pass / fail / executed"
 * Identify redundant test runs to optimize lab cost
 * Data source for test development / product development adherence metrics
+* Why not give developers a heads up when all their latest code has ben run ok at least once in a test suite? Maybe even terminate it to free lab resources!
 * What is the c code test coverage for the features added the last month?  
 
 ### Dependencies
