@@ -109,11 +109,16 @@ time {
   echo "Excludes: "
   cat $dmcepath/workarea/dmce.exclude
   echo
-  grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude > $dmcepath/latest.cache.tmp
+  grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
   echo "$(($nbr_of_files-$(cat $dmcepath/latest.cache.tmp | wc -l))) files excluded. View these files in $dmcepath/files_excluded.log"
   comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
   mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
   nbr_of_files=$(cat $dmcepath/latest.cache | wc -l)
+  if [ $nbr_of_files -eq 0 ]; then
+    echo "error: no files after include and exclude filter"
+    summary
+    exit
+  fi
 }
 
 # Populate FILE_LIST
