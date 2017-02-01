@@ -89,9 +89,11 @@ echo "Ask git to list modified and added files. Saving files here: $dmcepath/lat
 echo
 time {
   git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | egrep '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
+  # Add the added and modified files
+  git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$" >> $dmcepath/latest.cache || :
   # Sanity check
-  [ "$(wc -c < $dmcepath/latest.cache)" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
   nbr_of_files=$(cat $dmcepath/latest.cache | wc -l)
+  [ "$nbr_of_files" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
   echo "git found $nbr_of_files modified and changed files"
 }
 
@@ -203,12 +205,10 @@ time {
   for c_file in $FILE_LIST; do
     {
       # Sanity check that file exist in $newsha
-      if git cat-file -e $newsha:$c_file &> /dev/null; then
-        mkdir -p `dirname $dmcepath/new/${c_file}`
-        git show $newsha:$c_file > $dmcepath/new/$c_file
-        $binpath/dmce-remove-relpaths.sh $dmcepath/new/$c_file
-        echo $c_file >> $dmcepath/workarea/clang-list.new
-      fi
+      mkdir -p `dirname $dmcepath/new/${c_file}`
+      cp $c_file $dmcepath/new/$c_file
+      $binpath/dmce-remove-relpaths.sh $dmcepath/new/$c_file
+      echo $c_file >> $dmcepath/workarea/clang-list.new
     } &
 
     {
