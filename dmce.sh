@@ -366,8 +366,11 @@ echo "Update probed files"
 echo
 time {
   # Prepend the probed file with forward declaration and macro definition
-  echo "static void dmce_probe_body(unsigned int probenbr);" > $dmcepath/workarea/probe-header
+  echo "#ifndef __DMCE_PROBE_FUNCTION__HEADER__" > $dmcepath/workarea/probe-header
+  echo "#define __DMCE_PROBE_FUNCTION__HEADER__" >> $dmcepath/workarea/probe-header
+  echo "static void dmce_probe_body(unsigned int probenbr);" >> $dmcepath/workarea/probe-header
   echo "#define DMCE_PROBE(a) (dmce_probe_body(a))" >> $dmcepath/workarea/probe-header
+  echo "#endif" >> $dmcepath/workarea/probe-header
 
   while read c_file; do
     {
@@ -433,7 +436,8 @@ else
   echo
   time {
     # Assign DMCE_PROBE numbers.
-    size_of_user=2
+    # size_of_user compensates for the header put first in all source files by DMCE
+    size_of_user=5
     probe_nbr=0
     rm -f $dmcepath/probe-references.log
     nextfile=""
