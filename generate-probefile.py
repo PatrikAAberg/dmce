@@ -47,6 +47,15 @@ for construct in cxl_buf:
 if do_print == 1: print "constructs exclude list: {}".format(len(re_cxl_list))
 
 parsed_c_file = sys.argv[1]
+
+# c++ file?
+m_cc = re.match( r'.*\.cc$', parsed_c_file, re.I)
+m_cpp = re.match( r'.*\.cpp$', parsed_c_file, re.I)
+if (m_cc or m_cpp):
+    c_plusplus=1
+else:
+    c_plusplus=0
+
 parsed_c_file_exp = parsed_c_file
 probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
@@ -220,8 +229,9 @@ while (lineindex<linestotal):
         skip_statement = 1
         skip_statement_tab = tab
 
+    # Do not probe lvalues for c, but do for c++
     found_lvalue = re_lvalue.match(linebuf[lineindex])
-    if (found_lvalue):
+    if (found_lvalue and not c_plusplus):
         skip_lvalue = 1
         skip_lvalue_tab = tab
 
