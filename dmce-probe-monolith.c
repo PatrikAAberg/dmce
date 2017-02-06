@@ -1,6 +1,7 @@
 /* This is a simple template for a DMCE probe in a statically linked monolitic system              */
-/* This code is inserted at the top of all DMCE probed .c files!                                   */
 /* NOTE! the array dmce_probes[] array must be defined somewhere in the build and zero-initalized! */
+#ifndef __DMCE_PROBE_FUNCTION_BODY__
+#define __DMCE_PROBE_FUNCTION_BODY__
 
 extern int dmce_probes[5000];
 
@@ -10,3 +11,4 @@ static void dmce_probe_body(unsigned int probenbr)
 }
 
 #define DMCE_PROBE(a) (dmce_probe_body(a))
+#endif //__DMCE_PROBE_FUNCTION_BODY__
