@@ -19,6 +19,11 @@ Please note that dmce only uses clang for code insertion. Any build tool chain c
 * Why not give developers a heads up when all their latest code has ben run ok at least once in a test suite? Maybe even terminate it to free lab resources!
 * What is the c code test coverage for the features added the last month?  
 
+### Reference project
+Ericsson Research use dmce with Travis CI within the Calvin project: 
+
+https://github.com/EricssonResearch/calvin-constrained
+
 ### Dependencies
 
 clang 3.4
