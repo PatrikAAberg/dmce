@@ -35,6 +35,11 @@ function usage {
   exit 1
 }
 
+# TODO: Use getopt instead
+if [ "$1" == "" ]; then
+  usage
+fi
+
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
