@@ -109,6 +109,12 @@ else
   usage
 fi
 
+echo "DMCE rev:"
+pushd $DMCE_EXEC_PATH &>/dev/null
+git log -n 1
+popd &>/dev/null
+echo
+
 echo "DMCE launcher: $git_root executing on $head (head) to $baseline (base)"
 
 time {
