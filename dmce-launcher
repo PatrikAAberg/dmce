@@ -25,7 +25,13 @@
 # $ dmce-launcher ...
 
 function usage {
-  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c | -r old-SHA-1 new-SHA-1 ] [--skip]"
+  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c | -a | -r old-SHA-1 new-SHA-1 ] [--skip]"
+  echo "-d     Weekly delta"
+  echo "-n     Number of commits back from now"
+  echo "-r     SHA-1 delta"
+  echo "-c     Restore source code state (use for added and modified files)"
+  echo "-a     Probe all code at current commit"
+  echo "--skip Skip include file retrieval"
   exit 1
 }
 
