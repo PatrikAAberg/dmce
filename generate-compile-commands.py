@@ -41,12 +41,18 @@ defaultcmdline_c = os.environ.get('DMCE_DEFAULT_C_COMMAND_LINE')
 #default cmd line cpp
 defaultcmdline_cpp = os.environ.get('DMCE_DEFAULT_CPP_COMMAND_LINE')
 
+#dmce work path
+workpath = os.environ.get('DMCE_WORK_PATH')
+
 # Read from stdin
 linebuf = sys.stdin.readlines()
 
 # Construct list of file lines
 linestotal = len(linebuf)
 path = sys.argv[1] + "/"
+
+# Find out include file path
+includes = "-I" + workpath + "/inc/" + sys.argv[1].rsplit('/', 1)[1]
 
 # Retrieve individual command line
 def IndividualCmdLine( sourcefile ):
@@ -81,9 +87,9 @@ while (lineindex<linestotal):
           m_cpp = re.match( r'.*\.cpp$', linebuf[lineindex], re.M|re.I)
 
           if (m_c):
-              command = defaultcmdline_c + " " + filename
+              command = defaultcmdline_c + " " + includes + " " + filename
           elif (m_cc or m_cpp):
-              command = defaultcmdline_cpp + " " + filename
+              command = defaultcmdline_cpp + " " + includes + " " + filename
           else:
               print "file cache corrupt!"
               exit(-1)
