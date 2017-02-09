@@ -43,6 +43,13 @@ fi
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
+echo "DMCE rev:"
+pushd $DMCE_EXEC_PATH &>/dev/null
+git log -n 1
+popd &>/dev/null
+echo
+
+
 time {
   echo "Restoring old probe state if needed"
   dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
@@ -58,6 +65,7 @@ fi
 # Variable set up and config
 
 git_root=$PWD
+git_name=$(basename $PWD)
 
 # Find out what config file to use. Start with the one in the git
 
@@ -81,23 +89,6 @@ while read dmceconfig; do
   fi
 done < $USE_DMCE_CONFIG_FILE
 
-if ! echo $@ | grep -q '\-\-skip'; then
-  echo "Set up DMCE include directory"
-  chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
-  rm -rf $DMCE_WORK_PATH/inc &> /dev/null
-  mkdir -p $DMCE_WORK_PATH/inc
-  find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/ {} + &>/dev/null || :
-
-  echo "Removing relative paths in include files"
-  pushd $DMCE_WORK_PATH/inc &>/dev/null
-  $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
-  popd &>/dev/null
-
-  echo "Clean out probe database"
-  rm -rf $DMCE_WORK_PATH/global_probedata.dmce
-  touch $DMCE_WORK_PATH/global_probedata.dmce
-fi
-
 echo "Initialize log"
 logfile=$(basename $0 .sh)-$(basename $git_root)-$(date '+%Y%m%d-%H%M%S').log
 mkdir -p $DMCE_LOG_FILES
@@ -120,11 +111,45 @@ else
   usage
 fi
 
-echo "DMCE rev:"
-pushd $DMCE_EXEC_PATH &>/dev/null
-git log -n 1
-popd &>/dev/null
-echo
+if ! echo $@ | grep -q '\-\-skip'; then
+  echo "Set up DMCE include directory"
+
+  # Copy git and set rev to baseline TODO: Skip this step and copy from git directly
+  rm -rf $DMCE_WORK_PATH/baseline/$git_name
+  mkdir -p $DMCE_WORK_PATH/baseline
+  cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name
+  pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+  git clean -dfx
+  git reset --hard
+  git checkout $baseline
+  popd &>/dev/null
+
+  # Clear old inc directory
+  chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
+  rm -rf $DMCE_WORK_PATH/inc &> /dev/null
+
+  # Copy includes for head
+  mkdir -p $DMCE_WORK_PATH/inc/new
+  find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
+
+  # Copy includes for baseline
+  pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+  mkdir -p $DMCE_WORK_PATH/inc/old
+  find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
+  popd &>/dev/null
+
+  echo "Removing relative paths in include files"
+  pushd $DMCE_WORK_PATH/inc/new &>/dev/null
+  $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
+  popd &>/dev/null
+  pushd $DMCE_WORK_PATH/inc/old &>/dev/null
+  $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
+  popd &>/dev/null
+
+  echo "Clean out probe database"
+  rm -rf $DMCE_WORK_PATH/global_probedata.dmce
+  touch $DMCE_WORK_PATH/global_probedata.dmce
+fi
 
 echo "DMCE launcher: $git_root executing on $head (head) to $baseline (base)"
 
