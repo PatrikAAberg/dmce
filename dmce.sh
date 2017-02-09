@@ -173,6 +173,9 @@ time {
   if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
 
     for c_file in $FILE_LIST; do
+      # Is this needed? Maybe optimize the gen script instead
+      #TODO: Check for c or c++
+      #TODO: Add -I.../inc/new and -I.../inc/old directives
       echo -e "{\n\"directory\": \"$dmcepath/new/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/new/"$c_file".JSON &
       echo -e "{\n\"directory\": \"$dmcepath/old/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/old/"$c_file".JSON &
     done
