@@ -45,10 +45,9 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
 echo "DMCE rev:"
 pushd $DMCE_EXEC_PATH &>/dev/null
-git log -n 1
+git --no-pager log --no-color -n 1
 popd &>/dev/null
 echo
-
 
 time {
   echo "Restoring old probe state if needed"
