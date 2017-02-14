@@ -43,24 +43,6 @@ fi
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
-echo "DMCE rev:"
-pushd $DMCE_EXEC_PATH &>/dev/null
-git --no-pager log --no-color -n 1
-popd &>/dev/null
-echo
-
-time {
-  echo "Restoring old probe state if needed"
-  dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
-  [ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
-  wait
-}
-
-if [ "$1" == "-c" ]; then
-  echo "Done"
-  exit 0
-fi
-
 # Variable set up and config
 
 git_root=$PWD
@@ -88,6 +70,24 @@ while read dmceconfig; do
   fi
 done < $USE_DMCE_CONFIG_FILE
 
+echo "DMCE rev:"
+pushd $DMCE_EXEC_PATH &>/dev/null
+git --no-pager log --no-color -n 1
+popd &>/dev/null
+echo
+
+time {
+  echo "Restoring old probe state if needed"
+  dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
+  [ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
+  wait
+}
+
+if [ "$1" == "-c" ]; then
+  echo "Done"
+  exit 0
+fi
+
 echo "Initialize log"
 logfile=$(basename $0 .sh)-$(basename $git_root)-$(date '+%Y%m%d-%H%M%S').log
 mkdir -p $DMCE_LOG_FILES
@@ -114,13 +114,13 @@ if ! echo $@ | grep -q '\-\-skip'; then
   echo "Set up DMCE include directory"
 
   # Copy git and set rev to baseline TODO: Skip this step and copy from git directly
-  rm -rf $DMCE_WORK_PATH/baseline/$git_name
-  mkdir -p $DMCE_WORK_PATH/baseline
-  cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name
+  rm -rf $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+  mkdir -p $DMCE_WORK_PATH/baseline &>/dev/null
+  cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
   pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-  git clean -dfx
-  git reset --hard
-  git checkout $baseline
+  git clean -dfx &>/dev/null
+  git reset --hard &>/dev/null
+  git checkout $baseline &>/dev/null
   popd &>/dev/null
 
   # Clear old inc directory
