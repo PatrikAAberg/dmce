@@ -143,12 +143,8 @@ if ! echo $@ | grep -q '\-\-skip'; then
     popd &>/dev/null
 
     echo "Removing relative paths in include files"
-    pushd $DMCE_WORK_PATH/inc/new &>/dev/null
-    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
-    popd &>/dev/null
-    pushd $DMCE_WORK_PATH/inc/old &>/dev/null
-    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh
-    popd &>/dev/null
+    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/new
+    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/old
   fi
   echo "Clean out probe database"
   rm -rf $DMCE_WORK_PATH/global_probedata.dmce

@@ -19,53 +19,59 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# If no arguments, operate on all files in current directory
-# If one argument, operate on that argument as one file
-# TODO: take more than one argument
+# $1 = a file or a directory
 
-if [ "$1" == "" ]; then
+function _sed() {
+	sed -i 's/#\s*include\s\(\"\|<\).*\/\(.*\)\(\"\|>\).*/#include \"\2\"/g' $@
+}
 
-# Save all files under inc in one varaible
-files=$(echo *)
+if [ -f $1 ]; then
+	_sed $1
+elif [ -d $1 ]; then
+	# Enter directory
+	cd $1
 
-# Count number of files within that variable
-number_of_files=$(tr -dc ' ' <<<"$files" | awk '{ print length; }')
+	# Exit if directory is empty
+	[ ! -n "$(ls -A)" ] && exit 1
 
-# How many processing units available?
-CORES=$(nproc)
+	# Save all files in one variable
+	files=$(find -type f -printf "%f ")
 
-# Divide number of files on each core
-interval=$(($number_of_files/$CORES))
+	# Count number of spaces = number of files
+	number_of_files=$(tr -dc ' ' <<<"$files" | awk '{ print length; }')
 
-# variables for 'cut'
-a=1
-b=1
+	# How many processing units are available on this machine?
+	CORES=$(nproc)
 
-# List of 'sed' PIDs
-PIDS=
+	# Run sed and exit if we just have a few files
+	if [ $number_of_files -lt $CORES ]; then
+		_sed $files
+		exit
+	fi
 
-# Launch $CORES jobs
-for i in $(seq $CORES); do
-  a=$b
-  let "b = b + $interval"
+	# Divide number of files on each core
+	interval=$(($number_of_files/$CORES))
 
-  # Divide $files into smaller chunks, let last core handle a few more files
-  if [ $i == $CORES ]; then
-    sub_files=$(cut -d' ' -f$a- <(echo $files))
-  else
-    sub_files=$(cut -d' ' -f$a-$b <(echo $files))
-  fi
+	# variables for 'cut'
+	a=1
+	b=1
 
-  # Launch the command
-  sed -i 's/#\s*include\s\(\"\|<\).*\/\(.*\)\(\"\|>\).*/#include \"\2\"/g' $sub_files &
+	# Launch $CORES jobs
+	for i in $(seq $CORES); do
+		a=$b
+		let "b = b + $interval"
 
-  # Save the PID
-  PIDS="$PIDS $!"
-done
+		# Divide $files into smaller chunks, let last core handle a few more files
+		if [ $i == $CORES ]; then
+		  sub_files=$(cut -d' ' -f$a- <(echo $files))
+		else
+		  sub_files=$(cut -d' ' -f$a-$b <(echo $files))
+		fi
 
-echo "waiting for $(ps -o pid= -p $PIDS | wc  -l) spawned 'sed' jobs to finish, this may take a while."
-wait
+		# Launch the command
+		_sed $sub_files &
+	done
 
-else
-  sed -i 's/#\s*include\s\(\"\|<\).*\/\(.*\)\(\"\|>\).*/#include \"\2\"/g' $1
+	echo "waiting for spawned 'sed' jobs to finish, this may take a while."
+	wait
 fi
