@@ -71,6 +71,8 @@ while read dmceconfig; do
   fi
 done < $USE_DMCE_CONFIG_FILE
 
+set | grep ^DMCE_
+
 echo "DMCE rev:"
 pushd $DMCE_EXEC_PATH &>/dev/null
 git --no-pager log --no-color -n 1
