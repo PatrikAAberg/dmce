@@ -12,9 +12,11 @@ function _echo() {
 
 # setup working directory
 if [ -e $HOME/.dmceconfig ]; then
-	dmce_work_path="$(grep DMCE_WORK_PATH: $HOME/.dmceconfig | cut -d: -f2 | envsubst)"
+	dmce_work_path="$(grep ^DMCE_WORK_PATH: $HOME/.dmceconfig | cut -d: -f2 | envsubst)"
+	dmce_exec_path="$(grep ^DMCE_EXEC_PATH: $HOME/.dmceconfig | cut -d: -f2 | envsubst)"
 else
 	dmce_work_path="/tmp/$USER/dmce"
+	dmce_exec_path="$dmce_work_path/test/$PROG_NAME/dmce"
 fi
 
 my_work_path="$dmce_work_path/test/$PROG_NAME"
@@ -26,10 +28,12 @@ pushd $my_work_path
 grep Mem /proc/meminfo || :
 nproc || :
 
-time {
-	_echo "fetch DMCE"
-	git clone --depth 1 https://github.com/PatrikAAberg/dmce.git
-}
+if [ ! -e $HOME/.dmceconfig ]; then
+	time {
+		_echo "fetch DMCE"
+		git clone --depth 1 https://github.com/PatrikAAberg/dmce.git
+	}
+fi
 
 time {
 	_echo "fetch GCC"
@@ -85,14 +89,19 @@ time {
 	git commit -m "broken"
 
 	# add DMCE config
-	cp -v $my_work_path/dmce/test/$PROG_NAME.dmceconfig .dmceconfig
+	cp -v $dmce_exec_path/test/$PROG_NAME.dmceconfig .dmceconfig
+
+	# update DMCE_EXEC_PATH
+	sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:$dmce_exec_path|" .dmceconfig
+
+	# commit
 	git add .dmceconfig
 	git commit -m "dmceconfig"
 }
 
 time {
 	_echo "launch DMCE"
-	$my_work_path/dmce/dmce-launcher -n $(git rev-list --all --count)
+	$dmce_exec_path/dmce-launcher -n $(git rev-list --all --count)
 }
 
 time {
