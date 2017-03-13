@@ -19,6 +19,7 @@ else
 	dmce_exec_path="$dmce_work_path/test/$PROG_NAME/dmce"
 fi
 
+my_test_path=$(dirname $(echo $PWD/$0))
 my_work_path="$dmce_work_path/test/$PROG_NAME"
 [ -d $my_work_path ] && rm -rf $my_work_path
 mkdir -v -p $my_work_path
@@ -88,15 +89,14 @@ time {
 	git rm unsorted/dump-noaddr.c
 	git commit -m "broken"
 
-	# add DMCE config
-	cp -v $dmce_exec_path/test/$PROG_NAME.dmceconfig .dmceconfig
-
-	# update DMCE_EXEC_PATH
+	# add DMCE config and update paths
+	cp -v $dmce_exec_path/test/$PROG_NAME/dmceconfig .dmceconfig
 	sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:$dmce_exec_path|" .dmceconfig
-
-	# commit
+	sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:$my_test_path|" .dmceconfig
+	sed -i "s|DMCE_CMD_LOOKUP_HOOK:.*|DMCE_CMD_LOOKUP_HOOK:$my_test_path/cmdlookuphook.sh|" .dmceconfig
+	sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:$my_test_path/dmce-probe-monolith.c|" .dmceconfig
 	git add .dmceconfig
-	git commit -m "dmceconfig"
+	git commit -m "DMCE config"
 }
 
 time {
