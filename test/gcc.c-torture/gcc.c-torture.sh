@@ -21,7 +21,7 @@ fi
 
 my_test_path=$(dirname $(echo $PWD/$0))
 my_work_path="$dmce_work_path/test/$PROG_NAME"
-[ -d $my_work_path ] && rm -rf $my_work_path
+[ -d $my_work_path/gcc-$gcc_version ] && rm -rf $my_work_path/gcc-$gcc_version
 mkdir -v -p $my_work_path
 pushd $my_work_path
 
@@ -36,10 +36,12 @@ if [ ! -e $HOME/.dmceconfig ]; then
 	}
 fi
 
-time {
-	_echo "fetch GCC"
-	wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-$gcc_version/gcc-$gcc_version.tar.bz2
-}
+if [ ! -e "gcc-$gcc_version.tar.bz2" ]; then
+	time {
+		_echo "fetch GCC"
+		wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-$gcc_version/gcc-$gcc_version.tar.bz2
+	}
+fi
 
 time {
 	_echo "unpack GCC"
