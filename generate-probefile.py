@@ -143,7 +143,8 @@ exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*']
+                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
+                  '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
 re_exppatternlist = []
 
@@ -151,9 +152,10 @@ for exp in exppatternlist:
     re_exppatternlist.append(re.compile(exp))
 
 # Modes:
-#  1 - Contained space, use as is
-#  2 - Free, need to look for next
-exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+#  1    Contained space, use as is
+#  2    Free, need to look for next
+#  x    Free, look for next at colpos + x
+exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 # Escape some characters
 parsed_c_file_exp = re.sub("\/", "\/", parsed_c_file_exp)
@@ -447,13 +449,13 @@ while (lineindex<linestotal):
 # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
 
-        # If we reached the last subexpression in the expression
+        # If we reached the last subexpression in the expression or next expression or statement
         if ( (int(lstart) > cur_lend) or ( (int(lstart) == cur_lend) and (int(cstart) > cur_cend) ) ):
             expdb_lineend.append(int(lstart))
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
             expdb_index +=1
-            if do_print == 1: print "FOUND END (" + linebuf[lineindex].rstrip() + ") FOR (" + linebuf[inside_expression].rstrip() + ")"
+            if do_print == 1: print "FOUND END/NEXT (" + linebuf[lineindex].rstrip() + ") FOR (" + linebuf[inside_expression].rstrip() + ")"
             if do_print == 1: print "Start: ("+ str(cur_lstart) + ", " + str(cur_cstart) + ") End: (" + lstart  + ", " + str(int(cstart) -1) + ") ->" + linebuf[lineindex].rstrip()
             inside_expression = 0
 
@@ -497,6 +499,23 @@ while (lineindex<linestotal):
                    cur_tab = tab
                    expdb_linestart.append(int(lstart))
                    expdb_colstart.append(int(cstart))
+                   expdb_elineend.append(int(lend))
+                   expdb_ecolend.append(int(cend))
+                   expdb_exptext.append(linebuf[lineindex])
+                   expdb_in_c_file.append(in_parsed_c_file)
+                   expdb_exppatternmode.append(2)
+#                   if do_print == 1: print "START: (" + lstart + "," + cstart + ")"
+                   inside_expression = lineindex
+
+               # Need to look for last sub expression. Also need to add length of keyword
+               if (exppatternmode[i] > 2):
+                   cur_lstart = int(lstart)
+                   cur_cstart = int(cstart) + exppatternmode[i]
+                   cur_lend = int(lend)
+                   cur_cend = int(cend)
+                   cur_tab = tab
+                   expdb_linestart.append(int(lstart))
+                   expdb_colstart.append(int(cstart) + exppatternmode[i])
                    expdb_elineend.append(int(lend))
                    expdb_ecolend.append(int(cend))
                    expdb_exptext.append(linebuf[lineindex])
