@@ -2,3 +2,6 @@ GLOBAL
 MIN
 MAX
 #define
+extern
+static
+inline
