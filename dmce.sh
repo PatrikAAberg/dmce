@@ -70,6 +70,7 @@ time {
   echo "working directory       : $dmcepath"
   echo "lookup hook             : $DMCE_CMD_LOOKUP_HOOK"
   echo "probe c file            : $DMCE_PROBE_SOURCE"
+  echo "probe prolog file       : $DMCE_PROBE_PROLOG"
   echo "git path                : $git_top"
   echo "New sha1                : $newsha"
   echo "Old sha1                : $oldsha"
@@ -374,12 +375,22 @@ echo "------"
 echo "Update probed files"
 echo
 time {
-  # Prepend the probed file with forward declaration and macro definition
-  echo "#ifndef __DMCE_PROBE_FUNCTION__HEADER__" > $dmcepath/workarea/probe-header
-  echo "#define __DMCE_PROBE_FUNCTION__HEADER__" >> $dmcepath/workarea/probe-header
-  echo "static void dmce_probe_body(unsigned int probenbr);" >> $dmcepath/workarea/probe-header
-  echo "#define DMCE_PROBE(a) (dmce_probe_body(a))" >> $dmcepath/workarea/probe-header
-  echo "#endif" >> $dmcepath/workarea/probe-header
+
+  if [ -e "$DMCE_PROBE_PROLOG" ]; then
+    echo "Using prolog file: $DMCE_PROBE_PROLOG"
+    cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
+    # size_of_user compensates for the header put first in all source files by DMCE
+    size_of_user=$(cat $DMCE_PROBE_PROLOG | wc -l)
+  else
+    echo "No prolog file found, using default"
+    echo "#ifndef __DMCE_PROBE_FUNCTION__HEADER__" > $dmcepath/workarea/probe-header
+    echo "#define __DMCE_PROBE_FUNCTION__HEADER__" >> $dmcepath/workarea/probe-header
+    echo "static void dmce_probe_body(unsigned int probenbr);" >> $dmcepath/workarea/probe-header
+    echo "#define DMCE_PROBE(a) (dmce_probe_body(a))" >> $dmcepath/workarea/probe-header
+    echo "#endif" >> $dmcepath/workarea/probe-header
+    # size_of_user compensates for the header put first in all source files by DMCE
+    size_of_user=$(cat $dmcepath/workarea/probe-header | wc -l)
+  fi
 
   while read c_file; do
     {
@@ -445,8 +456,6 @@ else
   echo
   time {
     # Assign DMCE_PROBE numbers.
-    # size_of_user compensates for the header put first in all source files by DMCE
-    size_of_user=5
     probe_nbr=0
     rm -f $dmcepath/probe-references.log
     nextfile=""

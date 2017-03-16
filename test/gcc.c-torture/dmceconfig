@@ -19,5 +19,8 @@ DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 /usr/include -isystem $DMCE_WORK_PA
 # Probe definition c file
 DMCE_PROBE_SOURCE:
 
+# Probe prolog c file
+#DMCE_PROBE_PROLOG:
+
 # Log files
 DMCE_LOG_FILES:$DMCE_WORK_PATH

@@ -57,6 +57,9 @@ DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 /usr/include -isystem /tmp/$USER/dm
 # Probe definition c file
 DMCE_PROBE_SOURCE:$install_path/dmce-probe-user.c
 
+# Probe definition c file
+DMCE_PROBE_PROLOG:$install_path/dmce-prolog-default.c
+
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
 NoWord
