@@ -1,4 +1,4 @@
-# dmce (did my code execute)
+# dmce (did my code execute?)
 
 Code test coverage tool component for Linux. Probes c/c++ expressions added between two source code revisions. Consists of a bunch of bash and python scripts. No need to build, runs out of the box.
 
@@ -107,6 +107,10 @@ Default command line parameters if not using a lookup hook:
 Select what probe to use (currently 3 available):
     
         DMCE_PROBE_SOURCE
+
+Select probe prolog (the default one should be ok for most cases)
+
+        DMCE_PROBE_PROLOG
 
 Log files will end up here:
 
