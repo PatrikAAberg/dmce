@@ -57,7 +57,8 @@ time {
 	git add .
 	git commit -m "initial commit"
 
-	# broken
+	# gcc version or standard diffs, we are not that picky for this usage
+	git rm compile/20011119-1.c
 	git rm compile/20000120-2.c
 	git rm compile/20011119-2.c
 	git rm compile/20030305-1.c

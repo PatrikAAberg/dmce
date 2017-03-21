@@ -548,6 +548,13 @@ while (lineindex<linestotal):
     # Finally, update input file line index
     lineindex+=1
 
+# If we were inside an expression when the file ended, take care of the last one
+if inside_expression:
+    expdb_lineend.append(int(lstart))
+    expdb_colend.append(int(cstart) - 1)
+    expdb_tab.append(tab)
+    expdb_index +=1
+
 # Open probe data file to start append entries
 pdf = open(sys.argv[3], "w")
 
