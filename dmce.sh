@@ -456,7 +456,7 @@ else
   echo
   time {
     # Assign DMCE_PROBE numbers.
-    probe_nbr=0
+    probe_nbr=$offset
     rm -f $dmcepath/probe-references.log
     nextfile=""
     while read -r probe; do

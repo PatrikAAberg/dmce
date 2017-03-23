@@ -19,27 +19,153 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Main entry point for running DMCE from a git
-# To be executed from within the git repo root:
-# $ cd /path/to/git/repo
-# $ dmce-launcher ...
+NAME=$(basename $0)
 
-function usage {
-  echo "Usage: dmce-launcher [ -d WEEKSBACK1 WEEKSBACK2 | -n NUMBEROFCOMMITS | -c | -a | -r old-SHA-1 new-SHA-1 ] [--skip]"
-  echo "-d       Weekly delta"
-  echo "-n       Number of commits back from now"
-  echo "-r       SHA-1 delta"
-  echo "-c       Restore source code state (use for added and modified files)"
-#TODO  echo "-a       Probe all code at current commit"
-  echo "--skip   Skip include file retrieval"
-  echo "--stupid No includes fetched (has to be handled by parent script)"
-  exit 1
+function usage() {
+	cat << EOF
+SYNOPSIS
+	$NAME [options]
+
+OPTIONS
+	-n val           Number of commits from HEAD
+
+	-r val           SHA-1 delta HEAD..<val>
+
+	-d val           Number of weeks from HEAD
+
+	-c               Restore source code state
+
+	--offset[=]<val> Assign probes starting from <val>
+
+	--skip           Skip include file retrieval
+
+	--stupid         DMCE include files awareness disabled
+
+	-h, --help       This help
+
+	-v, --version    Get DMCE version
+
+DESCRIPTION:
+	$NAME is the main entry point for running DMCE from a git.
+
+	To be executed from within the git repo root:
+
+	$ cd /path/to/git/
+	$ ../dmce/$NAME ...
+
+	Details? Check out README.md!
+
+EXAMPLES:
+	# Run DMCE on your latest changes
+	$ ../dmce/$NAME
+
+	# Run DMCE on the last 15 commits
+	$ ../dmce/$NAME -n 15
+
+	# Run DMCE on HEAD..SHA-1
+	$ ../dmce/$NAME -r SHA-1
+
+	# Run DMCE on last 10 weeks
+	$ ../dmce/$NAME -d 10
+
+	# Run DMCE on the last 100 commits. Start assigning probe numbers from 254.
+	$ ../dmce/$NAME -n 100 --offset 254
+
+	# Iterativly run DMCE on your latest changes
+	$ ../dmce/$NAME
+	$ make
+	$ make test 2> outstderr.log
+	$ ../dmce/dmce-summary outstderr.log
+	$ ../dmce/$NAME -c
+
+	# Run DMCE and use include files from previous run (faster)
+	$ ../dmce/$NAME --skip
+
+	# Handle include file retrieval externally
+	$ ../dmce/$NAME --stupid
+
+EOF
+	exit 1
 }
 
-# TODO: Use getopt instead
-if [ "$1" == "" ]; then
-  usage
-fi
+optspec+="c"
+optspec+="d:"
+optspec+="h"
+optspec+="n:"
+optspec+="r:"
+optspec+="v"
+optspec+="-:"
+
+search_method=commits
+new=
+old=
+offset=0
+number_of_commits=1
+skip=false
+stupid=false
+print_version_and_exit=false
+
+while getopts "$optspec" optchar; do
+	case "${optchar}" in
+		-)
+		case "${OPTARG}" in
+			help)
+			usage
+			;;
+			offset)
+			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+			offset=$val
+			;;
+			offset=*)
+			val=${OPTARG#*=}
+			opt=${OPTARG%=$val}
+			offset=$val
+			;;
+			skip)
+			skip=true
+			;;
+			stupid)
+			stupid=true
+			;;
+			version)
+			print_version_and_exit=true
+			;;
+			*)
+			if [ "$OPTERR" = 1 ]; then
+				echo "$0: illegal option -- ${OPTARG}" >&2
+				usage
+			fi
+			;;
+		esac;;
+
+		h)
+		usage
+		;;
+		v)
+		print_version_and_exit=true
+		;;
+		d)
+		weeks=($OPTARG)
+		search_method="weeks"
+		;;
+		n)
+		number_of_commits=${OPTARG}
+		search_method="commits"
+		;;
+		r)
+		old=${OPTARG}
+		search_method="raw"
+		;;
+		c)
+		restore=true
+		;;
+		*)
+		if [ "$OPTERR" == 1 ]; then
+			usage
+		fi
+		;;
+	esac
+done
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
@@ -60,7 +186,7 @@ else
   exit 1
 fi
 
-echo "DMCE Launcher: [args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
+echo "$NAME: [args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
 while read dmceconfig; do
   validconfig=$(echo $dmceconfig | egrep -v \#)
   if [ "$validconfig" != ""  ]; then
@@ -71,13 +197,10 @@ while read dmceconfig; do
   fi
 done < $USE_DMCE_CONFIG_FILE
 
-set | grep ^DMCE_
+echo DMCE Version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)
+[ "$print_version_and_exit" = true ] && exit
 
-echo "DMCE rev:"
-pushd $DMCE_EXEC_PATH &>/dev/null
-git --no-pager log --no-color -n 1
-popd &>/dev/null
-echo
+set | grep ^DMCE_
 
 time {
   echo "Restoring old probe state if needed"
@@ -86,7 +209,7 @@ time {
   wait
 }
 
-if [ "$1" == "-c" ]; then
+if [ "$restore" = true ]; then
   echo "Done"
   exit 0
 fi
@@ -97,23 +220,20 @@ mkdir -p $DMCE_LOG_FILES
 exec > >(tee -i $DMCE_LOG_FILES/$logfile)
 exec 2>&1
 
-if [ "$1" == "-d" ]; then
-  echo "Search by date"
-  head=$(git log -n 1 --before=$2.weeks | head -n 1 | cut -d' ' -f2)
-  baseline=$(git log -n 1 --before=$3.weeks | head -n 1 | cut -d' ' -f2)
-elif [ "$1" == "-n" ]; then
-  echo "Search by number of commits"
-  head=$(git log --oneline -$2 | cut -d' ' -f1 | head -1)
-  baseline=$(git log --oneline -$2 | cut -d' ' -f1 | tail -1)
-elif [ "$1" == "-r" ]; then
-  echo "Search from $2 to $3"
-  head=$2
-  baseline=$3
+new="HEAD"
+if [ "$search_method" == "weeks" ]; then
+  echo "Search by weeks ($weeks)"
+  old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
+elif [ "$search_method" == "commits" ]; then
+  echo "Search by number of commits ($number_of_commits)"
+  old=$(git log --oneline -$number_of_commits --pretty=%h | tail -1)
+elif [ "$search_method" == "raw" ]; then
+  echo "Search from $new to $old"
 else
   usage
 fi
 
-if ! echo $@ | grep -q '\-\-skip'; then
+if [ "$skip" = false ]; then
   echo "Set up DMCE include directory"
 
   # Clear old inc directory
@@ -123,7 +243,7 @@ if ! echo $@ | grep -q '\-\-skip'; then
   mkdir -p $DMCE_WORK_PATH/inc/old
 
   # If stupid mode, create empty directory
-  if echo $@ | grep -q '\-\-stupid'; then
+  if [ "$stupid" = true ]; then
     echo "Stupid mode enabled, no include files used"
   else
     # Copy git and set rev to baseline TODO: Skip this step and copy from git directly
@@ -133,7 +253,7 @@ if ! echo $@ | grep -q '\-\-skip'; then
     pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
     git clean -dfx &>/dev/null
     git reset --hard &>/dev/null
-    git checkout $baseline &>/dev/null
+    git checkout $old &>/dev/null
     popd &>/dev/null
 
     # Copy includes for head
@@ -153,13 +273,15 @@ if ! echo $@ | grep -q '\-\-skip'; then
   touch $DMCE_WORK_PATH/global_probedata.dmce
 fi
 
-echo "DMCE launcher: $git_root executing on $head (head) to $baseline (base)"
-
 time {
-if ! $DMCE_EXEC_PATH/dmce.sh $git_root $head $baseline; then
-  echo "---"
-  echo "error: dmce.sh failed - check logs"
-  echo "---"
-  exit 1
-fi
+  # Make offset visible for dmce.sh
+  export offset
+
+  echo "$NAME: $DMCE_EXEC_PATH/dmce.sh $git_root $new $old"
+  if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old; then
+    echo "---"
+    echo "error: dmce.sh failed - check logs"
+    echo "---"
+    exit 1
+  fi
 }
