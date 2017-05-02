@@ -2,7 +2,9 @@
 
 Code test coverage tool component for Linux. Probes c/c++ expressions added between two source code revisions. Consists of a bunch of bash and python scripts. No need to build, runs out of the box.
 
-dmce is primarily intended for embedded systems where the level of intrusion must be kept low. Only code delta is probed and probes are lightweight!
+No dependencies towards build systems or test frameworks, only that code worked upon is written in c/c++  
+
+Flexible in configuration
 
 As dmce focus on code delta coverage, test teams are kept on their toes keeping up with the latest feature development!
 
