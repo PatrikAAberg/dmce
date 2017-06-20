@@ -31,6 +31,8 @@ OPTIONS
 
 	-r val           SHA-1 delta HEAD..<val>
 
+	--head[=]<val>	 <val> is the HEAD to which comparison is done
+
 	-d val           Number of weeks from HEAD
 
 	-c               Restore source code state
@@ -65,6 +67,9 @@ EXAMPLES:
 	# Run DMCE on HEAD..SHA-1
 	$ ../dmce/$NAME -r SHA-1
 
+	# Run DMCE on $SHA1..SHA-2
+	$ ../dmce/$NAME -r SHA-2 --head=SHA1
+
 	# Run DMCE on last 10 weeks
 	$ ../dmce/$NAME -d 10
 
@@ -97,7 +102,7 @@ optspec+="v"
 optspec+="-:"
 
 search_method=commits
-new=
+new="HEAD"
 old=
 offset=0
 number_of_commits=1
@@ -112,9 +117,18 @@ while getopts "$optspec" optchar; do
 			help)
 			usage
 			;;
+			head)
+			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+			new=$val
+			;;
 			offset)
 			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
 			offset=$val
+			;;
+			head=*)
+			val=${OPTARG#*=}
+			opt=${OPTARG%=$val}
+			new=$val
 			;;
 			offset=*)
 			val=${OPTARG#*=}
@@ -220,7 +234,6 @@ mkdir -p $DMCE_LOG_FILES
 exec > >(tee -i $DMCE_LOG_FILES/$logfile)
 exec 2>&1
 
-new="HEAD"
 if [ "$search_method" == "weeks" ]; then
   echo "Search by weeks ($weeks)"
   old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
