@@ -237,6 +237,17 @@ mkdir -p $DMCE_LOG_FILES
 exec > >(tee -i $DMCE_LOG_FILES/$logfile)
 exec 2>&1
 
+if [ "$checkout_head" = true ]; then
+  git checkout $new
+  if [ "$?" != 0 ]; then
+    echo ""
+    echo "Git tree is dirty. Cannot checkout $new."
+    echo "Please clean the $git_root before proceeding."
+    echo ""
+    exit 1
+  fi
+fi
+
 if [ "$search_method" == "weeks" ]; then
   echo "Search by weeks ($weeks)"
   old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
@@ -247,17 +258,6 @@ elif [ "$search_method" == "raw" ]; then
   echo "Search from $new to $old"
 else
   usage
-fi
-
-if [ "$checkout_head" = true ]; then
-  git_exit_code=`git checkout $new`
-  if [ "$git_exit_code" != 0 ]; then
-    echo ""
-    echo "Git tree is dirty. Cannot checkout $new."
-    echo "Please clean the $git_root before proceeding."
-    echo ""
-    exit 1
-  fi
 fi
 
 if [ "$skip" = false ]; then
