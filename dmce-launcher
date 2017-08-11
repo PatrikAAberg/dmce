@@ -121,7 +121,7 @@ while getopts "$optspec" optchar; do
 			head)
 			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
 			new=$val
-      checkout_head=true
+      			checkout_head=true
 			;;
 			offset)
 			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
@@ -131,7 +131,7 @@ while getopts "$optspec" optchar; do
 			val=${OPTARG#*=}
 			opt=${OPTARG%=$val}
 			new=$val
-      checkout_head=true
+      			checkout_head=true
 			;;
 			offset=*)
 			val=${OPTARG#*=}
