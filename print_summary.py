@@ -40,7 +40,7 @@ print "Summary (PROBED:NBR:FILE:LINE) "
 index=0
 total=len(logbuf)
 while ( index < total ):
-    m = re.match( r'.*DMCE_PROBE\((.*)\).*', logbuf[index], re.M|re.I)
+    m = re.match( r'.*DMCE_PROBE\((\d+)\).*', logbuf[index], re.M|re.I)
     if (m):    
         executed_probes.insert(0, m.group(1))        
     index+=1 
