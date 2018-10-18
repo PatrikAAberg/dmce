@@ -39,7 +39,7 @@ function summary
 
 function jobcap {
   while true; do
-    [ "$(pgrep -f $1 -c || :)" -lt "100" ] && break || sleep 0.5
+    [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ] && break || sleep 0.5
   done
  }
 
