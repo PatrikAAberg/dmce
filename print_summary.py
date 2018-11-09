@@ -22,48 +22,39 @@
 import sys
 import re
 
-# Read test log
-log = open(sys.argv[1])
-logbuf = log.readlines()
-log.close()
-
-# Read probe list
-probefile = open(sys.argv[2])
-probesbuf = probefile.readlines()
-probefile.close()
-
 probes = []
 executed_probes = []
 
-# Read all executed probes
 print "Summary (PROBED:NBR:FILE:LINE) "
-index=0
-total=len(logbuf)
-while ( index < total ):
-    m = re.match( r'.*DMCE_PROBE\((\d+)\).*', logbuf[index], re.M|re.I)
-    if (m):    
-        executed_probes.insert(0, m.group(1))        
-    index+=1 
+
+# Read all executed probes in log
+total=0
+with open(sys.argv[1]) as log:
+    for line in log:
+        total+=1
+        m = re.match( r'.*DMCE_PROBE\((\d+)\).*', line, re.M|re.I)
+        if m:
+            executed_probes.append(m.group(1))
 
 # Sort/remove doublets
 executed_probes_sorted = sorted(set(executed_probes))
 
-# Read inserted probes
-index=0
-total=len(probesbuf)
-while ( index < total ):
-    m = re.match( r'(\d*):.*', probesbuf[index], re.M|re.I)
-    if (m):
-        if m.group(1) in executed_probes_sorted:
-             print "[YES] " + probesbuf[index].rstrip()
-        else:
-             print "[NO ] " + probesbuf[index].rstrip()
-    else: 
-        print "Probe reference file corrupt!"
-    index+=1
+# Read probe list
+probes_nbr=0
+with open(sys.argv[2]) as probefile:
+    for line in probefile:
+        if len(line) > 1:
+            m = re.match( r'(\d*):.*', line, re.M|re.I)
+            if m:
+                probes_nbr+=1
+                if m.group(1) in executed_probes_sorted:
+                     print "[YES] " + line.rstrip()
+                else:
+                     print "[NO ] " + line.rstrip()
+            else:
+                print "Probe reference file corrupt!"
 
 exprobes_nbr = len(executed_probes_sorted)
-probes_nbr = len(probesbuf)
 
 print
 print "Total probes executed: {}".format(len(executed_probes))

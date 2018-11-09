@@ -39,7 +39,7 @@ function summary
 
 function jobcap {
   while true; do
-    [ "$(pgrep -f $1 -c || :)" -lt "100" ] && break || sleep 0.5
+    [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ] && break || sleep 0.5
   done
  }
 
@@ -304,7 +304,7 @@ echo
 time {
   for c_file in $FILE_LIST; do
     # Remove all hexnumbers (in-place) on clang-files
-    perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
+    perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' -pe 's#\`-#|-#;' -pe 's#(.*\|-CallExpr.*)#\n$1#;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
   done
   echo "waiting for spawned 'perl' jobs to finish, this may take a while."
   wait
