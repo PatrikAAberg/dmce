@@ -29,12 +29,12 @@ do_print=1
 
 time1 = time.time()
 
-if (len(sys.argv) != 5):
-    print "Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <constructs.exclude>"
+if (len(sys.argv) != 6):
+    print "Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <expression.dmce> <constructs.exclude>"
     exit()
 
 # Read constructs exclude file
-cxl = open(sys.argv[4])
+cxl = open(sys.argv[5])
 cxl_buf = cxl.readlines()
 cxl.close()
 
@@ -156,6 +156,9 @@ for exp in exppatternlist:
 #  2    Free, need to look for next
 #  x    Free, look for next at colpos + x
 exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+
+# Used to extract expression type and operator type
+exp_pat = re.compile('.*-(.*)\sHexnumber\s<.*\d>(.*)')
 
 # Escape some characters
 parsed_c_file_exp = re.sub("\/", "\/", parsed_c_file_exp)
@@ -406,7 +409,7 @@ while (lineindex<linestotal):
         backtrailing = 1
         if do_print == 1: print "Global backtrailing in " + parsed_c_file + " AT line start:" + lstart + "   col start:" + cstart + " current location:(" + last_lstart + "," + last_cstart + ")"
         if do_print == 1: print "EXPR: " + linebuf[lineindex]
-        
+
         # Check if this backtrailing is a compound or similar, in that case skip the whole thing
         # CompoundStmt Hexnumber <line:104:44, line:107:15>
         found_parsed_file_statement = re_parsed_file_statement.match(linebuf[lineindex])
@@ -446,7 +449,7 @@ while (lineindex<linestotal):
             skip=1
     if do_print == 1: print "SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend
 
-# ...and this is above. Check if found (almost) the end of an expression and update in that case
+    # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
 
         # If we reached the last subexpression in the expression or next expression or statement
@@ -459,7 +462,7 @@ while (lineindex<linestotal):
             if do_print == 1: print "Start: ("+ str(cur_lstart) + ", " + str(cur_cstart) + ") End: (" + lstart  + ", " + str(int(cstart) -1) + ") ->" + linebuf[lineindex].rstrip()
             inside_expression = 0
 
-# Check if expression is interesting
+    # Check if expression is interesting
     if (trailing and (linebuf[lineindex] != "")):
         if do_print == 1: print parsed_c_file + " trailing:" + str(trailing) + " is_addition:" + str(is_addition) + " backtrailing:" + str(backtrailing) + " inside_expression:" + str(inside_expression) + " skip:" + str(skip)
         if do_print == 1: print parsed_c_file + " >" + linebuf[lineindex].rstrip()
@@ -477,7 +480,7 @@ while (lineindex<linestotal):
 
                # Self contained expression
                if (exppatternmode[i] == 1):
- #                  if do_print == 1: print "Self contained"
+#                  if do_print == 1: print "Self contained"
                    expdb_linestart.append(int(lstart))
                    expdb_colstart.append(int(cstart))
                    expdb_lineend.append(int(lend))
@@ -548,6 +551,7 @@ while (lineindex<linestotal):
     # Finally, update input file line index
     lineindex+=1
 
+
 # If we were inside an expression when the file ended, take care of the last one
 if inside_expression:
     expdb_lineend.append(int(lstart))
@@ -555,11 +559,16 @@ if inside_expression:
     expdb_tab.append(tab)
     expdb_index +=1
 
+
+# Open probe expression data file to append entries
+exp_pdf = open(sys.argv[4], "w")
+
 # Open probe data file to start append entries
 pdf = open(sys.argv[3], "w")
 
 # Insert probes
 if do_print == 1: print "Probing starting at {}".format(parsed_c_file)
+
 
 i=0
 while (i < expdb_index):
@@ -713,7 +722,7 @@ while (i < expdb_index):
                     # Semicolon (always valid)
                     if (tail[pos_index] == ";"):
                         break
-                     
+
                     pos_index+=1
 
                 if do_print == 1: print "index: " + str(pos_index)
@@ -724,7 +733,7 @@ while (i < expdb_index):
 
                     # NOTE! Lines commented out prevents us to go further lines down than the actual expression was.
                     # Not sure if we need them, leave commented out for now.
- 
+
 #                    if (lp < le):
                     le = lp
                     ce = cp
@@ -793,6 +802,39 @@ while (i < expdb_index):
 
                         # Update probe file
                         pdf.write(parsed_c_file + ":" + str(ls) + "\n")
+                        tmp_exp = expdb_exptext[i].rstrip()
+                        pat_i = 0
+                        while (pat_i < len(exppatternlist)):
+                            re_exp = re_exppatternlist[pat_i]
+                            if (re.match(re_exp, tmp_exp)):
+                                if do_print == 1:
+                                    print "-"*20
+                                    print "Assigning a Probe expression index"
+                                    print "-"*20
+                                    print "Local Probe number: " + str(probes)
+                                    print "EXP_index: " + str(pat_i)
+                                    print "Matched with: " + re_exp.pattern
+                                    print "EXP string: " + tmp_exp
+                                    print "#"*5 + " TO NEW EXPRESSION FILE " + "#"*5
+                                exp_data = re.match(exp_pat, tmp_exp)
+                                exp_type = exp_data.group(1).strip()
+                                exp_operator = exp_data.group(2).strip()
+                                if do_print == 1:
+                                    print "File: " + parsed_c_file
+                                    print "Local probe number: " + str(probes)
+                                    print "EXPR index: " + str(pat_i)
+                                    print "EXP: " + exp_type
+                                    print "Value: " + exp_operator
+                                    print "-"*100
+                                # Write output to the <exprdata>-file
+                                # <c_file>:<line number>:<expression pattern index>:<full Clang expression>
+                                exp_pdf.write(parsed_c_file + ":" + str(ls) + ":" + str(pat_i) + ":" + exp_data.group().rstrip() + "\n")
+
+                                break
+                            pat_i += 1
+
+
+
     i += 1
 
 # write back c file
@@ -801,4 +843,6 @@ for line in pbuf:
    pf.write(line)
 
 pdf.close()
+exp_pdf.close()
+
 print '{:5.1f} ms {:5} probes'.format((time.time()-time1)*1000.0, probes)
