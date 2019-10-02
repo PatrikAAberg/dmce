@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Copyright (c) 2019 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+echo "---------------------------------------------"
+echo "Testing if probe expression index are correct"
+echo "---------------------------------------------"
+
+echo "-----"
+echo "Initializing test set-up."
+echo "-----"
+
+# Variable set up and config
+
+git_root=$PWD
+git_name=$(basename $PWD)
+
+if [ -e $git_root/.dmceconfig ]; then
+    USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
+elif [ -e $HOME/.dmceconfig ]; then
+    USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
+else
+    echo "Could not find a valid dmce config file. Did you run install?"
+    exit 1
+fi
+
+echo "$NAME: [args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
+while read dmceconfig; do
+    validconfig=$(echo $dmceconfig | egrep -v \#)
+    if [ "$validconfig" != ""  ]; then
+    	conf_var=$(echo $validconfig | cut -d: -f1)
+    	conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
+    	eval $conf_var=\'$conf_val\'
+    	export $conf_var
+    fi
+done < $USE_DMCE_CONFIG_FILE
+
+# Set up other paths
+binpath=$DMCE_EXEC_PATH
+configpath=$DMCE_CONFIG_PATH
+git_project=$(basename $PWD)
+dmcepath="$DMCE_WORK_PATH/$git_project"
+
+# Check if the correct probe-files exist
+probe_file=$dmcepath/probe-references.log
+expr_file=$dmcepath/expr-references.log
+
+if [ -f $probe_file ] && [ -f $expr_file ]; then
+    echo
+    echo "Found the two necessary files:"
+    echo "$probe_file"
+    echo "$expr_file"
+else
+    echo
+    echo "Could not find the correct files."
+    echo "You need to run '../dmce/dmce-launcher' before running this test."
+fi
+
+#############################
+# Test:
+# Check if the probes in probes-references.log correspond
+# to the same probes in expr-references.log
+#
+# Also checks if the expression index are correct for the probes
+#
+# Launch the python-script
+echo
+echo "---------------------------------------"
+echo " Running Test: comparing probes"
+echo "---------------------------------------"
+$binpath/test/compare_probes.py $probe_file $expr_file
+
+

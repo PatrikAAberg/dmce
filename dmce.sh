@@ -353,7 +353,7 @@ time {
   for c_file in $FILE_LIST; do
       [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
       touch $dmcepath/new/$c_file.probedata
-      cat $dmcepath/new/$c_file.clangdiff | $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $configpath/constructs.exclude >> $dmcepath/new/$c_file.probegen.log &
+      cat $dmcepath/new/$c_file.clangdiff | $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude >> $dmcepath/new/$c_file.probegen.log &
   done
   echo "waiting for spawned 'generate-probefile' jobs to finish, this may take a while."
   wait
@@ -459,6 +459,10 @@ else
     probe_nbr=$offset
     rm -f $dmcepath/probe-references.log
     nextfile=""
+    file=""
+    # set-up an ordered list with the probe-files
+    # we iterate through
+    declare -a file_list=()
     while read -r probe; do
       splitArray=(${probe//:/ })
       file=${splitArray[0]}
@@ -479,13 +483,52 @@ else
         SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
       fi
 
+      if [ "$file" != "$nextfile" ]; then
+        file_list+=( "$file" )
+        echo "File: $file "
+      fi
+
       nextfile=$file
       echo "$probe_nbr:$file:$line" >> $dmcepath/probe-references.log
+
+
       let 'probe_nbr = probe_nbr + 1'
     done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat)"
 
+
+    # Aggregate the probe-expression information into <expr-references.log>
+    # Loop through the list of files and aggregate the info from
+    # all the <$file>.exprdata into a global expr-references.log file
+    echo "------"
+    echo "Assemble and assign expression index for probes"
+    echo
+    probe_nbr=$offset
+    rm -f $dmcepath/expr-references.log
+    for file in "${file_list[@]}"; do
+      echo "Open: ${file}.exprdata"
+      local_probe_nbr=0
+
+	while read -r exp; do
+	  splitArray=(${exp//:/ })
+	  # local_probe_nbr=${splitArray[1]}
+	  line=${splitArray[1]}
+	  exp_index=${splitArray[2]}
+	  full_exp=${splitArray[@]:3}
+	  let 'line = line + size_of_user + 1'
+
+
+	  # echo "$probe_nbr:$file:$local_probe_nbr:$exp_index" >> $dmcepath/expr-references.log
+	  echo "$probe_nbr:$file:$line:$exp_index:$full_exp" >> $dmcepath/expr-references.log
+	  let 'probe_nbr = probe_nbr + 1'
+	  let 'local_probe_nbr = local_probe_nbr + 1'
+
+	done  <<< "$(cat $dmcepath/new/${file}.exprdata)"
+
+    done
+
     # Last file, remember sed command
     SED_CMDS+=("$SED_EXP $git_top/$nextfile")
+
   }
 
   echo "------"
