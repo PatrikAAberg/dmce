@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if ! command -v clang-check > /dev/null; then
-	echo "error: clang-check is not found"
-	exit 1
-fi
-
 cd ${OVE_BASE_DIR}
 try_to_identify_repo=0
 if [ $# -eq 0 ]; then

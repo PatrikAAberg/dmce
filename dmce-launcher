@@ -21,30 +21,25 @@
 
 NAME=$(basename $0)
 
+function _echo {
+	echo "$NAME: $*"
+}
+
 function usage() {
 	cat << EOF
 SYNOPSIS
 	$NAME [options]
 
 OPTIONS
-	-n val           Number of commits from HEAD
-
-	-r val           SHA-1 delta HEAD..<val>
-
-	--head[=]<val>	 <val> is the HEAD to which comparison is done
-
-	-d val           Number of weeks from HEAD
-
 	-c               Restore source code state
-
-	--offset[=]<val> Assign probes starting from <val>
-
-	--skip           Skip include file retrieval
-
-	--stupid         DMCE include files awareness disabled
-
+	-d val           Number of weeks from HEAD
+	--head[=]<val>	 <val> is the HEAD to which comparison is done
 	-h, --help       This help
-
+	-n val           Number of commits from HEAD
+	--offset[=]<val> Assign probes starting from <val>
+	-r val           SHA-1 delta HEAD..<val>
+	--skip           Skip include file retrieval
+	--stupid         DMCE include files awareness disabled
 	-v, --version    Get DMCE version
 
 DESCRIPTION:
@@ -90,8 +85,19 @@ EXAMPLES:
 	$ ../dmce/$NAME --stupid
 
 EOF
-	exit 1
+exit 1
 }
+
+if ! command -v clang-check > /dev/null; then
+	echo "error: clang-check is not found"
+	exit 1
+fi
+
+if ! command -v bc > /dev/null; then
+	echo "error: bc is not found"
+	exit 1
+fi
+
 
 optspec+="c"
 optspec+="d:"
@@ -114,73 +120,73 @@ print_version_and_exit=false
 while getopts "$optspec" optchar; do
 	case "${optchar}" in
 		-)
-		case "${OPTARG}" in
-			help)
+			case "${OPTARG}" in
+				help)
+					usage
+					;;
+				head)
+					val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+					new=$val
+					checkout_head=true
+					;;
+				offset)
+					val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+					offset=$val
+					;;
+				head=*)
+					val=${OPTARG#*=}
+					opt=${OPTARG%=$val}
+					new=$val
+					checkout_head=true
+					;;
+				offset=*)
+					val=${OPTARG#*=}
+					opt=${OPTARG%=$val}
+					offset=$val
+					;;
+				skip)
+					skip=true
+					;;
+				stupid)
+					stupid=true
+					;;
+				version)
+					print_version_and_exit=true
+					;;
+				*)
+					if [ "$OPTERR" = 1 ]; then
+						_echo "illegal option -- ${OPTARG}" >&2
+						usage
+					fi
+					;;
+			esac;;
+
+		h)
 			usage
 			;;
-			head)
-			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-			new=$val
-      			checkout_head=true
-			;;
-			offset)
-			val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
-			offset=$val
-			;;
-			head=*)
-			val=${OPTARG#*=}
-			opt=${OPTARG%=$val}
-			new=$val
-      			checkout_head=true
-			;;
-			offset=*)
-			val=${OPTARG#*=}
-			opt=${OPTARG%=$val}
-			offset=$val
-			;;
-			skip)
-			skip=true
-			;;
-			stupid)
-			stupid=true
-			;;
-			version)
+		v)
 			print_version_and_exit=true
 			;;
-			*)
-			if [ "$OPTERR" = 1 ]; then
-				echo "$0: illegal option -- ${OPTARG}" >&2
+		d)
+			weeks=($OPTARG)
+			search_method="weeks"
+			;;
+		n)
+			number_of_commits=${OPTARG}
+			search_method="commits"
+			;;
+		r)
+			old=${OPTARG}
+			search_method="raw"
+			;;
+		c)
+			restore=true
+			;;
+		*)
+			if [ "$OPTERR" == 1 ]; then
 				usage
 			fi
 			;;
-		esac;;
-
-		h)
-		usage
-		;;
-		v)
-		print_version_and_exit=true
-		;;
-		d)
-		weeks=($OPTARG)
-		search_method="weeks"
-		;;
-		n)
-		number_of_commits=${OPTARG}
-		search_method="commits"
-		;;
-		r)
-		old=${OPTARG}
-		search_method="raw"
-		;;
-		c)
-		restore=true
-		;;
-		*)
-		if [ "$OPTERR" == 1 ]; then
-			usage
-		fi
-		;;
 	esac
 done
 
@@ -195,120 +201,119 @@ git_name=$(basename $PWD)
 # Find out what config file to use. Start with the one in the git
 
 if [ -e $git_root/.dmceconfig ]; then
-  USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
+	USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
 elif [ -e $HOME/.dmceconfig ]; then
-  USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
+	USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
 else
-  echo "Could not find a valid dmce config file. Did you run install?"
-  exit 1
+	_echo "Could not find a valid dmce config file. Did you run install?"
+	exit 1
 fi
 
-echo "$NAME: [args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
+_echo "[args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
 while read dmceconfig; do
-  validconfig=$(echo $dmceconfig | egrep -v \#)
-  if [ "$validconfig" != ""  ]; then
-    conf_var=$(echo $validconfig | cut -d: -f1)
-    conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
-    eval $conf_var=\'$conf_val\'
-    export $conf_var
-  fi
+	validconfig=$(echo $dmceconfig | egrep -v \#)
+		if [ "$validconfig" != ""  ]; then
+			conf_var=$(echo $validconfig | cut -d: -f1)
+			conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
+			eval $conf_var=\'$conf_val\'
+			export $conf_var
+		fi
 done < $USE_DMCE_CONFIG_FILE
 
 echo DMCE Version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)
 [ "$print_version_and_exit" = true ] && exit
 
-set | grep ^DMCE_
-
 time {
-  echo "Restoring old probe state if needed"
-  dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
-  [ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
-  wait
+	_echo "restoring old probe state if needed"
+	dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
+	[ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
+	wait
 }
 
+set | grep ^DMCE_
+
 if [ "$restore" = true ]; then
-  echo "Done"
-  exit 0
+	exit 0
 fi
 
-echo "Initialize log"
+_echo "initialize log"
 logfile=$(basename $0 .sh)-$(basename $git_root)-$(date '+%Y%m%d-%H%M%S').log
 mkdir -p $DMCE_LOG_FILES
 exec > >(tee -i $DMCE_LOG_FILES/$logfile)
 exec 2>&1
 
 if [ "$checkout_head" = true ]; then
-  git checkout $new
-  if [ "$?" != 0 ]; then
-    echo ""
-    echo "Git tree is dirty. Cannot checkout $new."
-    echo "Please clean the $git_root before proceeding."
-    echo ""
-    exit 1
-  fi
+	git checkout $new
+	if [ "$?" != 0 ]; then
+		echo ""
+		_echo "git tree is dirty. Cannot checkout $new."
+		_echo "please clean the $git_root before proceeding."
+		echo ""
+		exit 1
+	fi
 fi
 
 if [ "$search_method" == "weeks" ]; then
-  echo "Search by weeks ($weeks)"
-  old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
+	_echo "search by weeks ($weeks)"
+	old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
 elif [ "$search_method" == "commits" ]; then
-  echo "Search by number of commits ($number_of_commits)"
-  old=$(git log --oneline -$number_of_commits --pretty=%h | tail -1)
+	_echo "search by number of commits ($number_of_commits)"
+	old=$(git log --oneline -$number_of_commits --pretty=%h | tail -1)
 elif [ "$search_method" == "raw" ]; then
-  echo "Search from $new to $old"
+	_echo "search from $new to $old"
 else
-  usage
+	usage
 fi
 
 if [ "$skip" = false ]; then
-  echo "Set up DMCE include directory"
+	_echo "set up DMCE include directory"
 
-  # Clear old inc directory
-  chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
-  rm -rf $DMCE_WORK_PATH/inc &> /dev/null
-  mkdir -p $DMCE_WORK_PATH/inc/new
-  mkdir -p $DMCE_WORK_PATH/inc/old
+	# Clear old inc directory
+	chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
+	rm -rf $DMCE_WORK_PATH/inc &> /dev/null
+	mkdir -p $DMCE_WORK_PATH/inc/new
+	mkdir -p $DMCE_WORK_PATH/inc/old
 
-  # If stupid mode, create empty directory
-  if [ "$stupid" = true ]; then
-    echo "Stupid mode enabled, no include files used"
-  else
-    # Copy git and set rev to baseline TODO: Skip this step and copy from git directly
-    rm -rf $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-    mkdir -p $DMCE_WORK_PATH/baseline &>/dev/null
-    cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-    pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-    git clean -dfx &>/dev/null
-    git reset --hard &>/dev/null
-    git checkout $old &>/dev/null
-    popd &>/dev/null
+	# If stupid mode, create empty directory
+	if [ "$stupid" = true ]; then
+		_echo "stupid mode enabled, no include files used"
+	else
+		set -x
+		# Copy git and set rev to baseline TODO: Skip this step and copy from git directly
+		rm -rf $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+		mkdir -p $DMCE_WORK_PATH/baseline &>/dev/null
+		cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+		pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+		git clean -dfx &>/dev/null
+		git reset --hard &>/dev/null
+		git checkout $old &>/dev/null
+		popd &>/dev/null
 
-    # Copy includes for head
-    find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
+		# Copy includes for head
+		find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
 
-    # Copy includes for baseline
-    pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-    find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
-    popd &>/dev/null
+		# Copy includes for baseline
+		pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
+		find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
+		popd &>/dev/null
 
-    echo "Removing relative paths in include files"
-    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/new
-    $DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/old
-  fi
-  echo "Clean out probe database"
-  rm -rf $DMCE_WORK_PATH/global_probedata.dmce
-  touch $DMCE_WORK_PATH/global_probedata.dmce
+		_echo "Removing relative paths in include files"
+		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/new
+		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/old
+	fi
+	_echo "clean out probe database"
+	> $DMCE_WORK_PATH/global_probedata.dmce
 fi
 
 time {
-  # Make offset visible for dmce.sh
-  export offset
+# Make offset visible for dmce.sh
+export offset
 
-  echo "$NAME: $DMCE_EXEC_PATH/dmce.sh $git_root $new $old"
-  if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old; then
-    echo "---"
-    echo "error: dmce.sh failed - check logs"
-    echo "---"
-    exit 1
-  fi
+_echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old"
+if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old; then
+	echo "---"
+	_echo "error: dmce.sh failed - check logs"
+	echo "---"
+	exit 1
+fi
 }

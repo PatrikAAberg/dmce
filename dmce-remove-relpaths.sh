@@ -21,6 +21,8 @@
 
 # $1 = a file or a directory
 
+NAME=$(basename $0)
+
 function _sed() {
 	sed -i 's/#\s*include\s\(\"\|<\).*\/\(.*\)\(\"\|>\).*/#include \"\2\"/g' $@
 }
@@ -72,6 +74,6 @@ elif [ -d $1 ]; then
 		_sed $sub_files &
 	done
 
-	echo "waiting for spawned 'sed' jobs to finish, this may take a while."
+	echo "${NAME}: waiting for spawned 'sed' jobs to finish, this may take a while."
 	wait
 fi

@@ -485,7 +485,6 @@ else
 
       if [ "$file" != "$nextfile" ]; then
         file_list+=( "$file" )
-        echo "File: $file "
       fi
 
       nextfile=$file
@@ -505,7 +504,6 @@ else
     probe_nbr=$offset
     rm -f $dmcepath/expr-references.log
     for file in "${file_list[@]}"; do
-      echo "Open: ${file}.exprdata"
       local_probe_nbr=0
 
 	while read -r exp; do
