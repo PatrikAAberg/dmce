@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+if ! command -v clang-check > /dev/null; then
+	echo "error: clang-check is not found"
+	exit 1
+fi
+
+cd ${OVE_BASE_DIR}
+try_to_identify_repo=0
+if [ $# -eq 0 ]; then
+	repos="$OVE_REPO_LIST"
+	try_to_identify_repo=1
+else
+	while true; do
+		[ "$*" == "" ] && break
+
+		# sanity check
+		if ! [ -d "$1" ] || \
+			! [ -d "$1/.git" ]; then
+			shift
+			continue
+		fi
+		repos+="$1 "
+		shift
+	done
+
+fi
+
+if [ "${repos}" == "" ]; then
+	echo "error: no git repos found, try again"
+	exit 1
+fi
+
+git_dir=$(git -C ${BASH_SOURCE[0]%/*} rev-parse --show-toplevel)
+git_dir=$(cd ${git_dir}; pwd -P)
+
+# $1: dir
+# returns 0 if one or more c/c++ file (based on file extension)
+function determine_if_repo_is_dmceable {
+	nbr_of_files=$(find $1 -type f -name '*.c' -or -name '*.cpp' | wc -l)
+	[ ${nbr_of_files} -gt 0 ] && return 0 || return 1
+}
+
+for repo in $repos; do
+	# skip DMCE repo
+	[ "${repo}" == "${git_dir}" ] && continue
+
+	# skip repos without C or C++ files
+	if [ ${try_to_identify_repo} -eq 1 ] && ! determine_if_repo_is_dmceable ${repo}; then
+		echo "repo: '${repo}' does not look like a C/C++ repo, skipping"
+		continue
+	fi
+
+	launch_dmce_repos+="${repo} "
+done
+
+if [ "${launch_dmce_repos}" == "" ]; then
+	echo "error: no git repos found, try again"
+	exit 1
+fi
+
+echo
+echo "I will start '${OVE_BASE_DIR}/dmce/dmce-launcher' on the following repos:"
+echo
+xargs -n1 <<<${launch_dmce_repos}
+echo
+while true; do
+	read -p "How many commits (i.e. the '-n' option for dmce-launcer)? "
+	if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+		echo "error: just numbers, try again!"
+		continue
+	fi
+	break
+done
+
+dmce_launcher_args="-n ${REPLY}"
+
+for repo in ${launch_dmce_repos}; do
+	cd ${repo}
+	${OVE_BASE_DIR}/dmce/dmce-launcher -c
+	${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}
+done

@@ -1,0 +1,1 @@
+COMPREPLY=( $(compgen -W "$(a=${OVE_REPO_LIST//$OVE_BASE_DIR\//}; echo ${a/dmce/})" -- "${cur}") )
