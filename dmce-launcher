@@ -268,36 +268,43 @@ fi
 if [ "$skip" = false ]; then
 	_echo "set up DMCE include directory"
 
-	# Clear old inc directory
-	chmod -R +wx $DMCE_WORK_PATH/inc &> /dev/null
-	rm -rf $DMCE_WORK_PATH/inc &> /dev/null
-	mkdir -p $DMCE_WORK_PATH/inc/new
-	mkdir -p $DMCE_WORK_PATH/inc/old
+	# remove old inc directory
+	rm -rf $DMCE_WORK_PATH/inc/{old,new} &> /dev/null
+
+	# re-create inc directories
+	mkdir -vp $DMCE_WORK_PATH/inc/{old,new}
 
 	# If stupid mode, create empty directory
 	if [ "$stupid" = true ]; then
 		_echo "stupid mode enabled, no include files used"
 	else
-		set -x
-		# Copy git and set rev to baseline TODO: Skip this step and copy from git directly
-		rm -rf $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-		mkdir -p $DMCE_WORK_PATH/baseline &>/dev/null
-		cp -r $git_root $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-		pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-		git clean -dfx &>/dev/null
-		git reset --hard &>/dev/null
-		git checkout $old &>/dev/null
-		popd &>/dev/null
+		old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
+		mkdir -vp ${old_git_dir}
 
-		# Copy includes for head
-		find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
+		# check if we have 'git worktree' (git 2.5) on this machine
+		if git help -a | grep -q worktree; then
+			_echo "set up old SHA-1: ${old_git_dir} using 'git worktree'"
+			if ! git -C $git_root worktree list | grep -q ${old_git_dir}; then
+				git -C $git_root worktree add ${old_git_dir} $old
+			fi
+		else
+			_echo "set up old SHA-1: ${old_git_dir} using 'cp'"
+			cp -ar $git_root ${old_git_dir} &>/dev/null
+		fi
 
-		# Copy includes for baseline
-		pushd $DMCE_WORK_PATH/baseline/$git_name &>/dev/null
-		find . -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
-		popd &>/dev/null
+		git -C ${old_git_dir} clean -dfx &>/dev/null
+		git -C ${old_git_dir} reset --hard &>/dev/null
+		git -C ${old_git_dir} checkout $old &>/dev/null
 
-		_echo "Removing relative paths in include files"
+		_echo "copy header files to $DMCE_WORK_PATH/inc/new"
+		find $git_root -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
+		_echo "found $(find $DMCE_WORK_PATH/inc/new -type f | wc -l) file(s)"
+
+		_echo "copy header files to $DMCE_WORK_PATH/inc/old"
+		find $old_git_dir -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
+		_echo "found $(find $DMCE_WORK_PATH/inc/old -type f | wc -l) file(s)"
+
+		_echo "removing relative paths in include files"
 		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/new
 		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/old
 	fi
