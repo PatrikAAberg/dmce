@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #define DMCE_NUMBER_OF_PROBES (80000)
-#define DMCE_BUFFER_SIZE (( (DMCE_NUMBER_OF_PROBES * sizeof(uint32_t) /4096) ) * 4096)
+#define DMCE_BUFFER_SIZE ((( (DMCE_NUMBER_OF_PROBES * sizeof(uint32_t) /4096) ) * 4096) + 4096)
 #define NUM_BUFFERS (1)
 
 //#define DMCE_DEBUG
