@@ -151,8 +151,11 @@ else
     echo "waiting for spawned '$DMCE_CMD_LOOKUP_HOOK' jobs to finish, this may take a while."
     wait
     popd &>/dev/null
-    # Sanity check
+    # sanity check
     [ "$(wc -c < $dmcepath/cmdlookup.cache)" == "0" ] && echo "error: cmdlookup.cache is empty" && ls -l $dmcepath/cmdlookup.cache && exit 1
+
+    # remove duplicates
+    sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
   }
 fi
 
