@@ -4,53 +4,61 @@ gcc_version=6.3.0
 
 # change the output format for the built in bash command 'time'
 PROG_NAME=$(basename $0 .sh)
-TIMEFORMAT="$PROG_NAME: real: %3lR user: %3lU sys: %3lS"
+TIMEFORMAT="${PROG_NAME}: real: %3lR user: %3lU sys: %3lS"
 
 function _echo() {
-	echo $(date '+%Y-%m-%d %H:%M:%S'):$PROG_NAME:$@:$(uptime)
+	echo $(date '+%Y-%m-%d %H:%M:%S'):${PROG_NAME}:$@:$(uptime)
 }
 
-# setup working directory
-if [ -e $HOME/.dmceconfig ]; then
-	dmce_work_path="$(grep ^DMCE_WORK_PATH: $HOME/.dmceconfig | cut -d: -f2 | envsubst)"
-	dmce_exec_path="$(grep ^DMCE_EXEC_PATH: $HOME/.dmceconfig | cut -d: -f2 | envsubst)"
-else
-	dmce_work_path="/tmp/$USER/dmce"
-	dmce_exec_path="$dmce_work_path/test/$PROG_NAME/dmce"
+# DMCE work directory
+dmce_work_path="/tmp/${USER}/dmce"
+
+# test work directory
+my_work_path="${dmce_work_path}/test/${PROG_NAME}"
+my_test_path=$(dirname $(echo ${PWD}/$0))
+mkdir -v -p ${my_work_path}
+[ -d ${my_work_path}/gcc-${gcc_version} ] && rm -rf ${my_work_path}/gcc-${gcc_version}
+
+# temporary hide errors
+set +e
+# DMCE exec directory
+dmce_exec_path="$(git rev-parse --show-toplevel 2> /dev/null)"
+if [ $? -ne 0 ]; then
+	set -e
+	if ! [ -e dmce/.git ]; then
+		time {
+			_echo "fetch DMCE"
+			set -x
+			git -C ${my_work_path} clone --depth 1 https://github.com/PatrikAAberg/dmce.git
+			{ set +x; } 2>/dev/null
+		}
+	fi
+	dmce_exec_path=${PWD}/dmce
 fi
+set -e
 
-my_test_path=$(dirname $(echo $PWD/$0))
-my_work_path="$dmce_work_path/test/$PROG_NAME"
-[ -d $my_work_path/gcc-$gcc_version ] && rm -rf $my_work_path/gcc-$gcc_version
-mkdir -v -p $my_work_path
-pushd $my_work_path
+pushd ${my_work_path}
 
-# what kind of machine is this?
-grep Mem /proc/meminfo || :
-nproc || :
-
-if [ ! -e $HOME/.dmceconfig ]; then
-	time {
-		_echo "fetch DMCE"
-		git clone --depth 1 https://github.com/PatrikAAberg/dmce.git
-	}
-fi
-
-if [ ! -e "gcc-$gcc_version.tar.bz2" ]; then
+if [ ! -e "gcc-${gcc_version}.tar.bz2" ]; then
 	time {
 		_echo "fetch GCC"
-		wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-$gcc_version/gcc-$gcc_version.tar.bz2
+		set -x
+		wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2
+		{ set +x; } 2>/dev/null
 	}
 fi
 
 time {
 	_echo "unpack GCC"
-	tar -xf gcc-$gcc_version.tar.bz2 gcc-$gcc_version/gcc/testsuite/$PROG_NAME
+	set -x
+	tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.bz2 gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+	{ set +x; } 2>/dev/null
 }
 
 time {
 	_echo "create git"
-	cd gcc-$gcc_version/gcc/testsuite/$PROG_NAME
+	set -x
+	cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 	git init
 	git commit -m "empty" --allow-empty
@@ -90,42 +98,50 @@ time {
 	git rm execute/vfprintf-chk-1.c
 	git rm execute/vprintf-chk-1.c
 	git rm unsorted/dump-noaddr.c
+	git rm compile/20001226-1.c
 	git commit -m "broken"
 
 	# add DMCE config and update paths
-	cp -v $dmce_exec_path/test/$PROG_NAME/dmceconfig .dmceconfig
-	sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:$dmce_exec_path|" .dmceconfig
-	sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:$my_test_path|" .dmceconfig
-	sed -i "s|DMCE_CMD_LOOKUP_HOOK:.*|DMCE_CMD_LOOKUP_HOOK:$my_test_path/cmdlookuphook.sh|" .dmceconfig
-	sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:$my_test_path/dmce-probe-monolith.c|" .dmceconfig
+	cp -v ${dmce_exec_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
+	sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:${dmce_exec_path}|" .dmceconfig
+	sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:${my_test_path}|" .dmceconfig
+	sed -i "s|DMCE_CMD_LOOKUP_HOOK:.*|DMCE_CMD_LOOKUP_HOOK:${my_test_path}/cmdlookuphook.sh|" .dmceconfig
+	sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-monolith.c|" .dmceconfig
 	git add .dmceconfig
 	git commit -m "DMCE config"
+	{ set +x; } 2>/dev/null
 }
 
 time {
 	_echo "launch DMCE"
-	$dmce_exec_path/dmce-launcher -n $(git rev-list --all --count)
+	set -x
+	${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
+	{ set +x; } 2>/dev/null
 }
 
 time {
 	_echo "compile"
-	> $my_work_path/compile-errors
-	for f in $(cat $dmce_work_path/$PROG_NAME/workarea/probe-list); do
+	> ${my_work_path}/compile-errors
+	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
-			if ! gcc -w -c -std=c++11 $f 2>> "$f".err; then
-				echo $f >> $my_work_path/compile-errors;
+			if ! gcc -w -c -std=c++11 ${f} 2>> "${f}".err; then
+				echo ${f} >> ${my_work_path}/compile-errors;
 			fi
 		} &
 	done
 
 	wait
 
+	set -x
 	find -name '*.err' -type f ! -size 0 -exec cat {} \;
+	{ set +x; } 2>/dev/null
 }
 
 _echo "results"
-find $dmce_work_path -maxdepth 1  -type f -name "dmce-launcher-$PROG_NAME-*" -printf '%T@ %p\n' | sort -nr | head -1 | awk '{print $2}' | xargs tail -v
+set -x
+find ${dmce_work_path} -maxdepth 1  -type f -name "dmce-launcher-${PROG_NAME}-*" -printf '%T@ %p\n' | sort -nr | head -1 | awk '{print $2}' | xargs tail -v
+{ set +x; } 2>/dev/null
 
-errors=$(cat $my_work_path/compile-errors | wc -l)
-_echo "exit: $errors"
-exit $errors
+errors=$(cat ${my_work_path}/compile-errors | wc -l)
+_echo "exit: ${errors}"
+exit ${errors}
