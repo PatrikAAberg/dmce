@@ -26,7 +26,11 @@ CLANG_FILE_FILTERED=$1
 
 # @@ -76356,7 +76366 @@ IntegerLiteralHexnumber  'int' 0
 
-SED_EXP=""
+function cleanup {
+	[ -e "${sed_exp}" ] && rm "${sed_exp}"
+}
+sed_exp=$(mktemp)
+trap cleanup EXIT
 
 # rows starting with "@@"
 while read -r line ; do
@@ -45,10 +49,10 @@ while read -r line ; do
 		NUM_LINES=1
 	fi
 
-	SED_EXP+="$START_POS","$(($START_POS+$NUM_LINES-1))""{s/\(.*\)/+\1/};"
+	echo "$START_POS","$(($START_POS+$NUM_LINES-1))""{s/\(.*\)/+\1/};" >> "${sed_exp}"
 done <<< "$(grep -n "^@@.*@@" $1)"
 
 # Sanity check
 [ "$ADD" == "" ] && exit
 
-sed -e "$SED_EXP" $CLANG_FILE > "$CLANG_FILE""diff"
+sed -f ${sed_exp} $CLANG_FILE > "$CLANG_FILE""diff"
