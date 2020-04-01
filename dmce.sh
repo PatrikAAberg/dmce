@@ -386,11 +386,15 @@ time {
     size_of_user=$(cat $DMCE_PROBE_PROLOG | wc -l)
   else
     echo "No prolog file found, using default"
-    echo "#ifndef __DMCE_PROBE_FUNCTION__HEADER__" > $dmcepath/workarea/probe-header
-    echo "#define __DMCE_PROBE_FUNCTION__HEADER__" >> $dmcepath/workarea/probe-header
-    echo "static void dmce_probe_body(unsigned int probenbr);" >> $dmcepath/workarea/probe-header
-    echo "#define DMCE_PROBE(a) (dmce_probe_body(a))" >> $dmcepath/workarea/probe-header
-    echo "#endif" >> $dmcepath/workarea/probe-header
+    nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat | wc -l)
+cat > $dmcepath/workarea/probe-header << EOF
+#ifndef __DMCE_PROBE_FUNCTION__HEADER__
+#define __DMCE_PROBE_FUNCTION__HEADER__
+static void dmce_probe_body(unsigned int probenbr);
+#define DMCE_NBR_OF_PROBES (${nbrofprobesinserted})
+#define DMCE_PROBE(a) (dmce_probe_body(a))
+#endif
+EOF
     # size_of_user compensates for the header put first in all source files by DMCE
     size_of_user=$(cat $dmcepath/workarea/probe-header | wc -l)
   fi
@@ -544,7 +548,6 @@ else
 
     # Update global dmce probe file, prepend with absolute path to files
     sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
-    nbrofprobesinserted=$(cat $dmcepath/probe-references.log | wc -l )
   }
 fi
 
