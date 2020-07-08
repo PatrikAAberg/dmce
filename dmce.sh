@@ -133,7 +133,8 @@ time {
 # Populate FILE_LIST
 FILE_LIST=""
 while read c_file; do
-  FILE_LIST+="$c_file "
+	[ -e $c_file ] || continue
+	FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
