@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -24,7 +24,7 @@ install_path=$PWD
 echo "DMCE installer"
 echo "Consider adding the following to $HOME/.profile"
 echo "PATH=\"$install_path \$PATH\""
-echo "Creating .dmceconfig file in $HOME" 
+echo "Creating .dmceconfig file in $HOME"
 echo "DMCE installed"
 echo
 # Add dmce git repo to path so that we can call dmce-launcher from within gits

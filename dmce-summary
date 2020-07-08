@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -24,32 +24,32 @@ rel_git_root=${PWD##*/}
 
 # TODO: Break out read config stuff from summary and launcher
 if [ -e $git_root/.dmceconfig ]; then
-  USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
+	USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
 elif [ -e $HOME/.dmceconfig ]; then
-  USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
+	USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
 else
-  echo "Could not find a valid dmce config file. Did you run install?"
-  exit 1
+	echo "Could not find a valid dmce config file. Did you run install?"
+	exit 1
 fi
 
 echo "DMCE summary. Using config file: $USE_DMCE_CONFIG_FILE"
 
 while read dmceconfig; do
-  validconfig=$(echo $dmceconfig | egrep -v \#)
-  if [ "$validconfig" != ""  ]; then
-    conf_var=$(echo $validconfig | cut -d: -f1)
-    conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
-    eval $conf_var=\'$conf_val\'
-    export $conf_var
-  fi
+	validconfig=$(echo $dmceconfig | egrep -v \#)
+	if [ "$validconfig" != ""  ]; then
+		conf_var=$(echo $validconfig | cut -d: -f1)
+		conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
+		eval $conf_var=\'$conf_val\'
+		export $conf_var
+	fi
 done < $USE_DMCE_CONFIG_FILE
 
 # Any probes found?
 if [ -e $DMCE_WORK_PATH/$rel_git_root/probe-references.log ]; then
-  echo "DMCE probe ref log: $DMCE_WORK_PATH/$rel_git_root/probe-references.log "
-  echo "Test result log   : $1"
-  echo "$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log"
-  $DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log
+	echo "DMCE probe ref log: $DMCE_WORK_PATH/$rel_git_root/probe-references.log "
+	echo "Test result log   : $1"
+	echo "$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log"
+	$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log
 else
-  echo "No DMCE probes found!"
+	echo "No DMCE probes found!"
 fi

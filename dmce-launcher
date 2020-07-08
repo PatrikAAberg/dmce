@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -212,12 +212,12 @@ fi
 _echo "[args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
 while read dmceconfig; do
 	validconfig=$(echo $dmceconfig | egrep -v \#)
-		if [ "$validconfig" != ""  ]; then
-			conf_var=$(echo $validconfig | cut -d: -f1)
-			conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
-			eval $conf_var=\'$conf_val\'
-			export $conf_var
-		fi
+	if [ "$validconfig" != ""  ]; then
+		conf_var=$(echo $validconfig | cut -d: -f1)
+		conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
+		eval $conf_var=\'$conf_val\'
+		export $conf_var
+	fi
 done < $USE_DMCE_CONFIG_FILE
 
 echo DMCE Version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)
