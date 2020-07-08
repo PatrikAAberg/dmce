@@ -99,7 +99,7 @@ time {
   # Add the added and modified files
   git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$" >> $dmcepath/latest.cache || :
   # Sanity check
-  nbr_of_files=$(cat $dmcepath/latest.cache | wc -l)
+  nbr_of_files=$(wc -l <$dmcepath/latest.cache)
   [ "$nbr_of_files" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
   echo "git found $nbr_of_files modified and changed files"
 }
@@ -119,10 +119,10 @@ time {
   cat $dmcepath/workarea/dmce.exclude
   echo
   grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
-  echo "$(($nbr_of_files-$(cat $dmcepath/latest.cache.tmp | wc -l))) files excluded. View these files in $dmcepath/files_excluded.log"
+  echo "$(($nbr_of_files-$(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
   comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
   mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
-  nbr_of_files=$(cat $dmcepath/latest.cache | wc -l)
+  nbr_of_files=$(wc -l <$dmcepath/latest.cache)
   if [ $nbr_of_files -eq 0 ]; then
     echo "error: no files after include and exclude filter"
     summary
@@ -204,8 +204,8 @@ time {
     echo ']' >>  $dmcepath/new/compile_commands.json
     echo ']' >>  $dmcepath/old/compile_commands.json
   else
-    cat $dmcepath/latest.cache | $binpath/generate-compile-commands.py $dmcepath/new $dmcepath/cmdlookup.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/new/compile_commands.json &
-    cat $dmcepath/latest.cache | $binpath/generate-compile-commands.py $dmcepath/old $dmcepath/cmdlookup.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/old/compile_commands.json &
+    $binpath/generate-compile-commands.py $dmcepath/new $dmcepath/cmdlookup.cache <$dmcepath/latest.cache| sed -e "s/\$USER/${USER}/g" > $dmcepath/new/compile_commands.json &
+    $binpath/generate-compile-commands.py $dmcepath/old $dmcepath/cmdlookup.cache <$dmcepath/latest.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/old/compile_commands.json &
     wait
   fi
 }
@@ -356,7 +356,7 @@ time {
   for c_file in $FILE_LIST; do
       [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
       touch $dmcepath/new/$c_file.probedata
-      cat $dmcepath/new/$c_file.clangdiff | $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude >> $dmcepath/new/$c_file.probegen.log &
+      $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
   done
   echo "waiting for spawned 'generate-probefile' jobs to finish, this may take a while."
   wait
@@ -383,7 +383,7 @@ time {
     echo "Using prolog file: $DMCE_PROBE_PROLOG"
     cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
     # size_of_user compensates for the header put first in all source files by DMCE
-    size_of_user=$(cat $DMCE_PROBE_PROLOG | wc -l)
+    size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
   else
     echo "No prolog file found, using default"
     nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat | wc -l)
@@ -396,7 +396,7 @@ static void dmce_probe_body(unsigned int probenbr);
 #endif
 EOF
     # size_of_user compensates for the header put first in all source files by DMCE
-    size_of_user=$(cat $dmcepath/workarea/probe-header | wc -l)
+    size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
   fi
 
   while read c_file; do
@@ -434,8 +434,8 @@ echo "------"
 echo "Results:"
 echo
 time {
-  files_probed=$(cat $dmcepath/workarea/probe-list 2> /dev/null | wc -l)
-  files_skipped=$(cat $dmcepath/workarea/skip-list 2> /dev/null | wc -l)
+  files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )
+  files_skipped=$(wc -l <$dmcepath/workarea/skip-list 2> /dev/null)
   echo "$files_probed file(s) probed:"
   while read f; do
     echo "$git_top/$f"
