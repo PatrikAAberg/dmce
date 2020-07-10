@@ -170,7 +170,7 @@ declare -A folders=()
 
 # Creating folder structure
 for c_file in $FILE_LIST; do
-	dirname=`dirname ${c_file}`
+	dirname=${c_file%/*}
 	[[ "${folders[$dmcepath/new/$dirname]+foobar}" ]]      && continue || folders[$dmcepath/new/$dirname]=1
 	[[ "${folders[$dmcepath/old/$dirname]+foobar}" ]]                  || folders[$dmcepath/old/$dirname]=1
 	[[ "${folders[$dmcepath/workarea/$dirname]+foobar}" ]]             || folders[$dmcepath/workarea/$dirname]=1
@@ -220,7 +220,7 @@ time {
 for c_file in $FILE_LIST; do
 	{
 		# Sanity check that file exist in $newsha
-		mkdir -p `dirname $dmcepath/new/${c_file}`
+		mkdir -p $dmcepath/new/${c_file%/*}
 		cp $c_file $dmcepath/new/$c_file
 		$binpath/dmce-remove-relpaths.sh $dmcepath/new/$c_file
 		echo $c_file >> $dmcepath/workarea/clang-list.new
@@ -228,7 +228,7 @@ for c_file in $FILE_LIST; do
 
 	{
 		# Always create the path for the old file
-		mkdir -p `dirname $dmcepath/old/${c_file}`
+		mkdir -p $dmcepath/old/${c_file%/*}
 
 		# If the file does not exist in $oldsha, create an empty file
 		if ! git cat-file -e $oldsha:$c_file &> /dev/null; then

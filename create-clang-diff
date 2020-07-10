@@ -21,7 +21,8 @@
 
 # $1 = <some-path>/<file>.cc.clang.filtereddiff
 
-CLANG_FILE=$(dirname $1)/$(basename $1 .filtereddiff)
+CLANG_FILE=${1%/*}/${1##*/}
+CLANG_FILE=${CLANG_FILE/.filtereddiff}
 CLANG_FILE_FILTERED=$1
 
 # @@ -76356,7 +76366 @@ IntegerLiteralHexnumber  'int' 0
