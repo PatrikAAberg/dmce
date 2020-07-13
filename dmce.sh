@@ -443,16 +443,14 @@ else
 	time {
 		# Assign DMCE_PROBE numbers.
 		probe_nbr=$offset
-		rm -f $dmcepath/probe-references.log
+		[ -e $dmcepath/probe-references.log ] && rm -f $dmcepath/probe-references.log
 		nextfile=""
 		file=""
 		# set-up an ordered list with the probe-files
 		# we iterate through
 		declare -a file_list=()
-		while read -r probe; do
-			splitArray=(${probe//:/ })
-			file=${splitArray[0]}
-			line=${splitArray[1]}
+		declare -a str=()
+		while IFS=':' read -r file line; do
 			let 'line = line + size_of_user + 1'
 
 			if [ "$nextfile" == "" ]; then
@@ -474,11 +472,12 @@ else
 			fi
 
 			nextfile=$file
-			echo "$probe_nbr:$file:$line" >> $dmcepath/probe-references.log
-
+			str+=("$probe_nbr:$file:$line\n")
 
 			let 'probe_nbr = probe_nbr + 1'
 		done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat)"
+
+		printf "${str[*]}" > $dmcepath/probe-references.log &
 
 		# Last file, remember sed command
 		SED_CMDS+=("$SED_EXP $git_top/$nextfile")
@@ -490,27 +489,29 @@ else
 		for var in "${SED_CMDS[@]}"; do
 			sed -i ${var} &
 		done
-		echo "waiting for spawned 'sed' jobs to finish, this may take a while."
 		wait
 
 		# Update global dmce probe file, prepend with absolute path to files
 		sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
 	}
-	# Aggregate the probe-expression information into <expr-references.log>
-	# Loop through the list of files and aggregate the info from
-	# all the <$file>.exprdata into a global expr-references.log file
-	echo "------"
-	echo "Assemble and assign expression index for probes"
-	echo
-	probe_nbr=$offset
-	rm -f $dmcepath/expr-references.log
-	for file in "${file_list[@]}"; do
-		while IFS=: read -r nop line exp_index full_exp; do
-			let 'line = line + size_of_user + 1'
-			echo "$probe_nbr:$file:$line:$exp_index:$full_exp" >> $dmcepath/expr-references.log
-			let 'probe_nbr = probe_nbr + 1'
-		done <$dmcepath/new/${file}.exprdata
-	done
+
+	time {
+		# Aggregate the probe-expression information into <expr-references.log>
+		# Loop through the list of files and aggregate the info from
+		# all the <$file>.exprdata into a global expr-references.log file
+		echo "------"
+		echo "Assemble and assign expression index for probes"
+		echo
+		probe_nbr=$offset
+		[ -e $dmcepath/expr-references.log ] && rm -f $dmcepath/expr-references.log
+		for file in "${file_list[@]}"; do
+			while IFS=: read -r nop line exp_index full_exp; do
+				let 'line = line + size_of_user + 1'
+				echo "$probe_nbr:$file:$line:$exp_index:$full_exp" >> $dmcepath/expr-references.log
+				let 'probe_nbr = probe_nbr + 1'
+			done <$dmcepath/new/${file}.exprdata
+		done
+	 }
 fi
 
 # Summary
