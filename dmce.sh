@@ -45,9 +45,9 @@ function jobcap {
 }
 
 # Usage
-if [ "$#" -ne 3 ]; then
-	echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id>"
-	exit
+if [ "$#" -ne 4 ]; then
+	echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root>"
+	exit 1
 fi
 
 # change the output format for the built in bash command 'time'
@@ -64,6 +64,7 @@ git_project=$(basename $1)
 git_top=$1
 newsha=$2
 oldsha=$3
+old_git_dir=$4
 dmcepath="$DMCE_WORK_PATH/$git_project"
 
 echo "binary path             : $binpath"
@@ -75,6 +76,7 @@ echo "probe prolog file       : $DMCE_PROBE_PROLOG"
 echo "git path                : $git_top"
 echo "New sha1                : $newsha"
 echo "Old sha1                : $oldsha"
+echo "Old git dir             : $old_git_dir"
 
 # Lets go!
 echo "Operate on $git_top"
@@ -217,42 +219,31 @@ echo "Running git cat-file, git show and dmce-remove-relpaths.sh"
 echo
 
 time {
-for c_file in $FILE_LIST; do
-	{
-		# Sanity check that file exist in $newsha
-		mkdir -p $dmcepath/new/${c_file%/*}
-		cp $c_file $dmcepath/new/$c_file
-		$binpath/dmce-remove-relpaths.sh $dmcepath/new/$c_file
-		echo $c_file >> $dmcepath/workarea/clang-list.new
-	} &
+	rsync -qazR $FILE_LIST $dmcepath/new/
 
-	{
-		# Always create the path for the old file
-		mkdir -p $dmcepath/old/${c_file%/*}
+	for c_file in $FILE_LIST; do
+		{
+			# If the file does not exist in $oldsha, create an empty file
+			if ! [ -e $old_git_dir/${c_file} ]; then
+				touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
+			else
+				cp -av $old_git_dir/${c_file} $dmcepath/old/$c_file
+				echo $c_file >> $dmcepath/workarea/clang-list.old
+			fi
+		}
+	done
+	[ "${touch_files}" != "" ] && touch $touch_files
+	$binpath/dmce-remove-relpaths.sh $dmcepath/new &
+	$binpath/dmce-remove-relpaths.sh $dmcepath/old &
+	wait
 
-		# If the file does not exist in $oldsha, create an empty file
-		if ! git cat-file -e $oldsha:$c_file &> /dev/null; then
-			touch $dmcepath/old/$c_file $dmcepath/old/$c_file.clang
-		else
-			git show $oldsha:$c_file > $dmcepath/old/$c_file
-			$binpath/dmce-remove-relpaths.sh $dmcepath/old/$c_file
-			echo $c_file >> $dmcepath/workarea/clang-list.old
-		fi
-	} &
-done
-wait
-
-FILE_LIST_NEW=""
-while read c_file; do
-	FILE_LIST_NEW+="$c_file "
-done < $dmcepath/workarea/clang-list.new
-
-if [ -e $dmcepath/workarea/clang-list.old ]; then
-	FILE_LIST_OLD=""
-	while read c_file; do
-		FILE_LIST_OLD+="$c_file "
-	done < $dmcepath/workarea/clang-list.old
-fi
+	FILE_LIST_NEW="${FILE_LIST}"
+	if [ -e $dmcepath/workarea/clang-list.old ]; then
+		FILE_LIST_OLD=""
+		while read c_file; do
+			FILE_LIST_OLD+="$c_file "
+		done < $dmcepath/workarea/clang-list.old
+	fi
 }
 
 echo "------"

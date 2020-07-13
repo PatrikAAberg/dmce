@@ -36,18 +36,16 @@ elif [ -d $1 ]; then
 	# Exit if directory is empty
 	[ ! -n "$(ls -A)" ] && exit 1
 
-	# Save all files in one variable
-	files=$(find -type f -printf "%f ")
-
-	# Count number of spaces = number of files
-	number_of_files=$(tr -dc ' ' <<<"$files" | awk '{ print length; }')
+	# Save all files in one array
+	files=($(find -type f))
+	number_of_files=${#files[*]}
 
 	# How many processing units are available on this machine?
 	CORES=$(nproc)
 
 	# Run sed and exit if we just have a few files
 	if [ $number_of_files -lt $CORES ]; then
-		_sed $files
+		_sed ${files[*]}
 		exit
 	fi
 
@@ -65,9 +63,9 @@ elif [ -d $1 ]; then
 
 		# Divide $files into smaller chunks, let last core handle a few more files
 		if [ $i == $CORES ]; then
-		  sub_files=$(cut -d' ' -f$a- <(echo $files))
+		  sub_files=$(cut -d' ' -f$a- <(echo ${files[*]}))
 		else
-		  sub_files=$(cut -d' ' -f$a-$b <(echo $files))
+		  sub_files=$(cut -d' ' -f$a-$b <(echo ${files[*]}))
 		fi
 
 		# Launch the command

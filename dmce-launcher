@@ -316,8 +316,8 @@ time {
 # Make offset visible for dmce.sh
 export offset
 
-_echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old"
-if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old; then
+_echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir"
+if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir; then
 	echo "---"
 	_echo "error: dmce.sh failed - check logs"
 	echo "---"
