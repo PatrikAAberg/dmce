@@ -504,13 +504,15 @@ else
 		echo
 		probe_nbr=$offset
 		[ -e $dmcepath/expr-references.log ] && rm -f $dmcepath/expr-references.log
+		declare -a str=()
 		for file in "${file_list[@]}"; do
 			while IFS=: read -r nop line exp_index full_exp; do
 				let 'line = line + size_of_user + 1'
-				echo "$probe_nbr:$file:$line:$exp_index:$full_exp" >> $dmcepath/expr-references.log
+				str+=("$probe_nbr:$file:$line:$exp_index:$full_exp\n")
 				let 'probe_nbr = probe_nbr + 1'
 			done <$dmcepath/new/${file}.exprdata
 		done
+		printf "${str[*]}" > $dmcepath/expr-references.log
 	 }
 fi
 
