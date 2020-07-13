@@ -33,45 +33,10 @@ elif [ -d $1 ]; then
 	# Enter directory
 	cd $1
 
-	# Exit if directory is empty
-	[ ! -n "$(ls -A)" ] && exit 1
-
 	# Save all files in one array
 	files=($(find -type f))
 	number_of_files=${#files[*]}
 
-	# How many processing units are available on this machine?
-	CORES=$(nproc)
-
-	# Run sed and exit if we just have a few files
-	if [ $number_of_files -lt $CORES ]; then
-		_sed ${files[*]}
-		exit
-	fi
-
-	# Divide number of files on each core
-	interval=$(($number_of_files/$CORES))
-
-	# variables for 'cut'
-	a=1
-	b=1
-
-	# Launch $CORES jobs
-	for i in $(seq $CORES); do
-		a=$b
-		let "b = b + $interval"
-
-		# Divide $files into smaller chunks, let last core handle a few more files
-		if [ $i == $CORES ]; then
-		  sub_files=$(cut -d' ' -f$a- <(echo ${files[*]}))
-		else
-		  sub_files=$(cut -d' ' -f$a-$b <(echo ${files[*]}))
-		fi
-
-		# Launch the command
-		_sed $sub_files &
-	done
-
-	echo "${NAME}: waiting for spawned 'sed' jobs to finish, this may take a while."
-	wait
+	[ $number_of_files -eq 0 ] && exit
+	_sed ${files[*]}
 fi
