@@ -51,7 +51,7 @@ if [ "$#" -ne 4 ]; then
 fi
 
 # change the output format for the built in bash command 'time'
-TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
+TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
 echo "------"
 echo "Init"
@@ -451,46 +451,61 @@ else
 	echo "Assemble and assign probes"
 	echo
 	time {
-	# Assign DMCE_PROBE numbers.
-	probe_nbr=$offset
-	rm -f $dmcepath/probe-references.log
-	nextfile=""
-	file=""
-	# set-up an ordered list with the probe-files
-	# we iterate through
-	declare -a file_list=()
-	while read -r probe; do
-		splitArray=(${probe//:/ })
-		file=${splitArray[0]}
-		line=${splitArray[1]}
-		let 'line = line + size_of_user + 1'
+		# Assign DMCE_PROBE numbers.
+		probe_nbr=$offset
+		rm -f $dmcepath/probe-references.log
+		nextfile=""
+		file=""
+		# set-up an ordered list with the probe-files
+		# we iterate through
+		declare -a file_list=()
+		while read -r probe; do
+			splitArray=(${probe//:/ })
+			file=${splitArray[0]}
+			line=${splitArray[1]}
+			let 'line = line + size_of_user + 1'
 
-		if [ "$nextfile" == "" ]; then
-			# First time, create 'sed' expression
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
-		elif [ "$nextfile" == $file ]; then
-			# Same file, append 'sed' expression
-			SED_EXP+=" -e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
-		else
-			# Next file, remember sed command
-			SED_CMDS+=("$SED_EXP $git_top/$nextfile")
+			if [ "$nextfile" == "" ]; then
+				# First time, create 'sed' expression
+				SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			elif [ "$nextfile" == $file ]; then
+				# Same file, append 'sed' expression
+				SED_EXP+=" -e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			else
+				# Next file, remember sed command
+				SED_CMDS+=("$SED_EXP $git_top/$nextfile")
 
-			# Remember 'sed' expression for next file
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
-		fi
+				# Remember 'sed' expression for next file
+				SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			fi
 
-		if [ "$file" != "$nextfile" ]; then
-			file_list+=( "$file" )
-		fi
+			if [ "$file" != "$nextfile" ]; then
+				file_list+=( "$file" )
+			fi
 
-		nextfile=$file
-		echo "$probe_nbr:$file:$line" >> $dmcepath/probe-references.log
-
-
-		let 'probe_nbr = probe_nbr + 1'
-	done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat)"
+			nextfile=$file
+			echo "$probe_nbr:$file:$line" >> $dmcepath/probe-references.log
 
 
+			let 'probe_nbr = probe_nbr + 1'
+		done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat)"
+
+		# Last file, remember sed command
+		SED_CMDS+=("$SED_EXP $git_top/$nextfile")
+	}
+	echo "------"
+	echo "Launch SED jobs"
+	echo
+	time {
+		for var in "${SED_CMDS[@]}"; do
+			sed -i ${var} &
+		done
+		echo "waiting for spawned 'sed' jobs to finish, this may take a while."
+		wait
+
+		# Update global dmce probe file, prepend with absolute path to files
+		sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
+	}
 	# Aggregate the probe-expression information into <expr-references.log>
 	# Loop through the list of files and aggregate the info from
 	# all the <$file>.exprdata into a global expr-references.log file
@@ -500,44 +515,12 @@ else
 	probe_nbr=$offset
 	rm -f $dmcepath/expr-references.log
 	for file in "${file_list[@]}"; do
-		local_probe_nbr=0
-
-		while read -r exp; do
-			splitArray=(${exp//:/ })
-			# local_probe_nbr=${splitArray[1]}
-			line=${splitArray[1]}
-			exp_index=${splitArray[2]}
-			full_exp=${splitArray[@]:3}
+		while IFS=: read -r nop line exp_index full_exp; do
 			let 'line = line + size_of_user + 1'
-
-
-			# echo "$probe_nbr:$file:$local_probe_nbr:$exp_index" >> $dmcepath/expr-references.log
 			echo "$probe_nbr:$file:$line:$exp_index:$full_exp" >> $dmcepath/expr-references.log
 			let 'probe_nbr = probe_nbr + 1'
-			let 'local_probe_nbr = local_probe_nbr + 1'
-
-		done  <<< "$(cat $dmcepath/new/${file}.exprdata)"
-
+		done <$dmcepath/new/${file}.exprdata
 	done
-
-	# Last file, remember sed command
-	SED_CMDS+=("$SED_EXP $git_top/$nextfile")
-
-}
-
-echo "------"
-echo "Launch SED jobs"
-echo
-time {
-for var in "${SED_CMDS[@]}"; do
-	sed -i ${var} &
-done
-echo "waiting for spawned 'sed' jobs to finish, this may take a while."
-wait
-
-# Update global dmce probe file, prepend with absolute path to files
-sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
-  }
 fi
 
 # Summary
