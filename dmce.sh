@@ -152,7 +152,6 @@ else
 	for c_file in $FILE_LIST; do
 		$DMCE_CMD_LOOKUP_HOOK $c_file >> $dmcepath/cmdlookup.cache &
 	done
-	echo "waiting for spawned '$DMCE_CMD_LOOKUP_HOOK' jobs to finish, this may take a while."
 	wait
 	popd &>/dev/null
 	# sanity check
@@ -215,7 +214,7 @@ fi
 }
 
 echo "------"
-echo "Running git cat-file, git show and dmce-remove-relpaths.sh"
+echo "copy files and dmce-remove-relpaths.sh"
 echo
 
 time {
@@ -263,7 +262,6 @@ for c_file in $FILE_LIST_NEW; do
 	let 'i = i + 1'
 	[ "$i" -gt 500 ] && i=0 && jobcap clang-check
 done
-echo "waiting for spawned 'clang-check' jobs to finish, this may take a while."
 wait
 }
 
@@ -290,7 +288,6 @@ for c_file in $FILE_LIST_NEW; do
 		[ "${PERCENTAGE_SPACES:1:2}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
 	} &
 done
-echo "waiting for spawned 'stat' jobs to finish, this may take a while."
 wait
 }
 
@@ -302,7 +299,6 @@ for c_file in $FILE_LIST; do
 	# Remove all hexnumbers (in-place) on clang-files
 	perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' -pe 's#\`-#|-#;' -pe 's#(.*\|-CallExpr.*)#\n$1#;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
 done
-echo "waiting for spawned 'perl' jobs to finish, this may take a while."
 wait
 }
 
@@ -314,7 +310,6 @@ for c_file in $FILE_LIST; do
 	perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
 	perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
 done
-echo "waiting for spawned 'perl' jobs to finish, this may take a while."
 wait
 }
 
@@ -326,7 +321,6 @@ for c_file in $FILE_LIST; do
 	# Create filtered diff
 	git --no-pager diff -U0 $dmcepath/old/$c_file.clang.filtered $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
 done
-echo "waiting for spawned 'git diff' jobs to finish, this may take a while."
 wait
 }
 
@@ -338,7 +332,6 @@ for c_file in $FILE_LIST; do
 	$binpath/create-clang-diff $dmcepath/new/$c_file.clang.filtereddiff &
 done
 
-echo "waiting for spawned 'create-clang-diff' jobs to finish, this may take a while."
 wait
 }
 
@@ -351,7 +344,6 @@ for c_file in $FILE_LIST; do
 	touch $dmcepath/new/$c_file.probedata
 	$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
-echo "waiting for spawned 'generate-probefile' jobs to finish, this may take a while."
 wait
 echo
 find $dmcepath/new -name '*probegen.log' |  xargs tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
@@ -378,7 +370,6 @@ if [ -e "$DMCE_PROBE_PROLOG" ]; then
 	# size_of_user compensates for the header put first in all source files by DMCE
 	size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
 else
-	echo "No prolog file found, using default"
 	nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat | wc -l)
 	cat > $dmcepath/workarea/probe-header << EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
@@ -415,7 +406,6 @@ size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
   # remove skipped working files from tree
   xargs rm <<<$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)
 
-  echo "waiting for spawned 'probe' jobs to finish, this may take a while."
   wait
 }
 
