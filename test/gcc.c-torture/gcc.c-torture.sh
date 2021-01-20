@@ -125,6 +125,7 @@ time {
 time {
 	_echo "compile"
 	> ${my_work_path}/compile-errors
+	find -name '*.err' -exec rm {} \;
 	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
 			if ! gcc -w -c -std=c++11 ${f} 2>> "${f}".err; then
