@@ -70,16 +70,16 @@ old_git_dir=$4
 offset=$5
 dmcepath="$DMCE_WORK_PATH/$git_project"
 
-_echo "binary path             : $binpath"
+_echo "binary path: $binpath"
 _echo "configurations file path: $configpath"
-_echo "working directory       : $dmcepath"
-_echo "lookup hook             : $DMCE_CMD_LOOKUP_HOOK"
-_echo "probe c file            : $DMCE_PROBE_SOURCE"
-_echo "probe prolog file       : $DMCE_PROBE_PROLOG"
-_echo "git path                : $git_top"
-_echo "new sha1                : $newsha"
-_echo "old sha1                : $oldsha"
-_echo "old git dir             : $old_git_dir"
+_echo "working directory: $dmcepath"
+_echo "lookup hook: $DMCE_CMD_LOOKUP_HOOK"
+_echo "probe c file: $DMCE_PROBE_SOURCE"
+_echo "probe prolog file: $DMCE_PROBE_PROLOG"
+_echo "git path: $git_top"
+_echo "new sha1: $newsha"
+_echo "old sha1: $oldsha"
+_echo "old git dir: $old_git_dir"
 
 # Lets go!
 _echo "operate on $git_top"
@@ -92,7 +92,7 @@ mkdir -p $dmcepath/{old,new,workarea}
 # pretty print old/new SHA-1
 git_fmt='%h?%ar?%ae?%s'
 _str="old:?$(git --no-pager log -1 --format=$git_fmt $oldsha)\nnew:?$(git --no-pager log -1 --format=$git_fmt $newsha)"
-_echo -e "$_str" | column -t -s? 2> /dev/null
+echo -e "$_str" | column -t -s? 2> /dev/null
 _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
 git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
 # Add the added and modified files
