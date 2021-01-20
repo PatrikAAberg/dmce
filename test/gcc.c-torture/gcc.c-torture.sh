@@ -90,6 +90,7 @@ time {
 	git rm compile/pr67143.c
 	git rm compile/pr70199.c
 	git rm compile/pr70633.c
+	git rm execute/20000227-1.c
 	git rm execute/20010206-1.c
 	git rm execute/fprintf-chk-1.c
 	git rm execute/pr19449.c
