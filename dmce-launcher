@@ -22,7 +22,7 @@
 NAME=$(basename $0)
 
 function _echo {
-	echo "$NAME: $*"
+	echo "$(date '+%Y-%m-%d %H:%M:%S'):$NAME:$*"
 }
 
 function usage() {
@@ -209,27 +209,32 @@ else
 	exit 1
 fi
 
-_echo "[args='$@']. Using config file: $USE_DMCE_CONFIG_FILE"
+_echo "config file: $USE_DMCE_CONFIG_FILE"
 while read dmceconfig; do
-	validconfig=$(echo $dmceconfig | egrep -v \#)
-	if [ "$validconfig" != ""  ]; then
-		conf_var=$(echo $validconfig | cut -d: -f1)
-		conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
-		eval $conf_var=\'$conf_val\'
-		export $conf_var
+	if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
+		continue
 	fi
+	conf_var=${dmceconfig%%:*}
+	conf_val=${dmceconfig##*:}
+	# escape double quotes
+	conf_val=${conf_val//\"/\\\"}
+	eval $conf_var=\"$conf_val\"
+	export $conf_var
 done < $USE_DMCE_CONFIG_FILE
+_echo "args: $@ version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)"
 
-echo DMCE Version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)
 [ "$print_version_and_exit" = true ] && exit
 
-time {
-	_echo "restoring old probe state if needed"
-	dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
-	[ "$dmce_double" != "" ] && for f in $dmce_double; do { mv $f ${f%%.orginal}; } & done
+dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
+if [ "$dmce_double" != "" ]; then
+	_echo "restoring old probe state"
+	for f in $dmce_double; do
+		mv $f ${f%%.orginal} &
+	done
 	wait
-}
+fi
 
+_echo "DMCE variables:"
 set | grep ^DMCE_
 
 if [ "$restore" = true ]; then
@@ -272,7 +277,7 @@ if [ "$skip" = false ]; then
 	rm -rf $DMCE_WORK_PATH/inc/{old,new} &> /dev/null
 
 	# re-create inc directories
-	mkdir -vp $DMCE_WORK_PATH/inc/{old,new}
+	mkdir -p $DMCE_WORK_PATH/inc/{old,new}
 
 	# If stupid mode, create empty directory
 	if [ "$stupid" = true ]; then
@@ -318,9 +323,7 @@ export offset
 
 _echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir"
 if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir; then
-	echo "---"
 	_echo "error: dmce.sh failed - check logs"
-	echo "---"
 	exit 1
 fi
 }
