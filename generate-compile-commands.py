@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -65,13 +65,13 @@ def IndividualCmdLine( sourcefile ):
    sourcefile = re.sub("\+", "\+", sourcefile)
    exp = sourcefile + "\s(.*)$"
    for file in lookupfile:
-      found = re.match( exp, file, re.M|re.I)
+      found = re.match( exp, file.decode('utf-8'), re.M|re.I)
       if (found):
           cmdline=found.group(1)
           break
    return cmdline
 
-print "["
+print("[")
 
 directory = ""
 command = ""
@@ -91,15 +91,15 @@ while (lineindex<linestotal):
           elif (m_cc or m_cpp):
               command = defaultcmdline_cpp + " " + includes + " " + filename
           else:
-              print "file cache corrupt!"
+              print("file cache corrupt!")
               exit(-1)
 
-      print "{"
-      print "\"directory\": \"" + directory + "\","
-      print "\"command\": \"" + command + "\","
-      print "\"file\": \"" + filename + "\""
-      print "},"
+      print("{")
+      print("\"directory\": \"" + directory + "\",")
+      print("\"command\": \"" + command + "\",")
+      print("\"file\": \"" + filename + "\"")
+      print("},")
 
       lineindex+=1
 
-print "]"
+print("]")

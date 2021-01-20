@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -30,7 +30,7 @@ do_print=1
 time1 = time.time()
 
 if (len(sys.argv) != 6):
-    print "Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <expression.dmce> <constructs.exclude>"
+    print("Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <expression.dmce> <constructs.exclude>")
     exit()
 
 # Read constructs exclude file
@@ -42,9 +42,11 @@ cxl.close()
 re_cxl_list = []
 for construct in cxl_buf:
     re_cxl_list.append(re.compile(".*" + construct.rstrip() + ".*"))
-    if do_print == 1: print ".*{}.*".format(construct.rstrip())
+    if do_print == 1:
+        print(".*{}.*".format(construct.rstrip()))
 
-if do_print == 1: print "constructs exclude list: {}".format(len(re_cxl_list))
+if do_print == 1:
+    print("constructs exclude list: {}".format(len(re_cxl_list)))
 
 parsed_c_file = sys.argv[1]
 
@@ -106,7 +108,8 @@ probes = 0
 rawlinebuf = sys.stdin.readlines()
 linebuf=[]
 
-if do_print == 1: print "Generating DMCE probes"
+if do_print == 1:
+    print("Generating DMCE probes")
 
 # Construct list of file lines
 
@@ -171,8 +174,8 @@ pbuf = cf.readlines()
 
 cf_len = len(pbuf)
 
-if do_print == 1: print "!!!" + parsed_c_file + "!!!"
-
+if do_print == 1:
+    print("!!!" + parsed_c_file + "!!!")
 
 # Used for parsing the textual AST
 
@@ -242,14 +245,15 @@ while (lineindex<linestotal):
 
     # <common/rhai-client_helper.c:101:3
     # Replace file statements and set appropriate state
-    # print linebuf[lineindex].rstrip()
+    # print(linebuf[lineindex].rstrip())
 
     # If we start in a .h file and end in a c-file, skip!
     get_skip_pos = re_compile_skip_pos.match(linebuf[lineindex])
     if (get_skip_pos):
         lskip_temp = int(get_skip_pos.group(3))
         cskip_temp = int(get_skip_pos.group(4))
-        if do_print == 1: print "Expression starts in .h file and ends in this file, skip until: (" + str(lskip_temp) + "," + str(cskip_temp) + ")"
+        if do_print == 1:
+            print("Expression starts in .h file and ends in this file, skip until: (" + str(lskip_temp) + "," + str(cskip_temp) + ")")
         if (lskip_temp > lskip):
             lskip=lskip_temp
             cskip=cskip_temp
@@ -271,7 +275,8 @@ while (lineindex<linestotal):
                 # Do nothing
                 pass
             else:
-                if do_print == 1: print "Entering another c-file, reset 'in_parsed_c_file'"
+                if do_print == 1:
+                    print("Entering another c-file, reset 'in_parsed_c_file'")
                 in_parsed_c_file = 0
 
         # Replace filename with 'line' for further parsing
@@ -302,7 +307,8 @@ while (lineindex<linestotal):
             in_parsed_c_file = 0
             # Remove .c filename for further parsing
             linebuf[lineindex] = re.sub(".*<.*\.c:\d*:\d*\,\s", "<external file, ", linebuf[lineindex])
-            if do_print == 1: print "in another c file, linebuf after re.sub: {}".format(linebuf[lineindex])
+            if do_print == 1:
+                print("in another c file, linebuf after re.sub: {}".format(linebuf[lineindex]))
 
     # The different ways of updating position:
     #
@@ -332,7 +338,8 @@ while (lineindex<linestotal):
         col_position_updated=1
         cstart = exp_pos_update.group(1)
         cend = cstart
-        #if do_print == 1: print "MATCH C: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+        #if do_print == 1:
+            #print("MATCH C: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # E
     if not col_position_updated:
@@ -342,7 +349,8 @@ while (lineindex<linestotal):
             exp_extra = 1
             cstart = exp_pos_update.group(1)
             cend = exp_pos_update.group(2)
-            #if do_print == 1: print "MATCH E: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+            #if do_print == 1:
+                #print("MATCH E: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # B
     exp_pos_update = re_update_pos_B.match(linebuf[lineindex])
@@ -356,7 +364,8 @@ while (lineindex<linestotal):
         if (in_parsed_c_file):
             trailing=1
 
-        #if do_print == 1: print "MATCH B: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+        #if do_print == 1:
+            #print("MATCH B: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # F
     if not line_position_updated:
@@ -370,7 +379,8 @@ while (lineindex<linestotal):
             if (in_parsed_c_file):
                 trailing=1
 
-            #if do_print == 1: print "MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+            #if do_print == 1:
+                #print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # A
     if not line_position_updated:
@@ -385,7 +395,8 @@ while (lineindex<linestotal):
             if (in_parsed_c_file):
                 trailing=1
 
-            #if do_print == 1: print "MATCH A: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+            #if do_print == 1:
+                #print("MATCH A: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # D
     if not col_position_updated:
@@ -396,19 +407,24 @@ while (lineindex<linestotal):
             lend = exp_pos_update.group(2)
             cstart = exp_pos_update.group(1)
             cend = exp_pos_update.group(3)
-            #if do_print == 1: print "MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip()
+            #if do_print == 1:
+                #print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # Check if backtrailing within current expression
     if (int(lstart) > int(lend)):
         backtrailing = 1
-        if do_print == 1: print "Local backtrailing in " + parsed_c_file + " AT start:" + lstart + "   end:" + lend
-        if do_print == 1: print "EXPR: " + linebuf[lineindex]
+        if do_print == 1:
+            print("Local backtrailing in " + parsed_c_file + " AT start:" + lstart + "   end:" + lend)
+        if do_print == 1:
+            print("EXPR: " + linebuf[lineindex])
 
     # Check if global backtrailing. Note! Within the parsed c file!
     if ( in_parsed_c_file and (( int(last_lstart) > int(lstart))  or ( ( int(last_lstart) == int(lstart) ) and (int(last_cstart) > int(cstart)))) ):
         backtrailing = 1
-        if do_print == 1: print "Global backtrailing in " + parsed_c_file + " AT line start:" + lstart + "   col start:" + cstart + " current location:(" + last_lstart + "," + last_cstart + ")"
-        if do_print == 1: print "EXPR: " + linebuf[lineindex]
+        if do_print == 1:
+            print("Global backtrailing in " + parsed_c_file + " AT line start:" + lstart + "   col start:" + cstart + " current location:(" + last_lstart + "," + last_cstart + ")")
+        if do_print == 1:
+            print("EXPR: " + linebuf[lineindex])
 
         # Check if this backtrailing is a compound or similar, in that case skip the whole thing
         # CompoundStmt Hexnumber <line:104:44, line:107:15>
@@ -447,7 +463,8 @@ while (lineindex<linestotal):
             skip=0
         else:
             skip=1
-    if do_print == 1: print "SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend
+    if do_print == 1:
+        print("SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend)
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -458,21 +475,26 @@ while (lineindex<linestotal):
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
             expdb_index +=1
-            if do_print == 1: print "FOUND END/NEXT (" + linebuf[lineindex].rstrip() + ") FOR (" + linebuf[inside_expression].rstrip() + ")"
-            if do_print == 1: print "Start: ("+ str(cur_lstart) + ", " + str(cur_cstart) + ") End: (" + lstart  + ", " + str(int(cstart) -1) + ") ->" + linebuf[lineindex].rstrip()
+            if do_print == 1:
+                print("FOUND END/NEXT (" + linebuf[lineindex].rstrip() + ") FOR (" + linebuf[inside_expression].rstrip() + ")")
+            if do_print == 1:
+                print("Start: ("+ str(cur_lstart) + ", " + str(cur_cstart) + ") End: (" + lstart  + ", " + str(int(cstart) -1) + ") ->" + linebuf[lineindex].rstrip())
             inside_expression = 0
 
     # Check if expression is interesting
     if (trailing and (linebuf[lineindex] != "")):
-        if do_print == 1: print parsed_c_file + " trailing:" + str(trailing) + " is_addition:" + str(is_addition) + " backtrailing:" + str(backtrailing) + " inside_expression:" + str(inside_expression) + " skip:" + str(skip)
-        if do_print == 1: print parsed_c_file + " >" + linebuf[lineindex].rstrip()
+        if do_print == 1:
+            print(parsed_c_file + " trailing:" + str(trailing) + " is_addition:" + str(is_addition) + " backtrailing:" + str(backtrailing) + " inside_expression:" + str(inside_expression) + " skip:" + str(skip))
+        if do_print == 1:
+            print(parsed_c_file + " >" + linebuf[lineindex].rstrip())
 
     if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_statement) and (not skip_backtrail) and (not skip_lvalue)):
         i = 0
         while (i < len(re_exppatternlist)):
             re_exp = re_exppatternlist[i]
             if (re_exp.match(linebuf[lineindex])):
-               if do_print == 1: print "FOUND EXP: start: (" + lstart.rstrip() + "," + cstart.rstrip() + ")" + linebuf[lineindex].rstrip()
+               if do_print == 1:
+                   print("FOUND EXP: start: (" + lstart.rstrip() + "," + cstart.rstrip() + ")" + linebuf[lineindex].rstrip())
 
                # Sanity check
                if (int(lstart) > int(cf_len)):
@@ -480,7 +502,8 @@ while (lineindex<linestotal):
 
                # Self contained expression
                if (exppatternmode[i] == 1):
-#                  if do_print == 1: print "Self contained"
+                   #if do_print == 1:
+                       #print "Self contained"
                    expdb_linestart.append(int(lstart))
                    expdb_colstart.append(int(cstart))
                    expdb_lineend.append(int(lend))
@@ -507,7 +530,8 @@ while (lineindex<linestotal):
                    expdb_exptext.append(linebuf[lineindex])
                    expdb_in_c_file.append(in_parsed_c_file)
                    expdb_exppatternmode.append(2)
-#                   if do_print == 1: print "START: (" + lstart + "," + cstart + ")"
+                   #if do_print == 1:
+                        #print("START: (" + lstart + "," + cstart + ")")
                    inside_expression = lineindex
 
                # Need to look for last sub expression. Also need to add length of keyword
@@ -524,7 +548,8 @@ while (lineindex<linestotal):
                    expdb_exptext.append(linebuf[lineindex])
                    expdb_in_c_file.append(in_parsed_c_file)
                    expdb_exppatternmode.append(2)
-#                   if do_print == 1: print "START: (" + lstart + "," + cstart + ")"
+                   #if do_print == 1:
+                        #print("START: (" + lstart + "," + cstart + ")")
                    inside_expression = lineindex
 
             i+=1
@@ -535,14 +560,16 @@ while (lineindex<linestotal):
         in_parsed_c_file = 1
 
     # If lstart or curstart moved forward in parsed c file, update
-    if ( line_position_updated and in_parsed_c_file and (int(lstart) > int(last_lstart))): 
+    if ( line_position_updated and in_parsed_c_file and (int(lstart) > int(last_lstart))):
         last_lstart=lstart
         last_cstart=cstart
-        if do_print == 1: print "Line moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart
+        if do_print == 1:
+            print("Line moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
 
     if ( col_position_updated and in_parsed_c_file and (int(lstart) == int(last_lstart)) and ( int(cstart) > int(last_cstart) ) ):
         last_cstart=cstart
-        if do_print == 1: print "Column moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart
+        if do_print == 1:
+            print("Column moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
 
     # Update lend and cend to reflect the position BEFORE THE NEXT expression, and not beginning iof the last in this one. See above...
     lstart = lend
@@ -567,8 +594,8 @@ exp_pdf = open(sys.argv[4], "w")
 pdf = open(sys.argv[3], "w")
 
 # Insert probes
-if do_print == 1: print "Probing starting at {}".format(parsed_c_file)
-
+if do_print == 1:
+    print("Probing starting at {}".format(parsed_c_file))
 
 i=0
 while (i < expdb_index):
@@ -592,7 +619,8 @@ while (i < expdb_index):
     if ((ls == ele) and (ece <= cs)):
         bail_out=1
 
-    if do_print == 1: print str(expdb_in_c_file[i]) + "  EXP:" + expdb_exptext[i].rstrip() + "STARTPOS: (" + str(ls) + "," + str(cs) + ")" + "ENDPOS: (" + str(le) + "," + str(ce) + ")" + "ECE: " + str(ece) + "Tab: " + str(tab)
+    if do_print == 1:
+        print(str(expdb_in_c_file[i]) + "  EXP:" + expdb_exptext[i].rstrip() + "STARTPOS: (" + str(ls) + "," + str(cs) + ")" + "ENDPOS: (" + str(le) + "," + str(ce) + ")" + "ECE: " + str(ece) + "Tab: " + str(tab))
 
     #single line
     #    if (ls==le):
@@ -601,12 +629,15 @@ while (i < expdb_index):
             line = pbuf[ls]
 
             iline = line[:cs] + "(DMCE_PROBE(TBD)," + line[cs:ce+1] + ")" + line[ce+1:]
-            if do_print == 1: print "Old single line: " + line.rstrip()
-            if do_print == 1: print "New single line: " + iline.rstrip()
+            if do_print == 1:
+                print("Old single line: " + line.rstrip())
+            if do_print == 1:
+                print("New single line: " + iline.rstrip())
             pbuf.pop(ls)
             pbuf.insert(ls,iline)
             probed_lines.append(ls)
-            if do_print == 1: print "1 Added line :" + str(ls)
+            if do_print == 1:
+                print("1 Added line :" + str(ls))
             pdf.write(parsed_c_file + ":" + str(ls) + "\n")
     else:
         # Multiple lines
@@ -618,13 +649,15 @@ while (i < expdb_index):
             lp=ls
             while (lp < ele):
                 probed_lines.append(lp)
-                if do_print == 1: print "2 Added line :" + str(lp)
+                if do_print == 1:
+                    print("2 Added line :" + str(lp))
                 lp +=1
 
             cp=ece
 
             found=0
-            if do_print == 1: print "Searching from (" + str(lp+1) + "," + str(cp) + ")"
+            if do_print == 1:
+                print("Searching from (" + str(lp+1) + "," + str(cp) + ")")
             stack_curly=0
             stack_parentesis=0
             stack_bracket=0
@@ -676,8 +709,10 @@ while (i < expdb_index):
                 line = "".join(line_no_strings)
 
                 tail = line[cp:]
-                if do_print == 1: print "LINE: " + line
-                if do_print == 1: print "TAIL: " + tail
+                if do_print == 1:
+                    print("LINE: " + line)
+                if do_print == 1:
+                    print("TAIL: " + tail)
 
                 # Find first ) } ] or comma that is not inside brackets of any kind
                 pos_index = 0
@@ -725,7 +760,8 @@ while (i < expdb_index):
 
                     pos_index+=1
 
-                if do_print == 1: print "index: " + str(pos_index)
+                if do_print == 1:
+                    print("index: " + str(pos_index))
 
                 if (pos_index < len(tail) and not bail_out):
                     found=1
@@ -741,12 +777,14 @@ while (i < expdb_index):
 ##                        if (cp < ce):
 #                        ce = cp
 
-                    if do_print == 1: print "FOUND EARLY: (" + str(le+1) + "," + str(ce) + ") in:" + pbuf[lp].rstrip()
+                    if do_print == 1:
+                        print("FOUND EARLY: (" + str(le+1) + "," + str(ce) + ") in:" + pbuf[lp].rstrip())
 
 
                 cp=0 # All following lines need to be searched from beginnning of line
                 probed_lines.append(lp)
-                if do_print == 1: print "3 Added line :" + str(lp+1)
+                if do_print == 1:
+                    print("3 Added line :" + str(lp+1))
                 lp+=1
 
             # pre insertion
@@ -757,10 +795,12 @@ while (i < expdb_index):
                 for re_exp in re_cxl_list:
                     j=0
                     while (ls + j) <= le:
-                        if do_print == 1: print "searching for '{}' in '{}'".format(re_exp.pattern, pbuf[ls + j])
+                        if do_print == 1:
+                            print("searching for '{}' in '{}'".format(re_exp.pattern, pbuf[ls + j]))
                         if (re_exp.match(pbuf[ls + j])):
                             match_exclude = 1
-                            if do_print == 1: print "match_exclude=1"
+                            if do_print == 1:
+                                print("match_exclude=1")
                             break
                         j = j + 1
 
@@ -770,8 +810,10 @@ while (i < expdb_index):
                 if (not match_exclude):
                     # Pick line to insert prolog
                     iline_start = line[:cs] + probe_prolog + line[cs:]
-                    if do_print == 1: print "Old starting line: " + line.rstrip()
-                    if do_print == 1: print "New starting line: " + iline_start.rstrip()
+                    if do_print == 1:
+                        print("Old starting line: " + line.rstrip())
+                    if do_print == 1:
+                        print("New starting line: " + iline_start.rstrip())
 
                     # if start and end on same line, compensate column for inserted data
                     if (ls == le):
@@ -786,13 +828,16 @@ while (i < expdb_index):
                         pbuf.insert(ls,iline_start)
 
                         # Pick line to insert epilog
-                        if do_print == 1: print "Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip()
+                        if do_print == 1:
+                            print("Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip())
                         line = pbuf[le]
                         iline_end = line[:ce] + probe_epilog + line[ce:]
 
                         # Print summary
-                        if do_print == 1: print "Old ending line: " + line.rstrip()
-                        if do_print == 1: print "New ending line: " + iline_end.rstrip()
+                        if do_print == 1:
+                            print("Old ending line: " + line.rstrip())
+                        if do_print == 1:
+                            print("New ending line: " + iline_end.rstrip())
 
                         # Insert epilog
                         pbuf.pop(le)
@@ -808,24 +853,24 @@ while (i < expdb_index):
                             re_exp = re_exppatternlist[pat_i]
                             if (re.match(re_exp, tmp_exp)):
                                 if do_print == 1:
-                                    print "-"*20
-                                    print "Assigning a Probe expression index"
-                                    print "-"*20
-                                    print "Local Probe number: " + str(probes)
-                                    print "EXP_index: " + str(pat_i)
-                                    print "Matched with: " + re_exp.pattern
-                                    print "EXP string: " + tmp_exp
-                                    print "#"*5 + " TO NEW EXPRESSION FILE " + "#"*5
+                                    print("-"*20)
+                                    print("Assigning a Probe expression index")
+                                    print("-"*20)
+                                    print("Local Probe number: " + str(probes))
+                                    print("EXP_index: " + str(pat_i))
+                                    print("Matched with: " + re_exp.pattern)
+                                    print("EXP string: " + tmp_exp)
+                                    print("#"*5 + " TO NEW EXPRESSION FILE " + "#"*5)
                                 exp_data = re.match(exp_pat, tmp_exp)
                                 exp_type = exp_data.group(1).strip()
                                 exp_operator = exp_data.group(2).strip()
                                 if do_print == 1:
-                                    print "File: " + parsed_c_file
-                                    print "Local probe number: " + str(probes)
-                                    print "EXPR index: " + str(pat_i)
-                                    print "EXP: " + exp_type
-                                    print "Value: " + exp_operator
-                                    print "-"*100
+                                    print("File: " + parsed_c_file)
+                                    print("Local probe number: " + str(probes))
+                                    print("EXPR index: " + str(pat_i))
+                                    print("EXP: " + exp_type)
+                                    print("Value: " + exp_operator)
+                                    print("-"*100)
                                 # Write output to the <exprdata>-file
                                 # <c_file>:<line number>:<expression pattern index>:<full Clang expression>
                                 exp_pdf.write(parsed_c_file + ":" + str(ls) + ":" + str(pat_i) + ":" + exp_data.group().rstrip() + "\n")
@@ -845,4 +890,4 @@ for line in pbuf:
 pdf.close()
 exp_pdf.close()
 
-print '{:5.1f} ms {:5} probes'.format((time.time()-time1)*1000.0, probes)
+print('{:5.1f} ms {:5} probes'.format((time.time()-time1)*1000.0, probes))

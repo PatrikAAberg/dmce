@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -25,7 +25,7 @@ import re
 probes = []
 executed_probes = []
 
-print "Summary (PROBED:NBR:FILE:LINE) "
+print("Summary (PROBED:NBR:FILE:LINE) ")
 
 # Read all executed probes in log
 total=0
@@ -48,17 +48,17 @@ with open(sys.argv[2]) as probefile:
             if m:
                 probes_nbr+=1
                 if m.group(1) in executed_probes_sorted:
-                     print "[YES] " + line.rstrip()
+                     print("[YES] " + line.rstrip())
                 else:
-                     print "[NO ] " + line.rstrip()
+                     print("[NO ] " + line.rstrip())
             else:
-                print "Probe reference file corrupt!"
+                print("Probe reference file corrupt!")
 
 exprobes_nbr = len(executed_probes_sorted)
 
 print
-print "Total probes executed: {}".format(len(executed_probes))
-print "Uniq probes executed: {}".format(len(executed_probes_sorted))
-print "Number of probes: {}".format(probes_nbr)
+print("Total probes executed: {}".format(len(executed_probes)))
+print("Uniq probes executed: {}".format(len(executed_probes_sorted)))
+print("Number of probes: {}".format(probes_nbr))
 print
-print "Test coverage: {:.1f} %".format(exprobes_nbr / float(probes_nbr) * 100)
+print("Test coverage: {:.1f} %".format(exprobes_nbr / float(probes_nbr) * 100))

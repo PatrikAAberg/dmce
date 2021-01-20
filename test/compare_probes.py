@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2019 Ericsson AB
 #
@@ -44,7 +44,7 @@ do_print=1
 time1 = time.time()
 
 if (len(sys.argv) != 3):
-    print "Usage: compare_probes <probe-references.log> <expr-references.log>"
+    print("Usage: compare_probes <probe-references.log> <expr-references.log>")
     exit()
 
 class bcolors:
@@ -69,22 +69,22 @@ expr_file.close()
 
 # Function to call if the test failed
 def test_failed(probe_nbr, error_msg):
-    print bcolors.FAIL
-    print "#"*12
-    print "Test failed!"
-    print "Probe: " + str(probe_nbr) + " is wrong."
-    print error_msg
-    print "#"*12
-    print bcolors.ENDC
+    print(bcolors.FAIL)
+    print("#"*12)
+    print("Test failed!")
+    print("Probe: " + str(probe_nbr) + " is wrong.")
+    print(error_msg)
+    print("#"*12)
+    print(bcolors.ENDC)
     exit()
 
 
 # Check if the files have the same number of entries
 n_lines = len(probe_buf)
 if (n_lines==len(expr_buf)):
-    print "Both files have the same length: " + str(n_lines) + " lines"
+    print("Both files have the same length: " + str(n_lines) + " lines")
 else:
-    print "The files does not have the same length."
+    print("The files does not have the same length.")
 
 
 # Used for c expression recognition
@@ -111,7 +111,6 @@ re_exppatternlist = []
 
 for exp in exppatternlist:
     re_exppatternlist.append(re.compile(exp))
-    
 
 # Iterate through the entries and compare probes
 i = 0
@@ -158,6 +157,4 @@ while ( i<n_lines ):
 
     i += 1
 
-print bcolors.OKGREEN + "All probes were correct!" + bcolors.ENDC
-
-    
+print(bcolors.OKGREEN + "All probes were correct!" + bcolors.ENDC)
