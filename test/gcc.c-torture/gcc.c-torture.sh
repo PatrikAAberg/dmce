@@ -2,7 +2,7 @@
 
 set -e
 
-gcc_version=6.3.0
+gcc_version=9.3.0
 PROG_NAME=$(basename $0 .sh)
 
 function _echo() {
@@ -36,16 +36,16 @@ set -e
 
 pushd ${my_work_path} &> /dev/null
 
-if [ ! -e "gcc-${gcc_version}.tar.bz2" ]; then
+if [ ! -e "gcc-${gcc_version}.tar.xz" ]; then
 	_echo "fetch GCC"
 	set -x
-	wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2
+	wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz
 	{ set +x; } 2>/dev/null
 fi
 
 _echo "unpack GCC"
 set -x
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.bz2 gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 { set +x; } 2>/dev/null
 
 _echo "create git"
