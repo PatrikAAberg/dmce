@@ -149,6 +149,9 @@ declare -A folders=()
 
 # Creating folder structure
 for c_file in $FILE_LIST; do
+	if [[ ! "${c_file}" == */* ]]; then
+		continue
+	fi
 	dirname=${c_file%/*}
 	[[ "${folders[$dmcepath/new/$dirname]+foobar}" ]]      && continue || folders[$dmcepath/new/$dirname]=1
 	[[ "${folders[$dmcepath/old/$dirname]+foobar}" ]]                  || folders[$dmcepath/old/$dirname]=1
