@@ -39,13 +39,16 @@ function summary
 
 function jobcap {
 	while true; do
-		[ "$(pgrep -f $1 | wc -l || :)" -lt "100" ] && break || sleep 0.5
+		if [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ]; then
+			break
+		fi
+		sleep 0.5
 	done
 }
 
 # Usage
-if [ "$#" -ne 4 ]; then
-	echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root>"
+if [ "$#" -ne 5 ]; then
+	echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root> <offset>"
 	exit 1
 fi
 
@@ -53,7 +56,7 @@ fi
 TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
 _echo() {
-	echo $(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$@
+	echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
 }
 _echo "init"
 # Variable set up and config
@@ -64,6 +67,7 @@ git_top=$1
 newsha=$2
 oldsha=$3
 old_git_dir=$4
+offset=$5
 dmcepath="$DMCE_WORK_PATH/$git_project"
 
 _echo "binary path             : $binpath"
@@ -90,7 +94,7 @@ git_fmt='%h?%ar?%ae?%s'
 _str="old:?$(git --no-pager log -1 --format=$git_fmt $oldsha)\nnew:?$(git --no-pager log -1 --format=$git_fmt $newsha)"
 _echo -e "$_str" | column -t -s? 2> /dev/null
 _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
-git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | egrep '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
+git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
 # Add the added and modified files
 git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$" >> $dmcepath/latest.cache || :
 # Sanity check
@@ -100,15 +104,15 @@ _echo "git found $nbr_of_files modified and added files"
 
 _echo "updating filecache removing exceptions. "
 # Exclude comments and blank rows
-egrep -v '^#|^$' $configpath/dmce.include > $dmcepath/workarea/dmce.include
-egrep -v '^#|^$' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
+grep -E -v '^#|^$' $configpath/dmce.include > $dmcepath/workarea/dmce.include
+grep -E -v '^#|^$' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
 
 _echo "includes: "
 cat $dmcepath/workarea/dmce.include
 _echo "excludes: "
 cat $dmcepath/workarea/dmce.exclude
 grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
-_echo "$(($nbr_of_files-$(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
+_echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
 comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
 mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
@@ -120,7 +124,7 @@ fi
 
 # Populate FILE_LIST
 FILE_LIST=""
-while read c_file; do
+while read -r c_file; do
 	[ -e $c_file ] || continue
 	FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
@@ -180,8 +184,8 @@ if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
 	echo '[' >  $dmcepath/old/compile_commands.json
 
 	# Assemble json files
-	find $dmcepath/new -name '*.JSON' | xargs cat >> $dmcepath/new/compile_commands.json &
-	find $dmcepath/old -name '*.JSON' | xargs cat >> $dmcepath/old/compile_commands.json &
+	find $dmcepath/new -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/new/compile_commands.json &
+	find $dmcepath/old -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/old/compile_commands.json &
 	wait
 
 	# JSON end
@@ -215,7 +219,7 @@ wait
 FILE_LIST_NEW="${FILE_LIST}"
 if [ -e $dmcepath/workarea/clang-list.old ]; then
 	FILE_LIST_OLD=""
-	while read c_file; do
+	while read -r c_file; do
 		FILE_LIST_OLD+="$c_file "
 	done < $dmcepath/workarea/clang-list.old
 fi
@@ -224,15 +228,21 @@ _echo "running clang-check"
 i=0
 for c_file in $FILE_LIST_OLD; do
 	clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
-	let 'i = i + 1'
-	[ "$i" -gt 500 ] && i=0 && jobcap clang-check
+	(( i+=1 ))
+	if [ "$i" -gt 500 ]; then
+		i=0
+		jobcap clang-check
+	fi
 done
 
 i=0
 for c_file in $FILE_LIST_NEW; do
 	clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
-	let 'i = i + 1'
-	[ "$i" -gt 500 ] && i=0 && jobcap clang-check
+	(( i+=1 ))
+	if [ "$i" -gt 500 ]; then
+		i=0
+		jobcap clang-check
+	fi
 done
 wait
 
@@ -293,7 +303,7 @@ for c_file in $FILE_LIST; do
 	$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
 wait
-find $dmcepath/new -name '*probegen.log' |  xargs tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
+find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
 
 _echo "create probe/skip list:"
 find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/probe-list &
@@ -307,7 +317,7 @@ if [ -e "$DMCE_PROBE_PROLOG" ]; then
 	# size_of_user compensates for the header put first in all source files by DMCE
 	size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
 else
-	nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat | wc -l)
+	nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
 	cat > $dmcepath/workarea/probe-header << EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
 #define __DMCE_PROBE_FUNCTION__HEADER__
@@ -320,7 +330,7 @@ EOF
 	size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
 fi
 
-while read c_file; do
+while read -r c_file; do
   {
 	  # Header
 	  cat $dmcepath/workarea/probe-header > $dmcepath/workarea/$c_file
@@ -341,7 +351,7 @@ while read c_file; do
 done < $dmcepath/workarea/probe-list
 
 # remove skipped working files from tree
-xargs rm <<<$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list) || :
+xargs rm -v <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
 
 wait
 
@@ -349,16 +359,16 @@ _echo "results:"
 files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )
 files_skipped=$(wc -l <$dmcepath/workarea/skip-list 2> /dev/null)
 echo "$files_probed file(s) probed:"
-while read f; do
+while read -r f; do
 	echo "$git_top/$f"
 done < $dmcepath/workarea/probe-list
 echo "$files_skipped file(s) skipped"
 
 if [ "$files_skipped" -gt 0 ]; then
 	echo "To view deltas manually:"
-	while read f; do
+	while read -r f; do
 		echo "diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f"
-		if ! [ -z ${DMCE_VERBOSE_OUTPUT+x} ]; then
+		if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
 			diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f
 		fi
 	done < $dmcepath/workarea/skip-list
@@ -378,7 +388,7 @@ else
 	declare -a file_list=()
 	declare -a str=()
 	while IFS=':' read -r file line; do
-		let 'line = line + size_of_user + 1'
+		((line = line + size_of_user + 1))
 
 		if [ "$nextfile" == "" ]; then
 			# First time, create 'sed' expression
@@ -401,8 +411,8 @@ else
 		nextfile=$file
 		str+=("$probe_nbr:$file:$line\n")
 
-		let 'probe_nbr = probe_nbr + 1'
-	done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 | xargs cat)"
+		((probe_nbr = probe_nbr + 1))
+	done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat)"
 
 	printf "${str[*]}" > $dmcepath/probe-references.log &
 
@@ -427,17 +437,18 @@ else
 	declare -a str=()
 	for file in "${file_list[@]}"; do
 		while IFS=: read -r nop line exp_index full_exp; do
-			let 'line = line + size_of_user + 1'
+			echo $nop > /dev/null
+			((line = line + size_of_user + 1))
 			str+=("$probe_nbr:$file:$line:$exp_index:$full_exp\n")
-			let 'probe_nbr = probe_nbr + 1'
+			(( probe_nbr+=1 ))
 		done <$dmcepath/new/${file}.exprdata
 	done
 	printf "${str[*]}" > $dmcepath/expr-references.log
 fi
 
-_echo "$(basename $git_top) summary:"
-echo $PWD
-if ! [ -z ${DMCE_VERBOSE_OUTPUT+x} ]; then
-	git --no-pager show --stat $oldsha..$newsha --oneline
+_echo "$(basename "$git_top") summary:"
+echo "$PWD"
+if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
+	git --no-pager show --stat "$oldsha".."$newsha" --oneline
 fi
 summary

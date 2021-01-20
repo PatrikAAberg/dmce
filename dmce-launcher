@@ -19,7 +19,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-NAME=$(basename $0)
+NAME=$(basename "$0")
 
 function _echo {
 	echo "$(date '+%Y-%m-%d %H:%M:%S'):$NAME:$*"
@@ -125,23 +125,21 @@ while getopts "$optspec" optchar; do
 					usage
 					;;
 				head)
-					val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+					val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
 					new=$val
 					checkout_head=true
 					;;
 				offset)
-					val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+					val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
 					offset=$val
 					;;
 				head=*)
 					val=${OPTARG#*=}
-					opt=${OPTARG%=$val}
 					new=$val
 					checkout_head=true
 					;;
 				offset=*)
 					val=${OPTARG#*=}
-					opt=${OPTARG%=$val}
 					offset=$val
 					;;
 				skip)
@@ -168,7 +166,7 @@ while getopts "$optspec" optchar; do
 			print_version_and_exit=true
 			;;
 		d)
-			weeks=($OPTARG)
+			weeks=("$OPTARG")
 			search_method="weeks"
 			;;
 		n)
@@ -196,13 +194,13 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 # Variable set up and config
 
 git_root=$PWD
-git_name=$(basename $PWD)
+git_name=$(basename "$PWD")
 
 # Find out what config file to use. Start with the one in the git
 
-if [ -e $git_root/.dmceconfig ]; then
-	USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
-elif [ -e $HOME/.dmceconfig ]; then
+if [ -e "${git_root}"/.dmceconfig ]; then
+	USE_DMCE_CONFIG_FILE="${git_root}"/.dmceconfig
+elif [ -e "$HOME"/.dmceconfig ]; then
 	USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
 else
 	_echo "Could not find a valid dmce config file. Did you run install?"
@@ -210,7 +208,7 @@ else
 fi
 
 _echo "config file: $USE_DMCE_CONFIG_FILE"
-while read dmceconfig; do
+while read -r dmceconfig; do
 	if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
 		continue
 	fi
@@ -218,10 +216,10 @@ while read dmceconfig; do
 	conf_val=${dmceconfig##*:}
 	# escape double quotes
 	conf_val=${conf_val//\"/\\\"}
-	eval $conf_var=\"$conf_val\"
-	export $conf_var
-done < $USE_DMCE_CONFIG_FILE
-_echo "args: $@ version: $(git -C $DMCE_EXEC_PATH --no-pager log --pretty='%h' -1)"
+	eval "$conf_var"=\""$conf_val"\"
+	export "${conf_var:?}"
+done < "$USE_DMCE_CONFIG_FILE"
+_echo "args: $* version: $(git -C "$DMCE_EXEC_PATH" --no-pager log --pretty='%h' -1)"
 
 [ "$print_version_and_exit" = true ] && exit
 
@@ -229,7 +227,7 @@ dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> 
 if [ "$dmce_double" != "" ]; then
 	_echo "restoring old probe state"
 	for f in $dmce_double; do
-		mv $f ${f%%.orginal} &
+		mv "$f" "${f%%.orginal}" &
 	done
 	wait
 fi
@@ -242,14 +240,13 @@ if [ "$restore" = true ]; then
 fi
 
 _echo "initialize log"
-logfile=$(basename $0 .sh)-$(basename $git_root)-$(date '+%Y%m%d-%H%M%S').log
-mkdir -p $DMCE_LOG_FILES
-exec > >(tee -i $DMCE_LOG_FILES/$logfile)
+logfile="$(basename "$0" .sh)-$(basename "$git_root")-$(date '+%Y%m%d-%H%M%S').log"
+mkdir -p "$DMCE_LOG_FILES"
+exec > >(tee -i "$DMCE_LOG_FILES/$logfile")
 exec 2>&1
 
 if [ "$checkout_head" = true ]; then
-	git checkout $new
-	if [ "$?" != 0 ]; then
+	if ! git checkout "${new}"; then
 		echo ""
 		_echo "git tree is dirty. Cannot checkout $new."
 		_echo "please clean the $git_root before proceeding."
@@ -259,11 +256,11 @@ if [ "$checkout_head" = true ]; then
 fi
 
 if [ "$search_method" == "weeks" ]; then
-	_echo "search by weeks ($weeks)"
-	old=$(git log -n 1 --before=$weeks.weeks --pretty=%h | head -n 1)
+	_echo "search by weeks (${weeks[0]})"
+	old=$(git log -n 1 --before="${weeks[0]}".weeks --pretty=%h | head -n 1)
 elif [ "$search_method" == "commits" ]; then
 	_echo "search by number of commits ($number_of_commits)"
-	old=$(git log --oneline -$number_of_commits --pretty=%h | tail -1)
+	old=$(git log --oneline -"$number_of_commits" --pretty=%h | tail -1)
 elif [ "$search_method" == "raw" ]; then
 	_echo "search from $new to $old"
 else
@@ -274,55 +271,52 @@ if [ "$skip" = false ]; then
 	_echo "set up DMCE include directory"
 
 	# remove old inc directory
-	rm -rf $DMCE_WORK_PATH/inc/{old,new} &> /dev/null
+	rm -rf "${DMCE_WORK_PATH}"/inc/{old,new} &> /dev/null
 
 	# re-create inc directories
-	mkdir -p $DMCE_WORK_PATH/inc/{old,new}
+	mkdir -p "${DMCE_WORK_PATH}"/inc/{old,new}
 
 	# If stupid mode, create empty directory
 	if [ "$stupid" = true ]; then
 		_echo "stupid mode enabled, no include files used"
 	else
 		old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
-		mkdir -vp ${old_git_dir}
+		mkdir -vp "${old_git_dir}"
 
 		# check if we have 'git worktree' (git 2.5) on this machine
 		if git help -a | grep -q worktree; then
 			_echo "set up old SHA-1: ${old_git_dir} using 'git worktree'"
-			if ! git -C $git_root worktree list | grep -q ${old_git_dir}; then
-				git -C $git_root worktree add ${old_git_dir} $old
+			if ! git -C "${git_root}" worktree list | grep -q "${old_git_dir}"; then
+				git -C "${git_root}" worktree add "${old_git_dir}" "${old}"
 			fi
 		else
 			_echo "set up old SHA-1: ${old_git_dir} using 'cp'"
-			cp -ar $git_root ${old_git_dir} &>/dev/null
+			cp -ar "${git_root}" "${old_git_dir}" &>/dev/null
 		fi
 
-		git -C ${old_git_dir} clean -dfx &>/dev/null
-		git -C ${old_git_dir} reset --hard &>/dev/null
-		git -C ${old_git_dir} checkout $old &>/dev/null
+		git -C "${old_git_dir}" clean -dfx &>/dev/null
+		git -C "${old_git_dir}" reset --hard &>/dev/null
+		git -C "${old_git_dir}" checkout "${old}" &>/dev/null
 
 		_echo "copy header files to $DMCE_WORK_PATH/inc/new"
-		find $git_root -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/new/ {} + &>/dev/null || :
-		_echo "found $(find $DMCE_WORK_PATH/inc/new -type f | wc -l) file(s)"
+		find "${git_root}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/inc/new/ {} + &>/dev/null || :
+		_echo "found $(find "$DMCE_WORK_PATH"/inc/new -type f | wc -l) file(s)"
 
 		_echo "copy header files to $DMCE_WORK_PATH/inc/old"
-		find $old_git_dir -name "*.h" -exec cp -t $DMCE_WORK_PATH/inc/old/ {} + &>/dev/null || :
-		_echo "found $(find $DMCE_WORK_PATH/inc/old -type f | wc -l) file(s)"
+		find "${old_git_dir}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/inc/old/ {} + &>/dev/null || :
+		_echo "found $(find "$DMCE_WORK_PATH"/inc/old -type f | wc -l) file(s)"
 
 		_echo "removing relative paths in include files"
-		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/new
-		$DMCE_EXEC_PATH/dmce-remove-relpaths.sh $DMCE_WORK_PATH/inc/old
+		"${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/inc/new
+		"${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/inc/old
 	fi
 	_echo "clean out probe database"
-	> $DMCE_WORK_PATH/global_probedata.dmce
+	true > "${DMCE_WORK_PATH}"/global_probedata.dmce
 fi
 
 time {
-# Make offset visible for dmce.sh
-export offset
-
 _echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir"
-if ! $DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir; then
+if ! "$DMCE_EXEC_PATH"/dmce.sh "${git_root}" "${new}" "${old}" "${old_git_dir}" ${offset}; then
 	_echo "error: dmce.sh failed - check logs"
 	exit 1
 fi
