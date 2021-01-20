@@ -2,7 +2,7 @@
 
 set -e
 
-gcc_version=9.3.0
+gcc_version=$(gcc --version| grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+'|head -1)
 PROG_NAME=$(basename $0 .sh)
 
 function _echo() {
