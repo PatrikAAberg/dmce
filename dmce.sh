@@ -404,7 +404,7 @@ size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
   done < $dmcepath/workarea/probe-list
 
   # remove skipped working files from tree
-  xargs rm <<<$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)
+  xargs rm <<<$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list) || :
 
   wait
 }
