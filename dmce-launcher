@@ -89,12 +89,17 @@ exit 1
 }
 
 if ! command -v clang-check > /dev/null; then
-	echo "error: clang-check is not found"
+	echo "error: clang-check not found"
 	exit 1
 fi
 
 if ! command -v bc > /dev/null; then
-	echo "error: bc is not found"
+	echo "error: bc not found"
+	exit 1
+fi
+
+if ! command -v python3 > /dev/null; then
+	echo "error: python3 not found"
 	exit 1
 fi
 
