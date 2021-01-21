@@ -39,7 +39,10 @@ pushd ${my_work_path} &> /dev/null
 if [ ! -e "gcc-${gcc_version}.tar.xz" ]; then
 	_echo "fetch GCC"
 	set -x
-	wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz
+	if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz; then
+		echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
+		exit 1
+	fi
 	{ set +x; } 2>/dev/null
 fi
 
