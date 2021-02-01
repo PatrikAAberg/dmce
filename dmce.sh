@@ -409,12 +409,12 @@ else
 		fi
 
 		nextfile=$file
-		str+=("$probe_nbr:$file:$line\n")
+		str+=("$probe_nbr:$file:$line")
 
 		((probe_nbr = probe_nbr + 1))
 	done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat)"
 
-	printf "${str[*]}" > $dmcepath/probe-references.log &
+	printf "%s\n" ${str[*]} > "$dmcepath/probe-references.log" &
 
 	# Last file, remember sed command
 	SED_CMDS+=("$SED_EXP $git_top/$nextfile")
@@ -439,11 +439,14 @@ else
 		while IFS=: read -r nop line exp_index full_exp; do
 			echo $nop > /dev/null
 			((line = line + size_of_user + 1))
-			str+=("$probe_nbr:$file:$line:$exp_index:$full_exp\n")
+			str+=("$probe_nbr:$file:$line:$exp_index:$full_exp")
 			(( probe_nbr+=1 ))
 		done <$dmcepath/new/${file}.exprdata
 	done
-	printf "${str[*]}" > $dmcepath/expr-references.log
+
+	for ((i = 0; i < ${#str[@]}; i++)); do
+		echo "${str[$i]}" >> "$dmcepath/expr-references.log"
+	done
 fi
 
 _echo "$(basename "$git_top") summary:"
