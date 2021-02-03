@@ -313,6 +313,8 @@ find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | se
 find $dmcepath/new -name '*.probedata' -size 0   | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/skip-list &
 wait
 
+nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
+
 _echo "update probed files"
 if [ -e "$DMCE_PROBE_PROLOG" ]; then
 	echo "Using prolog file: $DMCE_PROBE_PROLOG"
@@ -320,7 +322,6 @@ if [ -e "$DMCE_PROBE_PROLOG" ]; then
 	# size_of_user compensates for the header put first in all source files by DMCE
 	size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
 else
-	nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
 	cat > $dmcepath/workarea/probe-header << EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
 #define __DMCE_PROBE_FUNCTION__HEADER__
