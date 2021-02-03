@@ -212,6 +212,7 @@ else
 	exit 1
 fi
 
+echo "---"
 _echo "config file: $USE_DMCE_CONFIG_FILE"
 while read -r dmceconfig; do
 	if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then

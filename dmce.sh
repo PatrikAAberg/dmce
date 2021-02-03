@@ -27,13 +27,16 @@ files_probed=0
 files_skipped=0
 nbrofprobesinserted=0
 
-function summary
-{
+function summary {
 	echo "==============================================="
 	echo "Files examined          $nbr_of_files"
 	echo "Files probed            $files_probed"
 	echo "Files skipped           $files_skipped"
 	echo "Probes inserted         $nbrofprobesinserted"
+	if [ $nbrofprobesinserted -ne 0 ]; then
+		echo "Probes                  $dmcepath/probe-references.log"
+		echo "Expressions             $dmcepath/exp-references.log"
+	fi
 	echo "==============================================="
 }
 
@@ -206,7 +209,7 @@ for c_file in $FILE_LIST; do
 		if ! [ -e $old_git_dir/${c_file} ]; then
 			touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
 		else
-			cp -av $old_git_dir/${c_file} $dmcepath/old/$c_file
+			cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file
 			echo $c_file >> $dmcepath/workarea/clang-list.old
 		fi
 	}
@@ -374,13 +377,20 @@ if [ "$files_skipped" -gt 0 ]; then
 	done < $dmcepath/workarea/skip-list
 fi
 
+if [ -f "$dmcepath/probe-references.log" ]; then
+       rm -f "$dmcepath/probe-references.log"
+fi
+
+if [ -f "$dmcepath/expr-references.log" ]; then
+       rm -f "$dmcepath/expr-references.log"
+fi
+
 if [ "$files_probed" == 0 ]; then
 	nbrofprobesinserted=0
 else
 	_echo "assemble and assign probes"
 	# Assign DMCE_PROBE numbers.
 	probe_nbr=$offset
-	[ -e $dmcepath/probe-references.log ] && rm -f $dmcepath/probe-references.log
 	nextfile=""
 	file=""
 	# set-up an ordered list with the probe-files
@@ -433,7 +443,6 @@ else
 	# all the <$file>.exprdata into a global expr-references.log file
 	_echo "assemble and assign expression index for probes"
 	probe_nbr=$offset
-	[ -e $dmcepath/expr-references.log ] && rm -f $dmcepath/expr-references.log
 	declare -a str=()
 	for file in "${file_list[@]}"; do
 		while IFS=: read -r nop line exp_index full_exp; do
