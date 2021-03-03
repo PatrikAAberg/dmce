@@ -35,7 +35,7 @@ function summary {
 	echo "Probes inserted         $nbrofprobesinserted"
 	if [ $nbrofprobesinserted -ne 0 ]; then
 		echo "Probes                  $dmcepath/probe-references.log"
-		echo "Expressions             $dmcepath/exp-references.log"
+		echo "Expressions             $dmcepath/expr-references.log"
 	fi
 	echo "==============================================="
 }
@@ -165,11 +165,9 @@ for c_file in $FILE_LIST; do
 	[[ "${folders[$dmcepath/workarea/$dirname]+foobar}" ]]             || folders[$dmcepath/workarea/$dirname]=1
 done
 
-for i in "${!folders[@]}"; do
-	mkdir_cmd+="$i "
-done
-
-mkdir -p $mkdir_cmd
+if [ ${#folders[@]} -ne 0 ]; then
+	mkdir -vp "${!folders[@]}"
+fi
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
 
