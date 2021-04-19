@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+import argparse
+import re
+import numpy as np
+
+parser = argparse.ArgumentParser(description='log2bin')
+parser.add_argument('numprobes', type=str, help='log file (in)')  
+parser.add_argument('logfile', type=str, help='log file (in)')  
+parser.add_argument('binfile', type=str, help='Binary file (out)')  
+
+args = parser.parse_args()
+
+print("Reading log: " + args.logfile)
+
+lf = open(args.logfile)
+loglines = lf.read().splitlines()
+lf.close()
+
+MAX_NUM_PROBES = 100000
+probes_out = np.zeros(int(args.numprobes))
+
+max_probe = 0
+
+for line in loglines:
+    s = re.search ('DMCE_PROBE\((\d*)\)', line)
+    if s:
+        probenum = int(s.group(1))
+        probes_out[probenum] += 1
+
+print("Writing binary: " + args.binfile)
+
+probes_out.astype('uint32').tofile(args.binfile)
+
