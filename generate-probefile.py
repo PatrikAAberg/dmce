@@ -147,6 +147,8 @@ exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
                   '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
 re_exppatternlist = []
@@ -158,7 +160,7 @@ for exp in exppatternlist:
 #  1    Contained space, use as is
 #  2    Free, need to look for next
 #  x    Free, look for next at colpos + x
-exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 # Used to extract expression type and operator type
 exp_pat = re.compile('.*-(.*)\sHexnumber\s<.*\d>(.*)')
