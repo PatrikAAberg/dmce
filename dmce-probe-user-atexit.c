@@ -23,7 +23,7 @@ static void dmce_atexit(void){
     }
 
     size_t n = fread(dmce_tmp_buffer, DMCE_NUM_PROBES, 4, fp);
-    if (n != (4 * DMCE_NUM_PROBES))
+    if (n != DMCE_NUM_PROBES)
         printf("DMCE: Something went terribly wrong...\n");
 
     for (int i = 0; i < DMCE_NUM_PROBES; i++)
