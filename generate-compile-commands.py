@@ -35,11 +35,14 @@ except IOError:
     individualcmd=0
     lookupfile = []
 
-#default cmd line c
+#default cmd line .c
 defaultcmdline_c = os.environ.get('DMCE_DEFAULT_C_COMMAND_LINE')
 
-#default cmd line cpp
+#default cmd line .cpp
 defaultcmdline_cpp = os.environ.get('DMCE_DEFAULT_CPP_COMMAND_LINE')
+
+#default cmd line .h
+defaultcmdline_h = os.environ.get('DMCE_DEFAULT_H_COMMAND_LINE')
 
 #dmce work path
 workpath = os.environ.get('DMCE_WORK_PATH')
@@ -85,11 +88,14 @@ while (lineindex<linestotal):
           m_c = re.match( r'.*\.c$', linebuf[lineindex], re.M|re.I)
           m_cc = re.match( r'.*\.cc$', linebuf[lineindex], re.M|re.I)
           m_cpp = re.match( r'.*\.cpp$', linebuf[lineindex], re.M|re.I)
+          m_h = re.match( r'.*\.h$', linebuf[lineindex], re.M|re.I)
 
           if (m_c):
               command = defaultcmdline_c + " " + includes + " " + filename
           elif (m_cc or m_cpp):
               command = defaultcmdline_cpp + " " + includes + " " + filename
+          elif (m_h):
+              command = defaultcmdline_h + " " + includes + " " + filename
           else:
               print("file cache corrupt!")
               exit(-1)

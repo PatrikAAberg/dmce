@@ -97,9 +97,9 @@ git_fmt='%h?%ar?%ae?%s'
 _str="old:?$(git --no-pager log -1 --format=$git_fmt $oldsha)\nnew:?$(git --no-pager log -1 --format=$git_fmt $newsha)"
 echo -e "$_str" | column -t -s? 2> /dev/null
 _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
-git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$' | cut -f2 > $dmcepath/latest.cache
+git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > $dmcepath/latest.cache
 # Add the added and modified files
-git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$" >> $dmcepath/latest.cache || :
+git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$|[\w\/]+\.h$" >> $dmcepath/latest.cache || :
 # Sanity check
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 [ "$nbr_of_files" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
@@ -296,7 +296,6 @@ for c_file in $FILE_LIST; do
 done
 
 wait
-
 _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
 	[ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
