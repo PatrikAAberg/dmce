@@ -11,7 +11,7 @@ Probes c/c++ expressions added between two git revisions. Consists of a bunch of
 * Identify redundant test runs to optimize lab cost
 * Data source for test development / product development adherence metrics
 * Data source for delta code coverage metrics
-* Enables massive, parallel printf()-debugging with as lowe intrusion as you can make your probe (probes are pluggable)
+* Enables massive, parallel printf()-debugging with as low intrusion as you can make your probe (probes are pluggable)
 
 ### Probed code example
 
