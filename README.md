@@ -15,7 +15,7 @@ Probes c/c++ expressions added between two git revisions. Consists of a bunch of
 
 ### Probed code example
 
-Before dmce probing 
+Before dmce probing:
 
     int foo(int a) {
 
@@ -24,12 +24,14 @@ Before dmce probing
 
     int bar(int b) {
 
-        int c = foo(42);
+        int c;
 
+        c = foo(b);
         return c + 42;
     }
 
-After dmce probing
+After dmce probing:
+
 
     int foo(int a) {
 
@@ -38,9 +40,11 @@ After dmce probing
 
     int bar(int b) {
 
-        int c = foo(42);
+        int c;
 
-        return(DMCE_PROBE(1), c + 42);
+        (DMCE_PROBE(1),c = foo(b));
+
+        return(DMCE_PROBE(2), c + 42);
     }
 
 ### Reference project
