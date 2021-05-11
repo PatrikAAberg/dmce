@@ -199,7 +199,7 @@ re_parsed_c_file            = re.compile(".*\,\s" + parsed_c_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
 
 # Used in probe insertion pass
-re_regret_insertion         = re.compile(".*case.*DMCE.*:.*")
+re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*\}.*")
 
 # Regexps below skips (not_skip overrides skip) entire sections on block level
 re_sections_to_not_skip = []
