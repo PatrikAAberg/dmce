@@ -209,6 +209,7 @@ re_sections_to_skip = []
 re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*EnumDecl Hexnumber.*'))
+re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
 
 # Populate c expression database
 while (lineindex<linestotal):
