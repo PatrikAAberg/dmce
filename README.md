@@ -4,7 +4,7 @@ Source code level instrumentation tool that enables dynamic code execution track
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
-#### Examples of use:
+#### Examples of use
 
 * Typically used in a CI/CD pipeline, but due to it's simplicity it is also useful on the developer's prompt
 * Patch upload test for git / gerrit / jenkins setups. Instead of getting "pass / fail", you get "pass / fail / executed"
@@ -12,6 +12,36 @@ Probes c/c++ expressions added between two git revisions. Consists of a bunch of
 * Data source for test development / product development adherence metrics
 * Data source for delta code coverage metrics
 * Enables massive, parallel printf()-debugging with as lowe intrusion as you can make your probe (probes are pluggable)
+
+### Probed code example
+
+Before dmce probing 
+
+    int foo(int a) {
+
+        return a + 42;
+    }
+
+    int bar(int b) {
+
+        int c = foo(42);
+
+        return c + 42;
+    }
+
+After dmce probing
+
+    int foo(int a) {
+
+        return(DMCE_PROBE(0), a + 42);
+    }
+
+    int bar(int b) {
+
+        int c = foo(42);
+
+        return(DMCE_PROBE(1), c + 42);
+    }
 
 ### Reference project
 Ericsson Research use dmce with Travis CI within the Calvin project:
