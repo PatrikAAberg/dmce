@@ -74,7 +74,6 @@ git commit -m "initial commit"
 
 # Put crossed out ones here
 
-git rm Wparentheses-26.cpp
 git rm Wdouble-promotion.cpp
 git rm Wclass-memaccess.cpp
 git rm altivec-cell-3.cpp
