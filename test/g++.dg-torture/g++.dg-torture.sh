@@ -73,54 +73,153 @@ git add .
 git commit -m "initial commit"
 
 # Put crossed out ones here
-#git rm pr49644.cpp             # using namespace std::complex_literals
-#git rm pr91355.cpp             # dynamic exception specifications are deprecated
-#git rm pr82154.cpp             # dynamic exception specifications are deprecated
-#git rm pr70621.cpp             # Does not compile
-#git rm pr68220.cpp             # -fno-new-ttp-matching
-#git rm accessor-fixits-7.cpp   # Does not compile
-#git rm darwin-cfstring-3.cpp   # Does not compile
-#git rm pr64280.cpp             # Does not compile
-#git rm pr56768.cpp             # bool operator!= (Iter &, Iter &) { return(DMCE_PROBE(1636), true); }
-#git rm pr58380.cpp             # (DMCE_PROBE(TBD),  ~vector());
 
-# all except marked ones are dg-error
-#git rm non-dependent2.cpp
-#git rm template29.cpp
-#git rm crash44.cpp
-#git rm template28.cpp
-#git rm constant4.cpp
-#git rm crash58.cpp
-#git rm missing-template1.cpp
-#git rm crash23.cpp
-#git rm colon-autocorrect-1.cpp
-#git rm typename7.cpp
-#git rm crash40.cpp
-#git rm pr20118.cpp
-#git rm friend-main.cpp
-#git rm error20.cpp
-#git rm crash13.cpp
-#git rm pr18770.cpp
-#git rm error31.cpp
-#git rm else.cpp
-#git rm dtor15.cpp
-#git rm error11.cpp
-#git rm pr70635.cpp
-#git rm ivdep.cpp
-#git rm fn-template2.cpp
-#git rm lookup3.cpp
-#git rm class1.cpp
-#git rm varmod1.cpp # dg-message
-#git rm error61.cpp
-#git rm pr83634.cpp
-#git rm crash30.cpp
-#git rm casting-operator2.cpp
-#git rm error14.cpp
-#git rm pr26997.cpp
-#git rm semicolon3.cpp
-#git rm namespace-definition.cpp
-#git rm limits-initializer1.cpp
-#git commit -m "broken"
+git rm Wparentheses-26.cpp
+git rm Wdouble-promotion.cpp
+git rm Wclass-memaccess.cpp
+git rm altivec-cell-3.cpp
+git rm atomics-1.cpp
+git rm altivec-3.cpp
+git rm asm3.cpp
+git rm alias-decl-50.cpp
+git rm aligned-new8.cpp
+git rm cond8.cpp
+git rm auto-fn15.cpp
+git rm constexpr-array-ptr9.cpp
+git rm cgraph_edge.cpp
+git rm decomp2.cpp
+git rm defarg3.cpp
+git rm constexpr-arith-overflow.cpp
+git rm constexpr-56302.cpp
+git rm darwin-cfstring-3.cpp
+git rm elision2.cpp
+git rm altivec-1.cpp
+git rm bitfields.cpp
+git rm darwin-minversion-1.cpp
+git rm constexpr-attribute.cpp
+git rm auto-fn32.cpp
+git rm lambda-template2.cpp
+git rm fn-template9.cpp
+git rm elision.cpp
+git rm move-return1.cpp
+git rm defaulted21.cpp
+git rm atomics-2.cpp
+git rm lambda-uneval9.cpp
+git rm dllimport2.cpp
+git rm noexcept-6.cpp
+git rm noexcept-1.cpp
+git rm constexpr-default1.cpp
+git rm noexcept-4.cpp
+git rm attribute_plugin.c
+git rm def_plugin.c
+git rm gen-attrs-21.cpp
+git rm gen-attrs-48.cpp
+git rm mangle60.cpp
+git rm bitfields-2.cpp
+git rm invisiref2.cpp
+git rm constexpr-sfinae.cpp
+git rm arm-fp16-ops.h
+git rm invisiref2a.cpp
+git rm default-arg1.cpp
+git rm gen-attrs-49.cpp
+git rm initlist-deduce.cpp
+git rm pr42337.cpp
+git rm pch.cpp
+git rm inline12.cpp
+git rm noexcept-3.cpp
+git rm pr47530-2.cpp
+git rm altivec-cell-2.cpp
+git rm decl_plugin.c
+git rm nontype-class1.cpp
+git rm lambda-uneval4.cpp
+git rm lambda-uneval3.cpp
+git rm lambda-uneval7.cpp
+git rm constexpr-sizeof1.cpp
+git rm pr45940.cpp
+git rm complex3.cpp
+git rm comment_plugin.c
+git rm altivec-cell-4.cpp
+git rm multiple-overflow-warn-2.cpp
+git rm lambda-generic-variadic17.cpp
+git rm fp16-overload-1.cpp
+git rm pr45940-2.cpp
+git rm nontype-class4.cpp
+git rm dumb_plugin.c
+git rm nontype-class3.cpp
+git rm pr49644.cpp
+git rm paren1.cpp
+git rm constexpr-array19.cpp
+git rm header_plugin.c
+git rm gen-attrs-50.cpp
+git rm fn-template3.cpp
+git rm ia64-1.cpp
+git rm opaque-2.cpp
+git rm opaque-1.cpp
+git rm pr56419.cpp
+git rm pr55073.cpp
+git rm i386-10.cpp
+git rm lambda-uneval9.cc
+git rm pr54300.cpp
+git rm arm-neon-1.cpp
+git rm nvptx-ptrmem1.cpp
+git rm o32-fp.cpp
+git rm check-vect.h
+git rm gcov-3.h
+git rm local-1.cpp
+git rm empty.cpp
+git rm pr20366.cpp
+git rm destroying-delete1.cpp
+git rm ppc64-sighandle-cr.cpp
+git rm asm1.c
+git rm pr56768.cpp
+git rm pr47530.cpp
+git rm pr51516.cpp
+git rm pr84548.cpp
+git rm pr64688-2.cpp
+git rm pr64076_0.cpp
+git rm pr84943-2.cpp
+git rm pr64688.cpp
+git rm pr58380.cpp
+git rm pr63621.cpp
+git rm asm5.c
+git rm pr68220.cpp
+git rm pr85657.cpp
+git rm pr85503.cpp
+git rm pragma_plugin.c
+git rm pr78229.cpp
+git rm pr82410.cpp
+git rm simd-clone-6.cc
+git rm simd-clone-4.cc
+git rm simd-clone-2.cc
+git rm simd-clone-1.cc
+git rm static-1.cpp
+git rm pr77844.cpp
+git rm system-2.cpp
+git rm template-2.cpp
+git rm struct-layout-1_generate.c
+git rm system-binary-constants-1.cpp
+git rm system-1.cpp
+git rm structret1.cpp
+git rm pr60150_0.cpp
+git rm pr90326.cpp
+git rm utf-type-char8_t.cpp
+git rm var-templ1.cpp
+git rm using57.cpp
+git rm unexpected1_x.cpp
+git rm va-arg-pack-len-1.cpp
+git rm struct-layout-1_x1.h
+git rm copyprop.cpp
+git rm varmod1.cpp
+git rm typeof6.cpp
+git rm variadic98.cpp
+git rm udlit-resolve-char8_t.cpp
+git rm variadic87.cpp
+git rm typeof1.cpp
+git rm visibility-9.cpp
+git rm gcov-3.cpp
+git rm simd-2.cpp
+
+git commit -m "broken"
 
 # add DMCE config and update paths
 
