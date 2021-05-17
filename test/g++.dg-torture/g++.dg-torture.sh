@@ -74,20 +74,18 @@ git commit -m "initial commit"
 
 # Put crossed out ones here
 
-git rm Wdouble-promotion.cpp
-git rm Wclass-memaccess.cpp
-git rm altivec-cell-3.cpp
-git rm atomics-1.cpp
-git rm altivec-3.cpp
-git rm asm3.cpp
-git rm alias-decl-50.cpp
-git rm aligned-new8.cpp
-git rm cond8.cpp
-git rm auto-fn15.cpp
-git rm constexpr-array-ptr9.cpp
-git rm cgraph_edge.cpp
-git rm decomp2.cpp
-git rm defarg3.cpp
+git rm Wdouble-promotion.cpp                # Complex numbers macro expansion
+git rm Wclass-memaccess.cpp                 # Macro expansion of macro with only one capital letter
+git rm altivec-cell-3.cpp                   # altivec.h: No such file or directory
+git rm atomics-1.cpp                        # simulate-thread.h: No such file or directory
+git rm altivec-3.cpp                        # altivec.h: No such file or directory
+git rm asm3.cpp                             # __asm__
+git rm aligned-new8.cpp                     # DMCE_PROBE(TBD), crash?
+git rm auto-fn15.cpp                        # auto declarations
+git rm constexpr-array-ptr9.cpp             # Assert macro
+git rm cgraph_edge.cpp                      # -fgnu-tm needed to compile
+git rm decomp2.cpp                          # Complex numbers macro expansion
+
 git rm constexpr-arith-overflow.cpp
 git rm constexpr-56302.cpp
 git rm darwin-cfstring-3.cpp
