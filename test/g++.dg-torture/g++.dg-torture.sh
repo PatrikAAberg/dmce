@@ -49,10 +49,11 @@ fi
 
 _echo "unpack GCC"
 set -x
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg/torture
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg/parse
-mv gcc-${gcc_version}/gcc/testsuite/g++.dg/torture gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
-mv gcc-${gcc_version}/gcc/testsuite/g++.dg/parse/* gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}/
+tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg
+mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+pushd gcc-${gcc_version}/gcc/testsuite/g++.dg
+grep -rLE "dg-error|deprecated|concepts|sorry" | xargs -I{} cp {} ../${PROG_NAME}/
+popd
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 { set +x; } 2>/dev/null
 
@@ -63,6 +64,7 @@ cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 set +x
 shopt -s globstar
 for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
+for f in ../**/*.H; do mv "$f" "${f%.H}.h"; done
 set -x
 
 git init
@@ -71,54 +73,54 @@ git add .
 git commit -m "initial commit"
 
 # Put crossed out ones here
-git rm pr49644.cpp             # using namespace std::complex_literals
-git rm pr91355.cpp             # dynamic exception specifications are deprecated
-git rm pr82154.cpp             # dynamic exception specifications are deprecated
-git rm pr70621.cpp             # Does not compile
-git rm pr68220.cpp             # -fno-new-ttp-matching
-git rm accessor-fixits-7.cpp   # Does not compile
-git rm darwin-cfstring-3.cpp   # Does not compile
-git rm pr64280.cpp             # Does not compile
-git rm pr56768.cpp             # bool operator!= (Iter &, Iter &) { return(DMCE_PROBE(1636), true); }
-git rm pr58380.cpp             # (DMCE_PROBE(TBD),  ~vector());
+#git rm pr49644.cpp             # using namespace std::complex_literals
+#git rm pr91355.cpp             # dynamic exception specifications are deprecated
+#git rm pr82154.cpp             # dynamic exception specifications are deprecated
+#git rm pr70621.cpp             # Does not compile
+#git rm pr68220.cpp             # -fno-new-ttp-matching
+#git rm accessor-fixits-7.cpp   # Does not compile
+#git rm darwin-cfstring-3.cpp   # Does not compile
+#git rm pr64280.cpp             # Does not compile
+#git rm pr56768.cpp             # bool operator!= (Iter &, Iter &) { return(DMCE_PROBE(1636), true); }
+#git rm pr58380.cpp             # (DMCE_PROBE(TBD),  ~vector());
 
 # all except marked ones are dg-error
-git rm non-dependent2.cpp
-git rm template29.cpp
-git rm crash44.cpp
-git rm template28.cpp
-git rm constant4.cpp
-git rm crash58.cpp
-git rm missing-template1.cpp
-git rm crash23.cpp
-git rm colon-autocorrect-1.cpp
-git rm typename7.cpp
-git rm crash40.cpp
-git rm pr20118.cpp
-git rm friend-main.cpp
-git rm error20.cpp
-git rm crash13.cpp
-git rm pr18770.cpp
-git rm error31.cpp
-git rm else.cpp
-git rm dtor15.cpp
-git rm error11.cpp
-git rm pr70635.cpp
-git rm ivdep.cpp
-git rm fn-template2.cpp
-git rm lookup3.cpp
-git rm class1.cpp
-git rm varmod1.cpp # dg-message
-git rm error61.cpp
-git rm pr83634.cpp
-git rm crash30.cpp
-git rm casting-operator2.cpp
-git rm error14.cpp
-git rm pr26997.cpp
-git rm semicolon3.cpp
-git rm namespace-definition.cpp
-git rm limits-initializer1.cpp
-git commit -m "broken"
+#git rm non-dependent2.cpp
+#git rm template29.cpp
+#git rm crash44.cpp
+#git rm template28.cpp
+#git rm constant4.cpp
+#git rm crash58.cpp
+#git rm missing-template1.cpp
+#git rm crash23.cpp
+#git rm colon-autocorrect-1.cpp
+#git rm typename7.cpp
+#git rm crash40.cpp
+#git rm pr20118.cpp
+#git rm friend-main.cpp
+#git rm error20.cpp
+#git rm crash13.cpp
+#git rm pr18770.cpp
+#git rm error31.cpp
+#git rm else.cpp
+#git rm dtor15.cpp
+#git rm error11.cpp
+#git rm pr70635.cpp
+#git rm ivdep.cpp
+#git rm fn-template2.cpp
+#git rm lookup3.cpp
+#git rm class1.cpp
+#git rm varmod1.cpp # dg-message
+#git rm error61.cpp
+#git rm pr83634.cpp
+#git rm crash30.cpp
+#git rm casting-operator2.cpp
+#git rm error14.cpp
+#git rm pr26997.cpp
+#git rm semicolon3.cpp
+#git rm namespace-definition.cpp
+#git rm limits-initializer1.cpp
+#git commit -m "broken"
 
 # add DMCE config and update paths
 
