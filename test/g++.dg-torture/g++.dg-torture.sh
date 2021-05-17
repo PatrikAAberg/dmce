@@ -83,30 +83,35 @@ git rm asm3.cpp                             # __asm__
 git rm aligned-new8.cpp                     # DMCE_PROBE(TBD), crash?
 git rm auto-fn15.cpp                        # auto declarations
 git rm constexpr-array-ptr9.cpp             # Assert macro
-git rm cgraph_edge.cpp                      # -fgnu-tm needed to compile
 git rm decomp2.cpp                          # Complex numbers macro expansion
+git rm constexpr-arith-overflow.cpp         # Assert macro
+git rm constexpr-56302.cpp                  # __asm
+git rm darwin-cfstring-3.cpp                # __asm
+git rm elision2.cpp                         # use of deleted function
+git rm altivec-1.cpp                        # altivec.h: No such file or directory
+git rm bitfields.cpp                        # simulate-thread.h: No such file or directory
+git rm darwin-minversion-1.cpp              # simulate-thread.h: No such file or directory
+git rm constexpr-attribute.cpp              # __attribute__
+git rm auto-fn32.cpp                        # auto declarations
+git rm fn-template9.cpp                     # std=c++2a
+git rm elision.cpp                          # TO CHECK: return does smth with private
+git rm move-return1.cpp                     # deleted function
+git rm defaulted21.cpp                      # deleted function
+git rm atomics-2.cpp                        # simulate-thread.h: No such file or directory
+git rm lambda-uneval9.cpp                   # std=c++2a
+git rm dllimport2.cpp                       # __attribute__
+git rm noexcept-1.cpp                       # TO CHECK: constexpr
+git rm noexcept-6.cpp                       # TO CHECK: constexpr
+git rm asan_mem_test.cc                     # TO CHECK: constexpr
+git rm calloc.cpp                           # TO CHECK: indirect function call within transaction safe function
+git rm asan_oob_test.cc                     # #error, lack gtest
+git rm asan_str_test.cc                     # #error, lack gtest
+git rm asan_globals_test.cc                 # #error, lack gtest
+git rm asan_test.cc                         # #error, lack gtest
+git rm sanitizer_test_utils.h               # include file "vector" not found
+git rm range-test-1.cpp                     # range-test-1.C: No such file or directory
+git rm range-test-2.cpp                     # range-test-2.C: No such file or directory
 
-git rm constexpr-arith-overflow.cpp
-git rm constexpr-56302.cpp
-git rm darwin-cfstring-3.cpp
-git rm elision2.cpp
-git rm altivec-1.cpp
-git rm bitfields.cpp
-git rm darwin-minversion-1.cpp
-git rm constexpr-attribute.cpp
-git rm auto-fn32.cpp
-git rm lambda-template2.cpp
-git rm fn-template9.cpp
-git rm elision.cpp
-git rm move-return1.cpp
-git rm defaulted21.cpp
-git rm atomics-2.cpp
-git rm lambda-uneval9.cpp
-git rm dllimport2.cpp
-git rm noexcept-6.cpp
-git rm noexcept-1.cpp
-git rm constexpr-default1.cpp
-git rm noexcept-4.cpp
 git rm attribute_plugin.c
 git rm def_plugin.c
 git rm gen-attrs-21.cpp
@@ -239,7 +244,7 @@ ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
 	find -name '*.err' -exec rm {} \;
 	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
-			if ! gcc -w -c -fpermissive -std=c++17 ${f} 2>> "${f}".err; then
+			if ! gcc -w -c -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
 				echo ${f} >> ${my_work_path}/compile-errors;
 			fi
 		} &
