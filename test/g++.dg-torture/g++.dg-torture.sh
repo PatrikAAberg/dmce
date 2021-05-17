@@ -111,23 +111,22 @@ git rm asan_test.cc                         # #error, lack gtest
 git rm sanitizer_test_utils.h               # include file "vector" not found
 git rm range-test-1.cpp                     # range-test-1.C: No such file or directory
 git rm range-test-2.cpp                     # range-test-2.C: No such file or directory
+git rm attribute_plugin.c                   # gcc-plugin.h: No such file or directory
+git rm def_plugin.c                         # gcc-plugin.h: No such file or directory
+git rm gen-attrs-21.cpp                     # TO CHECK: string handling
+git rm gen-attrs-48.cpp                     # TO CHECK: string handling
+git rm mangle60.cpp                         # TO CHECK: numeric literal operators
+git rm bitfields-2.cpp                      # simulate-thread.h: No such file or directory
+git rm invisiref2.cpp                       # use of deleted function
+git rm arm-fp16-ops.h                       # unknown type name '__fp16'
+git rm invisiref2a.cpp                      # use of deleted function
+git rm default-arg1.cpp                     # DMCE_PROBE(TBD), crash?
+git rm gen-attrs-49.cpp                     # TO CHECK: string handling
+git rm initlist-deduce.cpp                  # TO CHECK: tbd
+git rm pr42337.cpp                          # TO CHECK: tbd
+git rm pch.cpp                              # pch.H: no such file or directory
+git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
 
-git rm attribute_plugin.c
-git rm def_plugin.c
-git rm gen-attrs-21.cpp
-git rm gen-attrs-48.cpp
-git rm mangle60.cpp
-git rm bitfields-2.cpp
-git rm invisiref2.cpp
-git rm constexpr-sfinae.cpp
-git rm arm-fp16-ops.h
-git rm invisiref2a.cpp
-git rm default-arg1.cpp
-git rm gen-attrs-49.cpp
-git rm initlist-deduce.cpp
-git rm pr42337.cpp
-git rm pch.cpp
-git rm inline12.cpp
 git rm noexcept-3.cpp
 git rm pr47530-2.cpp
 git rm altivec-cell-2.cpp
