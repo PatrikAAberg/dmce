@@ -69,7 +69,17 @@ git add .
 git commit -m "initial commit"
 
 # Put crossed out ones here
-#git rm compile/20001226-1.c
+git rm pr49644.cpp             # using namespace std::complex_literals
+git rm pr91355.cpp             # dynamic exception specifications are deprecated
+git rm pr82154.cpp             # dynamic exception specifications are deprecated
+git rm pr70621.cpp             # Does not compile
+git rm pr68220.cpp             # -fno-new-ttp-matching
+git rm accessor-fixits-7.cpp   # Does not compile
+git rm darwin-cfstring-3.cpp   # Does not compile
+git rm pr64280.cpp             # Does not compile
+git rm pr56768.cpp             # bool operator!= (Iter &, Iter &) { return(DMCE_PROBE(1636), true); }
+git rm pr58380.cpp             # (DMCE_PROBE(TBD),  ~vector());
+
 #git commit -m "broken"
 
 # add DMCE config and update paths
