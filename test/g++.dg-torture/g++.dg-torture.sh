@@ -178,42 +178,40 @@ git rm pr58380.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr63621.cpp                          # asm
 git rm asm5.c                               # asm
 
-#git rm pr68220.cpp
-#git rm pr85657.cpp
-#git rm pr85503.cpp
+git rm pr68220.cpp                          # TO CHECK: Template stuff
+git rm pr85657.cpp                          # ibm128 not declared...
+git rm pr85503.cpp                          # __builtin_vec_vsx_ld was not declared in this scope
 git rm pragma_plugin.c                      # gcc-plugin.h: no such file or directory
-#git rm pr78229.cpp
-#git rm pr82410.cpp
-#git rm simd-clone-6.cc
-#git rm simd-clone-4.cc
-#git rm simd-clone-2.cc
-#git rm simd-clone-1.cc
-#git rm static-1.cpp
-#git rm pr77844.cpp
-#git rm system-2.cpp
-#git rm template-2.cpp
-#git rm struct-layout-1_generate.c
-#git rm system-binary-constants-1.cpp
-#git rm system-1.cpp
-#git rm structret1.cpp
-#git rm pr60150_0.cpp
-#git rm pr90326.cpp
-#git rm utf-type-char8_t.cpp
-#git rm var-templ1.cpp
-#git rm using57.cpp
-#git rm unexpected1_x.cpp
-#git rm va-arg-pack-len-1.cpp
-#git rm struct-layout-1_x1.h
-#git rm copyprop.cpp
-#git rm varmod1.cpp
-#git rm typeof6.cpp
-#git rm variadic98.cpp
-#git rm udlit-resolve-char8_t.cpp
-#git rm variadic87.cpp
-#git rm typeof1.cpp
-#git rm visibility-9.cpp
-#git rm gcov-3.cpp
-#git rm simd-2.cpp
+git rm pr78229.cpp                          # __builtin_ia32_tzcnt_u32’ was not declared in this scope
+git rm pr82410.cpp                          # TO CHECK: Interesting one...
+git rm simd-clone-6.cc                      # tree-vect.h: No such file or directory
+git rm simd-clone-4.cc                      # tree-vect.h: No such file or directory
+git rm simd-clone-2.cc                      # tree-vect.h: No such file or directory
+git rm simd-clone-1.cc                      # tree-vect.h: No such file or directory
+git rm static-1.cpp                         # static-1.H: no such file or directory
+git rm pr77844.cpp                          # TO CHECK: vectors
+git rm system-2.cpp                         # "system-2.H": no such file or directory
+git rm struct-layout-1_generate.c           # generate-random.h: No such file or directory
+git rm system-binary-constants-1.cpp        # system-binary-constants-1.h: No such file or directory
+git rm system-1.cpp                         # system-1.H: No such file or directory
+git rm structret1.cpp                       # asm
+git rm pr60150_0.cpp                        # pr60150.H: No such file or directory
+git rm pr90326.cpp                          # pr90326.H: No such file or directory
+git rm utf-type-char8_t.cpp                 # __CHAR8_TYPE__ was not declared in this scope
+git rm var-templ1.cpp                       # TO CHECK: Template stuff
+git rm using57.cpp                          # return lacks cast
+git rm unexpected1_x.cpp                    # deprecated throw
+git rm va-arg-pack-len-1.cpp                # TO CHECK: elipsis stuff
+git rm struct-layout-1_x1.h                 # No such file or directory
+git rm copyprop.cpp                         # TO CHECK: Template stuff
+git rm varmod1.cpp                          # TO CHECK: Interesting one
+git rm typeof6.cpp                          # TO CHECK: Interesting one
+git rm udlit-resolve-char8_t.cpp            # TO CHECK: operators
+git rm variadic87.cpp                       # TO CHECK: string handling
+git rm typeof1.cpp                          # TO CHECK: INteresting one
+git rm visibility-9.cpp                     # __attribute__
+git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
+git rm simd-2.cpp                           # check-vect.h: No such file or directory
 
 git commit -m "broken"
 
