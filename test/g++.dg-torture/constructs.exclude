@@ -1,3 +1,7 @@
+INT_MAX
+INT_MIN
+MAX
+MIN
 constexpr
 #define
 extern

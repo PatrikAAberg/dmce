@@ -126,99 +126,94 @@ git rm initlist-deduce.cpp                  # TO CHECK: tbd
 git rm pr42337.cpp                          # TO CHECK: tbd
 git rm pch.cpp                              # pch.H: no such file or directory
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
-
-git rm noexcept-3.cpp
-git rm pr47530-2.cpp
-git rm altivec-cell-2.cpp
-git rm decl_plugin.c
-git rm nontype-class1.cpp
-git rm lambda-uneval4.cpp
-git rm lambda-uneval3.cpp
-git rm lambda-uneval7.cpp
-git rm constexpr-sizeof1.cpp
-git rm pr45940.cpp
-git rm complex3.cpp
-git rm comment_plugin.c
-git rm altivec-cell-4.cpp
-git rm multiple-overflow-warn-2.cpp
-git rm lambda-generic-variadic17.cpp
-git rm fp16-overload-1.cpp
-git rm pr45940-2.cpp
-git rm nontype-class4.cpp
-git rm dumb_plugin.c
-git rm nontype-class3.cpp
-git rm pr49644.cpp
-git rm paren1.cpp
-git rm constexpr-array19.cpp
-git rm header_plugin.c
-git rm gen-attrs-50.cpp
-git rm fn-template3.cpp
-git rm ia64-1.cpp
-git rm opaque-2.cpp
-git rm opaque-1.cpp
+git rm noexcept-3.cpp                       # TO CHECK: constexpr
+git rm altivec-cell-2.cpp                   # altivec.h: No such file or directory
+git rm decl_plugin.c                        # gcc-plugin.h: no such file or directory
+git rm nontype-class1.cpp                   # std=c++2a
+git rm lambda-uneval4.cpp                   # std=c++2a
+git rm lambda-uneval3.cpp                   # std=c++2a
+git rm lambda-uneval7.cpp                   # std=c++2a
+git rm complex3.cpp                         # Complex numbers macro expansion
+git rm comment_plugin.c                     # gcc-plugin.h: no such file or directory
+git rm altivec-cell-4.cpp                   # altivec.h: No such file or directory
+git rm multiple-overflow-warn-2.cpp         # DMCE_PROBE(TBD), crash?
+git rm lambda-generic-variadic17.cpp        # TO CHECK: return statement with only one brace not two
+git rm fp16-overload-1.cpp                  # __fp16
+git rm nontype-class4.cpp                   # std=c++2a
+git rm dumb_plugin.c                        # gcc-plugin.h: no such file or directory
+git rm nontype-class3.cpp                   # std=c++2a
+git rm pr49644.cpp                          # Complex number macro expansion
+git rm paren1.cpp                           # use of deleted function
+git rm constexpr-array19.cpp                # static_assert()
+git rm header_plugin.c                      # gcc-plugin.h: no such file or directory
+git rm gen-attrs-50.cpp                     # TO CHECK: string handling
+git rm fn-template3.cpp                     # TO CHECK: Template stuff
+git rm ia64-1.cpp                           # __asm
+git rm opaque-2.cpp                         # __ev64_opaque__
+git rm opaque-1.cpp                         # __ev64_opaque__
 git rm pr56419.cpp
-git rm pr55073.cpp
-git rm i386-10.cpp
-git rm lambda-uneval9.cc
-git rm pr54300.cpp
-git rm arm-neon-1.cpp
-git rm nvptx-ptrmem1.cpp
-git rm o32-fp.cpp
-git rm check-vect.h
-git rm gcov-3.h
-git rm local-1.cpp
-git rm empty.cpp
-git rm pr20366.cpp
-git rm destroying-delete1.cpp
-git rm ppc64-sighandle-cr.cpp
-git rm asm1.c
-git rm pr56768.cpp
-git rm pr47530.cpp
-git rm pr51516.cpp
-git rm pr84548.cpp
-git rm pr64688-2.cpp
-git rm pr64076_0.cpp
-git rm pr84943-2.cpp
-git rm pr64688.cpp
-git rm pr58380.cpp
-git rm pr63621.cpp
-git rm asm5.c
-git rm pr68220.cpp
-git rm pr85657.cpp
-git rm pr85503.cpp
-git rm pragma_plugin.c
-git rm pr78229.cpp
-git rm pr82410.cpp
-git rm simd-clone-6.cc
-git rm simd-clone-4.cc
-git rm simd-clone-2.cc
-git rm simd-clone-1.cc
-git rm static-1.cpp
-git rm pr77844.cpp
-git rm system-2.cpp
-git rm template-2.cpp
-git rm struct-layout-1_generate.c
-git rm system-binary-constants-1.cpp
-git rm system-1.cpp
-git rm structret1.cpp
-git rm pr60150_0.cpp
-git rm pr90326.cpp
-git rm utf-type-char8_t.cpp
-git rm var-templ1.cpp
-git rm using57.cpp
-git rm unexpected1_x.cpp
-git rm va-arg-pack-len-1.cpp
-git rm struct-layout-1_x1.h
-git rm copyprop.cpp
-git rm varmod1.cpp
-git rm typeof6.cpp
-git rm variadic98.cpp
-git rm udlit-resolve-char8_t.cpp
-git rm variadic87.cpp
-git rm typeof1.cpp
-git rm visibility-9.cpp
-git rm gcov-3.cpp
-git rm simd-2.cpp
+git rm pr55073.cpp                          # arm_neon.h: no such file or directory
+git rm i386-10.cpp                          # isa option -maes -msse2
+git rm lambda-uneval9.cc                    # std=c++2a
+
+git rm pr54300.cpp                          # arm_neon.h: no such file or directory
+git rm arm-neon-1.cpp                       # arm_neon.h: no such file or directory
+git rm nvptx-ptrmem1.cpp                    # cast lacking at return
+git rm o32-fp.cpp                           # __asm__
+git rm check-vect.h                         # TO CHECK: extern "C" in probe?
+git rm gcov-3.h                             # TO CHECK: Is this C, not C++ ?
+git rm local-1.cpp                          # "local-1.H": no such file or directory
+git rm empty.cpp                            # "empty.H": no such file or directory
+git rm pr20366.cpp                          # Mix with C and C++, extern "C" in probe?
+git rm destroying-delete1.cpp               # TO CHECK: No Idea
+git rm ppc64-sighandle-cr.cpp               # ppc asm
+git rm asm1.c                               # junk in file
+git rm pr56768.cpp                          # DMCE_PROBE(TBD), crash?
+git rm pr84548.cpp                          # DMCE_PROBE(TBD), crash?
+git rm pr64688-2.cpp                        # TO CHECK: probing in typedef template def
+git rm pr64076_0.cpp                        # pr64076.H: no such file or directory
+git rm pr84943-2.cpp                        # return lack cast
+git rm pr64688.cpp                          # DMCE_PROBE(TBD), crash?
+git rm pr58380.cpp                          # DMCE_PROBE(TBD), crash?
+git rm pr63621.cpp                          # asm
+git rm asm5.c                               # asm
+
+#git rm pr68220.cpp
+#git rm pr85657.cpp
+#git rm pr85503.cpp
+git rm pragma_plugin.c                      # gcc-plugin.h: no such file or directory
+#git rm pr78229.cpp
+#git rm pr82410.cpp
+#git rm simd-clone-6.cc
+#git rm simd-clone-4.cc
+#git rm simd-clone-2.cc
+#git rm simd-clone-1.cc
+#git rm static-1.cpp
+#git rm pr77844.cpp
+#git rm system-2.cpp
+#git rm template-2.cpp
+#git rm struct-layout-1_generate.c
+#git rm system-binary-constants-1.cpp
+#git rm system-1.cpp
+#git rm structret1.cpp
+#git rm pr60150_0.cpp
+#git rm pr90326.cpp
+#git rm utf-type-char8_t.cpp
+#git rm var-templ1.cpp
+#git rm using57.cpp
+#git rm unexpected1_x.cpp
+#git rm va-arg-pack-len-1.cpp
+#git rm struct-layout-1_x1.h
+#git rm copyprop.cpp
+#git rm varmod1.cpp
+#git rm typeof6.cpp
+#git rm variadic98.cpp
+#git rm udlit-resolve-char8_t.cpp
+#git rm variadic87.cpp
+#git rm typeof1.cpp
+#git rm visibility-9.cpp
+#git rm gcov-3.cpp
+#git rm simd-2.cpp
 
 git commit -m "broken"
 
