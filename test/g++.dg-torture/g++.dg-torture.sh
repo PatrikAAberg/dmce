@@ -50,7 +50,9 @@ fi
 _echo "unpack GCC"
 set -x
 tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg/torture
+tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg/parse
 mv gcc-${gcc_version}/gcc/testsuite/g++.dg/torture gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+mv gcc-${gcc_version}/gcc/testsuite/g++.dg/parse/* gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}/
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 { set +x; } 2>/dev/null
 
@@ -80,9 +82,46 @@ git rm pr64280.cpp             # Does not compile
 git rm pr56768.cpp             # bool operator!= (Iter &, Iter &) { return(DMCE_PROBE(1636), true); }
 git rm pr58380.cpp             # (DMCE_PROBE(TBD),  ~vector());
 
-#git commit -m "broken"
+# all except marked ones are dg-error
+git rm non-dependent2.cpp
+git rm template29.cpp
+git rm crash44.cpp
+git rm template28.cpp
+git rm constant4.cpp
+git rm crash58.cpp
+git rm missing-template1.cpp
+git rm crash23.cpp
+git rm colon-autocorrect-1.cpp
+git rm typename7.cpp
+git rm crash40.cpp
+git rm pr20118.cpp
+git rm friend-main.cpp
+git rm error20.cpp
+git rm crash13.cpp
+git rm pr18770.cpp
+git rm error31.cpp
+git rm else.cpp
+git rm dtor15.cpp
+git rm error11.cpp
+git rm pr70635.cpp
+git rm ivdep.cpp
+git rm fn-template2.cpp
+git rm lookup3.cpp
+git rm class1.cpp
+git rm varmod1.cpp # dg-message
+git rm error61.cpp
+git rm pr83634.cpp
+git rm crash30.cpp
+git rm casting-operator2.cpp
+git rm error14.cpp
+git rm pr26997.cpp
+git rm semicolon3.cpp
+git rm namespace-definition.cpp
+git rm limits-initializer1.cpp
+git commit -m "broken"
 
 # add DMCE config and update paths
+
 cp -v ${dmce_exec_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
 sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:${dmce_exec_path}|" .dmceconfig
 sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:${my_test_path}|" .dmceconfig
