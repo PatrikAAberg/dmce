@@ -64,7 +64,8 @@ cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 set +x
 shopt -s globstar
 for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
-for f in ../**/*.H; do mv "$f" "${f%.H}.h"; done
+for f in ../**/*.H; do cp "$f" "${f%.H}.h"; done
+for f in ../**/*.Hs; do mv "$f" "${f%.Hs}.H"; done
 set -x
 
 git init
@@ -124,7 +125,6 @@ git rm default-arg1.cpp                     # DMCE_PROBE(TBD), crash?
 git rm gen-attrs-49.cpp                     # TO CHECK: string handling
 git rm initlist-deduce.cpp                  # TO CHECK: tbd
 git rm pr42337.cpp                          # TO CHECK: tbd
-git rm pch.cpp                              # pch.H: no such file or directory
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
 git rm noexcept-3.cpp                       # TO CHECK: constexpr
 git rm altivec-cell-2.cpp                   # altivec.h: No such file or directory
@@ -155,15 +155,12 @@ git rm pr56419.cpp
 git rm pr55073.cpp                          # arm_neon.h: no such file or directory
 git rm i386-10.cpp                          # isa option -maes -msse2
 git rm lambda-uneval9.cc                    # std=c++2a
-
 git rm pr54300.cpp                          # arm_neon.h: no such file or directory
 git rm arm-neon-1.cpp                       # arm_neon.h: no such file or directory
 git rm nvptx-ptrmem1.cpp                    # cast lacking at return
 git rm o32-fp.cpp                           # __asm__
 git rm check-vect.h                         # TO CHECK: extern "C" in probe?
 git rm gcov-3.h                             # TO CHECK: Is this C, not C++ ?
-git rm local-1.cpp                          # "local-1.H": no such file or directory
-git rm empty.cpp                            # "empty.H": no such file or directory
 git rm pr20366.cpp                          # Mix with C and C++, extern "C" in probe?
 git rm destroying-delete1.cpp               # TO CHECK: No Idea
 git rm ppc64-sighandle-cr.cpp               # ppc asm
@@ -171,13 +168,11 @@ git rm asm1.c                               # junk in file
 git rm pr56768.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr84548.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr64688-2.cpp                        # TO CHECK: probing in typedef template def
-git rm pr64076_0.cpp                        # pr64076.H: no such file or directory
 git rm pr84943-2.cpp                        # return lack cast
 git rm pr64688.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr58380.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr63621.cpp                          # asm
 git rm asm5.c                               # asm
-
 git rm pr68220.cpp                          # TO CHECK: Template stuff
 git rm pr85657.cpp                          # ibm128 not declared...
 git rm pr85503.cpp                          # __builtin_vec_vsx_ld was not declared in this scope
@@ -188,15 +183,10 @@ git rm simd-clone-6.cc                      # tree-vect.h: No such file or direc
 git rm simd-clone-4.cc                      # tree-vect.h: No such file or directory
 git rm simd-clone-2.cc                      # tree-vect.h: No such file or directory
 git rm simd-clone-1.cc                      # tree-vect.h: No such file or directory
-git rm static-1.cpp                         # static-1.H: no such file or directory
 git rm pr77844.cpp                          # TO CHECK: vectors
-git rm system-2.cpp                         # "system-2.H": no such file or directory
 git rm struct-layout-1_generate.c           # generate-random.h: No such file or directory
 git rm system-binary-constants-1.cpp        # system-binary-constants-1.h: No such file or directory
-git rm system-1.cpp                         # system-1.H: No such file or directory
 git rm structret1.cpp                       # asm
-git rm pr60150_0.cpp                        # pr60150.H: No such file or directory
-git rm pr90326.cpp                          # pr90326.H: No such file or directory
 git rm utf-type-char8_t.cpp                 # __CHAR8_TYPE__ was not declared in this scope
 git rm var-templ1.cpp                       # TO CHECK: Template stuff
 git rm using57.cpp                          # return lacks cast
