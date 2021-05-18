@@ -75,7 +75,7 @@ git commit -m "initial commit"
 
 # Put crossed out ones here
 
-git rm Wdouble-promotion.cpp                # Complex numbers macro expansion
+#git rm Wdouble-promotion.cpp                # Complex numbers macro expansion
 git rm Wclass-memaccess.cpp                 # Macro expansion of macro with only one capital letter
 git rm altivec-cell-3.cpp                   # altivec.h: No such file or directory
 git rm atomics-1.cpp                        # simulate-thread.h: No such file or directory
@@ -83,7 +83,6 @@ git rm altivec-3.cpp                        # altivec.h: No such file or directo
 git rm asm3.cpp                             # __asm__
 git rm aligned-new8.cpp                     # DMCE_PROBE(TBD), crash?
 git rm auto-fn15.cpp                        # auto declarations
-git rm decomp2.cpp                          # Complex numbers macro expansion
 git rm constexpr-56302.cpp                  # __asm
 git rm darwin-cfstring-3.cpp                # __asm
 git rm elision2.cpp                         # use of deleted function
@@ -99,9 +98,9 @@ git rm defaulted21.cpp                      # deleted function
 git rm atomics-2.cpp                        # simulate-thread.h: No such file or directory
 git rm lambda-uneval9.cpp                   # std=c++2a
 git rm dllimport2.cpp                       # reference by dll linkage
-git rm noexcept-1.cpp                       # TO CHECK: constexpr
-git rm noexcept-6.cpp                       # TO CHECK: constexpr
-git rm asan_mem_test.cc                     # TO CHECK: constexpr
+git rm noexcept-1.cpp                       # calling constexpr method via struct is marked in AST as normal function call
+git rm noexcept-6.cpp                       # calling constexpr method via struct is marked in AST as normal function call
+git rm asan_mem_test.cc                     # calling constexpr method via struct is marked in AST as normal function call
 git rm calloc.cpp                           # TO CHECK: indirect function call within transaction safe function
 git rm asan_oob_test.cc                     # #error, lack gtest
 git rm asan_str_test.cc                     # #error, lack gtest
@@ -112,9 +111,8 @@ git rm range-test-1.cpp                     # range-test-1.C: No such file or di
 git rm range-test-2.cpp                     # range-test-2.C: No such file or directory
 git rm attribute_plugin.c                   # gcc-plugin.h: No such file or directory
 git rm def_plugin.c                         # gcc-plugin.h: No such file or directory
-git rm gen-attrs-21.cpp                     # TO CHECK: string handling
-git rm gen-attrs-48.cpp                     # TO CHECK: string handling
-git rm mangle60.cpp                         # TO CHECK: numeric literal operators
+git rm gen-attrs-21.cpp                     # static assert, something goes very wrong here
+git rm gen-attrs-48.cpp                     # static assert, something goes very wrong here
 git rm bitfields-2.cpp                      # simulate-thread.h: No such file or directory
 git rm invisiref2.cpp                       # use of deleted function
 git rm arm-fp16-ops.h                       # unknown type name '__fp16'
@@ -124,14 +122,13 @@ git rm gen-attrs-49.cpp                     # TO CHECK: string handling
 git rm initlist-deduce.cpp                  # TO CHECK: tbd
 git rm pr42337.cpp                          # TO CHECK: tbd
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
-git rm noexcept-3.cpp                       # TO CHECK: constexpr
+git rm noexcept-3.cpp                       # calling constexpr method via struct is marked in AST as normal function call
 git rm altivec-cell-2.cpp                   # altivec.h: No such file or directory
 git rm decl_plugin.c                        # gcc-plugin.h: no such file or directory
 git rm nontype-class1.cpp                   # std=c++2a
 git rm lambda-uneval4.cpp                   # std=c++2a
 git rm lambda-uneval3.cpp                   # std=c++2a
 git rm lambda-uneval7.cpp                   # std=c++2a
-git rm complex3.cpp                         # Complex numbers macro expansion
 git rm comment_plugin.c                     # gcc-plugin.h: no such file or directory
 git rm altivec-cell-4.cpp                   # altivec.h: No such file or directory
 git rm multiple-overflow-warn-2.cpp         # DMCE_PROBE(TBD), crash?
@@ -139,7 +136,6 @@ git rm fp16-overload-1.cpp                  # __fp16
 git rm nontype-class4.cpp                   # std=c++2a
 git rm dumb_plugin.c                        # gcc-plugin.h: no such file or directory
 git rm nontype-class3.cpp                   # std=c++2a
-git rm pr49644.cpp                          # Complex number macro expansion
 git rm paren1.cpp                           # use of deleted function
 git rm constexpr-array19.cpp                # static_assert()
 git rm header_plugin.c                      # gcc-plugin.h: no such file or directory
@@ -222,7 +218,7 @@ ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
 	find -name '*.err' -exec rm {} \;
 	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
-			if ! gcc -w -c -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
+			if ! gcc -w -c -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
 				echo ${f} >> ${my_work_path}/compile-errors;
 			fi
 		} &
