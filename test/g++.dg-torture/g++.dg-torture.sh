@@ -85,7 +85,6 @@ git rm aligned-new8.cpp                     # DMCE_PROBE(TBD), crash?
 git rm auto-fn15.cpp                        # auto declarations
 git rm constexpr-array-ptr9.cpp             # Assert macro
 git rm decomp2.cpp                          # Complex numbers macro expansion
-#git rm constexpr-arith-overflow.cpp         # Assert macro
 git rm constexpr-56302.cpp                  # __asm
 git rm darwin-cfstring-3.cpp                # __asm
 git rm elision2.cpp                         # use of deleted function
@@ -178,10 +177,10 @@ git rm pr85503.cpp                          # __builtin_vec_vsx_ld was not decla
 git rm pragma_plugin.c                      # gcc-plugin.h: no such file or directory
 git rm pr78229.cpp                          # __builtin_ia32_tzcnt_u32’ was not declared in this scope
 git rm pr82410.cpp                          # TO CHECK: Interesting one...
-git rm simd-clone-6.cc                      # tree-vect.h: No such file or directory
-git rm simd-clone-4.cc                      # tree-vect.h: No such file or directory
-git rm simd-clone-2.cc                      # tree-vect.h: No such file or directory
-git rm simd-clone-1.cc                      # tree-vect.h: No such file or directory
+git rm simd-clone-6.cc                      # -fopenmp-simd -fno-inline -mavx
+git rm simd-clone-4.cc                      # -fopenmp-simd -fno-inline -mavx
+git rm simd-clone-2.cc                      # -fopenmp-simd -fno-inline -mavx
+git rm simd-clone-1.cc                      # -fopenmp-simd -fno-inline -mavx
 git rm pr77844.cpp                          # TO CHECK: vectors
 git rm struct-layout-1_generate.c           # generate-random.h: No such file or directory
 git rm system-binary-constants-1.cpp        # system-binary-constants-1.h: No such file or directory
