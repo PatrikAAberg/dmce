@@ -90,7 +90,7 @@ git rm elision2.cpp                         # use of deleted function
 git rm altivec-1.cpp                        # altivec.h: No such file or directory
 git rm bitfields.cpp                        # simulate-thread.h: No such file or directory
 git rm darwin-minversion-1.cpp              # simulate-thread.h: No such file or directory
-git rm constexpr-attribute.cpp              # __attribute__
+git rm constexpr-attribute.cpp              # DMCE_PROBE(TBD), crash?
 git rm auto-fn32.cpp                        # auto declarations
 git rm fn-template9.cpp                     # std=c++2a
 git rm elision.cpp                          # TO CHECK: return does smth with private
@@ -98,7 +98,7 @@ git rm move-return1.cpp                     # deleted function
 git rm defaulted21.cpp                      # deleted function
 git rm atomics-2.cpp                        # simulate-thread.h: No such file or directory
 git rm lambda-uneval9.cpp                   # std=c++2a
-git rm dllimport2.cpp                       # __attribute__
+git rm dllimport2.cpp                       # reference by dll linkage
 git rm noexcept-1.cpp                       # TO CHECK: constexpr
 git rm noexcept-6.cpp                       # TO CHECK: constexpr
 git rm asan_mem_test.cc                     # TO CHECK: constexpr
@@ -148,7 +148,6 @@ git rm fn-template3.cpp                     # TO CHECK: Template stuff
 git rm ia64-1.cpp                           # __asm
 git rm opaque-2.cpp                         # __ev64_opaque__
 git rm opaque-1.cpp                         # __ev64_opaque__
-git rm pr56419.cpp
 git rm pr55073.cpp                          # arm_neon.h: no such file or directory
 git rm i386-10.cpp                          # isa option -maes -msse2
 git rm lambda-uneval9.cc                    # std=c++2a
@@ -196,7 +195,7 @@ git rm typeof6.cpp                          # TO CHECK: Interesting one
 git rm udlit-resolve-char8_t.cpp            # TO CHECK: operators
 git rm variadic87.cpp                       # TO CHECK: string handling
 git rm typeof1.cpp                          # TO CHECK: INteresting one
-git rm visibility-9.cpp                     # __attribute__
+git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
 git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
 git rm simd-2.cpp                           # check-vect.h: No such file or directory
 
