@@ -137,7 +137,6 @@ git rm complex3.cpp                         # Complex numbers macro expansion
 git rm comment_plugin.c                     # gcc-plugin.h: no such file or directory
 git rm altivec-cell-4.cpp                   # altivec.h: No such file or directory
 git rm multiple-overflow-warn-2.cpp         # DMCE_PROBE(TBD), crash?
-git rm lambda-generic-variadic17.cpp        # TO CHECK: return statement with only one brace not two
 git rm fp16-overload-1.cpp                  # __fp16
 git rm nontype-class4.cpp                   # std=c++2a
 git rm dumb_plugin.c                        # gcc-plugin.h: no such file or directory
