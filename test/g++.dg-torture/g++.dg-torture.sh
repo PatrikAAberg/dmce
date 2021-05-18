@@ -85,7 +85,7 @@ git rm aligned-new8.cpp                     # DMCE_PROBE(TBD), crash?
 git rm auto-fn15.cpp                        # auto declarations
 git rm constexpr-array-ptr9.cpp             # Assert macro
 git rm decomp2.cpp                          # Complex numbers macro expansion
-git rm constexpr-arith-overflow.cpp         # Assert macro
+#git rm constexpr-arith-overflow.cpp         # Assert macro
 git rm constexpr-56302.cpp                  # __asm
 git rm darwin-cfstring-3.cpp                # __asm
 git rm elision2.cpp                         # use of deleted function
