@@ -150,10 +150,10 @@ git rm pr54300.cpp                          # arm_neon.h: no such file or direct
 git rm arm-neon-1.cpp                       # arm_neon.h: no such file or directory
 git rm nvptx-ptrmem1.cpp                    # cast lacking at return
 git rm o32-fp.cpp                           # __asm__
-git rm check-vect.h                         # TO CHECK: extern "C" in probe?
-git rm gcov-3.h                             # TO CHECK: Is this C, not C++ ?
-git rm pr20366.cpp                          # Mix with C and C++, extern "C" in probe?
-git rm destroying-delete1.cpp               # TO CHECK: No Idea
+git rm check-vect.h                         # asm
+git rm gcov-3.h                             # Does not build before probing
+git rm pr20366.cpp                          # Does not build before probing
+git rm destroying-delete1.cpp               # Does not build before probing
 git rm ppc64-sighandle-cr.cpp               # ppc asm
 git rm asm1.c                               # junk in file
 git rm pr56768.cpp                          # DMCE_PROBE(TBD), crash?
@@ -168,27 +168,27 @@ git rm pr85657.cpp                          # ibm128 not declared...
 git rm pr85503.cpp                          # __builtin_vec_vsx_ld was not declared in this scope
 git rm pragma_plugin.c                      # gcc-plugin.h: no such file or directory
 git rm pr78229.cpp                          # __builtin_ia32_tzcnt_u32’ was not declared in this scope
-git rm pr82410.cpp                          # TO CHECK: Interesting one...
+git rm pr82410.cpp                          # Need to check for operator call, lambda and initlist, lets skip for now
 git rm simd-clone-6.cc                      # -fopenmp-simd -fno-inline -mavx
 git rm simd-clone-4.cc                      # -fopenmp-simd -fno-inline -mavx
 git rm simd-clone-2.cc                      # -fopenmp-simd -fno-inline -mavx
 git rm simd-clone-1.cc                      # -fopenmp-simd -fno-inline -mavx
-git rm pr77844.cpp                          # TO CHECK: vectors
+git rm pr77844.cpp                          # Misses simple nested [ and ( why this one?
 git rm struct-layout-1_generate.c           # generate-random.h: No such file or directory
 git rm system-binary-constants-1.cpp        # system-binary-constants-1.h: No such file or directory
 git rm structret1.cpp                       # asm
 git rm utf-type-char8_t.cpp                 # __CHAR8_TYPE__ was not declared in this scope
-git rm var-templ1.cpp                       # TO CHECK: Template stuff
+git rm var-templ1.cpp                       # Does not build before probing
 git rm using57.cpp                          # return lacks cast
 git rm unexpected1_x.cpp                    # deprecated throw
 git rm va-arg-pack-len-1.cpp                # TO CHECK: elipsis stuff
 git rm struct-layout-1_x1.h                 # No such file or directory
-git rm copyprop.cpp                         # TO CHECK: Template stuff
-git rm varmod1.cpp                          # TO CHECK: Interesting one
-git rm typeof6.cpp                          # TO CHECK: Interesting one
+git rm copyprop.cpp                         # Does not build before probing
+git rm varmod1.cpp                          # Does not build before probing
+git rm typeof6.cpp                          # Does not build before probing
 git rm udlit-resolve-char8_t.cpp            # TO CHECK: operators
 git rm variadic87.cpp                       # TO CHECK: string handling
-git rm typeof1.cpp                          # TO CHECK: INteresting one
+git rm typeof1.cpp                          # Does not build before probing
 git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
 git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
 git rm simd-2.cpp                           # check-vect.h: No such file or directory
