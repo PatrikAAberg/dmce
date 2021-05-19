@@ -119,8 +119,7 @@ git rm arm-fp16-ops.h                       # unknown type name '__fp16'
 git rm invisiref2a.cpp                      # use of deleted function
 git rm default-arg1.cpp                     # DMCE_PROBE(TBD), crash?
 git rm gen-attrs-49.cpp                     # TO CHECK: string handling
-git rm initlist-deduce.cpp                  # TO CHECK: tbd
-git rm pr42337.cpp                          # TO CHECK: tbd
+git rm pr42337.cpp                          # Does not build before probing
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
 git rm noexcept-3.cpp                       # calling constexpr method via struct is marked in AST as normal function call
 git rm altivec-cell-2.cpp                   # altivec.h: No such file or directory
@@ -218,7 +217,7 @@ ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
 	find -name '*.err' -exec rm {} \;
 	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
-			if ! gcc -w -c -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
+			if ! gcc -w -c -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
 				echo ${f} >> ${my_work_path}/compile-errors;
 			fi
 		} &
