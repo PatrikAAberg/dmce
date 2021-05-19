@@ -51,6 +51,7 @@ _echo "unpack GCC"
 set -x
 tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+
 pushd gcc-${gcc_version}/gcc/testsuite/g++.dg
 grep -rLE "dg-error|deprecated|concepts|sorry" | xargs -I{} cp {} ../${PROG_NAME}/
 popd
@@ -75,9 +76,8 @@ git commit -m "initial commit"
 
 # Put crossed out ones here
 
-#git rm Wdouble-promotion.cpp                # Complex numbers macro expansion
 git rm Wclass-memaccess.cpp                 # Macro expansion of macro with only one capital letter
-git rm altivec-cell-3.cpp                   # altivec.h: No such file or directory
+git rm altivec-cell-3.cpp                   # ppc
 git rm atomics-1.cpp                        # simulate-thread.h: No such file or directory
 git rm altivec-3.cpp                        # altivec.h: No such file or directory
 git rm asm3.cpp                             # __asm__
@@ -86,7 +86,7 @@ git rm auto-fn15.cpp                        # auto declarations
 git rm constexpr-56302.cpp                  # __asm
 git rm darwin-cfstring-3.cpp                # __asm
 git rm elision2.cpp                         # use of deleted function
-git rm altivec-1.cpp                        # altivec.h: No such file or directory
+git rm altivec-1.cpp                        # ppc
 git rm bitfields.cpp                        # simulate-thread.h: No such file or directory
 git rm darwin-minversion-1.cpp              # simulate-thread.h: No such file or directory
 git rm constexpr-attribute.cpp              # DMCE_PROBE(TBD), crash?
@@ -122,14 +122,14 @@ git rm gen-attrs-49.cpp                     # TO CHECK: string handling
 git rm pr42337.cpp                          # Does not build before probing
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
 git rm noexcept-3.cpp                       # calling constexpr method via struct is marked in AST as normal function call
-git rm altivec-cell-2.cpp                   # altivec.h: No such file or directory
+git rm altivec-cell-2.cpp                   # ppc
 git rm decl_plugin.c                        # gcc-plugin.h: no such file or directory
 git rm nontype-class1.cpp                   # std=c++2a
 git rm lambda-uneval4.cpp                   # std=c++2a
 git rm lambda-uneval3.cpp                   # std=c++2a
 git rm lambda-uneval7.cpp                   # std=c++2a
 git rm comment_plugin.c                     # gcc-plugin.h: no such file or directory
-git rm altivec-cell-4.cpp                   # altivec.h: No such file or directory
+git rm altivec-cell-4.cpp                   # ppc
 git rm multiple-overflow-warn-2.cpp         # DMCE_PROBE(TBD), crash?
 git rm fp16-overload-1.cpp                  # __fp16
 git rm nontype-class4.cpp                   # std=c++2a
@@ -139,7 +139,7 @@ git rm paren1.cpp                           # use of deleted function
 git rm constexpr-array19.cpp                # static_assert()
 git rm header_plugin.c                      # gcc-plugin.h: no such file or directory
 git rm gen-attrs-50.cpp                     # TO CHECK: string handling
-git rm fn-template3.cpp                     # TO CHECK: Template stuff
+git rm fn-template3.cpp                     # std=c++2a
 git rm ia64-1.cpp                           # __asm
 git rm opaque-2.cpp                         # __ev64_opaque__
 git rm opaque-1.cpp                         # __ev64_opaque__
@@ -164,7 +164,6 @@ git rm pr64688.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr58380.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr63621.cpp                          # asm
 git rm asm5.c                               # asm
-git rm pr68220.cpp                          # TO CHECK: Template stuff
 git rm pr85657.cpp                          # ibm128 not declared...
 git rm pr85503.cpp                          # __builtin_vec_vsx_ld was not declared in this scope
 git rm pragma_plugin.c                      # gcc-plugin.h: no such file or directory
@@ -193,6 +192,7 @@ git rm typeof1.cpp                          # TO CHECK: INteresting one
 git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
 git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
 git rm simd-2.cpp                           # check-vect.h: No such file or directory
+git rm mangle56.cpp                         # #include <initializer_list>
 
 git commit -m "broken"
 
@@ -217,7 +217,7 @@ ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
 	find -name '*.err' -exec rm {} \;
 	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
 		{
-			if ! gcc -w -c -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
+			if ! gcc -w -c -fno-new-ttp-matching -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
 				echo ${f} >> ${my_work_path}/compile-errors;
 			fi
 		} &
