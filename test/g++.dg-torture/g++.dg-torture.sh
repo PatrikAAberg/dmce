@@ -158,7 +158,7 @@ git rm ppc64-sighandle-cr.cpp               # ppc asm
 git rm asm1.c                               # junk in file
 git rm pr56768.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr84548.cpp                          # DMCE_PROBE(TBD), crash?
-git rm pr64688-2.cpp                        # TO CHECK: probing in typedef template def
+git rm pr64688-2.cpp                        # Parser needs info on skip section end, lacking in this case
 git rm pr84943-2.cpp                        # return lack cast
 git rm pr64688.cpp                          # DMCE_PROBE(TBD), crash?
 git rm pr58380.cpp                          # DMCE_PROBE(TBD), crash?
@@ -181,12 +181,12 @@ git rm utf-type-char8_t.cpp                 # __CHAR8_TYPE__ was not declared in
 git rm var-templ1.cpp                       # Does not build before probing
 git rm using57.cpp                          # return lacks cast
 git rm unexpected1_x.cpp                    # deprecated throw
-git rm va-arg-pack-len-1.cpp                # TO CHECK: elipsis stuff
+git rm va-arg-pack-len-1.cpp                # error directive for vararg checks, lets not dwell here
 git rm struct-layout-1_x1.h                 # No such file or directory
 git rm copyprop.cpp                         # Does not build before probing
 git rm varmod1.cpp                          # Does not build before probing
 git rm typeof6.cpp                          # Does not build before probing
-git rm udlit-resolve-char8_t.cpp            # TO CHECK: operators
+git rm udlit-resolve-char8_t.cpp            # Does not build before probing
 git rm variadic87.cpp                       # TO CHECK: string handling
 git rm typeof1.cpp                          # Does not build before probing
 git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
