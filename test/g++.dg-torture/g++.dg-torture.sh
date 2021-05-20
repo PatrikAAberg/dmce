@@ -92,7 +92,7 @@ git rm darwin-minversion-1.cpp              # simulate-thread.h: No such file or
 git rm constexpr-attribute.cpp              # DMCE_PROBE(TBD), crash?
 git rm auto-fn32.cpp                        # auto declarations
 git rm fn-template9.cpp                     # std=c++2a
-git rm elision.cpp                          # TO CHECK: return does smth with private
+git rm elision.cpp                          # a bug (not following standard) in gcc around the comma separator?
 git rm move-return1.cpp                     # deleted function
 git rm defaulted21.cpp                      # deleted function
 git rm atomics-2.cpp                        # simulate-thread.h: No such file or directory
@@ -101,7 +101,7 @@ git rm dllimport2.cpp                       # reference by dll linkage
 git rm noexcept-1.cpp                       # calling constexpr method via struct is marked in AST as normal function call
 git rm noexcept-6.cpp                       # calling constexpr method via struct is marked in AST as normal function call
 git rm asan_mem_test.cc                     # calling constexpr method via struct is marked in AST as normal function call
-git rm calloc.cpp                           # TO CHECK: indirect function call within transaction safe function
+git rm calloc.cpp                           # Does not build before probing
 git rm asan_oob_test.cc                     # #error, lack gtest
 git rm asan_str_test.cc                     # #error, lack gtest
 git rm asan_globals_test.cc                 # #error, lack gtest
