@@ -132,6 +132,7 @@ srccol = 0
 # Used for c expression recognition
 exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
+                  '.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
                   '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\/\'.*',
@@ -160,7 +161,7 @@ for exp in exppatternlist:
 #  1    Contained space, use as is
 #  2    Free, need to look for next
 #  x    Free, look for next at colpos + x
-exppatternmode = [1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+exppatternmode = [1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 # Used to extract expression type and operator type
 exp_pat = re.compile('.*-(.*)\sHexnumber\s<.*\d>(.*)')
@@ -211,6 +212,7 @@ re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
 re_sections_to_skip.append(re.compile(r'.*TemplateArgument expr.*'))
+re_sections_to_skip.append(re.compile(r'.*StaticAssertDecl.*'))
 
 # Populate c expression database
 while (lineindex<linestotal):

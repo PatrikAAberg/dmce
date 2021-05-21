@@ -118,7 +118,6 @@ git rm invisiref2.cpp                       # use of deleted function
 git rm arm-fp16-ops.h                       # unknown type name '__fp16'
 git rm invisiref2a.cpp                      # use of deleted function
 git rm default-arg1.cpp                     # DMCE_PROBE(TBD), crash?
-git rm gen-attrs-49.cpp                     # TO CHECK: string handling
 git rm pr42337.cpp                          # Does not build before probing
 git rm inline12.cpp                         # DMCE_PROBE(TBD), crash?
 git rm noexcept-3.cpp                       # calling constexpr method via struct is marked in AST as normal function call
@@ -138,7 +137,6 @@ git rm nontype-class3.cpp                   # std=c++2a
 git rm paren1.cpp                           # use of deleted function
 git rm constexpr-array19.cpp                # static_assert()
 git rm header_plugin.c                      # gcc-plugin.h: no such file or directory
-git rm gen-attrs-50.cpp                     # TO CHECK: string handling
 git rm fn-template3.cpp                     # std=c++2a
 git rm ia64-1.cpp                           # __asm
 git rm opaque-2.cpp                         # __ev64_opaque__
@@ -187,7 +185,6 @@ git rm copyprop.cpp                         # Does not build before probing
 git rm varmod1.cpp                          # Does not build before probing
 git rm typeof6.cpp                          # Does not build before probing
 git rm udlit-resolve-char8_t.cpp            # Does not build before probing
-git rm variadic87.cpp                       # TO CHECK: string handling
 git rm typeof1.cpp                          # Does not build before probing
 git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
 git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
