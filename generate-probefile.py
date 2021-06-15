@@ -99,6 +99,9 @@ lend = "0"
 cstart = "0"
 cend = "0"
 
+skiplend = "0"
+skipcend = "0"
+
 last_lstart = "0"
 last_cstart = "0"
 
@@ -356,7 +359,9 @@ while (lineindex<linestotal):
         lend = exp_pos_update.group(5)
         cstart = exp_pos_update.group(2)
         cend = exp_pos_update.group(6)
-        print("===================================================patrik start: " + str(lstart) + "," + str(cstart) + "        end: " + str(lend) + ", " + str(cend))
+        skiplend = exp_pos_update.group(3)
+        skipcend = exp_pos_update.group(4)
+
         if (in_parsed_c_file):
             trailing=1
 
@@ -366,6 +371,7 @@ while (lineindex<linestotal):
         col_position_updated=1
         cstart = exp_pos_update.group(1)
         cend = cstart
+        skipcend = cend
         #if do_print == 1:
             #print("MATCH C: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
@@ -377,6 +383,7 @@ while (lineindex<linestotal):
             exp_extra = 1
             cstart = exp_pos_update.group(1)
             cend = exp_pos_update.group(2)
+            skipcend = cend
             #if do_print == 1:
                 #print("MATCH E: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
@@ -389,6 +396,8 @@ while (lineindex<linestotal):
         lend = lstart
         cstart = exp_pos_update.group(2)
         cend = exp_pos_update.group(3)
+        skipcend = cend
+        skiplend = lend
         if (in_parsed_c_file):
             trailing=1
 
@@ -404,6 +413,8 @@ while (lineindex<linestotal):
             cstart = exp_pos_update.group(2)
             lend=lstart
             cend=cstart
+            skiplend = lend
+            skipcend = cend
             if (in_parsed_c_file):
                 trailing=1
 
@@ -420,6 +431,8 @@ while (lineindex<linestotal):
             lend = exp_pos_update.group(3)
             cstart = exp_pos_update.group(2)
             cend = exp_pos_update.group(4)
+            skiplend = lend
+            skipcend = cend
             if (in_parsed_c_file):
                 trailing=1
 
@@ -435,6 +448,8 @@ while (lineindex<linestotal):
             lend = exp_pos_update.group(2)
             cstart = exp_pos_update.group(1)
             cend = exp_pos_update.group(3)
+            skiplend = lend
+            skipcend = cend
             #if do_print == 1:
                 #print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
@@ -474,8 +489,8 @@ while (lineindex<linestotal):
                 found_section_to_skip=1
 
     if (found_section_to_skip and in_parsed_c_file):
-        lskip_temp = int(lend)
-        cskip_temp = int(cend)
+        lskip_temp = int(skiplend)
+        cskip_temp = int(skipcend)
         if (lskip_temp > lskip):
             lskip=lskip_temp
             cskip=cskip_temp
