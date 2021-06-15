@@ -209,9 +209,12 @@ re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*reference
 
 re_sections_to_skip = []
 re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*'))
+re_sections_to_skip.append(re.compile(r'.*InitListExpr.*'))
 re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
+re_sections_to_skip.append(re.compile(r'.*ConstantExpr.*'))
+re_sections_to_skip.append(re.compile(r'.*FieldDecl.*'))
 re_sections_to_skip.append(re.compile(r'.*TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*StaticAssertDecl.*'))
 
