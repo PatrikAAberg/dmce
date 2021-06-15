@@ -196,6 +196,7 @@ re_update_pos_C             = re.compile(r'.*<col:(\d*)>.*')
 re_update_pos_D             = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
 re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
+re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_parsed_c_file            = re.compile(".*\,\s" + parsed_c_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
 
@@ -328,6 +329,7 @@ while (lineindex<linestotal):
     # D <col:54, line:166:1>
     # E <col:5, col:58>
     # F <line:26:3>
+    # G <line:97:5, line:101:5> line:98:15\s
 
     backtrailing = 0
     exp_extra = 0
@@ -335,12 +337,25 @@ while (lineindex<linestotal):
     line_position_updated=0
 
     # Sort in order of common apperance
+    # MATCH G
     # MATCH C
     # MATCH E
     # MATCH B
     # MATCH F
     # MATCH A
     # MATCH D
+
+    exp_pos_update = re_update_pos_G.match(linebuf[lineindex])
+    if exp_pos_update:
+        line_position_updated=1
+        exp_extra = 1
+        lstart = exp_pos_update.group(1)
+        lend = exp_pos_update.group(5)
+        cstart = exp_pos_update.group(2)
+        cend = exp_pos_update.group(6)
+        print("===================================================patrik start: " + str(lstart) + "," + str(cstart) + "        end: " + str(lend) + ", " + str(cend))
+        if (in_parsed_c_file):
+            trailing=1
 
     # C
     exp_pos_update = re_update_pos_C.match(linebuf[lineindex])
