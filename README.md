@@ -54,7 +54,7 @@ https://github.com/EricssonResearch/calvin-constrained
 
 ### Dependencies
 
-clang-check 3.4+
+clang-check 10.0.0+
 
 git 2.10+
 
