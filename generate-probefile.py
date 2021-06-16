@@ -203,23 +203,22 @@ re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d
 re_parsed_c_file            = re.compile(".*\,\s" + parsed_c_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
 
-# Used in probe insertion pass
+# Used in probe insertion pass for regrets
 re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*")
 
-# Regexps below skips (not_skip overrides skip) entire sections on block level
+# Regexps below skips (not_to_skip overrides skip) entire blocks
 re_sections_to_not_skip = []
 re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*referenced class.*'))
+re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*class.*definition.*'))
 
 re_sections_to_skip = []
 re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*'))
-re_sections_to_skip.append(re.compile(r'.*InitListExpr.*'))
+re_sections_to_skip.append(re.compile(r'.*-InitListExpr.*'))
 re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
-re_sections_to_skip.append(re.compile(r'.*EnumDecl Hexnumber.*'))
+re_sections_to_skip.append(re.compile(r'.*-EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
-re_sections_to_skip.append(re.compile(r'.*ConstantExpr.*'))
-re_sections_to_skip.append(re.compile(r'.*FieldDecl.*'))
-re_sections_to_skip.append(re.compile(r'.*TemplateArgument expr.*'))
-re_sections_to_skip.append(re.compile(r'.*StaticAssertDecl.*'))
+re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
+re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 
 # Populate c expression database
 while (lineindex<linestotal):
@@ -483,10 +482,12 @@ while (lineindex<linestotal):
     found_section_to_skip=0
     for section in re_sections_to_skip:
         m = section.match(linebuf[lineindex])
+        mnot = False
         for not_section in re_sections_to_not_skip:
-            mnot = not_section.match(linebuf[lineindex])
-            if (m and not mnot):
-                found_section_to_skip=1
+            if not_section.match(linebuf[lineindex]):
+                mnot = True
+        if (m and not mnot):
+            found_section_to_skip=1
 
     if (found_section_to_skip and in_parsed_c_file):
         lskip_temp = int(skiplend)
