@@ -26,6 +26,7 @@ import time
 
 # Print is expensive and can be disabled
 do_print=1
+numDataVars = 0
 
 time1 = time.time()
 
@@ -72,7 +73,19 @@ expdb_ecolend = []
 expdb_in_c_file= []
 expdb_tab = []
 expdb_exppatternmode = []
+expdb_secstackvars = []
 expdb_index = 0
+
+secStackPos = []
+secStackVars = []
+
+def printSecStackVars():
+    i=0
+    print("SECSTACKVARS:")
+    while (i < expdb_index):
+        print("INDEX: " + str(i))
+        print(expdb_secstackvars[i])
+        i+=1
 
 cur_lend = 0
 cur_cend = 0
@@ -219,6 +232,9 @@ re_sections_to_skip.append(re.compile(r'.*-EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
 re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
+
+re_declarations = []
+re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
 
 # Populate c expression database
 while (lineindex<linestotal):
@@ -512,6 +528,48 @@ while (lineindex<linestotal):
     if do_print == 1:
         print("SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend)
 
+    # update section info and any declarations
+    if (in_parsed_c_file):
+        currentSectionLend = int(skiplend)
+        currentSectionCend = int(skipcend)
+
+        # pop section stack?
+        while True:
+            if len(secStackPos) > 0:
+                l, c = secStackPos[len(secStackPos) - 1]
+                if (int(lstart) > l) or ((int(lstart) == l) and (int(cstart) > c)):
+                    secStackPos.pop()
+                    secStackVars.pop()
+                else:
+                    break
+            else:
+                break
+
+        # push new sections
+        for section in re_declarations:
+            m = section.match(linebuf[lineindex])
+            if m:
+                print("MATCHED DECL: " + linebuf[lineindex])
+                break
+
+        if m:
+            secStackPos.pop()
+            secStackVars.pop()
+            secStackVars.pop()
+            secStackVars.append(m.group(1))
+        else:
+            secStackVars.append("")
+            secStackPos.append((currentSectionLend, currentSectionCend))
+
+        sValidVars = ""
+        for s in secStackVars:
+            if s != "":
+                sValidVars = sValidVars + "," + s
+
+#        print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
+#        print(secStackPos)
+        print("VALID VARS: " + sValidVars)
+
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
 
@@ -520,6 +578,7 @@ while (lineindex<linestotal):
             expdb_lineend.append(int(lstart))
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
+            expdb_secstackvars.append(secStackVars.copy())
             expdb_index +=1
             if do_print == 1:
                 print("FOUND END/NEXT (" + linebuf[lineindex].rstrip() + ") FOR (" + linebuf[inside_expression].rstrip() + ")")
@@ -560,6 +619,7 @@ while (lineindex<linestotal):
                    expdb_in_c_file.append(in_parsed_c_file)
                    expdb_tab.append(tab)
                    expdb_exppatternmode.append(1)
+                   expdb_secstackvars.append(secStackVars.copy())
                    expdb_index +=1
 
                # Need to look for last sub expression
@@ -630,6 +690,7 @@ if inside_expression:
     expdb_lineend.append(int(lstart))
     expdb_colend.append(int(cstart) - 1)
     expdb_tab.append(tab)
+    expdb_secstackvars.append(secStackVars.copy())
     expdb_index +=1
 
 
@@ -638,6 +699,8 @@ exp_pdf = open(sys.argv[4], "w")
 
 # Open probe data file to start append entries
 pdf = open(sys.argv[3], "w")
+
+printSecStackVars()
 
 # Insert probes
 if do_print == 1:
@@ -651,6 +714,33 @@ while (i < expdb_index):
     le = expdb_lineend[i] - 1
     ce = expdb_colend[i] #- 1
     ele = expdb_elineend[i] - 1
+
+    probe_prolog = "(DMCE_PROBE(TBD"
+
+    if numDataVars > 0:
+        vlist = []
+        for s in expdb_secstackvars[i]:
+            if s != "":
+                vlist.append(s)
+
+        count = 0
+        if len(vlist) > 0:
+            probe_prolog = probe_prolog + ","
+            for s in vlist:
+                probe_prolog = probe_prolog + s
+                count += 1
+                if (count == numDataVars):
+                    break
+                probe_prolog = probe_prolog + ","
+
+        while (count < numDataVars):
+            count += 1
+            if count == numDataVars:
+                probe_prolog = probe_prolog + "0"
+            else:
+                probe_prolog = probe_prolog + "0,"
+
+    probe_prolog = probe_prolog + "), "
 
     if (expdb_exppatternmode[i] == 2 ):
         ece = expdb_ecolend[i]
