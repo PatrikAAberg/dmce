@@ -400,16 +400,16 @@ else
 
 		if [ "$nextfile" == "" ]; then
 			# First time, create 'sed' expression
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
 		elif [ "$nextfile" == $file ]; then
 			# Same file, append 'sed' expression
-			SED_EXP+=" -e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			SED_EXP+=" -e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
 		else
 			# Next file, remember sed command
 			SED_CMDS+=("$SED_EXP $git_top/$nextfile")
 
 			# Remember 'sed' expression for next file
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD)/DMCE_PROBE($probe_nbr)/"
+			SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
 		fi
 
 		if [ "$file" != "$nextfile" ]; then
