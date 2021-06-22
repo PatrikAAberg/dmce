@@ -528,12 +528,8 @@ while (lineindex<linestotal):
     if do_print == 1:
         print("SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend)
 
-    # update section info and any declarations
+    # pop section stack?
     if (in_parsed_c_file and numDataVars > 0):
-        currentSectionLend = int(skiplend)
-        currentSectionCend = int(skipcend)
-
-        # pop section stack?
         while True:
             if len(secStackPos) > 0:
                 l, c = secStackPos[len(secStackPos) - 1]
@@ -544,51 +540,6 @@ while (lineindex<linestotal):
                     break
             else:
                 break
-
-        # push new sections
-        for section in re_declarations:
-            m = section.match(linebuf[lineindex])
-            if m:
-                print("MATCHED DECL: " + linebuf[lineindex])
-                break
-
-        if m:
-            # top level ?
-            top = True
-            count = 0
-            for l, c in secStackPos:
-                if l != sys.maxsize:
-                    top = False
-                    break
-                count += 1
-
-            if top:
-                secStackPos.append((sys.maxsize, 0))
-                secStackVars.append(m.group(1))
-            elif (len(secStackPos) - count) < 2:
-                secStackVars.append("")
-                secStackPos.append((currentSectionLend, currentSectionCend))
-            else:
-                # get rid of decl scope
-                secStackPos.pop()
-                secStackVars.pop()
-                # copy scope, add new var
-                scope = secStackPos.pop()
-                secStackPos.append(scope)
-                secStackPos.append(scope)
-                secStackVars.append(m.group(1))
-        else:
-            secStackVars.append("")
-            secStackPos.append((currentSectionLend, currentSectionCend))
-
-        sValidVars = ""
-        for s in secStackVars:
-            if s != "":
-                sValidVars = sValidVars + "," + s
-
-#        print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
-#        print(secStackPos)
-        print("VALID VARS: " + sValidVars)
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -700,6 +651,56 @@ while (lineindex<linestotal):
     # Update lend and cend to reflect the position BEFORE THE NEXT expression, and not beginning iof the last in this one. See above...
     lstart = lend
     cstart = cend
+
+    # update section info and any declarations
+    if (in_parsed_c_file and numDataVars > 0):
+        currentSectionLend = int(skiplend)
+        currentSectionCend = int(skipcend)
+
+       # push new sections
+        for section in re_declarations:
+            m = section.match(linebuf[lineindex])
+            if m:
+                print("MATCHED DECL: " + linebuf[lineindex])
+                break
+
+        if m:
+            # top level ?
+            top = True
+            count = 0
+            for l, c in secStackPos:
+                if l != sys.maxsize:
+                    top = False
+                    break
+                count += 1
+
+            if top:
+                secStackPos.append((sys.maxsize, 0))
+                secStackVars.append(m.group(1))
+            elif (len(secStackPos) - count) < 2:
+                secStackVars.append("")
+                secStackPos.append((currentSectionLend, currentSectionCend))
+            else:
+                # get rid of decl scope
+                secStackPos.pop()
+                secStackVars.pop()
+                # copy scope, add new var
+                scope = secStackPos.pop()
+                secStackPos.append(scope)
+                secStackPos.append(scope)
+                secStackVars.append(m.group(1))
+        else:
+            secStackVars.append("")
+            secStackPos.append((currentSectionLend, currentSectionCend))
+
+        sValidVars = ""
+        for s in secStackVars:
+            if s != "":
+                sValidVars = sValidVars + "," + s
+
+#        print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
+#        print(secStackPos)
+        print("VALID VARS: " + sValidVars)
 
     # Finally, update input file line index
     lineindex+=1
