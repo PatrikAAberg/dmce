@@ -755,7 +755,9 @@ while (i < expdb_index):
 
         while (count < numDataVars):
             count += 1
-            if count == numDataVars:
+            if count == 1:
+                probe_prolog = probe_prolog + ",0,"
+            elif count == numDataVars:
                 probe_prolog = probe_prolog + "0"
             else:
                 probe_prolog = probe_prolog + "0,"
