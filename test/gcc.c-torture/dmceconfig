@@ -20,10 +20,10 @@ DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 /usr/include -isystem $DMCE_WORK_PA
 DMCE_DEFAULT_H_COMMAND_LINE:gcc -isystem $DMCE_WORK_PATH/inc -I$DMCE_WORK_PATH/inc
 
 # Probe definition c file
-DMCE_PROBE_SOURCE:
+DMCE_PROBE_SOURCE: DMCE_PROBE_SOURCE:/home/epatabe/repos/dmce/dmce-probe-monolith.c
 
 # Probe prolog c file
-#DMCE_PROBE_PROLOG:
+DMCE_PROBE_PROLOG:DMCE_PROBE_PROLOG:/home/epatabe/repos/dmce/dmce-prolog-deafult.c
 
 # Log files
 DMCE_LOG_FILES:$DMCE_WORK_PATH
