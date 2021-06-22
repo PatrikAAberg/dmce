@@ -529,7 +529,7 @@ while (lineindex<linestotal):
         print("SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend)
 
     # update section info and any declarations
-    if (in_parsed_c_file):
+    if (in_parsed_c_file and numDataVars > 0):
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
 
@@ -553,10 +553,19 @@ while (lineindex<linestotal):
                 break
 
         if m:
-            secStackPos.pop()
-            secStackVars.pop()
-            secStackVars.pop()
-            secStackVars.append(m.group(1))
+            # top level ?
+            if len(secStackPos) == 0:
+                secStackPos.append((sys.maxsize, 0))
+                secStackVars.append(m.group(1))
+            else:
+                # get rid of decl scope
+                secStackPos.pop()
+                secStackVars.pop()
+                # copy scope, add new var
+                scope = secStackPos.pop()
+                secStackPos.append(scope)
+                secStackPos.append(scope)
+                secStackVars.append(m.group(1))
         else:
             secStackVars.append("")
             secStackPos.append((currentSectionLend, currentSectionCend))
