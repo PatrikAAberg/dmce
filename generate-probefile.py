@@ -554,9 +554,20 @@ while (lineindex<linestotal):
 
         if m:
             # top level ?
-            if len(secStackPos) == 0:
+            top = True
+            count = 0
+            for l, c in secStackPos:
+                if l != sys.maxsize:
+                    top = False
+                    break
+                count += 1
+
+            if top:
                 secStackPos.append((sys.maxsize, 0))
                 secStackVars.append(m.group(1))
+            elif (len(secStackPos) - count) < 2:
+                secStackVars.append("")
+                secStackPos.append((currentSectionLend, currentSectionCend))
             else:
                 # get rid of decl scope
                 secStackPos.pop()
