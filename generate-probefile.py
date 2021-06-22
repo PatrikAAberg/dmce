@@ -739,7 +739,7 @@ while (i < expdb_index):
 
     if numDataVars > 0:
         vlist = []
-        for s in expdb_secstackvars[i]:
+        for s in reversed(expdb_secstackvars[i]):
             if s != "":
                 vlist.append(s)
 
