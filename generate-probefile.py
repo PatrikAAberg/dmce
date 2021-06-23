@@ -653,7 +653,7 @@ while (lineindex<linestotal):
     cstart = cend
 
     # update section info and any declarations
-    if (in_parsed_c_file and numDataVars > 0):
+    if ((not backtrailing) and in_parsed_c_file and numDataVars > 0):
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
 
