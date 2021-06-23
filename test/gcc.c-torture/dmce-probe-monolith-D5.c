@@ -4,10 +4,10 @@
 
 extern int dmce_probes[30000];
 
-static void dmce_probe_body(unsigned int probenbr, int a, int b, int c, int d, int e)
+static void dmce_probe_body(unsigned int dmce_probenbr, int dmce_param_a, int dmce_param_b, int dmce_param_c, int dmce_param_d, int dmce_param_e)
 {
-  dmce_probes[probenbr] = 1;
+  dmce_probes[dmce_probenbr] = 1;
 }
 
-#define DMCE_PROBE(a) (dmce_probe_body(p, a, b, c, d, e))
+#define DMCE_PROBE(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e) (dmce_probe_body(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e))
 #endif //__DMCE_PROBE_FUNCTION_BODY__
