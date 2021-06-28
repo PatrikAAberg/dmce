@@ -26,7 +26,7 @@ import time
 
 # Print is expensive and can be disabled
 do_print=1
-numDataVars = 0
+numDataVars = 5
 
 time1 = time.time()
 
@@ -637,10 +637,11 @@ while (lineindex<linestotal):
 
             i+=1
 
+# TODO: This needs to be re-worked together with c and h file checks above
     # Check if we for next line is within the parsed c file
-    found_parsed_c_file = re_parsed_c_file.match(linebuf[lineindex])
-    if (found_parsed_c_file):
-        in_parsed_c_file = 1
+#    found_parsed_c_file = re_parsed_c_file.match(linebuf[lineindex])
+#    if (found_parsed_c_file):
+#        in_parsed_c_file = 1
 
     # If lstart or curstart moved forward in parsed c file, update
     if ( line_position_updated and in_parsed_c_file and (int(lstart) > int(last_lstart))):
