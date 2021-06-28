@@ -37,7 +37,7 @@ static void dmce_atexit(void){
     fclose(fp);
 }
 
-static void dmce_probe_body(unsigned int probenbr, int a, int b, int c, int d, int e) {
+static void dmce_probe_body(unsigned int dmce_probenbr, int dmce_par_a, int dmce_par_b, int dmce_par_c, int dmce_par_d, int dmce_par_e) {
 
     if (!registered_at_exit) {
 
@@ -45,11 +45,11 @@ static void dmce_probe_body(unsigned int probenbr, int a, int b, int c, int d, i
         registered_at_exit = 1;
     }
 
-    dmce_buffer[probenbr][0] ++;
-    dmce_buffer[probenbr][1] += a;
-    dmce_buffer[probenbr][2] += b;
-    dmce_buffer[probenbr][3] += c;
-    dmce_buffer[probenbr][4] += d;
-    dmce_buffer[probenbr][5] += e;
+    dmce_buffer[dmce_probenbr][0] ++;
+    dmce_buffer[dmce_probenbr][1] += dmce_par_a;
+    dmce_buffer[dmce_probenbr][2] += dmce_par_b;
+    dmce_buffer[dmce_probenbr][3] += dmce_par_c;
+    dmce_buffer[dmce_probenbr][4] += dmce_par_d;
+    dmce_buffer[dmce_probenbr][5] += dmce_par_e;
 }
 #endif //__DMCE_PROBE_FUNCTION_BODY__
