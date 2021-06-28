@@ -234,7 +234,7 @@ re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 
 re_declarations = []
-re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
+re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
 
 # Populate c expression database
 while (lineindex<linestotal):
