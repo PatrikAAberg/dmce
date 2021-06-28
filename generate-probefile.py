@@ -294,6 +294,7 @@ while (lineindex<linestotal):
 
 
     # Check if we for this line is within the parsed c file
+    # re.compile(".*<" + parsed_c_file_exp + ".*")
     found_parsed_c_file_start = re_c_file_start.match(linebuf[lineindex])
     if (found_parsed_c_file_start):
         # Assume that we are within the parsed c file
@@ -302,6 +303,7 @@ while (lineindex<linestotal):
         # Assure that we are not leaving the parsed c file
         #
         # ParmVarDecl Hexnumber <myfile.c:1:15, ../another-file.c:6:33>
+        # re.compile(", .*\.c:\d+:\d+>")
         if (re_leaving_c_file.search(linebuf[lineindex])):
             if (re_self.search(linebuf[lineindex])):
                 # Do nothing
@@ -320,12 +322,16 @@ while (lineindex<linestotal):
     # </usr/include/x86_64-linux-gnu/bits/poll.h:41:20, line:48:18>
     # </usr/include/x86_64-linux-gnu/bits/poll.h:27:18>
     if (re_h_files.match(linebuf[lineindex])):
+        print(".H FILE MATCH! LINE:")
+        print(linebuf[lineindex])
         trailing=0
         in_parsed_c_file = 0
         # Remove .h filename for further parsing
         linebuf[lineindex] = re.sub("\,\s/.*\.h:\d*:\d*>", ">", linebuf[lineindex])
         linebuf[lineindex] = re.sub(".*</.*\.h:\d*:\d*\,\s.*", "<external file,", linebuf[lineindex])
         linebuf[lineindex] = re.sub(".*</.*\.h:\d*:\d*>.*", "<external file>", linebuf[lineindex])
+        print("Replaced line with:")
+        print(linebuf[lineindex])
 
     # Other c-files (not self)
     #
