@@ -26,7 +26,7 @@ import time
 
 # Print is expensive and can be disabled
 do_print=1
-numDataVars = 5
+numDataVars = 0
 
 time1 = time.time()
 
