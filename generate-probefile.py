@@ -658,12 +658,15 @@ while (lineindex<linestotal):
     lstart = lend
     cstart = cend
 
+    print("Line: " + linebuf[lineindex])
+    print("in parsed file: " + str(in_parsed_c_file))
+
     # update section info and any declarations
     if ((not backtrailing) and (not inside_expression) and in_parsed_c_file and numDataVars > 0):
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
 
-       # push new sections
+        # push new sections
         for section in re_declarations:
             m = section.match(linebuf[lineindex])
             if m:
@@ -704,8 +707,8 @@ while (lineindex<linestotal):
             if s != "":
                 sValidVars = sValidVars + "," + s
 
-#        print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
-#        print(secStackPos)
+        print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
+        print(secStackPos)
         print("VALID VARS: " + sValidVars)
 
     # Finally, update input file line index
