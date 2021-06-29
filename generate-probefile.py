@@ -93,10 +93,14 @@ cur_tab = 0
 
 lskip = 0
 cskip = 0
-skip_tab = 0
 skip_statement = 0
+skip_statement_tab = 0
+skip_scope = 0
+skip_scope_tab  = 0
 skip_backtrail = 0
+skip_backtrail_tab = 0
 skip_lvalue = 0
+skip_lvalue_tab = 0
 
 lineindex = 0
 
@@ -203,7 +207,8 @@ re_c_file_start             = re.compile(".*<" + parsed_c_file_exp + ".*")
 re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
 re_self                     = re.compile(", " + parsed_c_file_exp + ":\d+:\d+>")
 re_h_files                  = re.compile(r'.*\.h:\d*:\d*.*')
-re_h_file_statement         = re.compile(r'.*\.h:\d*:\d*,\sline:\d*:\d*>.*')
+re_h_file_left_statement    = re.compile(r'.*\.h:\d*:\d*,\sline:\d*:\d*>.*')
+re_h_file_right_statement   = re.compile(r'.*\, .*\.h:.*')
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_self_anywhere            = re.compile(".*" + parsed_c_file_exp + ".*")
 re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
@@ -255,17 +260,32 @@ while (lineindex<linestotal):
         tab-=1
 
     # Check if we popped up tab to skip_tab_*
-    if (skip_statement and (tab <= skip_statement_tab)):
+    if skip_scope:
+        if tab <= skip_scope_tab:
+            skip_scope = 0
+        else:
+            lineindex += 1
+            continue
+
+    if skip_statement and (tab <= skip_statement_tab):
         skip_statement=0
     if (skip_backtrail and (tab <= skip_backtrail_tab)):
         skip_backtrail=0
     if (skip_lvalue and (tab <= skip_lvalue_tab)):
         skip_lvalue=0
 
+    # If we end up in another file and we are tracking variables, skip until we get back again
+
+    found_h_file_right_statement = re_h_file_right_statement.match(linebuf[lineindex])
+    if found_h_file_right_statement and (numDataVars > 0):
+        skip_scope = 1
+        skip_scope_tab = tab
+
     # If statement is within a .h file, skip all indented statements and expressions
     # CompoundStmt Hexnumber </tmp/epatabe/dmce/inc/internal.h:146:5, line:151:5>
-    found_h_file_statement = re_h_file_statement.match(linebuf[lineindex])
-    if (found_h_file_statement):
+
+    found_h_file_left_statement = re_h_file_left_statement.match(linebuf[lineindex])
+    if (found_h_file_left_statement):
         skip_statement = 1
         skip_statement_tab = tab
 
@@ -637,11 +657,10 @@ while (lineindex<linestotal):
 
             i+=1
 
-# TODO: This needs to be re-worked together with c and h file checks above
-    # Check if we for next line is within the parsed c file
-#    found_parsed_c_file = re_parsed_c_file.match(linebuf[lineindex])
-#    if (found_parsed_c_file):
-#        in_parsed_c_file = 1
+    # When not tracking variables, this works surprisingly well
+    found_parsed_c_file = re_parsed_c_file.match(linebuf[lineindex])
+    if (found_parsed_c_file and (numDataVars == 0)):
+        in_parsed_c_file = 1
 
     # If lstart or curstart moved forward in parsed c file, update
     if ( line_position_updated and in_parsed_c_file and (int(lstart) > int(last_lstart))):
