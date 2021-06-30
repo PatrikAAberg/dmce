@@ -206,10 +206,15 @@ re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(
 re_c_file_start             = re.compile(".*<" + parsed_c_file_exp + ".*")
 re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
 re_self                     = re.compile(", " + parsed_c_file_exp + ":\d+:\d+>")
-re_h_files                  = re.compile(r'.*\.h:\d*:\d*.*')
+
 re_h_file_left_statement    = re.compile(r'.*<(.*\.h):\d*:\d*.*')
 re_h_file_middle_statement  = re.compile(r'.*\, (.*\.h):.*>.*')
 re_h_file_right_statement   = re.compile(r'.*<.*>.*(\.h):.*')
+
+re_h_file_left_statement    = re.compile(r'.*<(.*\.h):\d*:\d*.*')
+re_h_file_middle_statement  = re.compile(r'.*\, (.*\.h):.*>.*')
+re_h_file_right_statement   = re.compile(r'.*<.*>.*(\.h):.*')
+
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_self_anywhere            = re.compile(".*" + parsed_c_file_exp + ".*")
 re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
@@ -341,7 +346,14 @@ while (lineindex<linestotal):
     left = re_h_file_left_statement.match(linebuf[lineindex])
     middle = re_h_file_middle_statement.match(linebuf[lineindex])
     right = re_h_file_right_statement.match(linebuf[lineindex])
-    if left or middle or right:
+    if left:
+        leftself = (parsed_c_file_exp in left.group(1))
+    if middle:
+        middleself = (parsed_c_file_exp in middle.group(1))
+    if right:
+        rightself = (parsed_c_file_exp in right.group(1))
+
+    if (left and not leftself) or (middle and not middleself) or (right and not rightself):
         print(".H FILE MATCH! LINE:")
         print(linebuf[lineindex])
         trailing=0
