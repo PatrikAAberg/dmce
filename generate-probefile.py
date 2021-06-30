@@ -210,11 +210,7 @@ re_self                     = re.compile(", " + parsed_c_file_exp + ":\d+:\d+>")
 
 re_h_file_left_statement    = re.compile(r'.*<(.*\.h):\d*:\d*.*')
 re_h_file_middle_statement  = re.compile(r'.*\, (.*\.h):.*>.*')
-re_h_file_right_statement   = re.compile(r'.*<.*>.*(\.h):.*')
-
-re_h_file_left_statement    = re.compile(r'.*<(.*\.h):\d*:\d*.*')
-re_h_file_middle_statement  = re.compile(r'.*\, (.*\.h):.*>.*')
-re_h_file_right_statement   = re.compile(r'.*<.*>.*(\.h):.*')
+re_h_file_right_statement   = re.compile(r'.*<.*> (.*\.h):.*')
 
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_self_anywhere            = re.compile(".*" + parsed_c_file_exp + ".*")
