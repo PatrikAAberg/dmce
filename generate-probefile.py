@@ -348,11 +348,20 @@ while (lineindex<linestotal):
     middle = re_h_file_middle_statement.match(linebuf[lineindex])
     right = re_h_file_right_statement.match(linebuf[lineindex])
     if left:
-        leftself = (parsed_c_file_exp in left.group(1))
+        leftself = (parsed_c_file in left.group(1))
+        print("LEFT Comparing: !" + parsed_c_file + "!" + left.group(1) + "!")
+        if leftself:
+            print("LEFT SELF!")
     if middle:
-        middleself = (parsed_c_file_exp in middle.group(1))
+        print("MIDDLE Comparing: !" + parsed_c_file + "!" + middle.group(1) + "!")
+        middleself = (parsed_c_file in middle.group(1))
+        if middleself:
+            print("MIDDLE SELF")
     if right:
-        rightself = (parsed_c_file_exp in right.group(1))
+        print("RIGHT Comparing: !" + parsed_c_file + "!" + right.group(1) + "!")
+        rightself = (parsed_c_file in right.group(1))
+        if rightself:
+            print("RIGHT SELF")
 
     if (left and not leftself) or (middle and not middleself) or (right and not rightself):
         print(".H FILE MATCH! LINE:")
