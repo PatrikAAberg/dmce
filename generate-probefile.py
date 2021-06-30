@@ -137,12 +137,13 @@ rawlinestotal = len(rawlinebuf)
 
 # Pre-filter out general stuff
 for line in rawlinebuf:
-    if '<<built-in>' in line:
-        # Make built-in functions look like lib functions
-        finalline = re.sub("<built\-in>", "built_in.h", line)
-        linebuf.append(finalline)
-    else:
-        linebuf.append(line)
+    # Make built-in functions look like lib functions
+    line = re.sub("<built\-in>", "dmce_built_in.h", line)
+    # Make scratch space look like include file ref
+    line = re.sub("<scratch space>", "dmce_scratch_space.h", line)
+    # Remove all "nice info" pointing to include files
+    line = re.sub("\(.* at .*\)", "", line)
+    linebuf.append(line)
 
 linestotal=rawlinestotal
 
