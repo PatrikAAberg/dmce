@@ -338,21 +338,14 @@ while (lineindex<linestotal):
         linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
 
     # h-files
-    #
-    # <line:101:3, /usr/include/x86_64-linux-gnu/bits/errno.h:54:39>
-    # </usr/include/x86_64-linux-gnu/bits/poll.h:41:20, line:48:18>
-    # </usr/include/x86_64-linux-gnu/bits/poll.h:27:18>
-    if (re_h_files.match(linebuf[lineindex])):
+    left = re_h_file_left_statement.match(linebuf[lineindex])
+    middle = re_h_file_middle_statement.match(linebuf[lineindex])
+    right = re_h_file_right_statement.match(linebuf[lineindex])
+    if left or middle or right:
         print(".H FILE MATCH! LINE:")
         print(linebuf[lineindex])
         trailing=0
         in_parsed_c_file = 0
-        # Remove .h filename for further parsing
-        linebuf[lineindex] = re.sub("\,\s/.*\.h:\d*:\d*>", ">", linebuf[lineindex])
-        linebuf[lineindex] = re.sub(".*</.*\.h:\d*:\d*\,\s.*", "<external file,", linebuf[lineindex])
-        linebuf[lineindex] = re.sub(".*</.*\.h:\d*:\d*>.*", "<external file>", linebuf[lineindex])
-        print("Replaced line with:")
-        print(linebuf[lineindex])
 
     # Other c-files (not self)
     #
