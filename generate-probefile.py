@@ -51,14 +51,6 @@ if do_print == 1:
 
 parsed_c_file = sys.argv[1]
 
-# c++ file?
-m_cc = re.match( r'.*\.cc$', parsed_c_file, re.I)
-m_cpp = re.match( r'.*\.cpp$', parsed_c_file, re.I)
-if (m_cc or m_cpp):
-    c_plusplus=1
-else:
-    c_plusplus=0
-
 parsed_c_file_exp = parsed_c_file
 probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
@@ -135,8 +127,13 @@ if do_print == 1:
 
 rawlinestotal = len(rawlinebuf)
 
-# Pre-filter out general stuff
+# Look for general info and pre-filter out stuff
+c_plusplus = 0
 for line in rawlinebuf:
+    # c++ file?
+    if "CXX" in line:
+        c_plusplus=1
+
     # Make built-in functions look like lib functions
     line = re.sub("<built\-in>", "dmce_built_in.h", line)
     # Make scratch space look like include file ref
@@ -598,7 +595,7 @@ while (lineindex<linestotal):
     # Check if expression is interesting
     if (trailing and (linebuf[lineindex] != "")):
         if do_print == 1:
-            print(parsed_c_file + " trailing:" + str(trailing) + " is_addition:" + str(is_addition) + " backtrailing:" + str(backtrailing) + " inside_expression:" + str(inside_expression) + " skip:" + str(skip))
+            print(parsed_c_file + " trailing:" + str(trailing) + " is_addition:" + str(is_addition) + " backtrailing:" + str(backtrailing) + " inside_expression:" + str(inside_expression) + " skip:" + str(skip) + " skip lvalue:" + str(skip_lvalue))
         if do_print == 1:
             print(parsed_c_file + " >" + linebuf[lineindex].rstrip())
 
