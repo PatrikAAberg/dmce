@@ -107,7 +107,8 @@ lstart = "0"
 lend = "0"
 cstart = "0"
 cend = "0"
-
+scopelstart = "0"
+scopecstart = "0"
 skiplend = "0"
 skipcend = "0"
 
@@ -240,6 +241,11 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 
 re_declarations = []
 re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
+re_declarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
+
+re_skip_scopes = []
+re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
+
 
 # Populate c expression database
 while (lineindex<linestotal):
@@ -407,6 +413,8 @@ while (lineindex<linestotal):
         exp_extra = 1
         lstart = exp_pos_update.group(1)
         lend = exp_pos_update.group(5)
+        scopelstart = lstart
+        scopecstart = cstart
         cstart = exp_pos_update.group(2)
         cend = exp_pos_update.group(6)
         skiplend = exp_pos_update.group(3)
@@ -420,10 +428,11 @@ while (lineindex<linestotal):
     if exp_pos_update:
         col_position_updated=1
         cstart = exp_pos_update.group(1)
+        scopecstart = cstart
         cend = cstart
         skipcend = cend
-        #if do_print == 1:
-            #print("MATCH C: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+        if do_print == 1:
+            print("MATCH C: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # E
     if not col_position_updated:
@@ -432,10 +441,11 @@ while (lineindex<linestotal):
             col_position_updated=1
             exp_extra = 1
             cstart = exp_pos_update.group(1)
+            scopecstart = cstart
             cend = exp_pos_update.group(2)
             skipcend = cend
-            #if do_print == 1:
-                #print("MATCH E: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+            if do_print == 1:
+                print("MATCH E: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # B
     exp_pos_update = re_update_pos_B.match(linebuf[lineindex])
@@ -445,14 +455,16 @@ while (lineindex<linestotal):
         lstart = exp_pos_update.group(1)
         lend = lstart
         cstart = exp_pos_update.group(2)
+        scopelstart = lstart
+        scopecstart = cstart
         cend = exp_pos_update.group(3)
         skipcend = cend
         skiplend = lend
         if (in_parsed_c_file):
             trailing=1
 
-        #if do_print == 1:
-            #print("MATCH B: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+        if do_print == 1:
+            print("MATCH B: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # F
     if not line_position_updated:
@@ -461,6 +473,8 @@ while (lineindex<linestotal):
             line_position_updated=1
             lstart = exp_pos_update.group(1)
             cstart = exp_pos_update.group(2)
+            scopelstart = lstart
+            scopecstart = cstart
             lend=lstart
             cend=cstart
             skiplend = lend
@@ -468,8 +482,8 @@ while (lineindex<linestotal):
             if (in_parsed_c_file):
                 trailing=1
 
-            #if do_print == 1:
-                #print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+            if do_print == 1:
+                print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # A
     if not line_position_updated:
@@ -480,14 +494,16 @@ while (lineindex<linestotal):
             lstart = exp_pos_update.group(1)
             lend = exp_pos_update.group(3)
             cstart = exp_pos_update.group(2)
+            scopelstart = lstart
+            scopecstart = cstart
             cend = exp_pos_update.group(4)
             skiplend = lend
             skipcend = cend
             if (in_parsed_c_file):
                 trailing=1
 
-            #if do_print == 1:
-                #print("MATCH A: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+            if do_print == 1:
+                print("MATCH A: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # D
     if not col_position_updated:
@@ -497,11 +513,12 @@ while (lineindex<linestotal):
             exp_extra = 1
             lend = exp_pos_update.group(2)
             cstart = exp_pos_update.group(1)
+            scopecstart = cstart
             cend = exp_pos_update.group(3)
             skiplend = lend
             skipcend = cend
-            #if do_print == 1:
-                #print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+            if do_print == 1:
+                print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # Check if backtrailing within current expression
     if (int(lstart) > int(lend)):
@@ -563,22 +580,9 @@ while (lineindex<linestotal):
     if do_print == 1:
         print("SKIP: " + str(skip) + "    lskip: " + str(lskip) + "   lend:"  + lend)
 
-    # pop section stack?
-    if (in_parsed_c_file and numDataVars > 0):
-        while True:
-            if len(secStackPos) > 0:
-                l, c = secStackPos[len(secStackPos) - 1]
-                if (int(lstart) > l) or ((int(lstart) == l) and (int(cstart) > c)):
-                    secStackPos.pop()
-                    secStackVars.pop()
-                else:
-                    break
-            else:
-                break
-
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
-
+        print("Inside expresson wating to pass l: " + str(cur_lend) + "   c: " + str(cur_cend))
         # If we reached the last subexpression in the expression or next expression or statement
         if ( (int(lstart) > cur_lend) or ( (int(lstart) == cur_lend) and (int(cstart) > cur_cend) ) ):
             expdb_lineend.append(int(lstart))
@@ -591,6 +595,21 @@ while (lineindex<linestotal):
             if do_print == 1:
                 print("Start: ("+ str(cur_lstart) + ", " + str(cur_cstart) + ") End: (" + lstart  + ", " + str(int(cstart) -1) + ") ->" + linebuf[lineindex].rstrip())
             inside_expression = 0
+
+    # pop section stack?
+    if (in_parsed_c_file and not inside_expression and numDataVars > 0):
+        while True:
+            if len(secStackPos) > 0:
+                l, c = secStackPos[len(secStackPos) - 1]
+                if (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
+                    secStackPos.pop()
+                    print("POPPING: (" + str(l) + ", " + str(c) + ") l: " + str(scopelstart) + "   c: " + str(scopecstart))
+                    secStackVars.pop()
+                else:
+                    print("NO POPPING: " + str(scopelstart) + "   c: " + str(scopecstart))
+                    break
+            else:
+                break
 
     # Check if expression is interesting
     if (trailing and (linebuf[lineindex] != "")):
@@ -683,7 +702,7 @@ while (lineindex<linestotal):
         if do_print == 1:
             print("Column moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
 
-    # Update lend and cend to reflect the position BEFORE THE NEXT expression, and not beginning iof the last in this one. See above...
+    # Update lstart and cstart to reflect the position BEFORE THE NEXT expression, and not beginning iof the last in this one. See above...
     lstart = lend
     cstart = cend
 
@@ -715,26 +734,41 @@ while (lineindex<linestotal):
             if top:
                 secStackPos.append((sys.maxsize, 0))
                 secStackVars.append(m.group(1))
-            elif (len(secStackPos) - count) < 2:
-                secStackVars.append("")
-                secStackPos.append((currentSectionLend, currentSectionCend))
             else:
-                # get rid of decl scope
-                secStackPos.pop()
-                secStackVars.pop()
                 # copy scope, add new var
                 scope = secStackPos.pop()
                 secStackPos.append(scope)
                 secStackPos.append(scope)
                 secStackVars.append(m.group(1))
+
+#            elif (len(secStackPos) - count) < 2:
+#                print("DIST FROM TOP: " + str(len(secStackPos) - count))
+#                secStackVars.append("")
+#                secStackPos.append((currentSectionLend, currentSectionCend))
+#            else:
+#                # get rid of decl scope
+#                secStackPos.pop()
+#                secStackVars.pop()
+#                # copy scope, add new var
+#                scope = secStackPos.pop()
+#                secStackPos.append(scope)
+#                secStackPos.append(scope)
+#                secStackVars.append(m.group(1))
         else:
-            secStackVars.append("")
-            secStackPos.append((currentSectionLend, currentSectionCend))
+            for section in re_skip_scopes:
+                m = section.match(linebuf[lineindex])
+                if m:
+                    pass
+                else:
+                    secStackVars.append("")
+                    secStackPos.append((currentSectionLend, currentSectionCend))
 
         sValidVars = ""
         for s in secStackVars:
             if s != "":
                 sValidVars = sValidVars + "," + s
+            else:
+                sValidVars = sValidVars + "," + "<None>"
 
         print("Current section = (line: " + str(currentSectionLend) + ", col: " + str(currentSectionCend) + ")")
         print(secStackPos)
