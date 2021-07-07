@@ -282,7 +282,7 @@ while (lineindex<linestotal):
         skip_scope_tab = tab
 
     # If statement is within a .h file, skip all indented statements and expressions
-    # CompoundStmt Hexnumber </tmp/epatabe/dmce/inc/internal.h:146:5, line:151:5>
+    # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
 
     found_h_file_left_statement = re_h_file_left_statement.match(linebuf[lineindex])
     if (found_h_file_left_statement):
@@ -295,7 +295,7 @@ while (lineindex<linestotal):
         skip_lvalue = 1
         skip_lvalue_tab = tab
 
-    # <common/rhai-client_helper.c:101:3
+    # <foo/bar.c:101:3
     # Replace file statements and set appropriate state
     # print(linebuf[lineindex].rstrip())
 
@@ -364,7 +364,7 @@ while (lineindex<linestotal):
 
     # Other c-files (not self)
     #
-    # <gcc.c-torture/compile/pr54713-1.c:21:31, col:42>
+    # <foo/bar.c:21:31, col:42>
     elif not found_parsed_c_file_start and '.c:' in linebuf[lineindex]:
         if (re_self_anywhere.match(linebuf[lineindex])):
             # Self, do nothing
