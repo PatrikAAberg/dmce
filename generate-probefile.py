@@ -264,18 +264,13 @@ while (lineindex<linestotal):
         is_addition=0
 
     # Check what tab we are on
-    tab = linebuf[lineindex].find("-")
+    tabtmp = linebuf[lineindex].find("|-")
+    if (tabtmp != -1):
+        tab = tabtmp
+
     #Compensate for + if added line in diff
     if (is_addition):
         tab-=1
-
-    # Check if we popped up tab to skip_tab_*
-    if skip_scope:
-        if tab <= skip_scope_tab:
-            skip_scope = 0
-        else:
-            lineindex += 1
-            continue
 
     if skip_statement and (tab <= skip_statement_tab):
         skip_statement=0
@@ -283,13 +278,8 @@ while (lineindex<linestotal):
         skip_backtrail=0
     if (skip_lvalue and (tab <= skip_lvalue_tab)):
         skip_lvalue=0
-
-    # If we end up in another file and we are tracking variables, skip until we get back again
-
-    found_h_file_right_statement = re_h_file_right_statement.match(linebuf[lineindex])
-    if found_h_file_right_statement and (numDataVars > 0):
-        skip_scope = 1
-        skip_scope_tab = tab
+    if (skip_scope and (tab <= skip_scope_tab)):
+        skip_scope=0
 
     # If statement is within a .h file, skip all indented statements and expressions
     # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
@@ -356,6 +346,9 @@ while (lineindex<linestotal):
     if (left and not leftself) or (middle and not middleself) or (right and not rightself):
         trailing=0
         in_parsed_c_file = 0
+        if numDataVars > 0:
+            skip_scope = 1
+            skip_scope_tab = tab
 
     # Other c-files (not self)
     #
@@ -580,7 +573,7 @@ while (lineindex<linestotal):
 #            cur_cend = 0
 
     # pop section stack?
-    if (in_parsed_c_file and not inside_expression and numDataVars > 0):
+    if (in_parsed_c_file and not inside_expression and not skip_scope and numDataVars > 0):
         while True:
             if len(secStackPos) > 0:
                 l, c = secStackPos[len(secStackPos) - 1]
@@ -687,7 +680,7 @@ while (lineindex<linestotal):
     print("in parsed file: " + str(in_parsed_c_file))
 
     # update section info and any declarations
-    if ((not backtrailing) and (not inside_expression) and in_parsed_c_file and numDataVars > 0):
+    if not backtrailing and not inside_expression and not skip_scope and in_parsed_c_file and numDataVars > 0:
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
 
