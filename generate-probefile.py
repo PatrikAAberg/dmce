@@ -574,7 +574,7 @@ while (lineindex<linestotal):
 #            cur_cend = 0
 
     # pop section stack?
-    if (in_parsed_c_file and not inside_expression and not skip_scope and numDataVars > 0):
+    if (in_parsed_c_file and not inside_expression and numDataVars > 0):
         while True:
             if len(secStackPos) > 0:
                 l, c = secStackPos[len(secStackPos) - 1]
