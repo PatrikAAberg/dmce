@@ -57,6 +57,9 @@ DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 -I/usr/include -isystem /tmp/$USER/
 # Default compiler command line for h files
 DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
 
+# Number of data variables to probe
+DMCE_NUM_DATA_VARS:0
+
 # Probe definition c file
 DMCE_PROBE_SOURCE:$install_path/dmce-probe-user.c
 

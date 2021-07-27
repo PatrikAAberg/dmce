@@ -19,6 +19,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import os
 import sys
 import re
 import argparse
@@ -26,7 +27,13 @@ import time
 
 # Print is expensive and can be disabled
 do_print=1
-numDataVars = 0
+
+# Get number of data variables
+ndvs = os.getenv('DMCE_NUM_DATA_VARS')
+if ndvs == None:
+    numDataVars = 0
+else:
+    numDataVars = int(ndvs)
 
 time1 = time.time()
 
