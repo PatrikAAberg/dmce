@@ -555,7 +555,7 @@ while (lineindex<linestotal):
     print("Parsed file: " + parsed_c_file)
     print("Parsed AST line:                     " + linebuf[lineindex])
     print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope))
+    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + " sct: " + str(skip_scope_tab))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
