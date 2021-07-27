@@ -347,8 +347,9 @@ while (lineindex<linestotal):
         trailing=0
         in_parsed_c_file = 0
         if numDataVars > 0:
-            skip_scope = 1
-            skip_scope_tab = tab
+            if not skip_scope:
+                skip_scope = 1
+                skip_scope_tab = tab
 
     # Other c-files (not self)
     #
