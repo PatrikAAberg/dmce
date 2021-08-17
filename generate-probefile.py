@@ -35,6 +35,9 @@ if ndvs == None:
 else:
     numDataVars = int(ndvs)
 
+# Get path to config files
+configpath = os.getenv('DMCE_CONFIG_PATH')
+
 time1 = time.time()
 
 if (len(sys.argv) != 6):
@@ -157,27 +160,32 @@ srcline = 0
 srccol = 0
 
 # Used for c expression recognition
-exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
-                  '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
-                  '.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
-                  '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\/\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\-\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\+\'.*',
-                  '.*UnaryOperator Hexnumber <.*\,.*>.*\'\+\+\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'=\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'<\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'>\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
-                  '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
-                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
-                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
-                  '.*ReturnStmt Hexnumber <.*\,.*>.*']
+if configpath != None and os.path.isfile(configpath + '/recognizedexpressions.py'):
+    sys.path.insert(1, configpath)
+    import recognizedexpressions
+    exppatternlist = recognizedexpressions.exppatternlist
+else:
+    exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
+                      '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
+                      '.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
+                      '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\/\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\-\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\+\'.*',
+                      '.*UnaryOperator Hexnumber <.*\,.*>.*\'\+\+\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'=\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'<\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'>\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
+                      '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
 re_exppatternlist = []
 
