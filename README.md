@@ -4,6 +4,8 @@ Source code level instrumentation tool that enables dynamic code execution track
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
+Latest stable tag: v1.0.0
+
 #### Examples of use
 
 * Typically used in a CI/CD pipeline, but due to it's simplicity it is also useful on the developer's prompt
