@@ -49,6 +49,26 @@ cxl = open(configpath + "/constructs.exclude")
 cxl_buf = cxl.readlines()
 cxl.close()
 
+# Create list of functions to include
+finc=[]
+dmceinclude = open(configpath + "/dmce.include")
+finclines = dmceinclude.readlines()
+dmceinclude.close()
+for func in finclines:
+    funcpos = func.find(':')
+    if (funcpos != -1):
+        finc.append(func[funcpos+1:].rstrip())
+
+re_func_list = []
+for func in finc:
+    re_func_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
+
+if len(re_func_list) == 0:
+    re_func_list.append(re.compile(".*"))
+    in_function_scope = True
+else:
+    in_function_scope = False
+
 # Pre compiled reg-ex
 re_cxl_list = []
 for construct in cxl_buf:
@@ -104,6 +124,8 @@ skip_backtrail = 0
 skip_backtrail_tab = 0
 skip_lvalue = 0
 skip_lvalue_tab = 0
+
+function_scope_tab = 0
 
 lineindex = 0
 
@@ -295,6 +317,8 @@ while (lineindex<linestotal):
         skip_lvalue=0
     if (skip_scope and (tab <= skip_scope_tab)):
         skip_scope=0
+    if (in_function_scope) and (tab <= function_scope_tab):
+        in_function_scope = False
 
     # If statement is within a .h file, skip all indented statements and expressions
     # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
@@ -567,10 +591,17 @@ while (lineindex<linestotal):
         else:
             skip=1
 
+    # Check if entering function scope
+    if not in_function_scope:
+        for re_f in re_func_list:
+            if re_f.match(linebuf[lineindex]):
+                in_function_scope = True
+                function_scope_tab = tab
+
     print("Parsed file: " + parsed_c_file)
     print("Parsed AST line:                     " + linebuf[lineindex])
     print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + " sct: " + str(skip_scope_tab))
+    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -604,7 +635,7 @@ while (lineindex<linestotal):
     print(secStackPos)
     print(secStackVars)
 
-    if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_statement) and (not skip_backtrail) and (not skip_lvalue)):
+    if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_statement) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
         i = 0
         while (i < len(re_exppatternlist)):
             re_exp = re_exppatternlist[i]
