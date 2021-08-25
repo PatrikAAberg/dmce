@@ -40,12 +40,12 @@ configpath = os.getenv('DMCE_CONFIG_PATH')
 
 time1 = time.time()
 
-if (len(sys.argv) != 6):
-    print("Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <expression.dmce> <constructs.exclude>")
+if (len(sys.argv) != 5):
+    print("Usage: gen-probefile <inputfile.c> <outputfile.c.probed> <probedata.dmce> <expression.dmce>")
     exit()
 
 # Read constructs exclude file
-cxl = open(sys.argv[5])
+cxl = open(configpath + "/constructs.exclude")
 cxl_buf = cxl.readlines()
 cxl.close()
 

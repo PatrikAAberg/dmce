@@ -300,7 +300,7 @@ _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
 	[ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
 	touch $dmcepath/new/$c_file.probedata
-	$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata $configpath/constructs.exclude <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
+	$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
 wait
 find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
