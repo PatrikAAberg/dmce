@@ -106,9 +106,9 @@ nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 _echo "git found $nbr_of_files modified and added files"
 
 _echo "updating filecache removing exceptions. "
-# Exclude comments and blank rows
-grep -E -v '^#|^$' $configpath/dmce.include > $dmcepath/workarea/dmce.include
-grep -E -v '^#|^$' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
+# Exclude comments and blank rows, dont care about eventual function names
+grep -E -v '^#|^$' $configpath/dmce.include | cut -d':' -f1 > $dmcepath/workarea/dmce.include
+grep -E -v '^#|^$' $configpath/dmce.exclude | cut -d':' -f1 > $dmcepath/workarea/dmce.exclude
 
 _echo "includes: "
 cat $dmcepath/workarea/dmce.include
