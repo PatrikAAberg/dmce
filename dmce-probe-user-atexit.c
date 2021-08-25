@@ -42,8 +42,8 @@ static void dmce_atexit(void){
 static void dmce_probe_body(unsigned int probenbr) {
 
     if (!registered_at_exit) {
-        dmce_buffer = calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
-        dmce_tmp_buffer = calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
+        dmce_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
+        dmce_tmp_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
         atexit(dmce_atexit);
         registered_at_exit = 1;
     }
