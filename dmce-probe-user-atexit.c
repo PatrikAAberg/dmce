@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#define DMCE_NUM_PROBES 100000
+#define DMCE_NUM_PROBES (100000*6)
 
 static uint32_t* dmce_buffer;
 static uint32_t* dmce_tmp_buffer;
@@ -14,6 +14,9 @@ static int registered_at_exit = 0;
 static void dmce_atexit(void){
 
     FILE *fp;
+    size_t n;
+    int i;
+
     if (!(fp = fopen("/tmp/dmcebuffer.bin", "r"))) {
 
         fp = fopen("/tmp/dmcebuffer.bin", "w");
