@@ -62,6 +62,7 @@ for func in finclines:
 re_func_list = []
 for func in finc:
     re_func_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
+    re_func_list.append(re.compile(".*-FunctionDecl.*" + func + ".*"))
 
 if len(re_func_list) == 0:
     re_func_list.append(re.compile(".*"))
