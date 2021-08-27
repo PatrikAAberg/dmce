@@ -28,6 +28,8 @@ import time
 # Print is expensive and can be disabled
 do_print=1
 
+parsed_c_file = sys.argv[1]
+
 # Get number of data variables
 ndvs = os.getenv('DMCE_NUM_DATA_VARS')
 if ndvs == None:
@@ -57,18 +59,46 @@ dmceinclude.close()
 for func in finclines:
     funcpos = func.find(':')
     if (funcpos != -1):
-        finc.append(func[funcpos+1:].rstrip())
+        # In correct file?
+        re_incfile = re.compile(".*" + func[:funcpos-1] + ".*")
+        if re_incfile.match(parsed_c_file):
+            finc.append(func[funcpos+1:].rstrip())
 
-re_func_list = []
-for func in finc:
-    re_func_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
-    re_func_list.append(re.compile(".*-FunctionDecl.*" + func + ".*"))
-
-if len(re_func_list) == 0:
-    re_func_list.append(re.compile(".*"))
+if len(finc) == 0:
+    finc.append(".*")
     in_function_scope = True
 else:
     in_function_scope = False
+
+re_func_inc_list = []
+for func in finc:
+    re_func_inc_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
+    re_func_inc_list.append(re.compile(".*-FunctionDecl.*" + func + ".*"))
+    re_func_inc_list.append(re.compile(".*-CXXConstructorDecl.*" + func + ".*"))
+    re_func_inc_list.append(re.compile(".*-CXXDestructorDecl.*" + func + ".*"))
+
+# Create list of functions to exclude
+fexcl=[]
+dmceexclude = open(configpath + "/dmce.exclude")
+fexcllines = dmceexclude.readlines()
+dmceexclude.close()
+for func in fexcllines:
+    funcpos = func.find(':')
+    if (funcpos != -1):
+        # In correct file?
+        re_incfile = re.compile(".*" + func[:funcpos-1] + ".*")
+        if re_incfile.match(parsed_c_file):
+            fexcl.append(func[funcpos+1:].rstrip())
+
+re_func_excl_list = []
+for func in fexcl:
+    re_func_excl_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
+    re_func_excl_list.append(re.compile(".*-FunctionDecl.*" + func + ".*"))
+    re_func_excl_list.append(re.compile(".*-CXXConstructorDecl.*" + func + ".*"))
+    re_func_excl_list.append(re.compile(".*-CXXDestructorDecl.*" + func + ".*"))
+
+if len(re_func_excl_list) == 0:
+    re_func_excl_list.append(re.compile("do_not_exclude_any_functions"))
 
 # Pre compiled reg-ex
 re_cxl_list = []
@@ -81,7 +111,6 @@ if do_print:
     print("constructs exclude list: {}".format(len(re_cxl_list)))
     print("Number of variables to trace: " + str(numDataVars))
 
-parsed_c_file = sys.argv[1]
 
 parsed_c_file_exp = parsed_c_file
 probe_prolog = "(DMCE_PROBE(TBD),"
@@ -594,10 +623,19 @@ while (lineindex<linestotal):
 
     # Check if entering function scope
     if not in_function_scope:
-        for re_f in re_func_list:
+        for re_f in re_func_inc_list:
             if re_f.match(linebuf[lineindex]):
                 in_function_scope = True
                 function_scope_tab = tab
+                print("MATCHED get into scope! ------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
+    # Check if exit function scope
+    if in_function_scope:
+        for re_f in re_func_excl_list:
+            if re_f.match(linebuf[lineindex]):
+                in_function_scope = False
+                print("MATCHED get out! ------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
 
     print("Parsed file: " + parsed_c_file)
     print("Parsed AST line:                     " + linebuf[lineindex])

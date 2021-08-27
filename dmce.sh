@@ -106,9 +106,11 @@ nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 _echo "git found $nbr_of_files modified and added files"
 
 _echo "updating filecache removing exceptions. "
-# Exclude comments and blank rows, dont care about eventual function names
+# Exclude comments and blank rows, dont care about eventual function names for include
 grep -E -v '^#|^$' $configpath/dmce.include | cut -d':' -f1 > $dmcepath/workarea/dmce.include
-grep -E -v '^#|^$' $configpath/dmce.exclude | cut -d':' -f1 > $dmcepath/workarea/dmce.exclude
+
+# Exclude comments, blank rows and file:function lines for exclude
+grep -E -v '^#|^$|:' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
 
 _echo "includes: "
 cat $dmcepath/workarea/dmce.include
@@ -247,7 +249,7 @@ for c_file in $FILE_LIST_NEW; do
 done
 wait
 
-_echo "remove clang files equal or greather than 1MB that contains more than 95% spaces"
+_echo "remove clang files equal or greater than 1MB that contains more than 95% spaces"
 for c_file in $FILE_LIST_OLD; do
 	{
 		FILE_SIZE=$(stat -c '%s' $dmcepath/old/$c_file.clang)
