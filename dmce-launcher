@@ -103,6 +103,18 @@ if ! command -v python3 > /dev/null; then
 	exit 1
 fi
 
+if ! command -v git > /dev/null; then
+	echo "error: git not found"
+	exit 1
+fi
+
+while true; do
+	bc --version | grep ^bc
+	clang-check --version | grep -o 'LLVM version.*'
+	git --version
+	python3 --version
+	break
+done | sed 's,version,,g' | column -t
 
 optspec+="c"
 optspec+="d:"
