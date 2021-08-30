@@ -195,6 +195,10 @@ if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
 	echo ']' >>  $dmcepath/new/compile_commands.json
 	echo ']' >>  $dmcepath/old/compile_commands.json
 else
+	true ${DMCE_DEFAULT_C_COMMAND_LINE:?}
+	true ${DMCE_DEFAULT_CPP_COMMAND_LINE:?}
+	true ${DMCE_DEFAULT_H_COMMAND_LINE:?}
+
 	$binpath/generate-compile-commands.py $dmcepath/new $dmcepath/cmdlookup.cache <$dmcepath/latest.cache| sed -e "s/\$USER/${USER}/g" > $dmcepath/new/compile_commands.json &
 	$binpath/generate-compile-commands.py $dmcepath/old $dmcepath/cmdlookup.cache <$dmcepath/latest.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/old/compile_commands.json &
 	wait

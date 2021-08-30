@@ -225,8 +225,22 @@ while read -r dmceconfig; do
 	eval "$conf_var"=\""$conf_val"\"
 	export "${conf_var:?}"
 done < "$USE_DMCE_CONFIG_FILE"
-_echo "args: $* version: $(git -C "$DMCE_EXEC_PATH" --no-pager log --pretty='%h' -1)"
 
+mandatory_configs=
+mandatory_configs+=("DMCE_EXEC_PATH")
+mandatory_configs+=("DMCE_CONFIG_PATH")
+mandatory_configs+=("DMCE_WORK_PATH")
+mandatory_configs+=("DMCE_LOG_FILES")
+mandatory_configs+=("DMCE_PROBE_SOURCE")
+
+for c in ${mandatory_configs[@]}; do
+	if [ "x${!c}" = "x" ]; then
+		_echo "error: mandatory config '${c}' missing. Try to re-install!"
+		exit 1
+	fi
+done
+
+_echo "args: $* version: $(git -C "$DMCE_EXEC_PATH" --no-pager log --pretty='%h' -1)"
 [ "$print_version_and_exit" = true ] && exit
 
 dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
