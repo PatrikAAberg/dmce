@@ -54,14 +54,17 @@ if [ "${launch_dmce_repos}" == "" ]; then
 	exit 1
 fi
 
-echo
-echo "I will start '${OVE_BASE_DIR}/dmce/dmce-launcher' on the following repos:"
-echo
-xargs -n1 <<<${launch_dmce_repos}
-echo
+echo "number of commits to probe?"
+echo "this dialog will timeout in 10 seconds and use 10000 commits."
 while true; do
-	read -p "How many commits (i.e. the '-n' option for dmce-launcer)? "
-	if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+	read -t 10 -p "#commits: "
+	ret=$?
+	if [ $ret -gt 128 ]; then
+		echo
+		REPLY=10000
+	elif [ $ret -eq 0 ] && [ "x${REPLY}" = "x" ]; then
+		REPLY=10000
+	elif ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
 		echo "error: just numbers, try again!"
 		continue
 	fi
@@ -71,7 +74,10 @@ done
 dmce_launcher_args="-n ${REPLY}"
 
 for repo in ${launch_dmce_repos}; do
+	echo "$ cd ${repo}"
 	cd ${repo}
+	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher -c"
 	${OVE_BASE_DIR}/dmce/dmce-launcher -c
+	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}"
 	${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}
 done
