@@ -621,21 +621,21 @@ while (lineindex<linestotal):
         else:
             skip=1
 
+    # Get a copy of linebuf[lineindex] without argument list to only search func names
+    argsstripped = re.sub('\'.*\'','',linebuf[lineindex])
+
     # Check if entering function scope
     if not in_function_scope:
         for re_f in re_func_inc_list:
-            if re_f.match(linebuf[lineindex]):
+            if re_f.match(argsstripped):
                 in_function_scope = True
                 function_scope_tab = tab
-                print("MATCHED get into scope! ------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
     # Check if exit function scope
     if in_function_scope:
         for re_f in re_func_excl_list:
-            if re_f.match(linebuf[lineindex]):
+            if re_f.match(argsstripped):
                 in_function_scope = False
-                print("MATCHED get out! ------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
 
     print("Parsed file: " + parsed_c_file)
     print("Parsed AST line:                     " + linebuf[lineindex])
