@@ -358,7 +358,7 @@ while read -r c_file; do
 done < $dmcepath/workarea/probe-list
 
 # remove skipped working files from tree
-xargs rm -v <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
+xargs rm -v 2> /dev/null <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
 
 wait
 
