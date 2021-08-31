@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -e
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -19,34 +19,28 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-install_path=$PWD
-
-echo "DMCE installer"
-echo "Consider adding the following to $HOME/.profile"
-echo "PATH=\"$install_path \$PATH\""
 echo "Creating .dmceconfig file in $HOME"
-echo "DMCE installed"
+echo "Creating dmce config directory as $HOME/.config/dmce"
 echo
-# Add dmce git repo to path so that we can call dmce-launcher from within gits
-PATH="$install_path $PATH"
-export PATH
 
 # Remove old config
 [ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
+[ -e $HOME/.config/dmce ] && rm $HOME/.config/dmce
+mkdir -p $HOMR/.config/dmce
 
 # Create config file in home directory
 cat > $HOME/.dmceconfig <<- NoWord
 # DMCE install path
-DMCE_EXEC_PATH:$install_path
+DMCE_EXEC_PATH:/usr/share/dmce
 
 # Working directory root
 DMCE_WORK_PATH:/tmp/$USER/dmce
 
 # config files path. (dmce.exclude, dmce.include etc.)
-DMCE_CONFIG_PATH:$install_path
+DMCE_CONFIG_PATH:$HOME/.config/dmce
 
 # Command line lookup hook (builds list of individual compile commands per file if not enough with the default ones)
-DMCE_CMD_LOOKUP_HOOK:$install_path/cmdlookuphook.sh
+DMCE_CMD_LOOKUP_HOOK:$HOME/.config/dmce/cmdlookuphook.sh
 
 # Default compiler command line for c files
 DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
@@ -61,11 +55,12 @@ DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -isystem /tmp/$USER/dm
 DMCE_NUM_DATA_VARS:0
 
 # Probe definition c file
-DMCE_PROBE_SOURCE:$install_path/dmce-probe-user.c
+DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user.c
 
 # Probe definition c file
-DMCE_PROBE_PROLOG:$install_path/dmce-prolog-default.c
+DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
 
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
 NoWord
+echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
