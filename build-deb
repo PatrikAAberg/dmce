@@ -37,6 +37,12 @@ cp $gitdir/dmce.sh dmce-$version/usr/share/dmce/
 cp $gitdir/generate-compile-commands.py dmce-$version/usr/share/dmce/
 cp $gitdir/generate-probefile.py dmce-$version/usr/share/dmce/
 
+
+cp $gitdir/constructs.exclude dmce-$version/usr/share/dmce/
+cp $gitdir/dmce.exclude dmce-$version/usr/share/dmce/
+cp $gitdir/dmce.include dmce-$version/usr/share/dmce/
+cp $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
+
 fakeroot dpkg-deb --build dmce-${version}
 cp -f dmce-${version}.deb $destpath/
 popd

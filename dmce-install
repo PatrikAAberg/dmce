@@ -20,8 +20,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 echo "Creating .dmceconfig file in $HOME"
-echo "Creating dmce config directory as $HOME/.config/dmce"
-echo
 
 # Remove old config
 [ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
@@ -63,4 +61,11 @@ DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
 NoWord
+
+echo "Creating dmce config directory as $HOME/.config/dmce"
+cp /usr/share/dmce/tructs.exclude /$HOME/.config/dmce/
+cp /usr/share/dmce/dmce.exclude /$HOME/.config/dmce/
+cp /usr/share/dmce/dmce.include  /$HOME/.config/dmce/
+cp /usr/share/dmce/recognizedexpressions.py /$HOME/.config/dmce/
+
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
