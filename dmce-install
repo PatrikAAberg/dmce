@@ -67,5 +67,6 @@ cp /usr/share/dmce/constructs.exclude /$HOME/.config/dmce/
 cp /usr/share/dmce/dmce.exclude /$HOME/.config/dmce/
 cp /usr/share/dmce/dmce.include  /$HOME/.config/dmce/
 cp /usr/share/dmce/recognizedexpressions.py /$HOME/.config/dmce/
+cp /usr/share/dmce/cmdlookuphook.sh /$HOME/.config/dmce/
 
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
