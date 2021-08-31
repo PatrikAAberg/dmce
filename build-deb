@@ -29,13 +29,13 @@ cp $gitdir/debian/* dmce-$version/DEBIAN
 cp $gitdir/dmce-launcher dmce-$version/usr/bin/
 cp $gitdir/dmce-install dmce-$version/usr/bin/
 cp $gitdir/dmce-summary dmce-$version/usr/bin/
-cp $gitdir/dmce-probe*   dmce-$version/usr/share/
-cp $gitdir/cmdlookuphook.sh dmce-$version/usr/share/
-cp $gitdir/create-clang-diff dmce-$version/usr/share/
-cp $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/
-cp $gitdir/dmce.sh dmce-$version/usr/share/
-cp $gitdir/generate-compile-commands.py dmce-$version/usr/share/
-cp $gitdir/generate-probefile.py dmce-$version/usr/share/
+cp $gitdir/dmce-probe*   dmce-$version/usr/share/dmce/
+cp $gitdir/cmdlookuphook.sh dmce-$version/usr/share/dmce/
+cp $gitdir/create-clang-diff dmce-$version/usr/share/dmce/
+cp $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/dmce/
+cp $gitdir/dmce.sh dmce-$version/usr/share/dmce/
+cp $gitdir/generate-compile-commands.py dmce-$version/usr/share/dmce/
+cp $gitdir/generate-probefile.py dmce-$version/usr/share/dmce/
 
 fakeroot dpkg-deb --build dmce-${version}
 cp -f dmce-${version}.deb $destpath/
