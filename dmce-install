@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -e
+#!/bin/bash -e
 
 # Copyright (c) 2016 Ericsson AB
 #
