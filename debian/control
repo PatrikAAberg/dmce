@@ -1,0 +1,9 @@
+Package: dmce
+Version: 1.1-0
+Section: unknown
+Priority: optional
+Architecture: any
+Depends: git, clang-tools, python3
+Maintainer: Patrik Aberg <patrik.aberg@ericsson.com>
+Description: dmce
+ Did My Code Execute, source-code level instrumentation tool

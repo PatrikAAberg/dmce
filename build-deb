@@ -1,0 +1,43 @@
+#!/bin/bash -ex
+
+# Usage
+if [ "$#" -ne 2 ]; then
+    echo "Usage: ./build-deb <Destination path> <version (x.y-z)>"
+    exit 1
+fi
+
+destpath=$1
+version=$2
+gitdir=$(pwd)
+
+echo "Building deb package version $version at $destpath"
+
+# Tree structure
+rm -rf /tmp/$USER/dmce/debian-build
+mkdir -p /tmp/$USER/dmce/debian-build
+
+pushd /tmp/$USER/dmce/debian-build
+mkdir -p dmce-$version/DEBIAN
+mkdir -p dmce-$version/usr
+mkdir -p dmce-$version/usr/bin
+mkdir -p dmce-$version/usr/share/dmce
+
+# deb files
+cp $gitdir/debian/* dmce-$version/DEBIAN
+
+# Program files
+cp $gitdir/dmce-launcher dmce-$version/usr/bin/
+cp $gitdir/dmce-install dmce-$version/usr/bin/
+cp $gitdir/dmce-summary dmce-$version/usr/bin/
+cp $gitdir/dmce-probe*   dmce-$version/usr/share/
+cp $gitdir/cmdlookuphook.sh dmce-$version/usr/share/
+cp $gitdir/create-clang-diff dmce-$version/usr/share/
+cp $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/
+cp $gitdir/dmce.sh dmce-$version/usr/share/
+cp $gitdir/generate-compile-commands.py dmce-$version/usr/share/
+cp $gitdir/generate-probefile.py dmce-$version/usr/share/
+
+fakeroot dpkg-deb --build dmce-${version}
+cp -f dmce-${version}.deb $destpath/
+popd
+exit 0
