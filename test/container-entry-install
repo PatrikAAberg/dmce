@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+
+apt update
+apt install -y fakeroot git python3 perl bc rsync clang-tools
+git clone https://github.com/PatrikAAberg/dmce.git
+cd dmce
+./build-deb / 1.1-0
+dpkg -i /dmce-1.1-0.deb
+bash
+
