@@ -63,7 +63,7 @@ DMCE_LOG_FILES:/tmp/$USER/dmce
 NoWord
 
 echo "Creating dmce config directory as $HOME/.config/dmce"
-cp /usr/share/dmce/tructs.exclude /$HOME/.config/dmce/
+cp /usr/share/dmce/contructs.exclude /$HOME/.config/dmce/
 cp /usr/share/dmce/dmce.exclude /$HOME/.config/dmce/
 cp /usr/share/dmce/dmce.include  /$HOME/.config/dmce/
 cp /usr/share/dmce/recognizedexpressions.py /$HOME/.config/dmce/
