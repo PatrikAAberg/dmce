@@ -4,7 +4,7 @@ set -e
 
 echo "Running g++.dg-torture"
 
-gcc_version=$(gcc --version| grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+'|head -1)
+gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
 PROG_NAME=$(basename $0 .sh)
 function _echo() {
 	echo $(date '+%Y-%m-%d %H:%M:%S'):${PROG_NAME}:$@
