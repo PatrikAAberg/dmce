@@ -26,7 +26,7 @@ echo
 # Remove old config
 [ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
 [ -e $HOME/.config/dmce ] && rm $HOME/.config/dmce
-mkdir -p $HOMR/.config/dmce
+mkdir -p $HOME/.config/dmce
 
 # Create config file in home directory
 cat > $HOME/.dmceconfig <<- NoWord
