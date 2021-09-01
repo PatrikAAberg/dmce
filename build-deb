@@ -1,16 +1,11 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
-# Usage
-if [ "$#" -ne 2 ]; then
-    echo "Usage: ./build-deb <Destination path> <version (x.y-z)>"
-    exit 1
-fi
 
-destpath=$1
-version=$2
+version=$(grep Version debian/control | cut -d' ' -f2)
 gitdir=$(pwd)
 
-echo "Building deb package version $version at $destpath"
+echo "Building deb package version $version"
+exit
 
 # Tree structure
 rm -rf /tmp/$USER/dmce/debian-build
@@ -45,6 +40,5 @@ cp $gitdir/dmce.include dmce-$version/usr/share/dmce/
 cp $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
 
 fakeroot dpkg-deb --build dmce-${version}
-cp -f dmce-${version}.deb $destpath/
 popd
 exit 0
