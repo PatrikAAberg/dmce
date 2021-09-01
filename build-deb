@@ -1,11 +1,10 @@
 #!/bin/bash -e
 
 
-version=$(grep Version debian/control | cut -d' ' -f2)
+version=$(grep ^Version debian/control | cut -d' ' -f2)
 gitdir=$(pwd)
 
 echo "Building deb package version $version"
-exit
 
 # Tree structure
 rm -rf /tmp/$USER/dmce/debian-build
@@ -40,5 +39,6 @@ cp $gitdir/dmce.include dmce-$version/usr/share/dmce/
 cp $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
 
 fakeroot dpkg-deb --build dmce-${version}
+cp /tmp/$USER/dmce/debian-build/dmce-${version}.deb $gitdir/
 popd
 exit 0
