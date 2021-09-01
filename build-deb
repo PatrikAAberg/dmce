@@ -27,7 +27,8 @@ cp $gitdir/debian/* dmce-$version/DEBIAN
 
 # Program files
 cp $gitdir/dmce-launcher dmce-$version/usr/bin/
-cp $gitdir/dmce-install dmce-$version/usr/bin/
+cp $gitdir/dmce-configure-local dmce-$version/usr/bin/
+cp $gitdir/dmce-configure-global dmce-$version/usr/bin/
 cp $gitdir/dmce-summary dmce-$version/usr/bin/
 cp $gitdir/dmce-probe*   dmce-$version/usr/share/dmce/
 cp $gitdir/cmdlookuphook.sh dmce-$version/usr/share/dmce/
