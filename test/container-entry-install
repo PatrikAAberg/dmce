@@ -4,7 +4,12 @@ apt update
 apt install -y bsdmainutils fakeroot git python3 perl bc rsync clang-tools
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
-./build-deb / 1.1-0
-dpkg -i /dmce-1.1-0.deb
+./build-deb
+dpkg -i dmce-1.1-0.deb
+cd ..
+git clone https://github.com/tmux/tmux.git
+dmce-configure-global
+cd tmux
+dmce-launcher -n 10000
 bash
 
