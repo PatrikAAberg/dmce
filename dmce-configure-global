@@ -25,7 +25,7 @@ echo "Creating .dmceconfig file in $HOME"
 
 # Remove old config
 [ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
-[ -e $HOME/.config/dmce ] && rm $HOME/.config/dmce
+[ -e $HOME/.config/dmce ] && rm -r $HOME/.config/dmce
 mkdir -p $HOME/.config/dmce
 
 # Create config file in home directory
