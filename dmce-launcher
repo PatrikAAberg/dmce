@@ -20,7 +20,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 NAME=$(basename "$0")
-
+set -ex
 function _echo {
 	echo "$(date '+%Y-%m-%d %H:%M:%S'):$NAME:$*"
 }
@@ -93,11 +93,6 @@ if ! command -v clang-check > /dev/null; then
 	exit 1
 fi
 
-if ! command -v bc > /dev/null; then
-	echo "error: bc not found"
-	exit 1
-fi
-
 if ! command -v python3 > /dev/null; then
 	echo "error: python3 not found"
 	exit 1
@@ -114,7 +109,6 @@ if ! command -v perl > /dev/null; then
 fi
 
 while true; do
-	bc --version | grep ^bc
 	clang-check --version | grep -o 'LLVM version.*'
 	git --version
 	perl_version=$(perl --version | grep version | grep -E -o "v[0-9]+\.[0-9]+\.[0-9]+")

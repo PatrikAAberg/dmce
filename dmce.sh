@@ -259,8 +259,8 @@ for c_file in $FILE_LIST_OLD; do
 		FILE_SIZE=$(stat -c '%s' $dmcepath/old/$c_file.clang)
 		[ "$FILE_SIZE" -lt 1048576 ] && exit
 		NUM_SPACES=$(tr -cd ' ' < $dmcepath/old/$c_file.clang | wc -c)
-		PERCENTAGE_SPACES=$(bc -l <<< "scale=2;$NUM_SPACES/$FILE_SIZE")
-		[ "${PERCENTAGE_SPACES:1:2}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
+		let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
+		[ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
 	} &
 done
 
@@ -269,8 +269,8 @@ for c_file in $FILE_LIST_NEW; do
 		FILE_SIZE=$(stat -c '%s' $dmcepath/new/$c_file.clang)
 		[ "$FILE_SIZE" -lt 1048576 ] && exit
 		NUM_SPACES=$(tr -cd ' ' < $dmcepath/new/$c_file.clang | wc -c)
-		PERCENTAGE_SPACES=$(bc -l <<< "scale=2;$NUM_SPACES/$FILE_SIZE")
-		[ "${PERCENTAGE_SPACES:1:2}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
+		let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
+		[ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
 	} &
 done
 wait
