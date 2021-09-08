@@ -20,7 +20,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 NAME=$(basename "$0")
-set -ex
+set -e
 function _echo {
 	echo "$(date '+%Y-%m-%d %H:%M:%S'):$NAME:$*"
 }
@@ -315,6 +315,7 @@ if [ "$skip" = false ]; then
 		_echo "stupid mode enabled, no include files used"
 	else
 		old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
+		rm -rf ${old_git_dir}
 		mkdir -vp "${old_git_dir}"
 
 		# check if we have 'git worktree' (git 2.5) on this machine
