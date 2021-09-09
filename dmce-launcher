@@ -314,10 +314,11 @@ if [ "$skip" = false ]; then
 	else
 		old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
 		rm -rf ${old_git_dir}
+        mkdir -p $DMCE_WORK_PATH/baseline
 		_echo "set up old SHA-1: ${old_git_dir} from git: ${git_root}"
 	    cp -r ${git_root} ${old_git_dir} &>/dev/null
 
-		git -C "${old_git_dir}" clean -dfx #&>/dev/null
+		git -C "${old_git_dir}" clean -dfx &>/dev/null
 		git -C "${old_git_dir}" reset --hard &>/dev/null
 		git -C "${old_git_dir}" checkout "${old}" &>/dev/null
 
