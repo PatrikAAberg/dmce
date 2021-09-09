@@ -294,15 +294,16 @@ wait
 
 _echo "preparing clang data: remove hexnumbers"
 for c_file in $FILE_LIST; do
-    # Remove all hexnumbers (in-place) on clang-files
-    perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' -pe 's#\`-#|-#;' -pe 's#(.*\|-CallExpr.*)#\n$1#;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
+    # Replace all hexnumbers and "branches" (in-place) on clang-files
+    sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' $dmcepath/old/$c_file.clang &
+    sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' -e 's/`-/|-/' $dmcepath/new/$c_file.clang &
 done
 wait
 
-_echo "remove position dependent stuff (line numbers etc) from clang output"
+_echo "remove position dependent stuff (line numbers) from clang output"
 for c_file in $FILE_LIST; do
-    perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
-    perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
+    sed -e "s/<[^>]*>//g"  $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
+    sed -e "s/<[^>]*>//g"  $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
 done
 wait
 
