@@ -28,6 +28,7 @@ nbrofprobesinserted=0
 
 function summary {
     echo "==============================================="
+    echo "git repository          $PWD"
     echo "Files examined          $nbr_of_files"
     echo "Files probed            $files_probed"
     echo "Files skipped           $files_skipped"
@@ -57,7 +58,18 @@ fi
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
+quiet_mode() {
+    if [ "x$DMCE_QUIET_MODE" != "x" ] && [ "$DMCE_QUIET_MODE" = "1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 _echo() {
+    if quiet_mode; then
+        return
+    fi
     echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
 }
 _echo "init"
@@ -107,10 +119,13 @@ grep -E -v '^#|^$' $configpath/dmce.include | cut -d':' -f1 > $dmcepath/workarea
 # Exclude comments, blank rows and file:function lines for exclude
 grep -E -v '^#|^$|:' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
 
-_echo "includes: "
-cat $dmcepath/workarea/dmce.include
-_echo "excludes: "
-cat $dmcepath/workarea/dmce.exclude
+if ! quiet_mode; then
+    _echo "includes: "
+    cat $dmcepath/workarea/dmce.include
+    _echo "excludes: "
+    cat $dmcepath/workarea/dmce.exclude
+fi
+
 grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
 _echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
 comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
@@ -163,7 +178,7 @@ for c_file in $FILE_LIST; do
 done
 
 if [ ${#folders[@]} -ne 0 ]; then
-    mkdir -vp "${!folders[@]}"
+    mkdir -p "${!folders[@]}"
 fi
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
@@ -311,7 +326,10 @@ for c_file in $FILE_LIST; do
     $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
 wait
-find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
+
+if ! quiet_mode; then
+    find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
+fi
 
 _echo "create probe/skip list:"
 find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/probe-list &
@@ -322,7 +340,7 @@ nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 
 
 _echo "update probed files"
 if [ -e "$DMCE_PROBE_PROLOG" ]; then
-    echo "Using prolog file: $DMCE_PROBE_PROLOG"
+    _echo "Using prolog file: $DMCE_PROBE_PROLOG"
     cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
     # size_of_user compensates for the header put first in all source files by DMCE
     size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
@@ -360,27 +378,29 @@ while read -r c_file; do
 done < $dmcepath/workarea/probe-list
 
 # remove skipped working files from tree
-xargs rm -v 2> /dev/null <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
+xargs rm 2> /dev/null <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
 
 wait
 
 _echo "results:"
 files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )
 files_skipped=$(wc -l <$dmcepath/workarea/skip-list 2> /dev/null)
-echo "$files_probed file(s) probed:"
-while read -r f; do
-    echo "$git_top/$f"
-done < $dmcepath/workarea/probe-list
-echo "$files_skipped file(s) skipped"
-
-if [ "$files_skipped" -gt 0 ]; then
-    echo "To view deltas manually:"
+if ! quiet_mode; then
+    echo "$files_probed file(s) probed:"
     while read -r f; do
+        echo "$git_top/$f"
+    done < $dmcepath/workarea/probe-list
+    echo "$files_skipped file(s) skipped"
+
+    if [ "$files_skipped" -gt 0 ]; then
+        echo "To view deltas manually:"
+        while read -r f; do
         echo "diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f"
         if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
             diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f
         fi
-    done < $dmcepath/workarea/skip-list
+        done < $dmcepath/workarea/skip-list
+    fi
 fi
 
 if [ -f "$dmcepath/probe-references.log" ]; then
@@ -465,7 +485,6 @@ else
 fi
 
 _echo "$(basename "$git_top") summary:"
-echo "$PWD"
 if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
     git --no-pager show --stat "$oldsha".."$newsha" --oneline
 fi
