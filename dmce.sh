@@ -27,38 +27,38 @@ files_skipped=0
 nbrofprobesinserted=0
 
 function summary {
-	echo "==============================================="
-	echo "Files examined          $nbr_of_files"
-	echo "Files probed            $files_probed"
-	echo "Files skipped           $files_skipped"
-	echo "Probes inserted         $nbrofprobesinserted"
-	if [ $nbrofprobesinserted -ne 0 ]; then
-		echo "Probes                  $dmcepath/probe-references.log"
-		echo "Expressions             $dmcepath/expr-references.log"
-	fi
-	echo "==============================================="
+    echo "==============================================="
+    echo "Files examined          $nbr_of_files"
+    echo "Files probed            $files_probed"
+    echo "Files skipped           $files_skipped"
+    echo "Probes inserted         $nbrofprobesinserted"
+    if [ $nbrofprobesinserted -ne 0 ]; then
+        echo "Probes                  $dmcepath/probe-references.log"
+        echo "Expressions             $dmcepath/expr-references.log"
+    fi
+    echo "==============================================="
 }
 
 function jobcap {
-	while true; do
-		if [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ]; then
-			break
-		fi
-		sleep 0.5
-	done
+    while true; do
+        if [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ]; then
+            break
+        fi
+        sleep 0.5
+    done
 }
 
 # Usage
 if [ "$#" -ne 5 ]; then
-	echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root> <offset>"
-	exit 1
+    echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root> <offset>"
+    exit 1
 fi
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
 _echo() {
-	echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
+    echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
 }
 _echo "init"
 # Variable set up and config
@@ -117,34 +117,34 @@ comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dm
 mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 if [ $nbr_of_files -eq 0 ]; then
-	echo "error: no files after include and exclude filter"
-	summary
-	exit
+    echo "error: no files after include and exclude filter"
+    summary
+    exit
 fi
 
 # Populate FILE_LIST
 FILE_LIST=""
 while read -r c_file; do
-	[ -e $c_file ] || continue
-	FILE_LIST+="$c_file "
+    [ -e $c_file ] || continue
+    FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
-	:
+    :
 else
-	_echo "producing individual command lines if available"
-	pushd $configpath &>/dev/null
-	[ -e $dmcepath/cmdlookup.cache ] && rm $dmcepath/cmdlookup.cache
-	for c_file in $FILE_LIST; do
-		$DMCE_CMD_LOOKUP_HOOK $c_file >> $dmcepath/cmdlookup.cache &
-	done
-	wait
-	popd &>/dev/null
-	# sanity check
-	[ "$(wc -c < $dmcepath/cmdlookup.cache)" == "0" ] && echo "error: cmdlookup.cache is empty" && ls -l $dmcepath/cmdlookup.cache && exit 1
+    _echo "producing individual command lines if available"
+    pushd $configpath &>/dev/null
+    [ -e $dmcepath/cmdlookup.cache ] && rm $dmcepath/cmdlookup.cache
+    for c_file in $FILE_LIST; do
+        $DMCE_CMD_LOOKUP_HOOK $c_file >> $dmcepath/cmdlookup.cache &
+    done
+    wait
+    popd &>/dev/null
+    # sanity check
+    [ "$(wc -c < $dmcepath/cmdlookup.cache)" == "0" ] && echo "error: cmdlookup.cache is empty" && ls -l $dmcepath/cmdlookup.cache && exit 1
 
-	# remove duplicates
-	sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
+    # remove duplicates
+    sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
 fi
 
 # No hook, create the json file in here
@@ -153,65 +153,65 @@ declare -A folders=()
 
 # Creating folder structure
 for c_file in $FILE_LIST; do
-	if [[ ! "${c_file}" == */* ]]; then
-		continue
-	fi
-	dirname=${c_file%/*}
-	[[ "${folders[$dmcepath/new/$dirname]+foobar}" ]]      && continue || folders[$dmcepath/new/$dirname]=1
-	[[ "${folders[$dmcepath/old/$dirname]+foobar}" ]]                  || folders[$dmcepath/old/$dirname]=1
-	[[ "${folders[$dmcepath/workarea/$dirname]+foobar}" ]]             || folders[$dmcepath/workarea/$dirname]=1
+    if [[ ! "${c_file}" == */* ]]; then
+        continue
+    fi
+    dirname=${c_file%/*}
+    [[ "${folders[$dmcepath/new/$dirname]+foobar}" ]]      && continue || folders[$dmcepath/new/$dirname]=1
+    [[ "${folders[$dmcepath/old/$dirname]+foobar}" ]]                  || folders[$dmcepath/old/$dirname]=1
+    [[ "${folders[$dmcepath/workarea/$dirname]+foobar}" ]]             || folders[$dmcepath/workarea/$dirname]=1
 done
 
 if [ ${#folders[@]} -ne 0 ]; then
-	mkdir -vp "${!folders[@]}"
+    mkdir -vp "${!folders[@]}"
 fi
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
 
-	for c_file in $FILE_LIST; do
-		# Is this needed? Maybe optimize the gen script instead
-		#TODO: Check for c or c++
-		#TODO: Add -I.../inc/new and -I.../inc/old directives
-		echo -e "{\n\"directory\": \"$dmcepath/new/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/new/"$c_file".JSON &
-		echo -e "{\n\"directory\": \"$dmcepath/old/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/old/"$c_file".JSON &
-	done
-	wait
+    for c_file in $FILE_LIST; do
+        # Is this needed? Maybe optimize the gen script instead
+        #TODO: Check for c or c++
+        #TODO: Add -I.../inc/new and -I.../inc/old directives
+        echo -e "{\n\"directory\": \"$dmcepath/new/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/new/"$c_file".JSON &
+        echo -e "{\n\"directory\": \"$dmcepath/old/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/old/"$c_file".JSON &
+    done
+    wait
 
-	# JSON start
-	echo '[' >  $dmcepath/new/compile_commands.json
-	echo '[' >  $dmcepath/old/compile_commands.json
+    # JSON start
+    echo '[' >  $dmcepath/new/compile_commands.json
+    echo '[' >  $dmcepath/old/compile_commands.json
 
-	# Assemble json files
-	find $dmcepath/new -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/new/compile_commands.json &
-	find $dmcepath/old -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/old/compile_commands.json &
-	wait
+    # Assemble json files
+    find $dmcepath/new -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/new/compile_commands.json &
+    find $dmcepath/old -name '*.JSON' -print0 | xargs -0 cat >> $dmcepath/old/compile_commands.json &
+    wait
 
-	# JSON end
-	echo ']' >>  $dmcepath/new/compile_commands.json
-	echo ']' >>  $dmcepath/old/compile_commands.json
+    # JSON end
+    echo ']' >>  $dmcepath/new/compile_commands.json
+    echo ']' >>  $dmcepath/old/compile_commands.json
 else
-	true ${DMCE_DEFAULT_C_COMMAND_LINE:?}
-	true ${DMCE_DEFAULT_CPP_COMMAND_LINE:?}
-	true ${DMCE_DEFAULT_H_COMMAND_LINE:?}
+    true ${DMCE_DEFAULT_C_COMMAND_LINE:?}
+    true ${DMCE_DEFAULT_CPP_COMMAND_LINE:?}
+    true ${DMCE_DEFAULT_H_COMMAND_LINE:?}
 
-	$binpath/generate-compile-commands.py $dmcepath/new $dmcepath/cmdlookup.cache <$dmcepath/latest.cache| sed -e "s/\$USER/${USER}/g" > $dmcepath/new/compile_commands.json &
-	$binpath/generate-compile-commands.py $dmcepath/old $dmcepath/cmdlookup.cache <$dmcepath/latest.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/old/compile_commands.json &
-	wait
+    $binpath/generate-compile-commands.py $dmcepath/new $dmcepath/cmdlookup.cache <$dmcepath/latest.cache| sed -e "s/\$USER/${USER}/g" > $dmcepath/new/compile_commands.json &
+    $binpath/generate-compile-commands.py $dmcepath/old $dmcepath/cmdlookup.cache <$dmcepath/latest.cache | sed -e "s/\$USER/${USER}/g" > $dmcepath/old/compile_commands.json &
+    wait
 fi
 
 _echo "copy files and dmce-remove-relpaths.sh"
 rsync -qazR $FILE_LIST $dmcepath/new/
 
 for c_file in $FILE_LIST; do
-	{
-		# If the file does not exist in $oldsha, create an empty file
-		if ! [ -e $old_git_dir/${c_file} ]; then
-			touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
-		else
-			cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file
-			echo $c_file >> $dmcepath/workarea/clang-list.old
-		fi
-	}
+    {
+        # If the file does not exist in $oldsha, create an empty file
+        if ! [ -e $old_git_dir/${c_file} ]; then
+            touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
+        else
+            cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file
+            echo $c_file >> $dmcepath/workarea/clang-list.old
+        fi
+    }
 done
 [ "${touch_files}" != "" ] && touch $touch_files
 $binpath/dmce-remove-relpaths.sh $dmcepath/new &
@@ -220,88 +220,88 @@ wait
 
 FILE_LIST_NEW="${FILE_LIST}"
 if [ -e $dmcepath/workarea/clang-list.old ]; then
-	FILE_LIST_OLD=""
-	while read -r c_file; do
-		FILE_LIST_OLD+="$c_file "
-	done < $dmcepath/workarea/clang-list.old
+    FILE_LIST_OLD=""
+    while read -r c_file; do
+        FILE_LIST_OLD+="$c_file "
+    done < $dmcepath/workarea/clang-list.old
 fi
 
 _echo "running clang-check"
 i=0
 for c_file in $FILE_LIST_OLD; do
-	clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
-	(( i+=1 ))
-	if [ "$i" -gt 500 ]; then
-		i=0
-		jobcap clang-check
-	fi
+    clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
+    (( i+=1 ))
+    if [ "$i" -gt 500 ]; then
+        i=0
+        jobcap clang-check
+    fi
 done
 
 i=0
 for c_file in $FILE_LIST_NEW; do
-	clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
-	(( i+=1 ))
-	if [ "$i" -gt 500 ]; then
-		i=0
-		jobcap clang-check
-	fi
+    clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
+    (( i+=1 ))
+    if [ "$i" -gt 500 ]; then
+        i=0
+        jobcap clang-check
+    fi
 done
 wait
 
 _echo "remove clang files equal or greater than 1MB that contains more than 95% spaces"
 for c_file in $FILE_LIST_OLD; do
-	{
-		FILE_SIZE=$(stat -c '%s' $dmcepath/old/$c_file.clang)
-		[ "$FILE_SIZE" -lt 1048576 ] && exit
-		NUM_SPACES=$(tr -cd ' ' < $dmcepath/old/$c_file.clang | wc -c)
-		let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
-		[ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
-	} &
+    {
+        FILE_SIZE=$(stat -c '%s' $dmcepath/old/$c_file.clang)
+        [ "$FILE_SIZE" -lt 1048576 ] && exit
+        NUM_SPACES=$(tr -cd ' ' < $dmcepath/old/$c_file.clang | wc -c)
+        let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
+        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
+    } &
 done
 
 for c_file in $FILE_LIST_NEW; do
-	{
-		FILE_SIZE=$(stat -c '%s' $dmcepath/new/$c_file.clang)
-		[ "$FILE_SIZE" -lt 1048576 ] && exit
-		NUM_SPACES=$(tr -cd ' ' < $dmcepath/new/$c_file.clang | wc -c)
-		let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
-		[ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
-	} &
+    {
+        FILE_SIZE=$(stat -c '%s' $dmcepath/new/$c_file.clang)
+        [ "$FILE_SIZE" -lt 1048576 ] && exit
+        NUM_SPACES=$(tr -cd ' ' < $dmcepath/new/$c_file.clang | wc -c)
+        let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
+        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
+    } &
 done
 wait
 
 _echo "preparing clang data: remove hexnumbers"
 for c_file in $FILE_LIST; do
-	# Remove all hexnumbers (in-place) on clang-files
-	perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' -pe 's#\`-#|-#;' -pe 's#(.*\|-CallExpr.*)#\n$1#;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
+    # Remove all hexnumbers (in-place) on clang-files
+    perl -i -pe 's| 0[xX][0-9a-fA-F]+| Hexnumber|g;' -pe 's#\`-#|-#;' -pe 's#(.*\|-CallExpr.*)#\n$1#;' $dmcepath/old/$c_file.clang $dmcepath/new/$c_file.clang &
 done
 wait
 
 _echo "remove position dependent stuff (line numbers etc) from clang output"
 for c_file in $FILE_LIST; do
-	perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
-	perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
+    perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
+    perl -pe 's|<.*?>||;' -pe 's|line:[0-9]+:[0-9]+||;' $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
 done
 wait
 
 _echo "create filtered clang diff"
 for c_file in $FILE_LIST; do
-	# Create filtered diff
-	git --no-pager diff -U0 $dmcepath/old/$c_file.clang.filtered $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
+    # Create filtered diff
+    git --no-pager diff -U0 $dmcepath/old/$c_file.clang.filtered $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
 done
 wait
 
 _echo "producing clang diffs"
 for c_file in $FILE_LIST; do
-	$binpath/create-clang-diff $dmcepath/new/$c_file.clang.filtereddiff &
+    $binpath/create-clang-diff $dmcepath/new/$c_file.clang.filtereddiff &
 done
 
 wait
 _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
-	[ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
-	touch $dmcepath/new/$c_file.probedata
-	$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
+    [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
+    touch $dmcepath/new/$c_file.probedata
+    $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
 wait
 find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
@@ -315,12 +315,12 @@ nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 
 
 _echo "update probed files"
 if [ -e "$DMCE_PROBE_PROLOG" ]; then
-	echo "Using prolog file: $DMCE_PROBE_PROLOG"
-	cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
-	# size_of_user compensates for the header put first in all source files by DMCE
-	size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
+    echo "Using prolog file: $DMCE_PROBE_PROLOG"
+    cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
+    # size_of_user compensates for the header put first in all source files by DMCE
+    size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
 else
-	cat > $dmcepath/workarea/probe-header << EOF
+    cat > $dmcepath/workarea/probe-header << EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
 #define __DMCE_PROBE_FUNCTION__HEADER__
 static void dmce_probe_body(unsigned int probenbr);
@@ -328,27 +328,27 @@ static void dmce_probe_body(unsigned int probenbr);
 #define DMCE_PROBE(a) (dmce_probe_body(a))
 #endif
 EOF
-	# size_of_user compensates for the header put first in all source files by DMCE
-	size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
+    # size_of_user compensates for the header put first in all source files by DMCE
+    size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
 fi
 
 while read -r c_file; do
   {
-	  # Header
-	  cat $dmcepath/workarea/probe-header > $dmcepath/workarea/$c_file
+      # Header
+      cat $dmcepath/workarea/probe-header > $dmcepath/workarea/$c_file
 
-	  # The probed source file itself
-	  cat $c_file.probed >> $dmcepath/workarea/$c_file
+      # The probed source file itself
+      cat $c_file.probed >> $dmcepath/workarea/$c_file
 
-	  # Put the probe in the end
-	  cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
+      # Put the probe in the end
+      cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
 
-	  # Make copy of original file and replace it with the probed one
-	  cp $c_file $c_file.orginal
-	  cp $dmcepath/workarea/$c_file $c_file
+      # Make copy of original file and replace it with the probed one
+      cp $c_file $c_file.orginal
+      cp $dmcepath/workarea/$c_file $c_file
 
-	  # remove probed working files from tree
-	  rm $c_file.probed
+      # remove probed working files from tree
+      rm $c_file.probed
   } &
 done < $dmcepath/workarea/probe-list
 
@@ -362,18 +362,18 @@ files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )
 files_skipped=$(wc -l <$dmcepath/workarea/skip-list 2> /dev/null)
 echo "$files_probed file(s) probed:"
 while read -r f; do
-	echo "$git_top/$f"
+    echo "$git_top/$f"
 done < $dmcepath/workarea/probe-list
 echo "$files_skipped file(s) skipped"
 
 if [ "$files_skipped" -gt 0 ]; then
-	echo "To view deltas manually:"
-	while read -r f; do
-		echo "diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f"
-		if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
-			diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f
-		fi
-	done < $dmcepath/workarea/skip-list
+    echo "To view deltas manually:"
+    while read -r f; do
+        echo "diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f"
+        if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
+            diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f
+        fi
+    done < $dmcepath/workarea/skip-list
 fi
 
 if [ -f "$dmcepath/probe-references.log" ]; then
@@ -385,81 +385,81 @@ if [ -f "$dmcepath/expr-references.log" ]; then
 fi
 
 if [ "$files_probed" == 0 ]; then
-	nbrofprobesinserted=0
+    nbrofprobesinserted=0
 else
-	_echo "assemble and assign probes"
-	# Assign DMCE_PROBE numbers.
-	probe_nbr=$offset
-	nextfile=""
-	file=""
-	# set-up an ordered list with the probe-files
-	# we iterate through
-	declare -a file_list=()
-	declare -a str=()
-	while IFS=':' read -r file line; do
-		((line = line + size_of_user + 1))
+    _echo "assemble and assign probes"
+    # Assign DMCE_PROBE numbers.
+    probe_nbr=$offset
+    nextfile=""
+    file=""
+    # set-up an ordered list with the probe-files
+    # we iterate through
+    declare -a file_list=()
+    declare -a str=()
+    while IFS=':' read -r file line; do
+        ((line = line + size_of_user + 1))
 
-		if [ "$nextfile" == "" ]; then
-			# First time, create 'sed' expression
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
-		elif [ "$nextfile" == $file ]; then
-			# Same file, append 'sed' expression
-			SED_EXP+=" -e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
-		else
-			# Next file, remember sed command
-			SED_CMDS+=("$SED_EXP $git_top/$nextfile")
+        if [ "$nextfile" == "" ]; then
+            # First time, create 'sed' expression
+            SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
+        elif [ "$nextfile" == $file ]; then
+            # Same file, append 'sed' expression
+            SED_EXP+=" -e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
+        else
+            # Next file, remember sed command
+            SED_CMDS+=("$SED_EXP $git_top/$nextfile")
 
-			# Remember 'sed' expression for next file
-			SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
-		fi
+            # Remember 'sed' expression for next file
+            SED_EXP="-e $line""s/DMCE_PROBE(TBD/DMCE_PROBE($probe_nbr/"
+        fi
 
-		if [ "$file" != "$nextfile" ]; then
-			file_list+=( "$file" )
-		fi
+        if [ "$file" != "$nextfile" ]; then
+            file_list+=( "$file" )
+        fi
 
-		nextfile=$file
-		str+=("$probe_nbr:$file:$line")
+        nextfile=$file
+        str+=("$probe_nbr:$file:$line")
 
-		((probe_nbr = probe_nbr + 1))
-	done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat)"
+        ((probe_nbr = probe_nbr + 1))
+    done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat)"
 
-	printf "%s\n" ${str[*]} > "$dmcepath/probe-references.log" &
+    printf "%s\n" ${str[*]} > "$dmcepath/probe-references.log" &
 
-	# Last file, remember sed command
-	SED_CMDS+=("$SED_EXP $git_top/$nextfile")
+    # Last file, remember sed command
+    SED_CMDS+=("$SED_EXP $git_top/$nextfile")
 
-	_echo "launch SED jobs"
-	for var in "${SED_CMDS[@]}"; do
-		sed -i ${var} &
-	done
-	wait
+    _echo "launch SED jobs"
+    for var in "${SED_CMDS[@]}"; do
+        sed -i ${var} &
+    done
+    wait
 
-	# Update global dmce probe file, prepend with absolute path to files
-	sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
+    # Update global dmce probe file, prepend with absolute path to files
+    sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
 
-	# Aggregate the probe-expression information into <expr-references.log>
-	# Loop through the list of files and aggregate the info from
-	# all the <$file>.exprdata into a global expr-references.log file
-	_echo "assemble and assign expression index for probes"
-	probe_nbr=$offset
-	declare -a str=()
-	for file in "${file_list[@]}"; do
-		while IFS=: read -r nop line exp_index full_exp; do
-			echo $nop > /dev/null
-			((line = line + size_of_user + 1))
-			str+=("$probe_nbr:$file:$line:$exp_index:$full_exp")
-			(( probe_nbr+=1 ))
-		done <$dmcepath/new/${file}.exprdata
-	done
+    # Aggregate the probe-expression information into <expr-references.log>
+    # Loop through the list of files and aggregate the info from
+    # all the <$file>.exprdata into a global expr-references.log file
+    _echo "assemble and assign expression index for probes"
+    probe_nbr=$offset
+    declare -a str=()
+    for file in "${file_list[@]}"; do
+        while IFS=: read -r nop line exp_index full_exp; do
+            echo $nop > /dev/null
+            ((line = line + size_of_user + 1))
+            str+=("$probe_nbr:$file:$line:$exp_index:$full_exp")
+            (( probe_nbr+=1 ))
+        done <$dmcepath/new/${file}.exprdata
+    done
 
-	for ((i = 0; i < ${#str[@]}; i++)); do
-		echo "${str[$i]}" >> "$dmcepath/expr-references.log"
-	done
+    for ((i = 0; i < ${#str[@]}; i++)); do
+        echo "${str[$i]}" >> "$dmcepath/expr-references.log"
+    done
 fi
 
 _echo "$(basename "$git_top") summary:"
 echo "$PWD"
 if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
-	git --no-pager show --stat "$oldsha".."$newsha" --oneline
+    git --no-pager show --stat "$oldsha".."$newsha" --oneline
 fi
 summary
