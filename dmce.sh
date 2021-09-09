@@ -200,10 +200,17 @@ else
 fi
 
 _echo "copy files and dmce-remove-relpaths.sh"
-rsync -qazR $FILE_LIST $dmcepath/new/
-
 for c_file in $FILE_LIST; do
     {
+        if [[ $c_file == */* ]]; then
+            newdestdir=$dmcepath/new/${c_file%/*}
+        else
+            newdestdir=$dmcepath/new
+        fi
+
+        mkdir -p $newdestdir
+        cp $c_file $newdestdir/
+
         # If the file does not exist in $oldsha, create an empty file
         if ! [ -e $old_git_dir/${c_file} ]; then
             touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
