@@ -47,6 +47,9 @@ defaultcmdline_h = os.environ.get('DMCE_DEFAULT_H_COMMAND_LINE')
 #dmce work path
 workpath = os.environ.get('DMCE_WORK_PATH')
 
+# git name
+gitname = os.environ.get("DMCE_GIT_NAME")
+
 # Read from stdin
 linebuf = sys.stdin.readlines()
 
@@ -55,8 +58,7 @@ linestotal = len(linebuf)
 path = sys.argv[1] + "/"
 
 # Find out include file path
-includes = "-I" + workpath + "/inc/" + sys.argv[1].rsplit('/', 1)[1]
-
+includes = "-I" + workpath + "/" + gitname + "/inc/" + sys.argv[1].rsplit('/', 1)[1]
 # Retrieve individual command line
 def IndividualCmdLine( sourcefile ):
    cmdline=""

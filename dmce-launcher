@@ -219,6 +219,7 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
 git_root=$PWD
 git_name=$(basename "$PWD")
+export DMCE_GIT_NAME=$git_name
 
 # Find out what config file to use. Start with the one in the git
 
@@ -312,10 +313,10 @@ if [ "$skip" = false ]; then
     _echo "set up DMCE include directory"
 
     # remove old inc directory
-    rm -rf "${DMCE_WORK_PATH}"/inc/{old,new} &> /dev/null
+    rm -rf "${DMCE_WORK_PATH}"/$git_name/inc/{old,new} &> /dev/null
 
     # re-create inc directories
-    mkdir -p "${DMCE_WORK_PATH}"/inc/{old,new}
+    mkdir -p "${DMCE_WORK_PATH}"/$git_name/inc/{old,new}
 
     # If stupid mode, create empty directory
     if [ "$stupid" = true ]; then
@@ -331,17 +332,17 @@ if [ "$skip" = false ]; then
         git -C "${old_git_dir}" reset --hard &>/dev/null
         git -C "${old_git_dir}" checkout "${old}" &>/dev/null
 
-        _echo "copy header files to $DMCE_WORK_PATH/inc/new"
-        find "${git_root}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/inc/new/ {} + &>/dev/null || :
-        _echo "found $(find "$DMCE_WORK_PATH"/inc/new -type f | wc -l) file(s)"
+        _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/new"
+        find "${git_root}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/new/ {} + &>/dev/null || :
+        _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/new -type f | wc -l) file(s)"
 
-        _echo "copy header files to $DMCE_WORK_PATH/inc/old"
-        find "${old_git_dir}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/inc/old/ {} + &>/dev/null || :
-        _echo "found $(find "$DMCE_WORK_PATH"/inc/old -type f | wc -l) file(s)"
+        _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/old"
+        find "${old_git_dir}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/old/ {} + &>/dev/null || :
+        _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/old -type f | wc -l) file(s)"
 
         _echo "removing relative paths in include files"
-        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/inc/new
-        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/inc/old
+        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/$git_name/inc/new
+        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/$git_name/inc/old
     fi
     _echo "clean out probe database"
     true > "${DMCE_WORK_PATH}"/global_probedata.dmce
