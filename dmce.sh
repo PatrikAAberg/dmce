@@ -66,12 +66,26 @@ quiet_mode() {
     fi
 }
 
+progress() {
+    if quiet_mode; then
+        echo -en ". "
+    fi
+}
+
+if quiet_mode; then
+    echo "|. . . . . . . . . . . . . . . >|"
+    echo -en "|"
+fi
+
 _echo() {
     if quiet_mode; then
         return
     fi
     echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
 }
+
+progress
+
 _echo "init"
 # Variable set up and config
 binpath=$DMCE_EXEC_PATH
@@ -112,6 +126,8 @@ nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 [ "$nbr_of_files" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
 _echo "git found $nbr_of_files modified and added files"
 
+progress
+
 _echo "updating filecache removing exceptions. "
 # Exclude comments and blank rows, dont care about eventual function names for include
 grep -E -v '^#|^$' $configpath/dmce.include | cut -d':' -f1 > $dmcepath/workarea/dmce.include
@@ -126,6 +142,8 @@ if ! quiet_mode; then
     cat $dmcepath/workarea/dmce.exclude
 fi
 
+progress
+
 grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
 _echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
 comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
@@ -136,6 +154,8 @@ if [ $nbr_of_files -eq 0 ]; then
     summary
     exit
 fi
+
+progress
 
 # Populate FILE_LIST
 FILE_LIST=""
@@ -161,6 +181,8 @@ else
     # remove duplicates
     sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
 fi
+
+progress
 
 # No hook, create the json file in here
 _echo "producing compile_commands.json files (used by clang-check)"
@@ -214,6 +236,8 @@ else
     wait
 fi
 
+progress
+
 _echo "copy files and dmce-remove-relpaths.sh"
 for c_file in $FILE_LIST; do
     {
@@ -248,6 +272,8 @@ if [ -e $dmcepath/workarea/clang-list.old ]; then
     done < $dmcepath/workarea/clang-list.old
 fi
 
+progress
+
 _echo "running clang-check"
 i=0
 for c_file in $FILE_LIST_OLD; do
@@ -269,6 +295,8 @@ for c_file in $FILE_LIST_NEW; do
     fi
 done
 wait
+
+progress
 
 _echo "remove clang files equal or greater than 1MB that contains more than 95% spaces"
 for c_file in $FILE_LIST_OLD; do
@@ -292,6 +320,8 @@ for c_file in $FILE_LIST_NEW; do
 done
 wait
 
+progress
+
 _echo "preparing clang data: remove hexnumbers"
 for c_file in $FILE_LIST; do
     # Replace all hexnumbers and "branches" (in-place) on clang-files
@@ -300,12 +330,16 @@ for c_file in $FILE_LIST; do
 done
 wait
 
+progress
+
 _echo "remove position dependent stuff (line numbers) from clang output"
 for c_file in $FILE_LIST; do
     sed -e "s/<[^>]*>//g"  $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
     sed -e "s/<[^>]*>//g"  $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
 done
 wait
+
+progress
 
 _echo "create filtered clang diff"
 for c_file in $FILE_LIST; do
@@ -314,12 +348,17 @@ for c_file in $FILE_LIST; do
 done
 wait
 
+progress
+
 _echo "producing clang diffs"
 for c_file in $FILE_LIST; do
     $binpath/create-clang-diff $dmcepath/new/$c_file.clang.filtereddiff &
 done
 
 wait
+
+progress
+
 _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
     [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
@@ -327,6 +366,8 @@ for c_file in $FILE_LIST; do
     $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
 done
 wait
+
+progress
 
 if ! quiet_mode; then
     find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
@@ -336,6 +377,8 @@ _echo "create probe/skip list:"
 find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/probe-list &
 find $dmcepath/new -name '*.probedata' -size 0   | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/skip-list &
 wait
+
+progress
 
 nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
 
@@ -382,6 +425,8 @@ done < $dmcepath/workarea/probe-list
 xargs rm 2> /dev/null <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)" || :
 
 wait
+
+echo ">|"
 
 _echo "results:"
 files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )
