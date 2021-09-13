@@ -59,7 +59,15 @@ fi
 TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
 quiet_mode() {
-    if [ "x$DMCE_QUIET_MODE" != "x" ] && [ "$DMCE_QUIET_MODE" = "1" ]; then
+    if [ "x$DMCE_QUIET_MODE" != "x" ] && [ "$DMCE_QUIET_MODE" = "true" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+progress_bar() {
+    if [ "x$DMCE_PROGRESS" != "x" ] && [ "$DMCE_PROGRESS" = "true" ]; then
         return 0
     else
         return 1
@@ -67,12 +75,13 @@ quiet_mode() {
 }
 
 progress() {
-    if quiet_mode; then
-        echo -en ". "
+    if ! progress_bar; then
+        return
     fi
+    echo -en ". "
 }
 
-if quiet_mode; then
+if progress_bar; then
     echo "|. . . . . . . . . . . . . . . >|"
     echo -en "|"
 fi
@@ -426,7 +435,9 @@ xargs rm 2> /dev/null <<<"$(sed -e 's/$/.probed/g' $dmcepath/workarea/skip-list)
 
 wait
 
-echo ">|"
+if progress_bar; then
+    echo ">|"
+fi
 
 _echo "results:"
 files_probed=$(wc -l <$dmcepath/workarea/probe-list 2> /dev/null )

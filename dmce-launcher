@@ -40,13 +40,14 @@ OPTIONS
     -h, --help       This help
     -n val           Number of commits from HEAD
     --offset[=]<val> Assign probes starting from <val>
+    --progress       Progress bar (implies -q)
     -q               Quiet mode
     -r val           SHA-1 delta HEAD..<val>
     --skip           Skip include file retrieval
     --stupid         DMCE include files awareness disabled
     -v, --version    Get DMCE version
 
-DESCRIPTION:
+DESCRIPTION
     $NAME is the main entry point for running DMCE from a git.
 
     To be executed from within the git repo root:
@@ -56,7 +57,7 @@ DESCRIPTION:
 
     Details? Check out README.md!
 
-EXAMPLES:
+EXAMPLES
     # Run DMCE on your latest changes
     $ ../dmce/$NAME
 
@@ -125,6 +126,7 @@ skip=false
 stupid=false
 checkout_head=false
 print_version_and_exit=false
+progress=false
 quiet=false
 
 while getopts "$optspec" optchar; do
@@ -151,6 +153,10 @@ while getopts "$optspec" optchar; do
                 offset=*)
                     val=${OPTARG#*=}
                     offset=$val
+                    ;;
+                progress)
+                    progress=true
+                    quiet=true
                     ;;
                 skip)
                     skip=true
@@ -208,9 +214,9 @@ if [ "${quiet}" = "false" ]; then
         python3 --version
         break
     done | sed 's,version,,g'
-else
-    export DMCE_QUIET_MODE=1
 fi
+export DMCE_QUIET_MODE="${quiet}"
+export DMCE_PROGRESS="${progress}"
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
@@ -287,6 +293,7 @@ logfile="$(basename "$0" .sh)-$(basename "$git_root")-$(date '+%Y%m%d-%H%M%S').l
 mkdir -p "$DMCE_LOG_FILES"
 exec > >(tee -i "$DMCE_LOG_FILES/$logfile")
 exec 2>&1
+_echo "$DMCE_LOG_FILES/$logfile"
 
 if [ "$checkout_head" = true ]; then
     if ! git checkout "${new}"; then
