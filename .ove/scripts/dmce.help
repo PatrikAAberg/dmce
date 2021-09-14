@@ -1,1 +1,1 @@
-dmce:[GIT...]:run 'dmce -n' for all/specified git repositories
+dmce:[git...]:run 'dmce -n ...' for all/specified git repositories
