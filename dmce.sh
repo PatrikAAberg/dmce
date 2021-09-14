@@ -50,7 +50,7 @@ function jobcap {
 }
 
 # Usage
-if [ "$#" -ne 5 ]; then
+if [ $# -ne 5 ]; then
     echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root> <offset>"
     exit 1
 fi
@@ -132,7 +132,14 @@ git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|
 git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$|[\w\/]+\.h$" >> $dmcepath/latest.cache || :
 # Sanity check
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
-[ "$nbr_of_files" == "0" ] && echo "error: no modified/added files found, try to increase SHA-1 delta" && ls -l $dmcepath/latest.cache && summary && exit
+
+if [ $nbr_of_files -eq 0 ]; then
+    echo "error: no modified/added files found, try to increase SHA-1 delta"
+    ls -l $dmcepath/latest.cache
+    summary
+    exit 1
+fi
+
 _echo "git found $nbr_of_files modified and added files"
 
 progress
@@ -161,7 +168,7 @@ nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 if [ $nbr_of_files -eq 0 ]; then
     echo "error: no files after include and exclude filter"
     summary
-    exit
+    exit 1
 fi
 
 progress
@@ -185,7 +192,11 @@ else
     wait
     popd &>/dev/null
     # sanity check
-    [ "$(wc -c < $dmcepath/cmdlookup.cache)" == "0" ] && echo "error: cmdlookup.cache is empty" && ls -l $dmcepath/cmdlookup.cache && exit 1
+    if [ "$(wc -c < $dmcepath/cmdlookup.cache)" = "0" ]; then
+        echo "error: cmdlookup.cache is empty"
+        ls -l $dmcepath/cmdlookup.cache
+        exit 1
+    fi
 
     # remove duplicates
     sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
