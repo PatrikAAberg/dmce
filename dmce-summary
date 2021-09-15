@@ -35,13 +35,15 @@ fi
 echo "DMCE summary. Using config file: $USE_DMCE_CONFIG_FILE"
 
 while read dmceconfig; do
-	validconfig=$(echo $dmceconfig | egrep -v \#)
-	if [ "$validconfig" != ""  ]; then
-		conf_var=$(echo $validconfig | cut -d: -f1)
-		conf_val=$(echo $validconfig | cut -d: -f2 | envsubst)
-		eval $conf_var=\'$conf_val\'
-		export $conf_var
+	if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
+		continue
 	fi
+	conf_var=${dmceconfig%%:*}
+	conf_val=${dmceconfig##*:}
+	# escape double quotes
+	conf_val=${conf_val//\"/\\\"}
+	eval "$conf_var"=\""$conf_val"\"
+	export "${conf_var:?}"
 done < $USE_DMCE_CONFIG_FILE
 
 # Any probes found?
