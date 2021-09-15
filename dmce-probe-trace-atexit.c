@@ -51,7 +51,7 @@ static void dmce_probe_body(unsigned int probenbr) {
 
 
     if (!dmce_registered_at_exit) {
-        dmce_buf_p = (dmce_probe_entry_t*)calloc(DMCE_TRACE_SIZE, sizeof(uint32_t));
+        dmce_buf_p = (dmce_probe_entry_t*)calloc(DMCE_TRACE_SIZE, sizeof(dmce_probe_entry_t));
         atexit(dmce_atexit);
         dmce_registered_at_exit = 1;
     }
