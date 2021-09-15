@@ -17,28 +17,28 @@ mkdir -p dmce-$version/usr/bin
 mkdir -p dmce-$version/usr/share/dmce
 
 # deb files
-cp $gitdir/debian/* dmce-$version/DEBIAN
+cp -a $gitdir/debian/* dmce-$version/DEBIAN
 
 # Program files
-cp $gitdir/dmce-launcher dmce-$version/usr/bin/
-cp $gitdir/dmce-configure-local dmce-$version/usr/bin/
-cp $gitdir/dmce-configure-global dmce-$version/usr/bin/
-cp $gitdir/dmce-summary dmce-$version/usr/bin/
-cp $gitdir/dmce-probe*   dmce-$version/usr/share/dmce/
-cp $gitdir/cmdlookuphook.sh dmce-$version/usr/share/dmce/
-cp $gitdir/create-clang-diff dmce-$version/usr/share/dmce/
-cp $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/dmce/
-cp $gitdir/dmce.sh dmce-$version/usr/share/dmce/
-cp $gitdir/generate-compile-commands.py dmce-$version/usr/share/dmce/
-cp $gitdir/generate-probefile.py dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce-launcher dmce-$version/usr/bin/
+cp -a $gitdir/dmce-configure-local dmce-$version/usr/bin/
+cp -a $gitdir/dmce-configure-global dmce-$version/usr/bin/
+cp -a $gitdir/dmce-summary dmce-$version/usr/bin/
+cp -a $gitdir/dmce-probe*   dmce-$version/usr/share/dmce/
+cp -a $gitdir/cmdlookuphook.sh dmce-$version/usr/share/dmce/
+cp -a $gitdir/create-clang-diff dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce.sh dmce-$version/usr/share/dmce/
+cp -a $gitdir/generate-compile-commands.py dmce-$version/usr/share/dmce/
+cp -a $gitdir/generate-probefile.py dmce-$version/usr/share/dmce/
+cp -a $gitdir/print_summary.py dmce-$version/usr/share/dmce/
 
-
-cp $gitdir/constructs.exclude dmce-$version/usr/share/dmce/
-cp $gitdir/dmce.exclude dmce-$version/usr/share/dmce/
-cp $gitdir/dmce.include dmce-$version/usr/share/dmce/
-cp $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
+cp -a $gitdir/constructs.exclude dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce.exclude dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce.include dmce-$version/usr/share/dmce/
+cp -a $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
 
 fakeroot dpkg-deb --build dmce-${version}
-cp /tmp/$USER/dmce/debian-build/dmce-${version}.deb $gitdir/
+cp -a /tmp/$USER/dmce/debian-build/dmce-${version}.deb $gitdir/
 popd
 exit 0
