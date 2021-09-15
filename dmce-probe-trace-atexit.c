@@ -11,7 +11,7 @@
 typedef struct {
 
     uint64_t timestamp;
-    uint32_t probenbr;
+    uint64_t probenbr;
 } dmce_probe_entry_t;
 
 static dmce_probe_entry_t* dmce_buf_p;

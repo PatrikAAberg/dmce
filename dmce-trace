@@ -1,0 +1,60 @@
+#!/usr/bin/python3
+
+import numpy as np
+import sys
+import argparse
+import os
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+parser.add_argument('dfile',            type=str,                      help='Raw ipnut file')
+parser.add_argument('probefile',        type=str,                      help='mypath/probe-references.log')
+parser.add_argument('codetree',         type=str,                      help='path to code tree')
+parser.add_argument('--numvars',        type=int, default=0,       help='Number of variables, default: 0')
+args = parser.parse_args()
+
+#dfile = "/tmp/dmcebuffer.bin"
+#probefile = "/tmp/epatabe/dmce/bbx/probe-references.log"
+#codetree = "/home/epatabe/repos/bbx"
+dfile = args.dfile
+probefile = args.probefile
+codetree = args.codetree
+entrysize64 = 2 + args.numvars
+
+print("Raw input file: " + dfile)
+print("Probe ref file: " + probefile)
+
+# Read probe refs file
+pf = open(probefile)
+prefs = pf.readlines()
+pf.close()
+
+data = np.fromfile(dfile, dtype=np.int64)
+
+length = int(len(data) / entrysize64)
+if ( (entrysize64 * length) != len(data) ):
+    print("Datafile has wrong alignment, abort")
+    sys.exit(0)
+
+data = np.reshape(data, (length, entrysize64))
+
+# Sort on timstamps
+np.sort(data, 0)
+
+longestpath=0
+
+for n in range(length):
+    pnum = data[n, 1]
+    refs = prefs[pnum].rstrip().split(':')
+    fname = refs[1]
+    line = int(refs[2])
+    if len(fname) > longestpath:
+        longestpath=len(fname)
+
+# TODO: When traces grow bigger, read code tree once in the beginning
+    fsource = open(codetree + "/" + fname)
+    lsource = fsource.readlines()
+    # Editor line numbers start with 1
+    sl = lsource[line - 1].rstrip()
+    out = [fname + ":" + str(line), sl]
+    fmt = "{: <"+ str(longestpath + 2) + "} {}"
+    print(fmt.format(*out))
