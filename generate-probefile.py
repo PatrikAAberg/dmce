@@ -216,6 +216,7 @@ if configpath != None and os.path.isfile(configpath + '/recognizedexpressions.py
     sys.path.insert(1, configpath)
     import recognizedexpressions
     exppatternlist = recognizedexpressions.exppatternlist
+    exppatternmode = recognizedexpressions.exppatternmode
 else:
     exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                       '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
@@ -226,6 +227,7 @@ else:
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\-\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\+\'.*',
                       '.*UnaryOperator Hexnumber <.*\,.*>.*\'\+\+\'.*',
+                      '.*UnaryOperator Hexnumber <.*\,.*>.*\'\-\-\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'=\'.*',
@@ -233,22 +235,24 @@ else:
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'>\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'>=\'.*',
+                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'<=\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
                       '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
                       '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
                       '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
+    # Modes:
+    #  1    Contained space, use as is
+    #  2    Free, need to look for next
+    #  x    Free, look for next at colpos + x
+    exppatternmode = [1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+
 re_exppatternlist = []
 
 for exp in exppatternlist:
     re_exppatternlist.append(re.compile(exp))
-
-# Modes:
-#  1    Contained space, use as is
-#  2    Free, need to look for next
-#  x    Free, look for next at colpos + x
-exppatternmode = [1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 # Used to extract expression type and operator type
 exp_pat = re.compile('.*-(.*)\sHexnumber\s<.*\d>(.*)')
