@@ -5,14 +5,21 @@ import sys
 import argparse
 import os
 import re
+from colorama import Fore, Back, Style
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
 parser.add_argument('dfile',            type=str,                   help='Raw ipnut file')
 parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='path to code tree')
 parser.add_argument('--numvars',        type=int, default=0,        help='Number of variables, default: 0')
+parser.add_argument('-A',               type=int, default=0,        help='Number of trailing source code lines, default: 0')
+parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
+parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
 args = parser.parse_args()
+
+trailing=args.A
+leading=args.B
 
 #dfile = "/tmp/dmcebuffer.bin"
 #probefile = "/tmp/epatabe/dmce/bbx/probe-references.log"
@@ -45,11 +52,19 @@ np.sort(data, 0)
 
 longestpath=0
 
+def stripProbe(s):
+    s = re.sub('\(DMCE_PROBE\(\d*\)\, (.*)', r'\1', s)
+    s = re.sub('(.*\(.*\))*\)(.*)', r'\1\2', s)
+    return s
+
+
 for n in range(length):
     pnum = data[n, 1]
     refs = prefs[pnum].rstrip().split(':')
     fname = refs[1]
     line = int(refs[2])
+    # Editor line numbers start with 1
+    line = line - 1
     if len(fname) > longestpath:
         longestpath=len(fname)
 
@@ -57,12 +72,23 @@ for n in range(length):
     fsource = open(codetree + "/" + fname)
     lsource = fsource.readlines()
 
-    # Editor line numbers start with 1
-    sl = lsource[line - 1].rstrip()
-    if not args.showprobes:
-        sl = re.sub('\(DMCE_PROBE\(\d*\)\, (.*)', r'\1', sl)
-        sl = re.sub('(.*\(.*\))+\)(.*)', r'\1\2', sl)
+    if leading or trailing:
+        print("                                             ---")
+    for lcount in range (line - leading, line + 1 + trailing):
+        if lcount > 0:
+            sl = lsource[lcount].rstrip()
+            if not args.showprobes:
+                sl = stripProbe(sl)
 
-    out = [fname + ":" + str(line), sl]
-    fmt = "{: <"+ str(longestpath + 2) + "} {}"
-    print(fmt.format(*out))
+            if lcount == line:
+                if not args.hl:
+                    out = [fname + ":" + str(lcount), sl]
+                else:
+                    out = [fname + ":" + str(lcount), Back.BLUE + sl + Style.RESET_ALL]
+            else:
+                out = ["", sl]
+
+            fmt = "{: <"+ str(longestpath + 2) + "} {}"
+            print(fmt.format(*out))
+
+# end of file
