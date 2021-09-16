@@ -4,12 +4,14 @@ import numpy as np
 import sys
 import argparse
 import os
+import re
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
-parser.add_argument('dfile',            type=str,                      help='Raw ipnut file')
-parser.add_argument('probefile',        type=str,                      help='mypath/probe-references.log')
-parser.add_argument('codetree',         type=str,                      help='path to code tree')
-parser.add_argument('--numvars',        type=int, default=0,       help='Number of variables, default: 0')
+parser.add_argument('dfile',            type=str,                   help='Raw ipnut file')
+parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
+parser.add_argument('codetree',         type=str,                   help='path to code tree')
+parser.add_argument('--numvars',        type=int, default=0,        help='Number of variables, default: 0')
+parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
 args = parser.parse_args()
 
 #dfile = "/tmp/dmcebuffer.bin"
@@ -22,6 +24,7 @@ entrysize64 = 2 + args.numvars
 
 print("Raw input file: " + dfile)
 print("Probe ref file: " + probefile)
+print("Code tree     : " + codetree)
 
 # Read probe refs file
 pf = open(probefile)
@@ -53,8 +56,13 @@ for n in range(length):
 # TODO: When traces grow bigger, read code tree once in the beginning
     fsource = open(codetree + "/" + fname)
     lsource = fsource.readlines()
+
     # Editor line numbers start with 1
     sl = lsource[line - 1].rstrip()
+    if not args.showprobes:
+        sl = re.sub('\(DMCE_PROBE\(\d*\)\, (.*)', r'\1', sl)
+        sl = re.sub('(.*\(.*\))+\)(.*)', r'\1\2', sl)
+
     out = [fname + ":" + str(line), sl]
     fmt = "{: <"+ str(longestpath + 2) + "} {}"
     print(fmt.format(*out))
