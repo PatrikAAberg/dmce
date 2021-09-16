@@ -860,7 +860,7 @@ while (i < expdb_index):
         if len(vlist) > 0:
             probe_prolog = probe_prolog + ","
             for s in vlist:
-                probe_prolog = probe_prolog + s
+                probe_prolog = probe_prolog + "(uint64_t)" + s
                 count += 1
                 if (count == numDataVars):
                     break
