@@ -313,7 +313,9 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 
 re_declarations = []
 re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
+re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 re_declarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
+re_declarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
 re_skip_scopes = []
 re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
