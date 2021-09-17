@@ -411,6 +411,11 @@ while (lineindex<linestotal):
     left = re_h_file_left_statement.match(linebuf[lineindex])
     middle = re_h_file_middle_statement.match(linebuf[lineindex])
     right = re_h_file_right_statement.match(linebuf[lineindex])
+
+    leftself = False
+    middleself = False
+    rightself = False
+
     if left:
         leftself = (parsed_c_file in left.group(1))
     if middle:
@@ -425,6 +430,10 @@ while (lineindex<linestotal):
             if not skip_scope:
                 skip_scope = 1
                 skip_scope_tab = tab
+
+    # Back in self again
+    if leftself and not (middleself or rightself):
+        skip_scope = 0
 
     # Other c-files (not self)
     #
