@@ -12,6 +12,7 @@ parser.add_argument('dfile',            type=str,                   help='Raw ip
 parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='path to code tree')
 parser.add_argument('--numvars',        type=int, default=0,        help='Number of variables, default: 0')
+parser.add_argument('--sourcewidth',    type=int, default=140,       help='Width of source code lines, default: 80')
 parser.add_argument('-A',               type=int, default=0,        help='Number of trailing source code lines, default: 0')
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
@@ -60,6 +61,10 @@ def stripProbe(s):
 
 for n in range(length):
     pnum = data[n, 1]
+    vs = ""
+    for v in range(0, args.numvars):
+        vs = vs + format(data[n,v + 2],"04x") + " "
+
     refs = prefs[pnum].rstrip().split(':')
     fname = refs[1]
     line = int(refs[2])
@@ -82,13 +87,13 @@ for n in range(length):
 
             if lcount == line:
                 if not args.hl:
-                    out = [fname + ":" + str(lcount), sl]
+                    out = [fname + ":" + str(lcount), sl, vs]
                 else:
-                    out = [fname + ":" + str(lcount), Back.BLUE + sl + Style.RESET_ALL]
+                    out = [fname + ":" + str(lcount), Back.BLUE + sl + Style.RESET_ALL, vs]
             else:
-                out = ["", sl]
+                out = ["", sl, ""]
 
-            fmt = "{: <"+ str(longestpath + 2) + "} {}"
+            fmt = "{: <"+ str(longestpath + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
             print(fmt.format(*out))
 
 # end of file
