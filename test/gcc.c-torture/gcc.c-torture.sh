@@ -108,8 +108,9 @@ if [[ "$numVars" -eq "0" ]]; then
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-default.c|" .dmceconfig
 else
     echo "5 variables probes enabled"
-    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-monolith-D5.c|" .dmceconfig
+    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-trace-atexit-D5.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-D5.c|" .dmceconfig
+    echo "DMCE_NUM_DATA_VARS:5" >> .dmceconfig
 fi
 
 git add .dmceconfig

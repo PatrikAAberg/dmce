@@ -191,7 +191,6 @@ git rm gcov-3.cpp                           # gcov-3.h: No such file or director
 git rm simd-2.cpp                           # check-vect.h: No such file or directory
 git rm mangle56.cpp                         # #include <initializer_list>
 
-
 # add DMCE config and update paths
 
 cp -v ${dmce_exec_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
@@ -204,9 +203,9 @@ if [[ "$numVars" -eq "0" ]]; then
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-default.c|" .dmceconfig
 else
     echo "5 variables probes enabled"
-    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-monolith-D5.c|" .dmceconfig
+    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-trace-atexit-D5.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-D5.c|" .dmceconfig
-
+    echo "DMCE_NUM_DATA_VARS:5" >> .dmceconfig
     git rm Wunused-var-10.cpp               # re-declaration of struct members shows up as ordinary declarations in AST
     git rm pr43365.cpp                      # re-declaration of struct members shows up as ordinary declarations in AST
     git rm pr79377.cpp                      # re-declaration of struct members shows up as ordinary declarations in AST
@@ -215,6 +214,15 @@ else
     git rm tls-3.cpp                        # re-declaration of struct members shows up as ordinary declarations in AST
     git rm pass_y.h                         # re-declaration of struct members shows up as ordinary declarations in AST
     git rm initlist90.cpp                   # re-declaration of struct members shows up as ordinary declarations in AST
+
+# files not yet examined:
+
+    git rm pr68220.cpp
+    git rm pr45572-1.cpp
+    pr68388.cpp
+    pr67989.cpp
+pr43655.cpp
+
 fi
 
 git commit -m "broken"
