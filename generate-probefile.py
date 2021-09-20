@@ -817,13 +817,14 @@ while (lineindex<linestotal):
                 secStackVars.append(m.group(1))
 
         else:
+            skipthis = False
             for section in re_skip_scopes:
                 m = section.match(linebuf[lineindex])
                 if m:
-                    pass
-                else:
-                    secStackVars.append("")
-                    secStackPos.append((currentSectionLend, currentSectionCend))
+                    skipthis = True
+            if not skipthis:
+                secStackVars.append("")
+                secStackPos.append((currentSectionLend, currentSectionCend))
 
     print("Scope stack after decl check: ")
     print(secStackPos)
