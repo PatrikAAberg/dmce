@@ -356,6 +356,30 @@ while (lineindex<linestotal):
     if (in_function_scope) and (tab <= function_scope_tab):
         in_function_scope = False
 
+    print("LINE WHEN CHECKING SELF: " + linebuf[lineindex])
+    # h-files
+    left = re_h_file_left_statement.match(linebuf[lineindex])
+    middle = re_h_file_middle_statement.match(linebuf[lineindex])
+    right = re_h_file_right_statement.match(linebuf[lineindex])
+
+    leftself = False
+    middleself = False
+    rightself = False
+    if left:
+        leftself = (parsed_c_file in left.group(1))
+    if middle:
+        middleself = (parsed_c_file in middle.group(1))
+    if right:
+        rightself = (parsed_c_file in right.group(1))
+
+    if (left and not leftself) or (middle and not middleself) or (right and not rightself):
+        trailing=0
+        in_parsed_c_file = 0
+        if numDataVars > 0:
+            if not skip_scope:
+                skip_scope = 1
+                skip_scope_tab = tab
+
     # If statement is within a .h file, skip all indented statements and expressions
     # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
 
@@ -407,33 +431,6 @@ while (lineindex<linestotal):
         # Replace filename with 'line' for further parsing
         linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
 
-    # h-files
-    left = re_h_file_left_statement.match(linebuf[lineindex])
-    middle = re_h_file_middle_statement.match(linebuf[lineindex])
-    right = re_h_file_right_statement.match(linebuf[lineindex])
-
-    leftself = False
-    middleself = False
-    rightself = False
-
-    if left:
-        leftself = (parsed_c_file in left.group(1))
-    if middle:
-        middleself = (parsed_c_file in middle.group(1))
-    if right:
-        rightself = (parsed_c_file in right.group(1))
-
-    if (left and not leftself) or (middle and not middleself) or (right and not rightself):
-        trailing=0
-        in_parsed_c_file = 0
-        if numDataVars > 0:
-            if not skip_scope:
-                skip_scope = 1
-                skip_scope_tab = tab
-
-    # Back in self again
-    if leftself and not (middleself or rightself):
-        skip_scope = 0
 
     # Other c-files (not self)
     #
@@ -447,6 +444,11 @@ while (lineindex<linestotal):
             in_parsed_c_file = 0
             # Remove .c filename for further parsing
             linebuf[lineindex] = re.sub(".*<.*\.c:\d*:\d*\,\s", "<external file, ", linebuf[lineindex])
+
+    # Back in self again
+    if leftself and not (middleself or rightself):
+        skip_scope = 0
+        print("Back in self!")
 
     # The different ways of updating position:
     #
