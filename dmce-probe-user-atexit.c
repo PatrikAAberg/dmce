@@ -50,4 +50,4 @@ static void dmce_probe_body(unsigned int probenbr) {
 
     dmce_buffer[probenbr] ++;
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif

@@ -74,7 +74,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         e_p->vars[4] = dmce_param_e;
     }
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif
 
 
 

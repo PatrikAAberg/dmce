@@ -10,4 +10,4 @@ static void dmce_probe_body(unsigned int dmce_probenbr, int dmce_param_a, int dm
 }
 
 #define DMCE_PROBE(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e) (dmce_probe_body(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e))
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif

@@ -16,4 +16,4 @@ static void dmce_probe_body(unsigned int probenbr)
     syslog(LOG_INFO, "\nDMCE_PROBE(%u)\n ",probenbr);
   }
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif

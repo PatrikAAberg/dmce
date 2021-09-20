@@ -64,7 +64,7 @@ static void dmce_probe_body(unsigned int probenbr) {
         e_p->probenbr = probenbr;
     }
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif
 
 
 

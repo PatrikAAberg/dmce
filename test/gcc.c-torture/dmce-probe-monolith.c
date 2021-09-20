@@ -10,4 +10,4 @@ static void dmce_probe_body(unsigned int probenbr)
 }
 
 #define DMCE_PROBE(a) (dmce_probe_body(a))
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif

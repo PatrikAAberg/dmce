@@ -17,4 +17,4 @@ static void dmce_probe_body(unsigned int probenbr)
     fprintf(stderr, "\nDMCE_PROBE(%u)\n ",probenbr);
   }
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif

@@ -52,4 +52,4 @@ static void dmce_probe_body(unsigned int dmce_probenbr, int dmce_par_a, int dmce
     dmce_buffer[dmce_probenbr][4] += dmce_par_d;
     dmce_buffer[dmce_probenbr][5] += dmce_par_e;
 }
-#endif //__DMCE_PROBE_FUNCTION_BODY__
+#endif
