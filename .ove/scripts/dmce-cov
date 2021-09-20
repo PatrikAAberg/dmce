@@ -269,7 +269,10 @@ function main() {
 		else
 			ove reset-hard "${git}"
 			git clean -dfxq
-			run_one "${first}"
+			if ! run_one "${first}"; then
+				echo "${prefix}:${na_string}:${err_string}"
+				continue
+			fi
 
 			echo "---"
 			if [ "${mode}" -eq 2 ]; then
