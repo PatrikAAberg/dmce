@@ -310,6 +310,9 @@ re_sections_to_skip.append(re.compile(r'.*-EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
 re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
+# Only needs skipping if we probe with variables
+if (numDataVars > 0):
+    re_sections_to_skip.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
 re_declarations = []
 re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
@@ -356,7 +359,6 @@ while (lineindex<linestotal):
     if (in_function_scope) and (tab <= function_scope_tab):
         in_function_scope = False
 
-    print("LINE WHEN CHECKING SELF: " + linebuf[lineindex])
     # h-files
     left = re_h_file_left_statement.match(linebuf[lineindex])
     middle = re_h_file_middle_statement.match(linebuf[lineindex])
