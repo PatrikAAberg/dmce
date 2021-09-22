@@ -317,8 +317,8 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 # Only needs skipping if we probe with variables
 # TODO: Still probe these sections but without variables?
 
-re_sections_to_skip_vars = []
-re_sections_to_skip_vars.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
+re_sections_parmdecl = []
+re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
 re_declarations = []
 re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
@@ -648,14 +648,14 @@ while (lineindex<linestotal):
         else:
             skip=1
 
-    # Check for section to not insert variables
-    found_section_to_skip_var = 0
-    for section in re_sections_to_skip_vars:
+    # Check if in for section to not insert variables
+    found_section_parmdecl = 0
+    for section in re_sections_parmdecl:
         m = section.match(linebuf[lineindex])
         if m:
-            found_section_to_skip_var = True
+            found_section_parmdecl = True
 
-    if found_section_to_skip_var and not skip_scope_var:
+    if found_section_parmdecl and not skip_scope_var:
         skip_scope_var = 1
         skip_scope_var_tab = tab
 
