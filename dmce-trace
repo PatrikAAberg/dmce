@@ -68,10 +68,12 @@ for n in range(length):
     refs = prefs[pnum].rstrip().split(':')
     fname = refs[1]
     line = int(refs[2])
+    func = refs[3]
+
     # Editor line numbers start with 1
     line = line - 1
     if len(fname) > longestpath:
-        longestpath=len(fname)
+        longestpath=len(fname) + len(str(line)) + len(func)
 
 # TODO: When traces grow bigger, read code tree once in the beginning
     fsource = open(codetree + "/" + fname)
@@ -87,9 +89,9 @@ for n in range(length):
 
             if lcount == line:
                 if not args.hl:
-                    out = [fname + ":" + str(lcount), sl, vs]
+                    out = [fname + ":" + str(lcount) + ":" + func, sl, vs]
                 else:
-                    out = [fname + ":" + str(lcount), Back.BLUE + sl + Style.RESET_ALL, vs]
+                    out = [fname + ":" + str(lcount) + ":" + func, Back.BLUE + sl + Style.RESET_ALL, vs]
             else:
                 out = ["", sl, ""]
 
