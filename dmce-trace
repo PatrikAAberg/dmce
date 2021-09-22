@@ -54,16 +54,41 @@ np.sort(data, 0)
 longestpath=0
 
 def stripProbe(s):
-    s = re.sub('\(DMCE_PROBE\(\d*\)\, (.*)', r'\1', s)
+    substr = '\(DMCE_PROBE\(\d*'
+    for i in range(0, args.numvars):
+        substr = substr + '\,[^\,]*'
+
+    substr = substr + '\), '
+    s = re.sub(substr, '', s)
     s = re.sub('(.*\(.*\))*\)(.*)', r'\1\2', s)
     return s
 
+def stripProbeExtractVars(sl, vs):
+    regexp = r'(.*)\(DMCE_PROBE\(\d*'
+
+    for i in range (0, args.numvars):
+        regexp = regexp + '\,(?:\(uint64_t\))*([^\,]*)'
+
+    regexp = regexp + "\)\, (.*)"
+    richvs = ""
+
+    slm = re.match(regexp, sl)
+    if slm:
+        sl = slm.group(1) + slm.group(args.numvars + 2)
+
+        # remove last right parentesis
+        sl = re.sub('(.*\(.*\))*\)(.*)', r'\1\2', sl)
+
+        for i in range (0, args.numvars):
+            if slm.group(i + 2) != '0':
+                richvs = richvs + slm.group(i + 2) + ": " + vs[i] + " "
+    return sl, richvs
 
 for n in range(length):
     pnum = data[n, 1]
-    vs = ""
+    vs = []
     for v in range(0, args.numvars):
-        vs = vs + format(data[n,v + 2],"04x") + " "
+        vs.append(format(data[n,v + 2],"04x"))
 
     refs = prefs[pnum].rstrip().split(':')
     fname = refs[1]
@@ -84,15 +109,19 @@ for n in range(length):
     for lcount in range (line - leading, line + 1 + trailing):
         if lcount > 0:
             sl = lsource[lcount].rstrip()
-            if not args.showprobes:
-                sl = stripProbe(sl)
 
             if lcount == line:
+                if not args.showprobes:
+                    sl, vs = stripProbeExtractVars(sl, vs)
+                else:
+                    sldummy, vs = stripProbeExtractVars(sl, vs)
                 if not args.hl:
                     out = [fname + ":" + str(lcount) + ":" + func, sl, vs]
                 else:
                     out = [fname + ":" + str(lcount) + ":" + func, Back.BLUE + sl + Style.RESET_ALL, vs]
             else:
+                if not args.showprobes:
+                    sl = stripProbe(sl)
                 out = ["", sl, ""]
 
             fmt = "{: <"+ str(longestpath + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
