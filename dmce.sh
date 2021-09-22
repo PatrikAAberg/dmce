@@ -491,7 +491,7 @@ else
     # we iterate through
     declare -a file_list=()
     declare -a str=()
-    while IFS=':' read -r file line; do
+    while IFS=':' read -r file line func; do
         ((line = line + size_of_user + 1))
 
         if [ "$nextfile" == "" ]; then
@@ -513,7 +513,7 @@ else
         fi
 
         nextfile=$file
-        str+=("$probe_nbr:$file:$line")
+        str+=("$probe_nbr:$file:$line:$func")
 
         ((probe_nbr = probe_nbr + 1))
     done <<< "$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat)"

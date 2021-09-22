@@ -72,10 +72,10 @@ else:
 
 re_func_inc_list = []
 for func in finc:
-    re_func_inc_list.append(re.compile(".*-CXXMethodDecl.*" + func + ".*"))
-    re_func_inc_list.append(re.compile(".*-FunctionDecl.*" + func + ".*"))
-    re_func_inc_list.append(re.compile(".*-CXXConstructorDecl.*" + func + ".*"))
-    re_func_inc_list.append(re.compile(".*-CXXDestructorDecl.*" + func + ".*"))
+    re_func_inc_list.append(re.compile(".*-FunctionDecl.* (" + func + ") \'"))
+    re_func_inc_list.append(re.compile(".*-CXXMethodDecl.* (" + func + ") \'"))
+    re_func_inc_list.append(re.compile(".*-CXXConstructorDecl.* (" + func + ") \'"))
+    re_func_inc_list.append(re.compile(".*-CXXDestructorDecl.* (" + func + ") \'"))
 
 # Create list of functions to exclude
 fexcl=[]
@@ -116,6 +116,7 @@ parsed_c_file_exp = parsed_c_file
 probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
 
+current_function = ""
 expdb_exptext = []
 expdb_linestart = []
 expdb_colstart = []
@@ -127,6 +128,7 @@ expdb_in_c_file= []
 expdb_tab = []
 expdb_exppatternmode = []
 expdb_secstackvars = []
+expdb_func = []
 expdb_index = 0
 
 secStackPos = []
@@ -657,15 +659,17 @@ while (lineindex<linestotal):
         skip_scope_var = 1
         skip_scope_var_tab = tab
 
-    # Get a copy of linebuf[lineindex] without argument list to only search func names
-    argsstripped = re.sub('\'.*\'','',linebuf[lineindex])
-
     # Check if entering function scope
     if not in_function_scope:
         for re_f in re_func_inc_list:
-            if re_f.match(argsstripped):
+            f_m = re_f.match(linebuf[lineindex])
+            if f_m:
+                current_function = f_m.group(1)
                 in_function_scope = True
                 function_scope_tab = tab
+
+    # Get a copy of linebuf[lineindex] without argument list to only search func names
+    argsstripped = re.sub('\'.*\'','',linebuf[lineindex])
 
     # Check if exit function scope
     if in_function_scope:
@@ -686,6 +690,7 @@ while (lineindex<linestotal):
             expdb_lineend.append(int(lstart))
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
+            expdb_func.append(current_function)
             if not skip_scope_var:
                 expdb_secstackvars.append(secStackVars.copy())
             else:
@@ -740,6 +745,7 @@ while (lineindex<linestotal):
                    expdb_in_c_file.append(in_parsed_c_file)
                    expdb_tab.append(tab)
                    expdb_exppatternmode.append(1)
+                   expdb_func.append(current_function)
                    if not skip_scope_var:
                        expdb_secstackvars.append(secStackVars.copy())
                    else:
@@ -863,6 +869,7 @@ if inside_expression:
     expdb_lineend.append(int(lstart))
     expdb_colend.append(int(cstart) - 1)
     expdb_tab.append(tab)
+    expdb_func.append(current_function)
     if not skip_scope_var:
         expdb_secstackvars.append(secStackVars.copy())
     else:
@@ -1160,7 +1167,7 @@ while (i < expdb_index):
                         probes+=1
 
                         # Update probe file
-                        pdf.write(parsed_c_file + ":" + str(ls) + "\n")
+                        pdf.write(parsed_c_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
                         tmp_exp = expdb_exptext[i].rstrip()
                         pat_i = 0
                         while (pat_i < len(exppatternlist)):
