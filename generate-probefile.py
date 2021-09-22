@@ -152,8 +152,8 @@ skip_statement = 0
 skip_statement_tab = 0
 skip_scope = 0
 skip_scope_tab  = 0
-skip_scope_var = 0
-skip_scope_var_tab  = 0
+in_parmdecl = 0
+in_parmdecl_tab  = 0
 skip_backtrail = 0
 skip_backtrail_tab = 0
 skip_lvalue = 0
@@ -320,11 +320,11 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
-re_declarations = []
-re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
-re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
-re_declarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
-re_declarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
+re_parmdeclarations = []
+#re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
+#re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
 re_skip_scopes = []
 re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
@@ -362,8 +362,8 @@ while (lineindex<linestotal):
         skip_lvalue=0
     if (skip_scope and (tab <= skip_scope_tab)):
         skip_scope=0
-    if (skip_scope_var and (tab <= skip_scope_var_tab)):
-        skip_scope_var=0
+    if (in_parmdecl and (tab <= in_parmdecl_tab)):
+        in_parmdecl=0
     if (in_function_scope) and (tab <= function_scope_tab):
         in_function_scope = False
 
@@ -655,9 +655,9 @@ while (lineindex<linestotal):
         if m:
             found_section_parmdecl = True
 
-    if found_section_parmdecl and not skip_scope_var:
-        skip_scope_var = 1
-        skip_scope_var_tab = tab
+    if found_section_parmdecl and not in_parmdecl:
+        in_parmdecl = 1
+        in_parmdecl_tab = tab
 
     # Check if entering function scope
     if not in_function_scope:
@@ -680,7 +680,7 @@ while (lineindex<linestotal):
     print("Parsed file: " + parsed_c_file)
     print("Parsed AST line:                     " + linebuf[lineindex])
     print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "skip scope var: " + str(skip_scope_var) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
+    print("Flags => " + " in parsed file: " + str(in_parsed_c_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -691,7 +691,7 @@ while (lineindex<linestotal):
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
             expdb_func.append(current_function)
-            if not skip_scope_var:
+            if not in_parmdecl:
                 expdb_secstackvars.append(secStackVars.copy())
             else:
                 expdb_secstackvars.append([])
@@ -746,7 +746,7 @@ while (lineindex<linestotal):
                    expdb_tab.append(tab)
                    expdb_exppatternmode.append(1)
                    expdb_func.append(current_function)
-                   if not skip_scope_var:
+                   if not in_parmdecl:
                        expdb_secstackvars.append(secStackVars.copy())
                    else:
                        expdb_secstackvars.append([])
@@ -820,11 +820,15 @@ while (lineindex<linestotal):
         currentSectionCend = int(skipcend)
 
         # push new sections
-        for section in re_declarations:
+
+        # var declarations in parameter declarations
+        for section in re_parmdeclarations:
             m = section.match(linebuf[lineindex])
             if m:
-                print("MATCHED DECL: " + linebuf[lineindex])
+                print("MATCHED PARM DECL: " + linebuf[lineindex])
                 break
+
+        # TODO: Add lvalue vars
 
         if m:
             # top level ?
@@ -870,7 +874,7 @@ if inside_expression:
     expdb_colend.append(int(cstart) - 1)
     expdb_tab.append(tab)
     expdb_func.append(current_function)
-    if not skip_scope_var:
+    if not in_parmdecl:
         expdb_secstackvars.append(secStackVars.copy())
     else:
         expdb_secstackvars.append([])
