@@ -321,8 +321,8 @@ re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
 re_parmdeclarations = []
-#re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
-#re_declarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
