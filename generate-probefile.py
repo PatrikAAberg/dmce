@@ -321,9 +321,17 @@ re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
 re_parmdeclarations = []
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'size_t\' cinit.*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'long\' cinit.*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'unsigned long\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
+#re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\' cinit.*'))
+#re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'size_t\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'long\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned long\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
+#re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
 re_skip_scopes = []
