@@ -295,6 +295,7 @@ re_update_pos_D             = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
 re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
 re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
+re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
 re_parsed_c_file            = re.compile(".*\,\s" + parsed_c_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
 
@@ -325,13 +326,13 @@ re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'siz
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'long\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'unsigned long\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'int\' cinit.*'))
-#re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\' cinit.*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\' cinit.*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*used\s(\S*)\s\'.* \*\' cinit.*'))
-#re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'size_t\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'size_t\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'long\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned long\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'int\'.*'))
-#re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
 re_skip_scopes = []
@@ -446,10 +447,7 @@ while (lineindex<linestotal):
             else:
                 in_parsed_c_file = 0
 
-        # Replace filename with 'line' for further parsing
-        linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
-
-
+    # TODO: CLean this mess up, old stuff
     # Other c-files (not self)
     #
     # <foo/bar.c:21:31, col:42>
@@ -462,6 +460,9 @@ while (lineindex<linestotal):
             in_parsed_c_file = 0
             # Remove .c filename for further parsing
             linebuf[lineindex] = re.sub(".*<.*\.c:\d*:\d*\,\s", "<external file, ", linebuf[lineindex])
+
+    # Replace filename with 'line' for further parsing
+    linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
 
     # Back in self again
     if leftself and not (middleself or rightself):
@@ -604,6 +605,12 @@ while (lineindex<linestotal):
             skipcend = cend
             if do_print == 2:
                 print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
+    # Only for updating scope end if we get back to self, filename is filtered eariler!
+    exp_pos_update = re_update_scope_end.match(linebuf[lineindex])
+    if exp_pos_update:
+        skiplend = exp_pos_update.group(1)
+        skipcend = exp_pos_update.group(2)
 
 
     # Check if backtrailing within current expression
