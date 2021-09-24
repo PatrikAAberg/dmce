@@ -123,6 +123,7 @@ old=
 offset=0
 number_of_commits=1
 skip=false
+debug=false
 stupid=false
 checkout_head=false
 print_version_and_exit=false
@@ -160,6 +161,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 skip)
                     skip=true
+                    ;;
+                debug)
+                    debug=true
                     ;;
                 stupid)
                     stupid=true
@@ -215,8 +219,10 @@ if [ "${quiet}" = "false" ]; then
         break
     done | sed 's,version,,g'
 fi
+
 export DMCE_QUIET_MODE="${quiet}"
 export DMCE_PROGRESS="${progress}"
+export DMCE_DEBUG="${debug}"
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
@@ -360,5 +366,10 @@ _echo "$DMCE_EXEC_PATH/dmce.sh $git_root $new $old $old_git_dir"
 if ! "$DMCE_EXEC_PATH"/dmce.sh "${git_root}" "${new}" "${old}" "${old_git_dir}" ${offset}; then
     _echo "error: dmce.sh failed - check logs"
     exit 1
+fi
+if [ "$DMCE_DEBUG" = false ]; then
+    rm -rf "${DMCE_WORK_PATH}"/$git_name/{old,new,inc,workarea} &> /dev/null
+else
+    echo "Debug mode: Logs stored at ${DMCE_WORK_PATH}/$git_name"
 fi
 }
