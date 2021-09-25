@@ -112,7 +112,6 @@ for n in range(length):
     pnum = data[n, 1]
 
     if pnum != 3735928559: # = 0xdeadbeef
-        print(pnum)
         vs = []
         for v in range(0, args.numvars):
             vs.append(format(data[n,v + 2],"04x"))
