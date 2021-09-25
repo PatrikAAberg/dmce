@@ -41,6 +41,21 @@ pf.close()
 
 data = np.fromfile(dfile, dtype=np.int64)
 
+# uint64_t timestamp, uint64_t probenbr, n * uint64_t variable value
+# Find first timestamp where a buffer is exhausted
+# TODO: Only search in probes field
+deadbeefs = np.where(data == int("deadbeef", 16))
+if len(deadbeefs[0]) > 0:
+    deadbeefs = deadbeefs[0]
+    deadbeeftimestamps = []
+    for index in deadbeefs:
+        ts = data[index - 1]
+        deadbeeftimestamps.append(ts)
+    deadbeeftimestamps = np.sort(deadbeeftimestamps)
+    fulltracelimit = deadbeeftimestamps[0]
+else:
+    fulltracelimit = None
+
 length = int(len(data) / entrysize64)
 if ( (entrysize64 * length) != len(data) ):
     print("Datafile has wrong alignment, abort")
@@ -49,7 +64,7 @@ if ( (entrysize64 * length) != len(data) ):
 data = np.reshape(data, (length, entrysize64))
 
 # Sort on timstamps
-np.sort(data, 0)
+data = data[data[:, 0].argsort()]
 
 longestpath=0
 
@@ -84,47 +99,62 @@ def stripProbeExtractVars(sl, vs):
                 richvs = richvs + slm.group(i + 2) + ": " + vs[i] + " "
     return sl, richvs
 
+def notComplete(timestamp):
+
+    if fulltracelimit is None:
+        return False
+    if fulltracelimit >= timestamp:
+        return False
+    else:
+        return True
+
 for n in range(length):
     pnum = data[n, 1]
-    vs = []
-    for v in range(0, args.numvars):
-        vs.append(format(data[n,v + 2],"04x"))
 
-    refs = prefs[pnum].rstrip().split(':')
-    fname = refs[1]
-    line = int(refs[2])
-    func = refs[3]
+    if pnum != 3735928559: # = 0xdeadbeef
+        print(pnum)
+        vs = []
+        for v in range(0, args.numvars):
+            vs.append(format(data[n,v + 2],"04x"))
 
-    # Editor line numbers start with 1
-    line = line - 1
-    if len(fname) > longestpath:
-        longestpath=len(fname) + len(str(line)) + len(func)
+        refs = prefs[pnum].rstrip().split(':')
+        fname = refs[1]
+        line = int(refs[2])
+        func = refs[3]
 
-# TODO: When traces grow bigger, read code tree once in the beginning
-    fsource = open(codetree + "/" + fname)
-    lsource = fsource.readlines()
+        # Editor line numbers start with 1
+        line = line - 1
+        if len(fname) > longestpath:
+            longestpath=len(fname) + len(str(line)) + len(func)
 
-    if leading or trailing:
-        print("                                             ---")
-    for lcount in range (line - leading, line + 1 + trailing):
-        if lcount > 0:
-            sl = lsource[lcount].rstrip()
+        # TODO: When traces grow bigger, read code tree once in the beginning
+        fsource = open(codetree + "/" + fname)
+        lsource = fsource.readlines()
 
-            if lcount == line:
-                if not args.showprobes:
-                    sl, vs = stripProbeExtractVars(sl, vs)
+        if notComplete(data[n, 0]):
+            fname = "<Trace incomplete>" + fname
+
+        if leading or trailing:
+            print("                                             ---")
+        for lcount in range (line - leading, line + 1 + trailing):
+            if lcount > 0:
+                sl = lsource[lcount].rstrip()
+
+                if lcount == line:
+                    if not args.showprobes:
+                        sl, vs = stripProbeExtractVars(sl, vs)
+                    else:
+                        sldummy, vs = stripProbeExtractVars(sl, vs)
+                    if not args.hl:
+                        out = [fname + ":" + str(lcount) + ":" + func, sl, vs]
+                    else:
+                        out = [fname + ":" + str(lcount) + ":" + func, Back.BLUE + sl + Style.RESET_ALL, vs]
                 else:
-                    sldummy, vs = stripProbeExtractVars(sl, vs)
-                if not args.hl:
-                    out = [fname + ":" + str(lcount) + ":" + func, sl, vs]
-                else:
-                    out = [fname + ":" + str(lcount) + ":" + func, Back.BLUE + sl + Style.RESET_ALL, vs]
-            else:
-                if not args.showprobes:
-                    sl = stripProbe(sl)
-                out = ["", sl, ""]
+                    if not args.showprobes:
+                        sl = stripProbe(sl)
+                    out = ["", sl, ""]
 
-            fmt = "{: <"+ str(longestpath + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
-            print(fmt.format(*out))
+                fmt = "{: <"+ str(longestpath + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                print(fmt.format(*out))
 
 # end of file

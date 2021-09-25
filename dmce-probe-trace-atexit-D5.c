@@ -42,7 +42,7 @@ static void dmce_atexit(void) {
 
     fp = fopen("/tmp/dmcebuffer.bin", "a");
 
-    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), dmce_probe_hit_count + 1, fp);
+    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), dmce_probe_hit_count, fp);
 
     fclose(fp);
 }
@@ -84,6 +84,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             dmce_trace_disable();
             /* Mark this trace buffer as full */
             dmce_buf_p[DMCE_MAX_HITS - 1].probenbr = 0xdeadbeef;
+            dmce_buf_p[DMCE_MAX_HITS - 1].timestamp = dmce_tsc();
         }
     }
 }
