@@ -1,7 +1,8 @@
 #!/bin/bash -ex
 
 apt update
-apt install -y fakeroot git python3 clang-tools
+apt install -y fakeroot git python3 clang-tools python3-pip automake
+pip3 install numpy colorama
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
 ./build-deb
@@ -10,6 +11,10 @@ cd ..
 git clone https://github.com/tmux/tmux.git
 dmce-configure-global
 cd tmux
+git checkout 2.9
 dmce-launcher -n 10000
+./autogen.sh
+./configure
+make -j
 bash
 
