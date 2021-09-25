@@ -16,11 +16,13 @@ parser.add_argument('--sourcewidth',    type=int, default=140,       help='Width
 parser.add_argument('-A',               type=int, default=0,        help='Number of trailing source code lines, default: 0')
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
+parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
 args = parser.parse_args()
 
 trailing=args.A
 leading=args.B
+showtimestamps = args.t
 
 #dfile = "/tmp/dmcebuffer.bin"
 #probefile = "/tmp/epatabe/dmce/bbx/probe-references.log"
@@ -123,12 +125,16 @@ for n in range(length):
 
         # Editor line numbers start with 1
         line = line - 1
+
         if len(fname) > longestpath:
             longestpath=len(fname) + len(str(line)) + len(func)
 
         # TODO: When traces grow bigger, read code tree once in the beginning
         fsource = open(codetree + "/" + fname)
         lsource = fsource.readlines()
+
+        if showtimestamps:
+            fname = str(data[n, 0]) + " " + fname
 
         if notComplete(data[n, 0]):
             fname = "<Trace incomplete>" + fname
@@ -153,7 +159,10 @@ for n in range(length):
                         sl = stripProbe(sl)
                     out = ["", sl, ""]
 
-                fmt = "{: <"+ str(longestpath + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                fwidth = longestpath
+                if showtimestamps:
+                    fwidth += 22
+                fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
                 print(fmt.format(*out))
 
 # end of file
