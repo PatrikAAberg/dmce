@@ -391,6 +391,13 @@ while (lineindex<linestotal):
     if right:
         rightself = (parsed_c_file in right.group(1))
 
+#    print("left: " + str(left))
+#    print("right: " + str(right))
+#    print("middle: " + str(middle))
+#    print("leftself: " + str(leftself))
+#    print("rightself: " + str(rightself))
+#    print("middleself: " + str(middleself))
+
     if (left and not leftself) or (middle and not middleself) or (right and not rightself):
         trailing=0
         in_parsed_c_file = 0
@@ -465,7 +472,7 @@ while (lineindex<linestotal):
     linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
 
     # Back in self again
-    if leftself and not (middleself or rightself):
+    if leftself and not (middle or right):
         skip_scope = 0
         print("Back in self!")
 
