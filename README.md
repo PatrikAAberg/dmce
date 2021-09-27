@@ -61,7 +61,7 @@ Clone from github
 Put together a default .dmceconfig file and put it in your home directory. Use this file to control dmce behaviour.
 
     $ cd dmce
-    $ ./dmce-install
+    $ ./dmce-configure-local
 
 ### Run
 
