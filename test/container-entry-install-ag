@@ -12,6 +12,10 @@ cd ..
 git clone https://github.com/ggreer/the_silver_searcher.git
 export USER="root" # not set in docker container
 dmce-configure-global
+sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-trace-atexit-D5.c|" /root/.dmceconfig
+sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-D5.c|" /root/.dmceconfig
+sed -i "s|DMCE_NUM_DATA_VARS:.*|DMCE_NUM_DATA_VARS:5|" /root/.dmceconfig
+bash
 cd the_silver_searcher
 dmce-launcher -n 10000
 ./autogen.sh
