@@ -58,7 +58,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
 
         /* First time a probe is executed in this file */
         if (!dmce_registered_at_exit) {
-            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS,
+            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
                                                       sizeof(dmce_probe_entry_t));
             atexit(dmce_atexit);
             dmce_registered_at_exit = 1;
