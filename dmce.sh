@@ -118,6 +118,10 @@ _echo "new sha1: $newsha"
 _echo "old sha1: $oldsha"
 _echo "old git dir: $old_git_dir"
 
+[ ! -e "$DMCE_PROBE_SOURCE" ] && echo "Error: Could not find probe: ${DMCE_PROBE_SOURCE}" && exit 1 
+[ ! -e "$DMCE_PROBE_PROLOG" ] && echo "Error: Could not find prolog: ${DMCE_PROBE_PROLOG}" && exit 1 
+[ ! -e "$DMCE_CMD_LOOKUP_HOOK" ] && echo "Error: Could not find lookup hook: ${DMCE_CMD_LOOKUP_HOOK}" && exit 1 
+
 # Lets go!
 _echo "operate on $git_top"
 cd $git_top
