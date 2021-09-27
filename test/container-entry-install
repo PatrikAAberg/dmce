@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
 apt update
-apt install -y fakeroot git python3 clang-tools python3-pip automake
+apt install -y build-essential pkg-config libtool libevent-dev libncurses5-dev libncursesw5-dev fakeroot git python3 clang-tools python3-pip automake bison make autoconf
 pip3 install numpy colorama
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
@@ -9,6 +9,7 @@ cd dmce
 dpkg -i dmce-1.1-0.deb
 cd ..
 git clone https://github.com/tmux/tmux.git
+export USER="root" # not set in docker container
 dmce-configure-global
 cd tmux
 git checkout 2.9
