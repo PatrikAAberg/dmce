@@ -14,9 +14,13 @@ typedef struct {
     uint64_t vars[5];
 } dmce_probe_entry_t;
 
+#ifdef __cplusplus
+static dmce_probe_entry_t* dmce_buf_p = nullptr;
+static int* dmce_probe_hitcount_p = nullptr;
+#else
 static dmce_probe_entry_t* dmce_buf_p;
-static int* dmce_probe_hit_count_p = 0;
-
+static int* dmce_probe_hitcount_p = 0;
+#endif
 static __inline__ uint64_t dmce_tsc(void) {
 
 #if defined(__x86_64__)
@@ -32,9 +36,9 @@ static void dmce_atexit(void) {
 
     FILE *fp;
 
-    fp = fopen("/tmp/dmcebuffer.bin", "a");
+    fp = fopen("/tmp/dmcebuffer.bin", "w");
 
-    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hit_count_p, fp);
+    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 
     fclose(fp);
 }
@@ -59,9 +63,9 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         /* If first time: allocate buffer, init env var and set up exit hook */
         /* TODO: Make this less racy maybe, but only a prooblem if threads spawned before the first probe */
         /* env var format: enabled buf_p hitcount*/
-        if(! s_trace_enabled_p = (getenv("dmce_trace_control"))) {
+        if(! (s_control_p = getenv("dmce_trace_control"))) {
         
-            char s[32];
+            char s[32 * 3];
 
             dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
                                                       sizeof(dmce_probe_entry_t));
@@ -73,7 +77,6 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             setenv("dmce_trace_control", s, 0);
 
             atexit(dmce_atexit);
-            dmce_registered_at_exit = 1;
 
             /* Just to avoid unused-function warnings */
             dmce_trace_disable();
@@ -82,15 +85,15 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         else {
             /* Buffer already exist, only init local pointers */
            s_control_p  = getenv("dmce_control_p");
-           sscanf(s_control_p, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
+           sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
         }
 
     }
 
-    if (dmce_trace_is_enabled() && *dmce_probe_hit_count_p < DMCE_MAX_HITS) {
+    if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
 
-        *dmce_probe_hit_count_p++;
-        dmce_probe_entry_t* e_p = &dmce_buf_p[*dmce_probe_hit_count_p - 1];
+        (*dmce_probe_hitcount_p)++;
+        dmce_probe_entry_t* e_p = &dmce_buf_p[(*dmce_probe_hitcount_p) - 1];
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
         e_p->vars[0] = dmce_param_a;
