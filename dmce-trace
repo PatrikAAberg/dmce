@@ -119,8 +119,6 @@ for filename in tree:
         f = open(filename)
         treedict[filename] = f.readlines()
         f.close()
-        print(filename)
-
 
 for n in range(length):
     pnum = data[n, 1]
