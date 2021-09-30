@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#define DMCE_MAX_HITS 1000
+#define DMCE_MAX_HITS 100000
 
 typedef struct {
 

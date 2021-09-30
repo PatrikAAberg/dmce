@@ -5,6 +5,7 @@ import sys
 import argparse
 import os
 import re
+import glob
 from colorama import Fore, Back, Style
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
@@ -110,6 +111,17 @@ def notComplete(timestamp):
     else:
         return True
 
+tree = glob.glob(codetree + "/**", recursive = True)
+treedict = {}
+re_source = re.compile('\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
+for filename in tree:
+    if os.path.isfile(filename) and re_source.search(filename):
+        f = open(filename)
+        treedict[filename] = f.readlines()
+        f.close()
+        print(filename)
+
+
 for n in range(length):
     pnum = data[n, 1]
 
@@ -130,8 +142,7 @@ for n in range(length):
             longestpath=len(fname) + len(str(line)) + len(func)
 
         # TODO: When traces grow bigger, read code tree once in the beginning
-        fsource = open(codetree + "/" + fname)
-        lsource = fsource.readlines()
+        lsource = treedict[codetree + "/" + fname]
 
         if showtimestamps:
             fname = str(data[n, 0]) + " " + fname
