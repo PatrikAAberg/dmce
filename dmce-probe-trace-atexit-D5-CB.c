@@ -84,7 +84,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         }
         else {
             /* Buffer already exist, only init local pointers */
-           s_control_p  = getenv("dmce_control_p");
+           s_control_p  = getenv("dmce_trace_control");
            sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
         }
 
