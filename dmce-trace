@@ -122,8 +122,6 @@ for filename in tree:
 
 for n in range(length):
     pnum = data[n, 1]
-    cpu = int((pnum & 0x0000ffff00000000) / 0xffffffff)
-    pnum = pnum & 0xffffffff
 
     if pnum != 3735928559: # = 0xdeadbeef
         vs = []
@@ -143,8 +141,6 @@ for n in range(length):
 
         # TODO: When traces grow bigger, read code tree once in the beginning
         lsource = treedict[codetree + "/" + fname]
-
-        fname = ":" + str(cpu) + ":" + fname
 
         if showtimestamps:
             fname = str(data[n, 0]) + " " + fname
