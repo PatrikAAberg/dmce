@@ -1,12 +1,16 @@
 /* This is a simple template for a linux userspace probe using the printf on stderr  */
 #ifndef __DMCE_PROBE_FUNCTION_BODY__
 #define __DMCE_PROBE_FUNCTION_BODY__
-
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sched.h>
+
 #define DMCE_MAX_HITS 100000
 
 typedef struct {
@@ -63,8 +67,8 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         char* s_control_p;
 
         /* If first time: allocate buffer, init env var and set up exit hook */
-        /* TODO: Make this less racy maybe, but only a prooblem if threads spawned before the first probe */
         /* env var format: enabled buf_p hitcount*/
+        /* TODO: Add option to use one buffer / cpu if speed is more important than size */
         if (! (mkdir("/tmp/dmce-trace-buffer-lock",0))) {
         
             char s[32 * 3];
@@ -93,12 +97,22 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
 
     }
 
+#ifdef DMCE_RUN_AS_RINGBUF
+/* TODO: Make this free running */
+    if (*dmce_probe_hitcount_p == DMCE_MAX_HITS)
+        *dmce_probe_hitcount_p = 0;
+#endif
+
     if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
 
+        unsigned int cpu;
+        getcpu(&cpu, 0);
         __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
         dmce_probe_entry_t* e_p = &dmce_buf_p[(*dmce_probe_hitcount_p) - 1];
         e_p->timestamp = dmce_tsc();
-        e_p->probenbr = dmce_probenbr;
+        e_p->probenbr = cpu;
+        e_p->probenbr = e_p->probenbr << 32;
+        e_p->probenbr = e_p->probenbr | dmce_probenbr;
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
