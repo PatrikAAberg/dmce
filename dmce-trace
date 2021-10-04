@@ -31,7 +31,7 @@ showtimestamps = args.t
 dfile = args.dfile
 probefile = args.probefile
 codetree = args.codetree
-entrysize64 = 2 + args.numvars
+entrysize64 = 2 + args.numvars + 1
 
 print("Raw input file: " + dfile)
 print("Probe ref file: " + probefile)
@@ -122,7 +122,7 @@ for filename in tree:
 
 for n in range(length):
     pnum = data[n, 1]
-
+    cpu = data[n, entrysize64 - 1]
     if pnum != 3735928559: # = 0xdeadbeef
         vs = []
         for v in range(0, args.numvars):
@@ -141,6 +141,8 @@ for n in range(length):
 
         # TODO: When traces grow bigger, read code tree once in the beginning
         lsource = treedict[codetree + "/" + fname]
+
+        fname = ":" + str(cpu) + ":" + fname
 
         if showtimestamps:
             fname = str(data[n, 0]) + " " + fname
