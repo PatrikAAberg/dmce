@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #define DMCE_MAX_HITS 10000
-
+#define DMCE_TRACE_RINGBUFFER
 typedef struct {
 
     uint64_t timestamp;
@@ -40,8 +40,17 @@ static void dmce_atexit(void) {
     FILE *fp;
 
     fp = fopen("/tmp/dmcebuffer.bin", "w");
+#ifdef DMCE_TRACE_RINGBUFFER
+    unsigned int buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
 
+    for (int i = 0; i < DMCE_MAX_HITS; i++) {
+
+        unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
+        fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
+    }
+#else
     fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
+#endif
     fclose(fp);
     remove("/tmp/dmce-trace-buffer-lock");
 }
@@ -97,10 +106,16 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             dmce_buffer_setup_done = 1;
         }
     }
+#ifndef DMCE_TRACE_RINGBUFFER
     if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
-
+#else
+    if (dmce_trace_is_enabled()) {
+#endif
         unsigned int cpu;
         unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
+#ifdef DMCE_TRACE_RINGBUFFER
+        index = index % DMCE_MAX_HITS;
+#endif
         dmce_probe_entry_t* e_p = &dmce_buf_p[index];
         getcpu(&cpu, 0);
         e_p->timestamp = dmce_tsc();
@@ -112,12 +127,14 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         e_p->vars[3] = dmce_param_d;
         e_p->vars[4] = dmce_param_e;
     }
+#ifndef DMCE_TRACE_RINGBUFFER
     else {
         dmce_trace_disable();
         /* Mark this trace buffer as full */
         dmce_buf_p[DMCE_MAX_HITS - 1].probenbr = 0xdeadbeef;
         dmce_buf_p[DMCE_MAX_HITS - 1].timestamp = dmce_tsc();
     }
+#endif
 }
 #endif
 
