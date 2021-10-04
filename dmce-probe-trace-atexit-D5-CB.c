@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
+#include <string.h>
 #define DMCE_MAX_HITS 10000
 #define DMCE_TRACE_RINGBUFFER
 typedef struct {
@@ -55,6 +57,14 @@ static void dmce_atexit(void) {
     remove("/tmp/dmce-trace-buffer-lock");
 }
 
+static void dmce_signal_handler(int sig) {
+
+    /* Just call atexit and invoke the standard sig handler */
+    dmce_atexit();
+    signal(sig, SIG_DFL);
+    kill(getpid(), sig);
+}
+
 #ifdef _GNU_SOURCE
 #include <sched.h>
 #else
@@ -92,6 +102,22 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
                 sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
                 setenv("dmce_trace_control", s, 0);
 
+                /* Handler for smth-went-wrong signals */
+                {
+                    struct sigaction sa;
+                    memset(&sa, 0, sizeof(sa));
+                    sa.sa_handler = dmce_signal_handler;
+                    sigaction(SIGBUS,   &sa, NULL);
+                    sigaction(SIGFPE,   &sa, NULL);
+                    sigaction(SIGILL,   &sa, NULL);
+                    sigaction(SIGINT,   &sa, NULL);
+                    sigaction(SIGKILL,  &sa, NULL);
+                    sigaction(SIGSEGV,  &sa, NULL);
+                    sigaction(SIGSYS,   &sa, NULL);
+                    sigaction(SIGTRAP,  &sa, NULL);
+                }
+
+                /* Handler for normal exit */
                 atexit(dmce_atexit);
 
                 /* Just to avoid unused-function warnings */
