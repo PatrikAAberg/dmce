@@ -100,8 +100,8 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
     if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
 
         unsigned int cpu;
-        __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
-        dmce_probe_entry_t* e_p = &dmce_buf_p[(*dmce_probe_hitcount_p) - 1];
+        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
+        dmce_probe_entry_t* e_p = &dmce_buf_p[index];
         getcpu(&cpu, 0);
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
