@@ -456,26 +456,13 @@ while (lineindex<linestotal):
             else:
                 in_parsed_c_file = 0
 
-    # TODO: CLean this mess up, old stuff
-    # Other c-files (not self)
-    #
-    # <foo/bar.c:21:31, col:42>
-    elif not found_parsed_c_file_start and '.c:' in linebuf[lineindex]:
-        if (re_self_anywhere.match(linebuf[lineindex])):
-            # Self, do nothing
-            pass
-        else:
-            trailing=0
-            in_parsed_c_file = 0
-            # Remove .c filename for further parsing
-            linebuf[lineindex] = re.sub(".*<.*\.c:\d*:\d*\,\s", "<external file, ", linebuf[lineindex])
-
     # Replace filename with 'line' for further parsing
     linebuf[lineindex] = re.sub(parsed_c_file_exp, "line", linebuf[lineindex])
 
     # Back in self again
     if leftself and not (middle or right):
         skip_scope = 0
+        in_parsed_c_file = 1
         print("Back in self!")
 
     # The different ways of updating position:
