@@ -25,9 +25,6 @@ trailing=args.A
 leading=args.B
 showtimestamps = args.t
 
-#dfile = "/tmp/dmcebuffer.bin"
-#probefile = "/tmp/epatabe/dmce/bbx/probe-references.log"
-#codetree = "/home/epatabe/repos/bbx"
 dfile = args.dfile
 probefile = args.probefile
 codetree = args.codetree
@@ -111,6 +108,7 @@ def notComplete(timestamp):
     else:
         return True
 
+# Cache dir tree and source code
 tree = glob.glob(codetree + "/**", recursive = True)
 treedict = {}
 re_source = re.compile('\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
@@ -123,7 +121,7 @@ for filename in tree:
 for n in range(length):
     pnum = data[n, 1]
     cpu = data[n, entrysize64 - 1]
-    if pnum != 3735928559: # = 0xdeadbeef
+    if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
         vs = []
         for v in range(0, args.numvars):
             vs.append(format(data[n,v + 2],"04x"))
@@ -139,7 +137,7 @@ for n in range(length):
         if len(fname) > longestpath:
             longestpath=len(fname) + len(str(line)) + len(func)
 
-        # TODO: When traces grow bigger, read code tree once in the beginning
+        # Retrieve source code from cache
         lsource = treedict[codetree + "/" + fname]
 
         fname = ":" + str(cpu) + ":" + fname
