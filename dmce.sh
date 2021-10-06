@@ -51,6 +51,7 @@ function summary {
         echo "Probes                  $dmcepath/probe-references.log"
         echo "Expressions             $dmcepath/expr-references.log"
     fi
+    echo "DMCE version            $DMCE_VERSION"
     echo "==============================================="
 }
 

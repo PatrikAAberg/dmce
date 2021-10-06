@@ -243,10 +243,7 @@ else
     _echo "Could not find a valid dmce config file. Did you run install?"
     exit 1
 fi
-if [ "${quiet}" = "false" ]; then
-    echo "---"
-fi
-_echo "config file: $USE_DMCE_CONFIG_FILE"
+
 while read -r dmceconfig; do
     if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
         continue
@@ -274,9 +271,23 @@ for c in ${mandatory_configs[@]}; do
     fi
 done
 
-_echo "args: $* version: $(git -C "$DMCE_EXEC_PATH" --no-pager log --pretty='%h' -1)"
-[ "$print_version_and_exit" = true ] && exit
+if ! DMCE_VERSION=$(git -C "$DMCE_EXEC_PATH" describe --tags --always --dirty --long 2> /dev/null); then
+	DMCE_VERSION="TBD"
+fi
+export DMCE_VERSION
+if [ "${quiet}" = "false" ]; then
+	echo "DMCE ${DMCE_VERSION}"
+fi
 
+if [ "$print_version_and_exit" = true ]; then
+	exit
+fi
+
+if [ "${quiet}" = "false" ]; then
+    echo "---"
+fi
+
+_echo "config file: $USE_DMCE_CONFIG_FILE"
 dmce_double=$(find -name "*.dmceoriginal")
 if [ "$dmce_double" != "" ]; then
     _echo "restoring old probe state"
