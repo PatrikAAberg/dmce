@@ -74,11 +74,10 @@ done
 dmce_launcher_args="-n ${REPLY} -q"
 
 for repo in ${launch_dmce_repos}; do
-	echo "$ cd ${repo}"
-	cd ${repo}
+	echo "$ cd ${OVE_BASE_DIR}/${repo}"
+	cd ${OVE_BASE_DIR}/${repo}
 	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher -c -q"
 	${OVE_BASE_DIR}/dmce/dmce-launcher -c -q
 	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}"
 	${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}
-	cd -
 done
