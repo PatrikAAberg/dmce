@@ -62,6 +62,9 @@ DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
 
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
+
+# git diff algorithm
+DMCE_GIT_DIFF_ALGORITHM:histogram
 NoWord
 
 echo "Creating dmce config directory as $HOME/.config/dmce"

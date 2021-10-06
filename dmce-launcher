@@ -265,10 +265,11 @@ mandatory_configs+=("DMCE_CONFIG_PATH")
 mandatory_configs+=("DMCE_WORK_PATH")
 mandatory_configs+=("DMCE_LOG_FILES")
 mandatory_configs+=("DMCE_PROBE_SOURCE")
+mandatory_configs+=("DMCE_GIT_DIFF_ALGORITHM")
 
 for c in ${mandatory_configs[@]}; do
     if [ "x${!c}" = "x" ]; then
-        _echo "error: mandatory config '${c}' missing. Try to re-install!"
+        _echo "error: mandatory config '${c}' missing, please add it to .dmceconfig"
         exit 1
     fi
 done

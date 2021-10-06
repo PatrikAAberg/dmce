@@ -68,5 +68,8 @@ DMCE_PROBE_PROLOG:$install_path/dmce-prolog-default.c
 
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
+
+# git diff algorithm
+DMCE_GIT_DIFF_ALGORITHM:histogram
 NoWord
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."

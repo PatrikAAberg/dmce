@@ -368,7 +368,11 @@ progress
 _echo "create filtered clang diff"
 for c_file in $FILE_LIST; do
     # Create filtered diff
-    git --no-pager diff -U0 $dmcepath/old/$c_file.clang.filtered $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
+    git --no-pager diff \
+      --diff-algorithm=${DMCE_GIT_DIFF_ALGORITHM:?} \
+      -U0 \
+      $dmcepath/old/$c_file.clang.filtered \
+      $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
 done
 wait
 

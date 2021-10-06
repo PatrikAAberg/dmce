@@ -27,3 +27,6 @@ DMCE_PROBE_PROLOG:
 
 # Log files
 DMCE_LOG_FILES:$DMCE_WORK_PATH
+
+# git diff algorithm
+DMCE_GIT_DIFF_ALGORITHM:histogram
