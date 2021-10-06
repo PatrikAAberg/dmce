@@ -282,9 +282,10 @@ re_c_file_start             = re.compile(".*<" + parsed_file_exp + ".*")
 re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
 re_self                     = re.compile(", " + parsed_file_exp + ":\d+:\d+>")
 
-re_h_file_left_statement    = re.compile(r'.*<(.*\.h):\d*:\d*.*')
-re_h_file_middle_statement  = re.compile(r'.*\, (.*\.h):.*>.*')
-re_h_file_right_statement   = re.compile(r'.*<.*> (.*\.h):.*')
+re_h_file_left_statement   = re.compile(r'.*<(.*\.h):\d*:\d*.*')
+re_file_ref_left            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
+re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
+re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*')
 
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_self_anywhere            = re.compile(".*" + parsed_file_exp + ".*")
@@ -378,20 +379,30 @@ while (lineindex<linestotal):
     if (in_function_scope) and (tab <= function_scope_tab):
         in_function_scope = False
 
-    # h-files
-    left = re_h_file_left_statement.match(linebuf[lineindex])
-    middle = re_h_file_middle_statement.match(linebuf[lineindex])
-    right = re_h_file_right_statement.match(linebuf[lineindex])
+    # file refs
+    left = re_file_ref_left.match(linebuf[lineindex])
+    middle = re_file_ref_middle.match(linebuf[lineindex])
+    right = re_file_ref_right.match(linebuf[lineindex])
 
     leftself = False
     middleself = False
     rightself = False
+    rightother = False
+    middleother = False
+    leftother = False
+
     if left:
         leftself = (parsed_file in left.group(1))
+        if not leftself:
+            leftother = True
     if middle:
         middleself = (parsed_file in middle.group(1))
+        if not middleself:
+            middleother = True
     if right:
         rightself = (parsed_file in right.group(1))
+        if not rightself:
+            rightother = True
 
 #    print("left: " + str(left))
 #    print("right: " + str(right))
@@ -399,14 +410,9 @@ while (lineindex<linestotal):
 #    print("leftself: " + str(leftself))
 #    print("rightself: " + str(rightself))
 #    print("middleself: " + str(middleself))
-
-    if (left and not leftself) or (middle and not middleself) or (right and not rightself):
-        trailing=0
-        in_parsed_file = 0
-        if numDataVars > 0:
-            if not skip_scope:
-                skip_scope = 1
-                skip_scope_tab = tab
+#    print("leftother: " + str(leftother))
+#    print("rightother: " + str(rightother))
+#    print("middleother: " + str(middleother))
 
     # If statement is within a .h file, skip all indented statements and expressions
     # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
@@ -422,10 +428,6 @@ while (lineindex<linestotal):
         skip_lvalue = 1
         skip_lvalue_tab = tab
 
-    # <foo/bar.c:101:3
-    # Replace file statements and set appropriate state
-    # print(linebuf[lineindex].rstrip())
-
     # If we start in a .h file and end in a c-file, skip!
     get_skip_pos = re_compile_skip_pos.match(linebuf[lineindex])
     if (get_skip_pos):
@@ -438,32 +440,22 @@ while (lineindex<linestotal):
             cskip=cskip_temp
 
 
-    # Check if we for this line is within the parsed c file
-    # re.compile(".*<" + parsed_file_exp + ".*")
-    found_parsed_file_start = re_c_file_start.match(linebuf[lineindex])
-    if (found_parsed_file_start):
-        # Assume that we are within the parsed c file
-        in_parsed_file = 1
-
-        # Assure that we are not leaving the parsed c file
-        #
-        # ParmVarDecl Hexnumber <myfile.c:1:15, ../another-file.c:6:33>
-        # re.compile(", .*\.c:\d+:\d+>")
-        if (re_leaving_c_file.search(linebuf[lineindex])):
-            if (re_self.search(linebuf[lineindex])):
-                # Do nothing
-                pass
-            else:
-                in_parsed_file = 0
-
     # Replace filename with 'line' for further parsing
     linebuf[lineindex] = re.sub(parsed_file_exp, "line", linebuf[lineindex])
 
-    # Back in self again
+    # Check if we are leaving (entering is checked after expression search)
+    if (rightother) or (middleother and not rightself) or (leftother and not rightself and not middleself):
+        in_parsed_file = 0
+        trailing=0
+        if numDataVars > 0:
+            if not skip_scope:
+                skip_scope = 1
+                skip_scope_tab = tab
+
+    # Special: For this one we get full position info, so we can set the flag before check for expressions
     if leftself and not (middle or right):
         skip_scope = 0
         in_parsed_file = 1
-        print("Back in self!")
 
     # The different ways of updating position:
     #
@@ -801,9 +793,7 @@ while (lineindex<linestotal):
 
             i+=1
 
-    # When not tracking variables, this works surprisingly well
-    found_parsed_file = re_parsed_file.match(linebuf[lineindex])
-    if found_parsed_file and (numDataVars == 0):
+    if (rightself) or (middleself and not rightother) or (leftself and not middleother and not rightother):
         in_parsed_file = 1
 
     # If lstart or curstart moved forward in parsed c file, update
