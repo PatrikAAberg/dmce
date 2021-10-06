@@ -437,7 +437,7 @@ while read -r c_file; do
       cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
 
       # Make copy of original file and replace it with the probed one
-      cp $c_file $c_file.orginal
+      cp $c_file $c_file.dmceoriginal
       cp $dmcepath/workarea/$c_file $c_file
 
       # remove probed working files from tree
