@@ -27,8 +27,22 @@ files_skipped=0
 nbrofprobesinserted=0
 
 function summary {
+    local padding
+
+    padding=$(wc -L <<<$(printf "$oldsha\n$newsha\n"))
     echo "==============================================="
     echo "git repository          $PWD"
+    if [ "$oldsha" != "$oldsha_rev" ]; then
+	    echo "Old SHA-1               $(printf %-${padding}s $oldsha) ($oldsha_rev)"
+    else
+	    echo "Old SHA-1               $oldsha"
+	    padding=0
+    fi
+    if [ "$newsha" != "$newsha_rev" ]; then
+	    echo "New SHA-1               $(printf %-${padding}s $newsha) ($newsha_rev)"
+    else
+	    echo "New SHA-1               $newsha"
+    fi
     echo "Files examined          $nbr_of_files"
     echo "Files probed            $files_probed"
     echo "Files skipped           $files_skipped"
@@ -107,6 +121,14 @@ old_git_dir=$4
 offset=$5
 dmcepath="$DMCE_WORK_PATH/$git_project"
 
+if ! newsha_rev=$(git rev-list -1 ${newsha}); then
+	echo "error: could not run 'git rev-list -1 ${newsha}'"
+	exit 1
+elif ! oldsha_rev=$(git rev-list -1 ${oldsha}); then
+	echo "error: could not run 'git rev-list -1 ${oldsha}'"
+	exit 1
+fi
+
 _echo "binary path: $binpath"
 _echo "configurations file path: $configpath"
 _echo "working directory: $dmcepath"
@@ -114,8 +136,8 @@ _echo "lookup hook: $DMCE_CMD_LOOKUP_HOOK"
 _echo "probe c file: $DMCE_PROBE_SOURCE"
 _echo "probe prolog file: $DMCE_PROBE_PROLOG"
 _echo "git path: $git_top"
-_echo "new sha1: $newsha"
-_echo "old sha1: $oldsha"
+_echo "new sha1: $newsha ($newsha_rev)"
+_echo "old sha1: $oldsha ($oldsha_rev)"
 _echo "old git dir: $old_git_dir"
 
 [ ! -e "$DMCE_PROBE_SOURCE" ] && echo "Error: Could not find probe: ${DMCE_PROBE_SOURCE}" && exit 1 
