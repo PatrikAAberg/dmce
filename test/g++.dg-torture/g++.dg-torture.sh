@@ -75,7 +75,7 @@ git add .
 git commit -m "initial commit"
 
 # Put crossed out ones here
-
+set +e
 git rm Wclass-memaccess.cpp                 # Macro expansion of macro with only one capital letter
 git rm altivec-cell-3.cpp                   # ppc
 git rm atomics-1.cpp                        # simulate-thread.h: No such file or directory
@@ -190,6 +190,7 @@ git rm visibility-9.cpp                     # __attribute__((dllimport)) f1();
 git rm gcov-3.cpp                           # gcov-3.h: No such file or directory
 git rm simd-2.cpp                           # check-vect.h: No such file or directory
 git rm mangle56.cpp                         # #include <initializer_list>
+set -e
 
 # add DMCE config and update paths
 
