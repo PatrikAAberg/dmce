@@ -229,8 +229,8 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
 # Variable set up and config
 
-git_root=$PWD
-git_name=$(basename "$PWD")
+git_root=$(pwd -P)
+git_name=$(basename "${git_root}")
 export DMCE_GIT_NAME=$git_name
 
 # Find out what config file to use. Start with the one in the git
@@ -285,6 +285,11 @@ fi
 
 if [ "${quiet}" = "false" ]; then
     echo "---"
+fi
+
+if [ "$(readlink -f ${DMCE_EXEC_PATH})" = "${git_root}" ]; then
+	echo "error: do not run DMCE on DMCE"
+	exit 1
 fi
 
 _echo "config file: $USE_DMCE_CONFIG_FILE"
