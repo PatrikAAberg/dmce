@@ -276,11 +276,11 @@ done
 _echo "args: $* version: $(git -C "$DMCE_EXEC_PATH" --no-pager log --pretty='%h' -1)"
 [ "$print_version_and_exit" = true ] && exit
 
-dmce_double=$(git ls-files -o --error-unmatch --exclude-standard '*.orginal' 2> /dev/null || :)
+dmce_double=$(git ls-files -o --error-unmatch '*.dmceoriginal' 2> /dev/null || :)
 if [ "$dmce_double" != "" ]; then
     _echo "restoring old probe state"
     for f in $dmce_double; do
-        mv "$f" "${f%%.orginal}" &
+        mv "$f" "${f%%.dmceoriginal}" &
     done
     wait
 fi
