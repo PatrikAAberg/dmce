@@ -119,7 +119,7 @@ git commit -m "DMCE config"
 
 _echo "launch DMCE"
 set -x
-${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count)
+${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count) --debug
 { set +x; } 2>/dev/null
 
 	_echo "compile"
