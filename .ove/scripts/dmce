@@ -54,22 +54,24 @@ if [ "${launch_dmce_repos}" == "" ]; then
 	exit 1
 fi
 
-echo "number of commits to probe?"
-echo "this dialog will timeout in 10 seconds and use 100 commits."
-while true; do
-	read -t 10 -p "#commits: "
-	ret=$?
-	if [ $ret -gt 128 ]; then
-		echo
-		REPLY=100
-	elif [ $ret -eq 0 ] && [ "x${REPLY}" = "x" ]; then
-		REPLY=100
-	elif ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
-		echo "error: just numbers, try again!"
-		continue
-	fi
-	break
-done
+REPLY=100
+if [ -t 1 ]; then
+	echo "number of commits to probe?"
+	echo "this dialog will timeout in 10 seconds and use ${REPLY} commits."
+	while true; do
+		read -t 10 -p "#commits: "
+		ret=$?
+		if [ $ret -gt 128 ]; then
+			echo
+		elif [ $ret -eq 0 ] && [ "x${REPLY}" = "x" ]; then
+			:
+		elif ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+			echo "error: just numbers, try again!"
+			continue
+		fi
+		break
+	done
+fi
 
 dmce_launcher_args="-n ${REPLY} -q"
 

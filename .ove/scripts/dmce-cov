@@ -150,14 +150,16 @@ function init() {
 			exit 1
 		fi
 	done
-	echo "WARNING: ${name} will start by doing a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this git: ${git_full}"
-	read -p "continue? (y/N) " -r
-	if ! [[ "${REPLY}" =~ ^[Yy]$ ]]; then
-		exit 1
-	fi
-	read -p "are you REALLY sure? (y/N) " -r
-	if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
-		exit 1
+	if [ -t 1 ]; then
+		echo "WARNING: ${name} will start by doing a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this git: ${git_full}"
+		read -p "continue? (y/N) " -r
+		if ! [[ "${REPLY}" =~ ^[Yy]$ ]]; then
+			exit 1
+		fi
+		read -p "are you REALLY sure? (y/N) " -r
+		if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
+			exit 1
+		fi
 	fi
 
 	echo "revs (${nbr_revs}): ${revs[*]}"
