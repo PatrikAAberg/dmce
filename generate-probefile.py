@@ -286,6 +286,7 @@ re_h_file_left_statement   = re.compile(r'.*<(.*\.h):\d*:\d*.*')
 re_file_ref_left            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
 re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*')
+re_compound                 = re.compile(r'.*CompoundStmt.*')
 
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_self_anywhere            = re.compile(".*" + parsed_file_exp + ".*")
@@ -384,6 +385,9 @@ while (lineindex<linestotal):
     middle = re_file_ref_middle.match(linebuf[lineindex])
     right = re_file_ref_right.match(linebuf[lineindex])
 
+    # Compound statement
+    compound = re_compound.match(linebuf[lineindex])
+
     leftself = False
     middleself = False
     rightself = False
@@ -454,8 +458,11 @@ while (lineindex<linestotal):
 
     # Special: For this one we get full position info, so we can set the flag before check for expressions
     if leftself and not (middle or right):
-        skip_scope = 0
         in_parsed_file = 1
+
+    # A compound expression always gives us a new scope
+    if compound and skip_scope and in_parsed_file:
+        skip_scope = 0
 
     # The different ways of updating position:
     #
