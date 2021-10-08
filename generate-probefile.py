@@ -148,8 +148,6 @@ cur_tab = 0
 
 lskip = 0
 cskip = 0
-skip_statement = 0
-skip_statement_tab = 0
 skip_scope = 0
 skip_scope_tab  = 0
 in_parmdecl = 0
@@ -367,8 +365,6 @@ while (lineindex<linestotal):
     if (is_addition):
         tab-=1
 
-    if skip_statement and (tab <= skip_statement_tab):
-        skip_statement=0
     if (skip_backtrail and (tab <= skip_backtrail_tab)):
         skip_backtrail=0
     if (skip_lvalue and (tab <= skip_lvalue_tab)):
@@ -417,14 +413,6 @@ while (lineindex<linestotal):
 #    print("leftother: " + str(leftother))
 #    print("rightother: " + str(rightother))
 #    print("middleother: " + str(middleother))
-
-    # If statement is within a .h file, skip all indented statements and expressions
-    # CompoundStmt Hexnumber </foo/bar.h:146:5, line:151:5>
-
-    found_h_file_left_statement = re_h_file_left_statement.match(linebuf[lineindex])
-    if (found_h_file_left_statement):
-        skip_statement = 1
-        skip_statement_tab = tab
 
     # Do not probe lvalues for c, but do for c++
     found_lvalue = re_lvalue.match(linebuf[lineindex])
@@ -729,7 +717,7 @@ while (lineindex<linestotal):
     print(secStackPos)
     print(secStackVars)
 
-    if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_statement) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
+    if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
         i = 0
         while (i < len(re_exppatternlist)):
             re_exp = re_exppatternlist[i]
