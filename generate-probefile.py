@@ -270,9 +270,6 @@ if do_print:
 # Regexps for file refs, trailing and states
 
 re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
-re_c_file_start             = re.compile(".*<" + parsed_file_exp + ".*")
-re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
-re_self                     = re.compile(", " + parsed_file_exp + ":\d+:\d+>")
 
 re_file_ref_left            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
@@ -280,7 +277,6 @@ re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.
 re_compound                 = re.compile(r'.*CompoundStmt.*')
 
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
-re_self_anywhere            = re.compile(".*" + parsed_file_exp + ".*")
 re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_B             = re.compile(r'.*<line:(\d*):(\d*)\,\scol:(\d*)>.*')
 re_update_pos_C             = re.compile(r'.*<col:(\d*)>.*')
@@ -308,9 +304,8 @@ re_sections_to_skip.append(re.compile(r'.*-EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*constexpr.*'))
 re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
-# Only needs skipping if we probe with variables
-# TODO: Still probe these sections but without variables?
 
+# Parameter and variable declarations
 re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
@@ -330,6 +325,7 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'unsigned int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*used\s(\S*)\s\'.* \*\'.*'))
 
+# scopes to skip
 re_skip_scopes = []
 re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
 
