@@ -100,7 +100,7 @@ for func in fexcl:
 if len(re_func_excl_list) == 0:
     re_func_excl_list.append(re.compile("do_not_exclude_any_functions"))
 
-# Pre compiled reg-ex
+# Make regexps for constructs exclusion
 re_cxl_list = []
 for construct in cxl_buf:
     re_cxl_list.append(re.compile(".*" + construct.rstrip() + ".*"))
@@ -182,16 +182,13 @@ last_cstart = "0"
 
 probes = 0
 
-# Read from stdin
+# Read clang AST diff from stdin
 rawlinebuf = sys.stdin.readlines()
 linebuf=[]
+rawlinestotal = len(rawlinebuf)
 
 if do_print:
     print("Generating DMCE probes")
-
-# Construct list of file lines
-
-rawlinestotal = len(rawlinebuf)
 
 # Look for general info and pre-filter out stuff
 c_plusplus = 0
@@ -210,10 +207,7 @@ for line in rawlinebuf:
 
 linestotal=rawlinestotal
 
-srcline = 0
-srccol = 0
-
-# Used for c expression recognition
+# Regexps for C/C++ expression recognition
 if configpath != None and os.path.isfile(configpath + '/recognizedexpressions.py'):
     sys.path.insert(1, configpath)
     import recognizedexpressions
@@ -273,14 +267,13 @@ cf_len = len(pbuf)
 if do_print:
     print("!!!" + parsed_file + "!!!")
 
-# Used for parsing the textual AST
+# Regexps for file refs, trailing and states
 
 re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
 re_c_file_start             = re.compile(".*<" + parsed_file_exp + ".*")
 re_leaving_c_file           = re.compile(", .*\.c:\d+:\d+>")
 re_self                     = re.compile(", " + parsed_file_exp + ":\d+:\d+>")
 
-re_h_file_left_statement   = re.compile(r'.*<(.*\.h):\d*:\d*.*')
 re_file_ref_left            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
 re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*')
@@ -342,7 +335,7 @@ re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
 
 
 # Populate c expression database
-while (lineindex<linestotal):
+while (lineindex < linestotal):
     if do_print:
         print("---------------------")
         print("Pre-filtered AST line:           " + linebuf[lineindex])
@@ -612,8 +605,6 @@ while (lineindex<linestotal):
             skip_backtrail_tab = tab
 
     # Check for sections to skip
-    # VarDecl Hexnumber <line:88:1, line:100:1>
-    # RecordDecl Hexnumber <line:5:1, line:8:1>
 
     found_section_to_skip=0
     for section in re_sections_to_skip:
