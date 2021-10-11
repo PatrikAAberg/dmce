@@ -324,7 +324,7 @@ progress
 _echo "running clang-check"
 i=0
 for c_file in $FILE_LIST_OLD; do
-    clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
+    eval clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
     (( i+=1 ))
     if [ "$i" -gt 500 ]; then
         i=0
@@ -334,7 +334,7 @@ done
 
 i=0
 for c_file in $FILE_LIST_NEW; do
-    clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
+    eval clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
     (( i+=1 ))
     if [ "$i" -gt 500 ]; then
         i=0
