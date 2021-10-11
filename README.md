@@ -76,7 +76,7 @@ This will produce a .dmceconfig file which uses the dmce directory as source for
 ## Configuration
 
 Valid for both alternatives above:
-Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-configure-global). This way, in a multi-git project, each git can have its own dmce configuration. During installation, a default .dmceconfig will be put in the user's home directory.
+Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-configure-global). This way, in a multi-git project, each git can have its own dmce configuration.
 
 ### .dmceconfig walkthrough
 (showing default values written by dmce-configure-global)
