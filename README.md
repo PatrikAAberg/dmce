@@ -72,6 +72,38 @@ Enter the dmce directory (cloned or un-tar'ed). Now run:
 
 This will produce a .dmceconfig file which uses the dmce directory as source for all execution and configuration.
 
+# Example: How to use dmce trace
+
+Clone the dmce-examples git and enter the directory:
+
+    $ git clone https://github.com/PatrikAAberg/dmce-examples.git
+    $ cd dmce-examples
+
+Set up a git local .dmceconfig file using this helper:
+
+    $ ./config-trace
+
+Run dmce for more commits than are actually in the git, making it probe everything:
+
+    $ dmce-launcher -n 10000 --progress
+
+Go into the simplecrash example folder, build the executable and run it.
+
+    $ cd simplecrash && ./build && ./simplecrash
+
+It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 module colorama:
+
+    $ pip3 install colorama
+
+    $ cd -
+
+    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+
+This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo.
+
+For larger traces than this one, something to try out is to pipe the results to less for easy view and search, like this:
+
+    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
 
 ## Configuration
 
