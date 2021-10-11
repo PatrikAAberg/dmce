@@ -66,13 +66,15 @@ Clone from github
     $ git clone https://github.com/PatrikAAberg/dmce.git
 
 or download the release tarball of choice found in "releases" to the right on this page.
-Enter the dmce directory (cloned or un-tar'ed). Now run:
+Enter the dmce directory (cloned or un-tar'ed) and run the local configure script:
 
-    $ dmce-configure-local
+    $ cd dmce
 
-This will produce a .dmceconfig file which uses the dmce directory as source for all execution and configuration.
+    $ ./dmce-configure-local
 
-# Example: How to use dmce trace
+This will produce a .dmceconfig file in the home directory which uses the dmce directory as source for all execution and configuration. Any call to dmce executables in the following examples need to be prepended by the path to the dmce directory.
+
+## Example: How to use dmce trace
 
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
