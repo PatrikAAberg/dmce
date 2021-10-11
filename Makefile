@@ -1,4 +1,6 @@
-.PHONY:test gcc_torture gplusplus_torture
+.PHONY: test gcc_torture gplusplus_torture
+.DEFAULT_GOAL := test
+.NOTPARALLEL:
 
 gcc_torture:
 	@test/gcc.c-torture/gcc.c-torture.sh
