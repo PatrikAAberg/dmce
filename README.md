@@ -53,7 +53,7 @@ python 3+
 ## How to get started
 
 ### Alternative 1: Install Using .deb package
-Find the release debian package in "releases" on this page. Download it, install it and run
+Find the latest released debian package in "releases" to the right on this page. Download it, install it and run
 
     $ dmce-configure-global
 
@@ -74,7 +74,7 @@ This will produce a .dmceconfig file which uses the dmce directory as source for
 
 # Example: How to use dmce trace
 
-Clone the dmce-examples git and enter the directory:
+Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
@@ -104,6 +104,8 @@ This line deserves a bit of explanation. The standard trace probe uses maximum o
 For larger traces than this one, something to try out is to pipe the results to less for easy view and search, like this:
 
     $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
+
+That's it! You should now be able to see the null-pointer bug at the end of execution.
 
 ## Configuration
 
