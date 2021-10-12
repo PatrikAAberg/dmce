@@ -96,7 +96,7 @@ def stripProbeExtractVars(sl, vs):
 
         for i in range (0, args.numvars):
             if slm.group(i + 2) != '0':
-                richvs = richvs + slm.group(i + 2) + ": " + vs[i] + " "
+                richvs = richvs + slm.group(i + 2) + ": 0x" + vs[i] + " "
     return sl, richvs
 
 def notComplete(timestamp):
