@@ -53,7 +53,9 @@ python 3+
 ## How to get started
 
 ### Alternative 1: Install Using .deb package
-Find the latest released debian package in "releases" to the right on this page. Download it, install it and run
+Find the latest released debian package in "releases" to the right on this page. Download it, install and configure dmce:
+
+    $ dpkg -i dmce-X.Y-Z.deb    # To uninstall: $ dpkg -r dmce
 
     $ dmce-configure-global
 
@@ -93,9 +95,9 @@ Go into the simplecrash example folder, build the executable and run it.
 
     $ cd simplecrash && ./build && ./simplecrash
 
-It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 module colorama:
+It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 modules colorama and numpy:
 
-    $ pip3 install colorama
+    $ pip3 install colorama numpy
 
     $ cd -
 
