@@ -37,19 +37,30 @@ set -e
 
 pushd ${my_work_path} &> /dev/null
 
-if [ ! -e "gcc-${gcc_version}.tar.xz" ]; then
+if [ -e "gcc-${gcc_version}.tar.xz" ]; then
+	archive="xz"
+elif [ -e "gcc-${gcc_version}.tar.gz" ]; then
+	archive="gz"
+else
 	_echo "fetch GCC"
 	set -x
+	# try xz first
 	if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz; then
-		echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
-		exit 1
+		# then gz
+		if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz; then
+			echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
+			exit 1
+		fi
+		archive="gz"
+	else
+		archive="xz"
 	fi
 	{ set +x; } 2>/dev/null
 fi
 
 _echo "unpack GCC"
 set -x
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/g++.dg
+tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 pushd gcc-${gcc_version}/gcc/testsuite/g++.dg

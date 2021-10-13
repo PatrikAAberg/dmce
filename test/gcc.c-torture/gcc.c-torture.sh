@@ -36,19 +36,30 @@ set -e
 
 pushd ${my_work_path} &> /dev/null
 
-if [ ! -e "gcc-${gcc_version}.tar.xz" ]; then
+if [ -e "gcc-${gcc_version}.tar.xz" ]; then
+	archive="xz"
+elif [ -e "gcc-${gcc_version}.tar.gz" ]; then
+	archive="gz"
+else
 	_echo "fetch GCC"
 	set -x
+	# try xz first
 	if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz; then
-		echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
-		exit 1
+		# then gz
+		if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz; then
+			echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
+			exit 1
+		fi
+		archive="gz"
+	else
+		archive="xz"
 	fi
 	{ set +x; } 2>/dev/null
 fi
 
 _echo "unpack GCC"
 set -x
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 { set +x; } 2>/dev/null
 
 _echo "create git"
@@ -61,6 +72,7 @@ git add .
 git commit -m "initial commit"
 
 # gcc version or standard diffs, we are not that picky for this usage
+set +e
 git rm compile/20011119-1.c
 git rm compile/20000120-2.c
 git rm compile/20011119-2.c
@@ -95,6 +107,7 @@ git rm execute/vfprintf-chk-1.c
 git rm execute/vprintf-chk-1.c
 git rm unsorted/dump-noaddr.c
 git rm compile/20001226-1.c
+set -e
 git commit -m "broken"
 
 # add DMCE config and update paths
