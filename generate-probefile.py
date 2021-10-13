@@ -283,6 +283,7 @@ re_update_pos_C             = re.compile(r'.*<col:(\d*)>.*')
 re_update_pos_D             = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
 re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
+re_update_pos_H             = re.compile(r'.*, line:(\d*):(\d*)>.*')
 re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
 re_parsed_file            = re.compile(".*\,\s" + parsed_file_exp + ".*")
@@ -465,6 +466,7 @@ while (lineindex < linestotal):
     # MATCH A
     # MATCH D
 
+    # G
     exp_pos_update = re_update_pos_G.match(linebuf[lineindex])
     if exp_pos_update:
         line_position_updated=1
@@ -480,6 +482,10 @@ while (lineindex < linestotal):
 
         if (in_parsed_file):
             trailing=1
+
+        if do_print == 2:
+            print("MATCH G: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
 
     # C
     exp_pos_update = re_update_pos_C.match(linebuf[lineindex])
@@ -543,6 +549,21 @@ while (lineindex < linestotal):
             if do_print == 2:
                 print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
+    # H
+    if not line_position_updated:
+        exp_pos_update = re_update_pos_H.match(linebuf[lineindex])
+        if exp_pos_update:
+            line_position_updated=1
+            lend = exp_pos_update.group(1)
+            cend = exp_pos_update.group(2)
+            skiplend = lend
+            skipcend = cend
+            if (in_parsed_file):
+                trailing=1
+
+            if do_print == 2:
+                print("MATCH H: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
     # A
     if not line_position_updated:
         exp_pos_update = re_update_pos_A.match(linebuf[lineindex])
@@ -583,6 +604,9 @@ while (lineindex < linestotal):
     if exp_pos_update:
         skiplend = exp_pos_update.group(1)
         skipcend = exp_pos_update.group(2)
+        if do_print == 2:
+            print("MATCH UPDATE_SCOPE_END: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
 
 
     # Check if backtrailing within current expression
