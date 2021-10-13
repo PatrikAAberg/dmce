@@ -53,7 +53,7 @@ tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.xz gcc-${gcc_version}/gcc/test
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 pushd gcc-${gcc_version}/gcc/testsuite/g++.dg
-rsync -azR $(grep -rLE "dg-error|deprecated|concepts|sorry") ../${PROG_NAME}/
+cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry") ../${PROG_NAME}/
 popd
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 { set +x; } 2>/dev/null
