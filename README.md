@@ -63,7 +63,7 @@ This will produce a .dmceconfig file at /home/$USER and a dmce configuration dir
 
 ### Alternative 2: Clone the git or download tarball
 
-Clone from github
+Clone from github (make sure to checkout latest stable tag)
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
 
