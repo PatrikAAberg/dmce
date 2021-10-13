@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Print is expensive and can be disabled
-do_print=1
+do_print=2
 
 parsed_file = sys.argv[1]
 
@@ -470,6 +470,7 @@ while (lineindex < linestotal):
     exp_pos_update = re_update_pos_G.match(linebuf[lineindex])
     if exp_pos_update:
         line_position_updated=1
+        col_position_updated = 1
         exp_extra = 1
         lstart = exp_pos_update.group(1)
         lend = exp_pos_update.group(5)
@@ -515,6 +516,7 @@ while (lineindex < linestotal):
     exp_pos_update = re_update_pos_B.match(linebuf[lineindex])
     if exp_pos_update:
         line_position_updated=1
+        col_position_updated = 1
         exp_extra = 1
         lstart = exp_pos_update.group(1)
         lend = lstart
@@ -535,6 +537,7 @@ while (lineindex < linestotal):
         exp_pos_update = re_update_pos_F.match(linebuf[lineindex])
         if exp_pos_update:
             line_position_updated=1
+            col_position_updated = 1
             lstart = exp_pos_update.group(1)
             cstart = exp_pos_update.group(2)
             scopelstart = lstart
@@ -549,26 +552,12 @@ while (lineindex < linestotal):
             if do_print == 2:
                 print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
-    # H
-    if not line_position_updated:
-        exp_pos_update = re_update_pos_H.match(linebuf[lineindex])
-        if exp_pos_update:
-            line_position_updated=1
-            lend = exp_pos_update.group(1)
-            cend = exp_pos_update.group(2)
-            skiplend = lend
-            skipcend = cend
-            if (in_parsed_file):
-                trailing=1
-
-            if do_print == 2:
-                print("MATCH H: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
-
     # A
     if not line_position_updated:
         exp_pos_update = re_update_pos_A.match(linebuf[lineindex])
         if exp_pos_update:
             line_position_updated=1
+            col_position_updated = 1
             exp_extra = 1
             lstart = exp_pos_update.group(1)
             lend = exp_pos_update.group(3)
@@ -598,6 +587,22 @@ while (lineindex < linestotal):
             skipcend = cend
             if do_print == 2:
                 print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
+    # H
+    if not line_position_updated:
+        exp_pos_update = re_update_pos_H.match(linebuf[lineindex])
+        if exp_pos_update:
+            line_position_updated=1
+            col_position_updated = 1
+            lend = exp_pos_update.group(1)
+            cend = exp_pos_update.group(2)
+            skiplend = lend
+            skipcend = cend
+            if (in_parsed_file):
+                trailing=1
+
+            if do_print == 2:
+                print("MATCH H: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # Only for updating scope end if we get back to self, filename is filtered eariler!
     exp_pos_update = re_update_scope_end.match(linebuf[lineindex])
