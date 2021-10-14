@@ -33,7 +33,7 @@ if [ $? -ne 0 ]; then
 fi
 set -e
 
-pushd ${my_work_path} &> /dev/null
+cd ${my_work_path}
 
 if [ -e "gcc-${gcc_version}.tar.xz" ]; then
 	archive="xz"
@@ -58,9 +58,9 @@ _echo "unpack GCC"
 tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
-pushd gcc-${gcc_version}/gcc/testsuite/g++.dg
+cd gcc-${gcc_version}/gcc/testsuite/g++.dg
 cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry") ../${PROG_NAME}/
-popd
+cd -
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 
 _echo "create git"
@@ -249,13 +249,26 @@ if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
 	exit 1
 fi
 
-for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
+gcc_opts_candidates=""
+gcc_opts_candidates+=" -fno-new-ttp-matching"
+gcc_opts_candidates+=" -fext-numeric-literals"
+gcc_opts_candidates+=" -fpermissive"
+gcc_opts_candidates+=" -fgnu-tm"
+gcc_opts_candidates+=" -std=c++17"
+for opt in $gcc_opts_candidates; do
+        if ! gcc $opt |& grep -q 'unrecognized command'; then
+                gcc_opts+=" $opt"
+        fi
+done
+echo "gcc options: $gcc_opts"
+
+while read -r f; do
 	{
-		if ! gcc -w -c -fno-new-ttp-matching -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
+		if ! gcc -w -c $gcc_opts ${f} 2>> "${f}".err; then
 			echo ${f} >> ${my_work_path}/compile-errors;
 		fi
 	} &
-done
+done < ${dmce_work_path}/${PROG_NAME}/workarea/probe-list
 wait
 find -name '*.err' -type f ! -size 0 -exec cat {} \;
 errors=$(cat ${my_work_path}/compile-errors | wc -l)

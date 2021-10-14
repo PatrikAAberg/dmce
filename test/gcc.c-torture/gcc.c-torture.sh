@@ -32,7 +32,7 @@ if [ $? -ne 0 ]; then
 fi
 set -e
 
-pushd ${my_work_path} &> /dev/null
+cd ${my_work_path}
 
 if [ -e "gcc-${gcc_version}.tar.xz" ]; then
 	archive="xz"
@@ -134,13 +134,13 @@ if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
 	exit 1
 fi
 
-for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
+while read -r f; do
 	{
 		if ! gcc -w -c -std=c++11 ${f} 2>> "${f}".err; then
 			echo ${f} >> ${my_work_path}/compile-errors;
 		fi
 	} &
-done
+done < ${dmce_work_path}/${PROG_NAME}/workarea/probe-list
 wait
 find -name '*.err' -type f ! -size 0 -exec cat {} \;
 errors=$(wc -l < ${my_work_path}/compile-errors)
