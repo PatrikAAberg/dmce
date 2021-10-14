@@ -117,6 +117,7 @@ else
     sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test-D5.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test-D5.c|" .dmceconfig
     echo "DMCE_NUM_DATA_VARS:5" >> .dmceconfig
+    echo "DMCE_TRACE_VAR_TYPE:unsigned long" >> .dmceconfig
 fi
 
 git add .dmceconfig
