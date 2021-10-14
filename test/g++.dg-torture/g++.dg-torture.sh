@@ -205,6 +205,15 @@ rm_file_list+=" bitfield1.cpp"                        # typedef typeof
 rm_file_list+=" simd-5.cpp"                           # simd5 switch
 rm_file_list+=" typename12.cpp"                       # a bug (not following standard) in gcc around the comma separator?
 rm_file_list+=" typename6.cpp"                        # a bug (not following standard) in gcc around the comma separator?
+
+rm_file_list+=" volatile1.cpp"                        # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" fnname3.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" cleanup1.cpp"                         # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" addr-const1.cpp"                      # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" ctor1.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+
 rm_file_list+=" pr68220.cpp"                          # file not yet examined
 rm_file_list+=" pr45572-1.cpp"                        # file not yet examined
 rm_file_list+=" pr68388.cpp"                          # file not yet examined
