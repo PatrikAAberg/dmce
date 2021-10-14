@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Print is expensive and can be disabled
-do_print=2
+do_print=1
 
 parsed_file = sys.argv[1]
 
@@ -36,6 +36,11 @@ if ndvs == None:
     numDataVars = 0
 else:
     numDataVars = int(ndvs)
+
+# variable type specified?
+tvtype = os.getenv('DMCE_TRACE_VAR_TYPE')
+if tvtype is None:
+    tvtype="uint64_t"
 
 # Get path to config files
 configpath = os.getenv('DMCE_CONFIG_PATH')
@@ -926,7 +931,7 @@ while (i < expdb_index):
         if len(vlist) > 0:
             probe_prolog = probe_prolog + ","
             for s in vlist:
-                probe_prolog = probe_prolog + "(uint64_t)" + s
+                probe_prolog = probe_prolog + "(" + tvtype + ")" + s
                 count += 1
                 if (count == numDataVars):
                     break
