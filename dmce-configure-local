@@ -63,7 +63,7 @@ DMCE_NUM_DATA_VARS:0
 # Probe definition c file
 DMCE_PROBE_SOURCE:$install_path/dmce-probe-user.c
 
-# Probe definition c file
+# Prolog definition c file
 DMCE_PROBE_PROLOG:$install_path/dmce-prolog-default.c
 
 # Log files
