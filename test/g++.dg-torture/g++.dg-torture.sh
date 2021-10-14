@@ -27,9 +27,7 @@ if [ $? -ne 0 ]; then
 	set -e
 	if ! [ -e dmce/.git ]; then
 		_echo "fetch DMCE"
-		set -x
 		git -C ${my_work_path} clone --depth 1 https://github.com/PatrikAAberg/dmce.git
-		{ set +x; } 2>/dev/null
 	fi
 	dmce_exec_path=${PWD}/dmce
 fi
@@ -43,7 +41,6 @@ elif [ -e "gcc-${gcc_version}.tar.gz" ]; then
 	archive="gz"
 else
 	_echo "fetch GCC"
-	set -x
 	# try xz first
 	if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz; then
 		# then gz
@@ -55,11 +52,9 @@ else
 	else
 		archive="xz"
 	fi
-	{ set +x; } 2>/dev/null
 fi
 
 _echo "unpack GCC"
-set -x
 tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
@@ -67,18 +62,14 @@ pushd gcc-${gcc_version}/gcc/testsuite/g++.dg
 cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry") ../${PROG_NAME}/
 popd
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
-{ set +x; } 2>/dev/null
 
 _echo "create git"
-set -x
 cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
-set +x
 shopt -s globstar
 for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
 for f in ../**/*.H; do cp "$f" "${f%.H}.h"; done
 for f in ../**/*.Hs; do mv "$f" "${f%.Hs}.H"; done
-set -x
 
 git init
 git commit -m "empty" --allow-empty
@@ -246,35 +237,27 @@ fi
 git commit -m "broken"
 git add .dmceconfig
 git commit -m "DMCE config"
-{ set +x; } 2>/dev/null
 
 _echo "launch DMCE"
-set -x
 ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count) --debug
-{ set +x; } 2>/dev/null
+_echo "compile"
+> ${my_work_path}/compile-errors
+find -name '*.err' -exec rm {} \;
 
-	_echo "compile"
-	> ${my_work_path}/compile-errors
-	find -name '*.err' -exec rm {} \;
-	for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
-		{
-			if ! gcc -w -c -fno-new-ttp-matching -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
-				echo ${f} >> ${my_work_path}/compile-errors;
-			fi
-		} &
+if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
+	echo "error: empty probe-list"
+	exit 1
+fi
+
+for f in $(cat ${dmce_work_path}/${PROG_NAME}/workarea/probe-list); do
+	{
+		if ! gcc -w -c -fno-new-ttp-matching -fdeduce-init-list -fext-numeric-literals -fpermissive -fgnu-tm -std=c++17 ${f} 2>> "${f}".err; then
+			echo ${f} >> ${my_work_path}/compile-errors;
+		fi
+	} &
 done
-
 wait
-
-set -x
 find -name '*.err' -type f ! -size 0 -exec cat {} \;
-{ set +x; } 2>/dev/null
-
-_echo "results"
-set -x
-find ${dmce_work_path} -maxdepth 1  -type f -name "dmce-launcher-${PROG_NAME}-*" -printf '%T@ %p\n' | sort -nr | head -1 | awk '{print $2}' | xargs tail -v
-{ set +x; } 2>/dev/null
-
 errors=$(cat ${my_work_path}/compile-errors | wc -l)
 _echo "exit: ${errors}"
 exit ${errors}
