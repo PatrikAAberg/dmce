@@ -1,12 +1,11 @@
-/* Test probe for code trace only */
+/* Test probe for no-variables case */
 #ifndef __DMCE_PROBE_FUNCTION_BODY__
 #define __DMCE_PROBE_FUNCTION_BODY__
 
-extern int dmce_probes[30000];
-
+static unsigned int dmce_dummy = 0;
 static void dmce_probe_body(unsigned int probenbr)
 {
-  dmce_probes[probenbr] = 1;
+  dmce_dummy = probenbr;
 }
 
 #define DMCE_PROBE(a) (dmce_probe_body(a))
