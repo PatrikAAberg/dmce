@@ -155,8 +155,10 @@ mkdir -p $dmcepath/{old,new,workarea}
 
 _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
 git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > $dmcepath/latest.cache
-# Add the added and modified files
-git status | grep -oP "[\w\/]+\.c$|[\w\/]+\.cpp$|[\w\/]+\.cc$|[\w\/]+\.h$" >> $dmcepath/latest.cache || :
+
+# add modified/untracked files
+git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> tee -a $dmcepath/latest.cache || :
+
 # Sanity check
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 
