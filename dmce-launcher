@@ -257,6 +257,7 @@ while read -r dmceconfig; do
 done < "$USE_DMCE_CONFIG_FILE"
 
 # extract any probe defines
+mkdir -p $DMCE_WORK_PATH/$git_name
 grep "DMCE_PROBE_DEFINE" $USE_DMCE_CONFIG_FILE | sed -E "s,DMCE_PROBE_DEFINE:,#define ,g" > $DMCE_WORK_PATH/$git_name/probedefines.h
 
 mandatory_configs=
