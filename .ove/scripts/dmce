@@ -54,26 +54,33 @@ if [ "${launch_dmce_repos}" == "" ]; then
 	exit 1
 fi
 
-REPLY=100
+default_n=100
+timeout=3
 if [ -t 1 ]; then
 	echo "number of commits to probe?"
-	echo "this dialog will timeout in 10 seconds and use ${REPLY} commits."
+	echo "this dialog will timeout in ${timeout} seconds and use ${default_n} commits."
 	while true; do
-		read -t 10 -p "#commits: "
+		read -t ${timeout} -p "#commits: "
 		ret=$?
 		if [ $ret -gt 128 ]; then
+			n=${default_n}
 			echo
+			break
 		elif [ $ret -eq 0 ] && [ "x${REPLY}" = "x" ]; then
-			:
+			continue
 		elif ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
 			echo "error: just numbers, try again!"
 			continue
+		else
+			n=${REPLY}
+			break
 		fi
-		break
 	done
+else
+	n=${default_n}
 fi
 
-dmce_launcher_args="-n ${REPLY} -q"
+dmce_launcher_args="-n ${n} -q"
 
 for repo in ${launch_dmce_repos}; do
 	echo "$ cd ${OVE_BASE_DIR}/${repo}"
