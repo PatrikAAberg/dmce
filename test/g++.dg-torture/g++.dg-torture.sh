@@ -72,6 +72,7 @@ for f in ../**/*.H; do cp "$f" "${f%.H}.h"; done
 for f in ../**/*.Hs; do mv "$f" "${f%.Hs}.H"; done
 
 git init
+git config gc.autoDetach false
 git commit -m "empty" --allow-empty
 git add .
 git commit -m "initial commit"
@@ -222,7 +223,7 @@ rm_file_list+=" pr43655.cpp"                          # file not yet examined
 
 set +e
 for f in $rm_file_list; do
-	find -name $f -exec git rm -- {} \;
+	find -not -path '*.git*' -name $f -exec git rm -- {} \;
 done
 set -e
 

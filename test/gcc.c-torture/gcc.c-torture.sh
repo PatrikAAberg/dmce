@@ -60,6 +60,7 @@ _echo "create git"
 cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 git init
+git config gc.autoDetach false
 git commit -m "empty" --allow-empty
 git add .
 git commit -m "initial commit"
