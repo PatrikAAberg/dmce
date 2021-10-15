@@ -59,7 +59,7 @@ tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 cd gcc-${gcc_version}/gcc/testsuite/g++.dg
-cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry") ../${PROG_NAME}/
+cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry" *) ../${PROG_NAME}/
 cd -
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 
