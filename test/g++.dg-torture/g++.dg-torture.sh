@@ -4,7 +4,10 @@ set -e
 
 echo "Running g++.dg-torture"
 
-gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
+# Hard coded or follow distro
+#gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
+gcc_version="9.3.0"
+
 PROG_NAME=$(basename $0 .sh)
 function _echo() {
 	echo $(date '+%Y-%m-%d %H:%M:%S'):${PROG_NAME}:$@
@@ -192,6 +195,19 @@ rm_file_list+=" visibility-9.cpp"                     # __attribute__((dllimport
 rm_file_list+=" gcov-3.cpp"                           # gcov-3.h: No such file or directory
 rm_file_list+=" simd-2.cpp"                           # check-vect.h: No such file or directory
 rm_file_list+=" mangle56.cpp"                         # #include <initializer_list>
+rm_file_list+=" pr61034.cpp"                           # transaction safe builtin
+rm_file_list+=" new1.cpp"                             # transaction safe builtin
+rm_file_list+=" bitfield1.cpp"                        # typedef typeof
+rm_file_list+=" simd-5.cpp"                           # simd5 switch
+rm_file_list+=" typename12.cpp"                       # a bug (not following standard) in gcc around the comma separator?
+rm_file_list+=" typename6.cpp"                        # a bug (not following standard) in gcc around the comma separator?
+rm_file_list+=" pr68220.cpp"                          # file not yet examined
+rm_file_list+=" pr45572-1.cpp"                        # file not yet examined
+rm_file_list+=" pr68388.cpp"                          # file not yet examined
+rm_file_list+=" pr67989.cpp"                          # file not yet examined
+rm_file_list+=" pr43655.cpp"                          # file not yet examined
+
+if [[ "$numVars" -ne "0" ]]; then
 rm_file_list+=" Wunused-var-10.cpp"                   # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" pr43365.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" pr79377.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
@@ -200,13 +216,6 @@ rm_file_list+=" spec24.cpp"                           # re-declaration of struct
 rm_file_list+=" tls-3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" pass_y.h"                             # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" initlist90.cpp"                       # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" pr61034.cpp"                          # transaction safe builtin
-rm_file_list+=" new1.cpp"                             # transaction safe builtin
-rm_file_list+=" bitfield1.cpp"                        # typedef typeof
-rm_file_list+=" simd-5.cpp"                           # simd5 switch
-rm_file_list+=" typename12.cpp"                       # a bug (not following standard) in gcc around the comma separator?
-rm_file_list+=" typename6.cpp"                        # a bug (not following standard) in gcc around the comma separator?
-
 rm_file_list+=" volatile1.cpp"                        # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" fnname3.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" cleanup1.cpp"                         # re-declaration of struct members shows up as ordinary declarations in AST
@@ -214,12 +223,8 @@ rm_file_list+=" addr-const1.cpp"                      # re-declaration of struct
 rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" ctor1.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
 rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+fi
 
-rm_file_list+=" pr68220.cpp"                          # file not yet examined
-rm_file_list+=" pr45572-1.cpp"                        # file not yet examined
-rm_file_list+=" pr68388.cpp"                          # file not yet examined
-rm_file_list+=" pr67989.cpp"                          # file not yet examined
-rm_file_list+=" pr43655.cpp"                          # file not yet examined
 
 set +e
 for f in $rm_file_list; do
