@@ -465,6 +465,9 @@ while read -r c_file; do
       # The probed source file itself
       cat $c_file.probed >> $dmcepath/workarea/$c_file
 
+      # any defines from the config file
+      cat $dmcepath/probedefines.h >> $dmcepath/workarea/$c_file
+
       # Put the probe in the end
       cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
 

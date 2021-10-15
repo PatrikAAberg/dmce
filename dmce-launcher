@@ -256,6 +256,9 @@ while read -r dmceconfig; do
     export "${conf_var:?}"
 done < "$USE_DMCE_CONFIG_FILE"
 
+# extract any probe defines
+grep "DMCE_PROBE_DEFINE" ~/.dmceconfig | sed -E "s,DMCE_PROBE_DEFINE:,#define ,g" > $DMCE_WORK_PATH/$git_name/probedefines.h
+
 mandatory_configs=
 mandatory_configs+=("DMCE_EXEC_PATH")
 mandatory_configs+=("DMCE_CONFIG_PATH")
