@@ -159,6 +159,9 @@ git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|
 # add modified/untracked files
 git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> tee -a $dmcepath/latest.cache || :
 
+# uniq
+sort -o $dmcepath/latest.cache -u $dmcepath/latest.cache
+
 # Sanity check
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 
