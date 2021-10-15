@@ -109,7 +109,7 @@ For larger traces than this one, something to try out is to pipe the results to 
 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
 
-## Configuration
+## Mandatory entries in .dmceconfig
 
 Valid for both alternatives above:
 Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-configure-global). This way, in a multi-git project, each git can have its own dmce configuration.
@@ -186,3 +186,22 @@ When dmce is searching for added expressions between two git revisions it uses g
         histogram
         minimal
         patience
+
+### Optional entries in .dmceconfig
+
+#### Passing defines to dmce probes
+Sometimes it is useful to be able to pass custom information from the .dmceconfig file to the currently used probe. Below is an example:
+
+    DMCE_DEFINE:FOO
+    DMCE_DEFINE:BAR (42)
+
+These lines will insert the following after the probed c-file but before the probe code:
+
+    #define FOO
+    #define BAR (42)
+
+#### Changing the type of traced variables
+The dmce trace probe normally cast all variables to uint64_t. However, a custom probe might want to use a different data type. Below is an example of how to change type to unsigned long:
+
+    DMCE_TRACE_VAR_TYPE:unsigned long
+
