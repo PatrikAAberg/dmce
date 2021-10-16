@@ -93,7 +93,8 @@ Run dmce for more commits than are actually in the git, making it probe everythi
 
 Go into the simplecrash example folder, build the executable and run it.
 
-    $ cd simplecrash && ./build && ./simplecrash && cd -
+    $ cd simplecrash && ./build && ./simplecrash
+    $ cd -
 
 It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 modules colorama and numpy:
 
