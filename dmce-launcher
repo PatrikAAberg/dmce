@@ -301,7 +301,7 @@ dmce_double=$(find -name "*.dmceoriginal")
 if [ "$dmce_double" != "" ]; then
     _echo "restoring old probe state"
     for f in $dmce_double; do
-        mv "$f" "${f%%.dmceoriginal}" &
+        { mv "$f" "${f%%.dmceoriginal}"; touch ${f%%.dmceoriginal}; } &
     done
     wait
 fi
