@@ -44,8 +44,9 @@ static void dmce_atexit(void) {
     fp = fopen("/tmp/dmcebuffer.bin", "w");
 #ifdef DMCE_TRACE_RINGBUFFER
     unsigned int buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
+    int i;
 
-    for (int i = 0; i < DMCE_MAX_HITS; i++) {
+    for (i = 0; i < DMCE_MAX_HITS; i++) {
 
         unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
         fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
