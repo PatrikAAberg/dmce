@@ -14,10 +14,11 @@ dmce-configure-global
 cd dmce-examples
 ./config-trace
 dmce-launcher -n 10000
-cd simplecrash
+pushd simplecrash
 ./build
 set +e
 ./simplecrash
 set -e
+popd
 dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 bash
