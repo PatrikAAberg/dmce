@@ -1,0 +1,23 @@
+#!/bin/bash -ex
+
+apt update
+apt install -y git python3 clang-tools python3-pip
+pip3 install numpy colorama
+git clone https://github.com/PatrikAAberg/dmce.git
+cd dmce
+./build-deb
+dpkg -i dmce-1.2-0.deb
+cd ..
+git clone https://github.com/PatrikAAberg/dmce-examples.git
+export USER="root" # not set in docker container
+dmce-configure-global
+cd dmce-examples
+./config-trace
+dmce-launcher -n 10000
+cd simplecrash
+./build
+set +e
+./simplecrash
+set -e
+dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+bash
