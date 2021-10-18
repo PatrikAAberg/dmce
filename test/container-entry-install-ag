@@ -7,7 +7,7 @@ pip3 install cram
 ln -s /usr/bin/cram3 /usr/bin/cram
 cd dmce
 ./build-deb
-dpkg -i dmce-1.1-0.deb
+dpkg -i dmce-1.2-0.deb
 cd ..
 git clone https://github.com/ggreer/the_silver_searcher.git
 export USER="root" # not set in docker container
