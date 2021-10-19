@@ -6,7 +6,7 @@ pip3 install numpy colorama
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
 ./build-deb
-dpkg -i dmce-1.2-0.deb
+dpkg -i dmce-*.deb
 cd ..
 git clone https://github.com/PatrikAAberg/dmce-examples.git
 export USER="root" # not set in docker container
