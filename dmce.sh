@@ -157,7 +157,7 @@ _echo "ask git to list modified and added files. Saving files here: $dmcepath/la
 git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > $dmcepath/latest.cache
 
 # add modified/untracked files
-git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> tee -a $dmcepath/latest.cache || :
+git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
 
 # uniq
 sort -o $dmcepath/latest.cache -u $dmcepath/latest.cache
