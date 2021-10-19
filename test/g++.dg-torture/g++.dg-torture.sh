@@ -2,16 +2,24 @@
 numVars=$1
 set -e
 
-echo "Running g++.dg-torture"
-
 # Hard coded or follow distro
 #gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
 gcc_version="9.3.0"
 
 PROG_NAME=$(basename $0 .sh)
+
 function _echo() {
-	echo $(date '+%Y-%m-%d %H:%M:%S'):${PROG_NAME}:$@
+	local a
+
+	if [ "x$numVars" != "x" ]; then
+		a="${PROG_NAME}-${numVars}"
+	else
+		a="${PROG_NAME}"
+	fi
+
+	echo $(date '+%Y-%m-%d %H:%M:%S'):${a}:$@
 }
+_echo "running g++.dg-torture"
 
 # DMCE work directory
 dmce_work_path="/tmp/${USER}/dmce"
@@ -74,11 +82,11 @@ for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
 for f in ../**/*.H; do cp "$f" "${f%.H}.h"; done
 for f in ../**/*.Hs; do mv "$f" "${f%.Hs}.H"; done
 
-git init
+git init -q
 git config gc.autoDetach false
-git commit -m "empty" --allow-empty
+git commit -q -m "empty" --allow-empty
 git add .
-git commit -m "initial commit"
+git commit -q -m "initial commit"
 
 # Put crossed out ones here
 rm_file_list+=" Wclass-memaccess.cpp"                 # Macro expansion of macro with only one capital letter
@@ -225,12 +233,42 @@ rm_file_list+=" ctor1.cpp"                            # re-declaration of struct
 rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
 fi
 
-
 set +e
 for f in $rm_file_list; do
-	find -not -path '*.git*' -name $f -exec git rm -- {} \;
+	find -not -path '*.git*' -name $f -exec git rm -q -- {} \;
 done
 set -e
+git commit -q -m "broken"
+
+_echo "remove files that does not build"
+gcc_opts_candidates=""
+gcc_opts_candidates+=" -fno-new-ttp-matching"
+gcc_opts_candidates+=" -fext-numeric-literals"
+gcc_opts_candidates+=" -fpermissive"
+gcc_opts_candidates+=" -fgnu-tm"
+gcc_opts_candidates+=" -std=c++17"
+for opt in $gcc_opts_candidates; do
+        if ! gcc $opt |& grep -q 'unrecognized command'; then
+                gcc_opts+=" $opt"
+        fi
+done
+echo "gcc options: $gcc_opts"
+
+> ${my_work_path}/compile-errors
+while read -r f; do
+	{
+		if ! gcc -w -c $gcc_opts ${f} &> /dev/null; then
+			echo ${f} >> ${my_work_path}/compile-errors;
+		fi
+	} &
+done < <(git ls-files)
+wait
+if [ -s ${my_work_path}/compile-errors ]; then
+	while read -r f; do
+		git rm -q $f
+	done <${my_work_path}/compile-errors
+	git commit -q -m "does not compile"
+fi
 
 # add DMCE config and update paths
 
@@ -250,9 +288,9 @@ else
     echo "DMCE_TRACE_VAR_TYPE:unsigned long" >> .dmceconfig
 fi
 
-git commit -m "broken"
 git add .dmceconfig
-git commit -m "DMCE config"
+git commit -q -m "DMCE config"
+git --no-pager log --oneline --shortstat --no-color
 
 _echo "launch DMCE"
 ${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count) --debug
@@ -264,19 +302,6 @@ if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
 	echo "error: empty probe-list"
 	exit 1
 fi
-
-gcc_opts_candidates=""
-gcc_opts_candidates+=" -fno-new-ttp-matching"
-gcc_opts_candidates+=" -fext-numeric-literals"
-gcc_opts_candidates+=" -fpermissive"
-gcc_opts_candidates+=" -fgnu-tm"
-gcc_opts_candidates+=" -std=c++17"
-for opt in $gcc_opts_candidates; do
-        if ! gcc $opt |& grep -q 'unrecognized command'; then
-                gcc_opts+=" $opt"
-        fi
-done
-echo "gcc options: $gcc_opts"
 
 while read -r f; do
 	{
