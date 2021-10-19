@@ -23,7 +23,7 @@ static void dmce_atexit(void){
         fwrite(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
         fclose(fp);
 
-        fp = fopen("/tmp/dmcebuffer.bin", "r"); 
+        fp = fopen("/tmp/dmcebuffer.bin", "r");
     }
 
     n = fread(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
