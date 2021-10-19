@@ -1,0 +1,22 @@
+#!/bin/bash -ex
+
+apt update
+apt install -y git python3 clang-tools python3-pip
+git clone https://github.com/PatrikAAberg/dmce.git
+cd dmce
+./build-deb
+dpkg -i dmce-1.2-0.deb
+cd ..
+git clone https://github.com/PatrikAAberg/dmce-examples.git
+export USER="root" # not set in docker container
+dmce-configure-global
+cd dmce-examples
+./config-patchcov
+pushd patchcov
+git apply 000-patchcov.patch
+popd
+dmce-launcher -n 1
+git diff
+cd patchcov
+./build && ./test-patchcov
+bash
