@@ -76,7 +76,40 @@ Enter the dmce directory (cloned or un-tar'ed) and run the local configure scrip
 
 This will produce a .dmceconfig file in the home directory which uses the dmce directory as source for all execution and configuration. Any call to dmce executables in the following examples need to be prepended by the path to the dmce directory.
 
-## Example: How to use dmce trace
+## Example 1: A simple, general example of probing
+
+Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
+
+    $ git clone https://github.com/PatrikAAberg/dmce-examples.git
+    $ cd dmce-examples
+
+Set up a git local .dmceconfig file using this helper:
+
+    $ ./config-simple
+
+Run dmce for more commits than are actually in the git, making it probe everything:
+
+    $ dmce-launcher -n 10000 --progress
+
+Check the diff. You should be able to see the inserted dmce probes.
+
+    $ git diff
+
+Go into the simple example folder, build the executable and run it.
+
+    $ cd simple && ./build && ./simple
+
+It builds and runs. Nothing functional-wise is changed,  but we have inserted hooks at all do-something-expressions. Using dmce-probe-XYZ.c files we can now extract information from code execution without tampering with build chains or using target- or OS specifics. In this example, we have used a probe that simply prints to stderr the first time that position in the code is passed, and keep silent after that.
+
+Of course you want to be able to go back to a non-probed state. You do this using the -c switch in the git root:
+
+    $ cd ..
+    $ dmce-launcher -c
+    $ git diff
+    
+The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce-launcher --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
+
+## Example 2: How to use dmce trace
 
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
