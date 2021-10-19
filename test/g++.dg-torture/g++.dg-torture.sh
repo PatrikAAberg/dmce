@@ -261,7 +261,7 @@ while read -r f; do
 			echo ${f} >> ${my_work_path}/compile-errors;
 		fi
 	} &
-done < <(git ls-files)
+done < <(git ls-files | grep -E '\.cpp$|\.cc$|\.c$')
 wait
 if [ -s ${my_work_path}/compile-errors ]; then
 	while read -r f; do
