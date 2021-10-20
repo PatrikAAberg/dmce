@@ -498,18 +498,11 @@ if ! quiet_mode; then
     echo "$files_probed file(s) probed:"
     while read -r f; do
         echo "$git_top/$f"
-    done < $dmcepath/workarea/probe-list
-    echo "$files_skipped file(s) skipped"
-
-    if [ "$files_skipped" -gt 0 ]; then
-        echo "To view deltas manually:"
-        while read -r f; do
-        echo "diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f"
-        if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
-            diff -y --suppress-common-lines $dmcepath/old/$f $dmcepath/new/$f
-        fi
-        done < $dmcepath/workarea/skip-list
-    fi
+    done < $dmcepath/workarea/probe-list | sort | cat -n
+    echo "$files_skipped file(s) skipped:"
+    while read -r f; do
+        echo "$git_top/$f"
+    done < $dmcepath/workarea/skip-list | sort | cat -n
 fi
 
 if [ -f "$dmcepath/probe-references.log" ]; then
