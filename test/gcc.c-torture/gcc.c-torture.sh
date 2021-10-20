@@ -117,20 +117,52 @@ set -e
 git commit -q -m "broken"
 
 _echo "remove files that does not compile"
+
+cap_jobs() {
+	if [ $# -ne 1 ] || [ $1 -eq 0 ]; then
+		return
+	fi
+
+	mapfile -t job_list < <(jobs -p -r)
+	if [ "${#job_list[@]}" -ge "${1}" ]; then
+	        wait -n
+	fi
+}
+
 > ${my_work_path}/compile-errors
+> ${my_work_path}/compile-timeouts
+_timeout=10
+_max_jobs=200
+set +e
 while read -r f; do
 	{
-		if ! gcc -w -c -std=c++11 ${f} &> /dev/null; then
-			echo ${f} >> ${my_work_path}/compile-errors;
+		timeout $_timeout gcc -w -c -std=c++11 ${f} &> /dev/null
+		ret=$?
+		if [ $ret -eq 124 ]; then
+			echo ${f} >> ${my_work_path}/compile-timeouts
+		elif [ $ret -ne 0 ]; then
+			echo ${f} >> ${my_work_path}/compile-errors
 		fi
 	} &
+	cap_jobs $_max_jobs
 done < <(git ls-files | grep -E '\.cpp$|\.cc$|\.c$')
 wait
+set -e
 if [ -s ${my_work_path}/compile-errors ]; then
+	echo compile errors:
+	cat -n ${my_work_path}/compile-errors
 	while read -r f; do
 		git rm -q $f
 	done <${my_work_path}/compile-errors
 	git commit -q -m "does not compile"
+fi
+if [ -s ${my_work_path}/compile-timeouts ]; then
+	echo timeout errors:
+	cat -n ${my_work_path}/compile-timeouts
+	while read -r f; do
+		git rm -q $f
+	done <${my_work_path}/compile-timeouts
+	git commit -q -m "takes more than $_timeout s to compile"
 fi
 
 # add DMCE config and update paths
@@ -172,6 +204,7 @@ while read -r f; do
 			echo ${f} >> ${my_work_path}/compile-errors;
 		fi
 	} &
+	cap_jobs $_max_jobs
 done < ${dmce_work_path}/${PROG_NAME}/workarea/probe-list
 wait
 find -name '*.err' -type f ! -size 0 -exec cat {} \;
