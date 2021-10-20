@@ -259,6 +259,9 @@ done < "$USE_DMCE_CONFIG_FILE"
 # extract any probe defines
 mkdir -p $DMCE_WORK_PATH/$git_name
 grep "DMCE_PROBE_DEFINE" $USE_DMCE_CONFIG_FILE | sed -E "s,DMCE_PROBE_DEFINE:,#define ,g" > $DMCE_WORK_PATH/$git_name/probedefines.h
+if [ ! -s $DMCE_WORK_PATH/$git_name/probedefines.h ]; then
+	rm $DMCE_WORK_PATH/$git_name/probedefines.h
+fi
 
 mandatory_configs=
 mandatory_configs+=("DMCE_EXEC_PATH")
