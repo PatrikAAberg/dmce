@@ -150,7 +150,7 @@ function init() {
 			exit 1
 		fi
 	done
-	if [ -t 1 ]; then
+	if [ -n "$PS1" ]; then
 		echo "WARNING: ${name} will start by doing a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this git: ${git_full}"
 		read -p "continue? (y/N) " -r
 		if ! [[ "${REPLY}" =~ ^[Yy]$ ]]; then
