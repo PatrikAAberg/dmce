@@ -587,7 +587,4 @@ else
 fi
 
 _echo "$(basename "$git_top") summary:"
-if [ -n "${DMCE_VERBOSE_OUTPUT+x}" ]; then
-    git --no-pager show --stat "$oldsha".."$newsha" --oneline
-fi
 summary
