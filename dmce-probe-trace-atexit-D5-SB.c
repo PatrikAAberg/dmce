@@ -26,7 +26,10 @@ static dmce_probe_entry_t* dmce_buf_p = 0;
 static unsigned int* dmce_probe_hitcount_p = 0;
 #endif
 static int dmce_buffer_setup_done = 0;
+static long dmce_num_cpus = 0;
+
 static __inline__ uint64_t dmce_tsc(void) {
+
 
 #if defined(__x86_64__)
     unsigned msw, lsw;
@@ -42,18 +45,7 @@ static void dmce_atexit(void) {
     FILE *fp;
 
     fp = fopen("/tmp/dmcebuffer.bin", "w");
-#ifdef DMCE_TRACE_RINGBUFFER
-    unsigned int buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
-    int i;
-
-    for (i = 0; i < DMCE_MAX_HITS; i++) {
-
-        unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-        fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
-    }
-#else
-    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
-#endif
+    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), dmce_num_cpus * DMCE_MAX_HITS, fp);
     fclose(fp);
     remove("/tmp/dmce-trace-buffer-lock");
 }
@@ -94,14 +86,13 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             if (! (mkdir("/tmp/dmce-trace-buffer-lock",0))) {
             
                 char s[32 * 3];
-                long num_cpus;
 
-                num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-                dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
+                dmce_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+                dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS * dmce_num_cpus,
                                                           sizeof(dmce_probe_entry_t));
 
                 dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
-                dmce_probe_hitcount_p = (unsigned int*)calloc(1, sizeof(int));
+                dmce_probe_hitcount_p = (unsigned int*)calloc(1 * dmce_num_cpus, sizeof(int));
 
                 sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
                 setenv("dmce_trace_control", s, 0);
@@ -136,18 +127,20 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             dmce_buffer_setup_done = 1;
         }
     }
-#ifndef DMCE_TRACE_RINGBUFFER
-    if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
-#else
+
     if (dmce_trace_is_enabled()) {
-#endif
+
         unsigned int cpu;
-        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
-#ifdef DMCE_TRACE_RINGBUFFER
-        index = index % DMCE_MAX_HITS;
-#endif
-        dmce_probe_entry_t* e_p = &dmce_buf_p[index];
+        unsigned int index;
+
         getcpu(&cpu, 0);
+
+        index = dmce_probe_hitcount_p[cpu];
+        dmce_probe_hitcount_p[cpu]++;
+
+        index = index % DMCE_MAX_HITS;
+
+        dmce_probe_entry_t* e_p = &dmce_buf_p[index + (DMCE_MAX_HITS * cpu) ];
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
         e_p->cpu = cpu;
@@ -157,14 +150,6 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         e_p->vars[3] = dmce_param_d;
         e_p->vars[4] = dmce_param_e;
     }
-#ifndef DMCE_TRACE_RINGBUFFER
-    else {
-        dmce_trace_disable();
-        /* Mark this trace buffer as full */
-        dmce_buf_p[DMCE_MAX_HITS - 1].probenbr = 0xdeadbeef;
-        dmce_buf_p[DMCE_MAX_HITS - 1].timestamp = dmce_tsc();
-    }
-#endif
 }
 #endif
 
