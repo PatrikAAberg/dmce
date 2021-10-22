@@ -80,13 +80,18 @@ else
 	n=${default_n}
 fi
 
+dmce_launcher="${OVE_ACTIVE_REPO_DIR:?}/dmce-launcher"
+if [ ! -e $dmce_launcher ]; then
+	echo "error: can not find DMCE launcher"
+	exit 1
+fi
 dmce_launcher_args="-n ${n} -q"
 
 for repo in ${launch_dmce_repos}; do
 	echo "$ cd ${OVE_BASE_DIR}/${repo}"
 	cd ${OVE_BASE_DIR}/${repo}
-	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher -c -q"
-	${OVE_BASE_DIR}/dmce/dmce-launcher -c -q
-	echo "$ ${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}"
-	${OVE_BASE_DIR}/dmce/dmce-launcher ${dmce_launcher_args}
+	echo "$ ${dmce_launcher} -c -q"
+	${dmce_launcher} -c -q
+	echo "$ ${dmce_launcher} ${dmce_launcher_args}"
+	${dmce_launcher} ${dmce_launcher_args}
 done

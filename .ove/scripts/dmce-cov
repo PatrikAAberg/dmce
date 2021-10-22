@@ -6,7 +6,7 @@ function dmce_build_test() {
 	local test_start
 
 	ove_echo_cyan_error "dmce-launcher -q -r $1"
-	out=$("${OVE_BASE_DIR:?}"/dmce/dmce-launcher -q -r "$1")
+	out=$("${OVE_ACTIVE_REPO_DIR:?}"/dmce-launcher -q -r "$1")
 	ret=$?
 	if [ ${ret} -ne 0 ]; then
 		if [[ ${out} == *error* ]]; then
@@ -111,7 +111,7 @@ function init() {
 		exit 1
 	fi
 
-	out=$("${OVE_BASE_DIR:?}"/dmce/dmce-launcher -c)
+	out=$("${OVE_ACTIVE_REPO_DIR:?}"/dmce-launcher -c)
 	if ! grep -q 'DMCE_PROBE_SOURCE=.*dmce-probe-syslog.c' <<<"${out}"; then
 		echo "error: DMCE_PROBE_SOURCE must use 'dmce-probe-syslog.c'. Output from 'dmce-launcher -c':"
 		printf "%s\n" "$out" | grep --color -E '^|DMCE_PROBE_SOURCE.*'
