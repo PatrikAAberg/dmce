@@ -3,6 +3,7 @@
 apt update
 apt install -y git python3 clang-tools python3-pip
 git clone https://github.com/PatrikAAberg/dmce.git
+pip3 install numpy
 cd dmce
 ./build-deb
 dpkg -i dmce-*.deb
@@ -19,4 +20,4 @@ dmce-launcher -n 1
 git diff
 cd patchcov
 ./build && ./test-patchcov
-bash
+dmce-summary -v /tmp/dmcebuffer.bin /tmp/root/dmce/dmce-examples/probe-references.log
