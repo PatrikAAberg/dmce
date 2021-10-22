@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/python3
 
-# Copyright (c) 2016 Ericsson AB
+# Copyright (c) 2021 Ericsson AB
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -19,39 +19,62 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-git_root=$PWD
-rel_git_root=${PWD##*/}
+import numpy as np
+import sys
+import argparse
+import os
 
-# TODO: Break out read config stuff from summary and launcher
-if [ -e $git_root/.dmceconfig ]; then
-	USE_DMCE_CONFIG_FILE=$git_root/.dmceconfig
-elif [ -e $HOME/.dmceconfig ]; then
-	USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
-else
-	echo "Could not find a valid dmce config file. Did you run install?"
-	exit 1
-fi
+descr = 'Print DMCE coverage, hit and total number of instrumentation probes.'
 
-echo "DMCE summary. Using config file: $USE_DMCE_CONFIG_FILE"
+parser = argparse.ArgumentParser(description=descr)
+parser.add_argument('dfile',            type=str,                   help='Binary input file')
+parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
+parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
+args = parser.parse_args()
 
-while read dmceconfig; do
-	if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
-		continue
-	fi
-	conf_var=${dmceconfig%%:*}
-	conf_val=${dmceconfig##*:}
-	# escape double quotes
-	conf_val=${conf_val//\"/\\\"}
-	eval "$conf_var"=\""$conf_val"\"
-	export "${conf_var:?}"
-done < $USE_DMCE_CONFIG_FILE
+dfile = args.dfile
+probefile = args.probefile
+printverbose = args.verbose
 
-# Any probes found?
-if [ -e $DMCE_WORK_PATH/$rel_git_root/probe-references.log ]; then
-	echo "DMCE probe ref log: $DMCE_WORK_PATH/$rel_git_root/probe-references.log "
-	echo "Test result log   : $1"
-	echo "$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log"
-	$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log
-else
-	echo "No DMCE probes found!"
-fi
+# parse the probe reference
+with open(probefile, 'r') as pf:
+     prefs = pf.readlines()
+
+nprobes = len(prefs)
+
+# read probe data from run
+data = np.fromfile(dfile, dtype=np.int32)
+for i in range(nprobes, data.size):
+     if data[i] != 0:
+          print("Data file contains non-zero values outside of valid range.")
+          print("File likely corrupted. Aborting.")
+          sys.exit(1)
+
+# combine into one list
+res = []
+for probe in range(nprobes):
+     rec = prefs[probe].rstrip().split(':')
+     rec.append(data[probe])
+     res.append(rec)
+
+# find the probes not executed
+skipped = [item for item in res if item[4] == 0]
+nskipped = len(skipped)
+nhit = nprobes - nskipped
+
+# print short result
+if not printverbose:
+     print('{:2.2f} {} {}'.format(100*nhit/nprobes, nhit, nprobes))
+
+if printverbose:
+     print("\n--- Dmce summary results ---")
+     print('Coverage:{:2.2f}%'.format(100*nhit/nprobes))
+     print('Probes executed:{}/{}'.format(nhit, nprobes))
+     print("\n--- Details ---")
+     fullfmt = "{:<10}{:<8}{:<10}{}:{}"
+     print(fullfmt.format('id', 'status', 'count', 'file', 'line'))
+     for entry in res:
+          if entry[4] == 0:
+               print(fullfmt.format(entry[0], 'MISS', entry[4], entry[1], entry[2]))
+          else:
+               print(fullfmt.format(entry[0], 'HIT', entry[4], entry[1], entry[2]))
