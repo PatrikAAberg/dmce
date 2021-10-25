@@ -1,6 +1,6 @@
 # dmce (did my code execute?)
 
-Source code level instrumentation tool that enables dynamic code execution tracking without build tool chain dependencies.
+Source code level instrumentation tool that enables dynamic code execution tracking *without build tool chain dependencies*.
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
@@ -78,6 +78,7 @@ This will produce a .dmceconfig file in the home directory which uses the dmce d
 
 ## Example 1: A simple, general example of probing
 
+This is a basic example just showing how DMCE probes are inserted without changing SW behaviour with respect to the original function.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
@@ -111,6 +112,7 @@ The probes are now removed. A note: -n 1 means "probe everyting untracked and/or
 
 ## Example 2: How to use dmce trace
 
+DMCE can be used as a trace tool. The following example shows how to find a null-pointer bug in an example program.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
@@ -135,13 +137,51 @@ It crashes! Let's find out why. Step up to the git root again and run dmce-trace
 
     $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
-This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo.
+This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo.
 
 For larger traces than this one, something to try out is to pipe the results to less for easy view and search, like this:
 
     $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
+
+## Example 3: Patch code coverage
+
+This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below. 
+Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
+
+    $ git clone https://github.com/PatrikAAberg/dmce-examples.git
+    $ cd dmce-examples
+
+Set up a git local .dmceconfig file using this helper:
+
+    $ ./config-patchcov
+
+Apply the patch in the patchcov dir:
+
+    $ pushd patchcov
+    $ git apply 000-patchcov.patch
+    $ popd
+
+Probe the untracked and modified files, nothing more:
+
+    $ dmce-launcher -n 1 --progress
+    
+Check that the patch was probed:
+
+    $ git diff
+    
+Go into the patchcov directory again to build and run the tests:
+
+    $ cd patchcov
+    $ ./build && ./test-patchcov
+    
+Use dmce summary to display the results:
+
+    $ dmce-summary -v /tmp/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references.log
+    
+The probe that was set up by the config-patchcov script writes its output to /tmp/dmcebuffer.bin, so that's wehere we pick it up. 
+Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
 ## Mandatory entries in .dmceconfig
 
