@@ -45,7 +45,7 @@ function dmce_build_test() {
 		cut -d: -f4- | \
 		sort -V -u > "${OVE_TMP:?}/${name}.log"
 
-	"${OVE_BASE_DIR:?}"/dmce/dmce-summary "${OVE_TMP:?}/${name}.log"
+	"${OVE_BASE_DIR:?}"/dmce/dmce-summary-syslog "${OVE_TMP:?}/${name}.log"
 
 	return 0
 }
