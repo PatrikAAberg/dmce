@@ -76,13 +76,6 @@ EXAMPLES
     # Run DMCE on the last 100 commits. Start assigning probe numbers from 254.
     $ ../dmce/$NAME -n 100 --offset 254
 
-    # Iterativly run DMCE on your latest changes
-    $ ../dmce/$NAME
-    $ make
-    $ make test 2> outstderr.log
-    $ ../dmce/dmce-summary outstderr.log
-    $ ../dmce/$NAME -c
-
     # Run DMCE and use include files from previous run (faster)
     $ ../dmce/$NAME --skip
 

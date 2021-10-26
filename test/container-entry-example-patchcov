@@ -21,4 +21,4 @@ git diff
 rm -f /tmp/dmcebuffer.bin
 cd patchcov
 ./build && ./test-patchcov
-dmce-summary -v /tmp/dmcebuffer.bin /tmp/root/dmce/dmce-examples/probe-references.log
+dmce-summary-bin -v /tmp/dmcebuffer.bin /tmp/root/dmce/dmce-examples/probe-references.log

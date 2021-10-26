@@ -176,9 +176,9 @@ Go into the patchcov directory again to build and run the tests:
     $ cd patchcov
     $ ./build && ./test-patchcov
     
-Use dmce summary to display the results:
+Use dmce summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
 
-    $ dmce-summary -v /tmp/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references.log
+    $ dmce-summary-bin -v /tmp/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references.log
     
 The probe that was set up by the config-patchcov script writes its output to /tmp/dmcebuffer.bin, so that's wehere we pick it up. 
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
