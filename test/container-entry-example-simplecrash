@@ -17,6 +17,8 @@ dmce-launcher -n 10000
 pushd simplecrash
 ./build
 set +e
+rm -f /tmp/dmcebuffer.bin
+rm -rf /tmp/dmce-trace-buffer-lock
 ./simplecrash
 set -e
 popd
