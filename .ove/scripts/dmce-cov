@@ -189,6 +189,7 @@ function summary() {
 function main() {
 	local date_base
 	local date_head
+	local _errors=0
 
 	name=$(basename "$0")
 	init_time="${SECONDS}"
@@ -255,6 +256,7 @@ function main() {
 		if [ "${mode}" -eq 1 ] || [ "${mode}" -eq 3 ]; then
 			if ! run_one "${base}"; then
 				echo "${prefix}:${na_string}:${err_string}"
+				((_errors++))
 				continue
 			fi
 
@@ -273,6 +275,7 @@ function main() {
 			git clean -dfxq
 			if ! run_one "${first}"; then
 				echo "${prefix}:${na_string}:${err_string}"
+				((_errors++))
 				continue
 			fi
 
@@ -285,6 +288,12 @@ function main() {
 			echo "---"
 		fi
 	done
+
+	if [ $_errors -ge $((i+1)) ]; then
+		exit 1
+	fi
+
+	exit 0
 }
 
 function run_one {
