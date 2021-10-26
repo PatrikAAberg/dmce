@@ -171,8 +171,9 @@ Check that the patch was probed:
 
     $ git diff
     
-Go into the patchcov directory again to build and run the tests:
+Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/dmcebuffer.bin files if it is not the intention to collect several runs in the same file:
 
+    $ rm -f /tmp/dmcebuffer.bin
     $ cd patchcov
     $ ./build && ./test-patchcov
     
