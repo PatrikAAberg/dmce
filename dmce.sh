@@ -72,7 +72,9 @@ function memcap {
         used=$(echo $mem | cut -d' ' -f3)
         let ntot=$tot
         let nused=$used
+        set +e
         let percentused=nused*100/ntot
+        set -e
         if [ $percentused -lt $memlimit ]; then
             break
         else
