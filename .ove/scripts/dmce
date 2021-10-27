@@ -15,7 +15,7 @@ else
 			shift
 			continue
 		fi
-		repos+="$1 "
+		repos+="$(readlink -f $1) "
 		shift
 	done
 
@@ -88,8 +88,11 @@ fi
 dmce_launcher_args="-n ${n} -q"
 
 for repo in ${launch_dmce_repos}; do
-	echo "$ cd ${OVE_BASE_DIR}/${repo}"
-	cd ${OVE_BASE_DIR}/${repo}
+	echo "$ cd ${repo}"
+	if ! cd ${repo}; then
+		echo "error: 'cd ${repo}' failed"
+		exit 1
+	fi
 	echo "$ ${dmce_launcher} -c -q"
 	${dmce_launcher} -c -q
 	echo "$ ${dmce_launcher} ${dmce_launcher_args}"
