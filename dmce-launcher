@@ -43,6 +43,7 @@ OPTIONS
     --progress       Progress bar (implies -q)
     -q               Quiet mode
     -r val           SHA-1 delta HEAD..<val>
+    -f <path/file>   Manually point out a custom .dmceconfig file
     --skip           Skip include file retrieval
     --stupid         DMCE include files awareness disabled
     -v, --version    Get DMCE version
@@ -105,6 +106,7 @@ optspec+="c"
 optspec+="d:"
 optspec+="h"
 optspec+="n:"
+optspec+="f:"
 optspec+="q"
 optspec+="r:"
 optspec+="v"
@@ -122,6 +124,7 @@ checkout_head=false
 print_version_and_exit=false
 progress=false
 quiet=false
+config_file_cmd=""
 
 while getopts "$optspec" optchar; do
     case "${optchar}" in
@@ -190,6 +193,9 @@ while getopts "$optspec" optchar; do
             old=${OPTARG}
             search_method="raw"
             ;;
+        f)
+            config_file_cmd=${OPTARG}
+            ;;
         q)
             quiet=true
             ;;
@@ -226,9 +232,16 @@ git_root=$(pwd -P)
 git_name=$(basename "${git_root}")
 export DMCE_GIT_NAME=$git_name
 
-# Find out what config file to use. Start with the one in the git
+# Find out what config file to use. Look in this order: cmd line, git root, home dir
+if  [ "$config_file_cmd" != "" ]; then
 
-if [ -e "${git_root}"/.dmceconfig ]; then
+    if  [ -e $config_file_cmd ]; then
+        USE_DMCE_CONFIG_FILE=$config_file_cmd
+    else
+        _echo "Could not find config file: $config_file_cmd, abort"
+        exit 1
+    fi
+elif [ -e "${git_root}"/.dmceconfig ]; then
     USE_DMCE_CONFIG_FILE="${git_root}"/.dmceconfig
 elif [ -e "$HOME"/.dmceconfig ]; then
     USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
