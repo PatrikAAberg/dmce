@@ -64,6 +64,24 @@ function jobcap {
     done
 }
 
+function memcap {
+    let memlimit=50
+    while true; do
+        mem=$(free | grep "Mem")
+        tot=$(echo $mem | cut -d' ' -f2)
+        used=$(echo $mem | cut -d' ' -f3)
+        let ntot=$tot
+        let nused=$used
+        let percentused=nused*100/ntot
+        if [ $percentused -lt $memlimit ]; then
+            break
+        else
+            echo "Memory limit of ${memlimit}% reached (used: ${percentused}%), wait 10s..."
+            sleep 10
+        fi
+    done
+}
+
 # Usage
 if [ $# -ne 5 ]; then
     echo "Usage: $(basename $0) <path to git top> <new commit sha id> <old commit sha id> <old-git-root> <offset>"
@@ -420,6 +438,7 @@ for c_file in $FILE_LIST; do
     [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
     touch $dmcepath/new/$c_file.probedata
     $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
+    memcap
 done
 wait
 
