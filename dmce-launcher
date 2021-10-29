@@ -266,7 +266,7 @@ done < "$USE_DMCE_CONFIG_FILE"
 mkdir -p $DMCE_WORK_PATH/$git_name
 grep "DMCE_PROBE_DEFINE" $USE_DMCE_CONFIG_FILE | sed -E "s,DMCE_PROBE_DEFINE:,#define ,g" > $DMCE_WORK_PATH/$git_name/probedefines.h
 if [ ! -s $DMCE_WORK_PATH/$git_name/probedefines.h ]; then
-	rm $DMCE_WORK_PATH/$git_name/probedefines.h
+    rm $DMCE_WORK_PATH/$git_name/probedefines.h
 fi
 
 mandatory_configs=
@@ -285,15 +285,15 @@ for c in ${mandatory_configs[@]}; do
 done
 
 if ! DMCE_VERSION=$(git -C "$DMCE_EXEC_PATH" describe --tags --always --dirty --long 2> /dev/null); then
-	DMCE_VERSION="TBD"
+    DMCE_VERSION="TBD"
 fi
 export DMCE_VERSION
 if [ "${quiet}" = "false" ]; then
-	echo "DMCE ${DMCE_VERSION}"
+    echo "DMCE ${DMCE_VERSION}"
 fi
 
 if [ "$print_version_and_exit" = true ]; then
-	exit
+    exit
 fi
 
 if [ "${quiet}" = "false" ]; then
@@ -301,8 +301,8 @@ if [ "${quiet}" = "false" ]; then
 fi
 
 if [ "$(readlink -f ${DMCE_EXEC_PATH})" = "${git_root}" ]; then
-	echo "error: do not run DMCE on DMCE"
-	exit 1
+    echo "error: do not run DMCE on DMCE"
+    exit 1
 fi
 
 _echo "config file: $USE_DMCE_CONFIG_FILE"
@@ -366,14 +366,39 @@ if [ "$skip" = false ]; then
         _echo "stupid mode enabled, no include files used"
     else
         old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
-        rm -rf ${old_git_dir}
         mkdir -p $DMCE_WORK_PATH/baseline
-        _echo "set up old SHA-1: ${old_git_dir} from git: ${git_root}"
-        cp -r ${git_root} ${old_git_dir} &>/dev/null
+        # check if we have 'git worktree' (git >=2.5) on this machine
+        if git help -a | grep -w -q worktree; then
+            _echo "set up old SHA-1: ${old_git_dir} using 'git worktree'"
+            setup_worktree=1
 
-        git -C "${old_git_dir}" clean -dfx &>/dev/null
-        git -C "${old_git_dir}" reset --hard &>/dev/null
-        git -C "${old_git_dir}" checkout "${old}" &>/dev/null
+            # remove any old repos laying around
+            if [ -d "${old_git_dir}"/.git ] ; then
+                    rm -rf ${old_git_dir}
+            elif [ -e "${old_git_dir}"/.git ] ; then
+                worktree=$(grep gitdir: "${old_git_dir}"/.git | awk '{print $2}')
+                if [[ $worktree =~ $git_root ]]; then
+                    _echo "worktree seems to be healthy"
+                    setup_worktree=0
+                fi
+            fi
+
+            if [ $setup_worktree -eq 1 ]; then
+                _echo "git worktree add -f ${old_git_dir} ${old}"
+                git -C "${git_root}" worktree add -f "${old_git_dir}" "${old}"
+            fi
+        else
+            _echo "set up old SHA-1: ${old_git_dir} using 'cp' (slow)"
+            if [ -d ${old_git_dir} ]; then
+                   rm -rf ${old_git_dir}
+            fi
+            cp -ar ${git_root} ${old_git_dir} &>/dev/null
+        fi
+
+        _echo "git -C ${old_git_dir} clean/reset/checkout ${old}"
+        git -C "${old_git_dir}" clean -dfx || true
+        git -C "${old_git_dir}" reset --hard &>/dev/null || true
+        git -C "${old_git_dir}" checkout "${old}" &>/dev/null || true
 
         _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/new"
         find "${git_root}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/new/ {} + &>/dev/null || :
