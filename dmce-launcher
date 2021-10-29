@@ -25,7 +25,25 @@ function _echo {
     if [ "${quiet}" = "true" ]; then
         return
     fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S'):$NAME:$*"
+    local diff
+    if [ "x$old_sec" != "x" ]; then
+            diff=$((SECONDS-old_sec))
+    else
+            diff=0
+    fi
+    echo "$(date '+%Y-%m-%d %H:%M:%S') (+${diff}s):$NAME:$*"
+    old_sec=$SECONDS
+}
+
+function jobcap {
+   if [ ${_jobs:?} -eq 0 ]; then
+           return
+   fi
+   local job_list
+   mapfile -t job_list < <(jobs -p -r)
+   if [ "${#job_list[@]}" -ge "${_jobs}" ]; then
+           wait -n || true
+   fi
 }
 
 function usage() {
@@ -38,6 +56,7 @@ OPTIONS
     -d val           Number of weeks from HEAD
     --head[=]<val>   <val> is the HEAD to which comparison is done
     -h, --help       This help
+    -j val           Number of background jobs to run simultaneously
     -n val           Number of commits from HEAD
     --offset[=]<val> Assign probes starting from <val>
     --progress       Progress bar (implies -q)
@@ -105,6 +124,7 @@ fi
 optspec+="c"
 optspec+="d:"
 optspec+="h"
+optspec+="j:"
 optspec+="n:"
 optspec+="f:"
 optspec+="q"
@@ -125,6 +145,7 @@ print_version_and_exit=false
 progress=false
 quiet=false
 config_file_cmd=""
+_jobs=$(getconf _NPROCESSORS_ONLN)
 
 while getopts "$optspec" optchar; do
     case "${optchar}" in
@@ -178,6 +199,9 @@ while getopts "$optspec" optchar; do
         h)
             usage
             ;;
+        j)
+            _jobs=${OPTARG}
+            ;;
         v)
             print_version_and_exit=true
             ;;
@@ -222,6 +246,7 @@ fi
 export DMCE_QUIET_MODE="${quiet}"
 export DMCE_PROGRESS="${progress}"
 export DMCE_DEBUG="${debug}"
+export DMCE_JOBS="${_jobs}"
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
@@ -311,6 +336,7 @@ if [ "$dmce_double" != "" ]; then
     _echo "restoring old probe state"
     for f in $dmce_double; do
         { mv "$f" "${f%%.dmceoriginal}"; touch ${f%%.dmceoriginal}; } &
+        jobcap
     done
     wait
 fi

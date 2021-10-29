@@ -33,15 +33,15 @@ function summary {
     echo "==============================================="
     echo "git repository          $PWD"
     if [ "$oldsha" != "$oldsha_rev" ]; then
-	    echo "Old SHA-1               $(printf %-${padding}s $oldsha) ($oldsha_rev)"
+            echo "Old SHA-1               $(printf %-${padding}s $oldsha) ($oldsha_rev)"
     else
-	    echo "Old SHA-1               $oldsha"
-	    padding=0
+            echo "Old SHA-1               $oldsha"
+            padding=0
     fi
     if [ "$newsha" != "$newsha_rev" ]; then
-	    echo "New SHA-1               $(printf %-${padding}s $newsha) ($newsha_rev)"
+            echo "New SHA-1               $(printf %-${padding}s $newsha) ($newsha_rev)"
     else
-	    echo "New SHA-1               $newsha"
+            echo "New SHA-1               $newsha"
     fi
     echo "Files examined          $nbr_of_files"
     echo "Files probed            $files_probed"
@@ -56,12 +56,14 @@ function summary {
 }
 
 function jobcap {
-    while true; do
-        if [ "$(pgrep -f $1 | wc -l || :)" -lt "100" ]; then
-            break
+        if [ ${DMCE_JOBS:?} -eq 0 ]; then
+                return
         fi
-        sleep 0.5
-    done
+        mapfile -t job_list < <(jobs -p -r)
+        if [ "${#job_list[@]}" -lt "${DMCE_JOBS}" ]; then
+                return
+        fi
+        wait -n || true
 }
 
 function memcap {
@@ -125,7 +127,15 @@ _echo() {
     if quiet_mode; then
         return
     fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S'):dmce.sh:$*"
+
+    local diff
+    if [ "x$old_sec" != "x" ]; then
+        diff=$((SECONDS-old_sec))
+    else
+        diff=0
+    fi
+    echo "$(date '+%Y-%m-%d %H:%M:%S') (+${diff}s):dmce.sh:$*"
+    old_sec=$SECONDS
 }
 
 progress
@@ -143,11 +153,11 @@ offset=$5
 dmcepath="$DMCE_WORK_PATH/$git_project"
 
 if ! newsha_rev=$(git rev-list -1 ${newsha}); then
-	echo "error: could not run 'git rev-list -1 ${newsha}'"
-	exit 1
+        echo "error: could not run 'git rev-list -1 ${newsha}'"
+        exit 1
 elif ! oldsha_rev=$(git rev-list -1 ${oldsha}); then
-	echo "error: could not run 'git rev-list -1 ${oldsha}'"
-	exit 1
+        echo "error: could not run 'git rev-list -1 ${oldsha}'"
+        exit 1
 fi
 
 _echo "binary path: $binpath"
@@ -240,6 +250,7 @@ else
     [ -e $dmcepath/cmdlookup.cache ] && rm $dmcepath/cmdlookup.cache
     for c_file in $FILE_LIST; do
         $DMCE_CMD_LOOKUP_HOOK $c_file >> $dmcepath/cmdlookup.cache &
+        jobcap
     done
     wait
     popd &>/dev/null
@@ -276,13 +287,13 @@ if [ ${#folders[@]} -ne 0 ]; then
 fi
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
-
     for c_file in $FILE_LIST; do
         # Is this needed? Maybe optimize the gen script instead
         #TODO: Check for c or c++
         #TODO: Add -I.../inc/new and -I.../inc/old directives
         echo -e "{\n\"directory\": \"$dmcepath/new/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/new/"$c_file".JSON &
         echo -e "{\n\"directory\": \"$dmcepath/old/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," > $dmcepath/old/"$c_file".JSON &
+        jobcap
     done
     wait
 
@@ -346,25 +357,16 @@ fi
 
 progress
 
-_echo "running clang-check"
-i=0
+_echo "running clang-check (old)"
 for c_file in $FILE_LIST_OLD; do
     eval clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/old/clangresults.log > $dmcepath/old/$c_file.clang &
-    (( i+=1 ))
-    if [ "$i" -gt 500 ]; then
-        i=0
-        jobcap clang-check
-    fi
+    jobcap
 done
 
-i=0
+_echo "running clang-check (new)"
 for c_file in $FILE_LIST_NEW; do
     eval clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2>>$dmcepath/new/clangresults.log > $dmcepath/new/$c_file.clang &
-    (( i+=1 ))
-    if [ "$i" -gt 500 ]; then
-        i=0
-        jobcap clang-check
-    fi
+    jobcap
 done
 wait
 
@@ -379,6 +381,7 @@ for c_file in $FILE_LIST_OLD; do
         let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
         [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
     } &
+    jobcap
 done
 
 for c_file in $FILE_LIST_NEW; do
@@ -389,25 +392,37 @@ for c_file in $FILE_LIST_NEW; do
         let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
         [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
     } &
+    jobcap
 done
 wait
 
 progress
 
-_echo "preparing clang data: remove hexnumbers"
+# Replace all hexnumbers and "branches" (in-place) on clang-files
+_echo "preparing clang data: remove hexnumbers (old)"
 for c_file in $FILE_LIST; do
-    # Replace all hexnumbers and "branches" (in-place) on clang-files
     sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' $dmcepath/old/$c_file.clang &
+    jobcap
+done
+_echo "preparing clang data: remove hexnumbers (new)"
+for c_file in $FILE_LIST; do
     sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' -e 's/`-/|-/' $dmcepath/new/$c_file.clang &
+    jobcap
 done
 wait
 
 progress
 
-_echo "remove position dependent stuff (line numbers) from clang output"
+_echo "remove position dependent stuff (line numbers) from clang output (old)"
 for c_file in $FILE_LIST; do
     sed -e "s/<[^>]*>//g"  $dmcepath/old/$c_file.clang > $dmcepath/old/$c_file.clang.filtered &
+    jobcap
+done
+
+_echo "remove position dependent stuff (line numbers) from clang output (new)"
+for c_file in $FILE_LIST; do
     sed -e "s/<[^>]*>//g"  $dmcepath/new/$c_file.clang > $dmcepath/new/$c_file.clang.filtered &
+    jobcap
 done
 wait
 
@@ -421,6 +436,7 @@ for c_file in $FILE_LIST; do
       -U0 \
       $dmcepath/old/$c_file.clang.filtered \
       $dmcepath/new/$c_file.clang.filtered > $dmcepath/new/$c_file.clang.filtereddiff || : &
+    jobcap
 done
 wait
 
@@ -429,6 +445,7 @@ progress
 _echo "producing clang diffs"
 for c_file in $FILE_LIST; do
     $binpath/create-clang-diff $dmcepath/new/$c_file.clang.filtereddiff &
+    jobcap
 done
 
 wait
@@ -440,6 +457,7 @@ for c_file in $FILE_LIST; do
     [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
     touch $dmcepath/new/$c_file.probedata
     $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
+    jobcap
     memcap
 done
 wait
@@ -488,7 +506,7 @@ while read -r c_file; do
 
       # any defines from the config file
       if [ -s $dmcepath/probedefines.h ]; then
-	      cat $dmcepath/probedefines.h >> $dmcepath/workarea/$c_file
+              cat $dmcepath/probedefines.h >> $dmcepath/workarea/$c_file
       fi
 
       # Put the probe in the end
@@ -501,6 +519,7 @@ while read -r c_file; do
       # remove probed working files from tree
       rm $c_file.probed
   } &
+  jobcap
 done < $dmcepath/workarea/probe-list
 
 # remove skipped working files from tree
@@ -581,6 +600,7 @@ else
     _echo "launch SED jobs"
     for var in "${SED_CMDS[@]}"; do
         sed -i ${var} &
+        jobcap
     done
     wait
 
