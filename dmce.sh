@@ -504,6 +504,9 @@ while read -r c_file; do
       # The probed source file itself
       cat $c_file.probed >> $dmcepath/workarea/$c_file
 
+      # new line
+      echo "" >> $dmcepath/workarea/$c_file
+
       # any defines from the config file
       if [ -s $dmcepath/probedefines.h ]; then
               cat $dmcepath/probedefines.h >> $dmcepath/workarea/$c_file
