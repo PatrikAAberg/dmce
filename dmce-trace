@@ -13,17 +13,24 @@ parser.add_argument('dfile',            type=str,                   help='Raw ip
 parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='path to code tree')
 parser.add_argument('--numvars',        type=int, default=0,        help='Number of variables, default: 0')
-parser.add_argument('--sourcewidth',    type=int, default=140,       help='Width of source code lines, default: 80')
+parser.add_argument('--sourcewidth',    type=int, default=140,      help='Width of source code lines, default: 80')
 parser.add_argument('-A',               type=int, default=0,        help='Number of trailing source code lines, default: 0')
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
+parser.add_argument('-c',               type=str, default="nocores",help='Comma-separated list of cores to display')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
 parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
+
 args = parser.parse_args()
 
 trailing=args.A
 leading=args.B
 showtimestamps = args.t
+
+if not 'nocores' in args.c:
+    cores = args.c.split(',')
+else:
+    cores = None
 
 dfile = args.dfile
 probefile = args.probefile
@@ -121,6 +128,10 @@ for filename in tree:
 for n in range(length):
     pnum = data[n, 1]
     cpu = data[n, entrysize64 - 1]
+
+    if cores is not None and str(cpu) not in cores:
+        continue
+
     if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
         vs = []
         for v in range(0, args.numvars):
