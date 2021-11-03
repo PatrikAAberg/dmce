@@ -27,9 +27,9 @@ function _echo {
     fi
     local diff
     if [ "x$old_sec" != "x" ]; then
-            diff=$((SECONDS-old_sec))
+        diff=$((SECONDS-old_sec))
     else
-            diff=0
+        diff=0
     fi
     echo "$(date '+%Y-%m-%d %H:%M:%S') (+${diff}s):$NAME:$*"
     old_sec=$SECONDS
@@ -37,12 +37,12 @@ function _echo {
 
 function jobcap {
    if [ ${_jobs:?} -eq 0 ]; then
-           return
+       return
    fi
    local job_list
    mapfile -t job_list < <(jobs -p -r)
    if [ "${#job_list[@]}" -ge "${_jobs}" ]; then
-           wait -n || true
+       wait -n || true
    fi
 }
 
@@ -400,12 +400,22 @@ if [ "$skip" = false ]; then
 
             # remove any old repos laying around
             if [ -d "${old_git_dir}"/.git ] ; then
-                    rm -rf ${old_git_dir}
+                rm -rf ${old_git_dir}
             elif [ -e "${old_git_dir}"/.git ] ; then
-                worktree=$(grep gitdir: "${old_git_dir}"/.git | awk '{print $2}')
-                if [[ $worktree =~ $git_root ]]; then
-                    _echo "worktree seems to be healthy"
-                    setup_worktree=0
+                if ! git -C $old_git_dir status --porcelain &> /dev/null; then
+                    _echo "worktree is broken"
+                    rm -rf ${old_git_dir}
+                else
+                    worktree=$(grep gitdir: "${old_git_dir}"/.git | awk '{print $2}')
+                    if [[ $worktree =~ $git_root ]]; then
+                        if ! git -C $old_git_dir status --porcelain &> /dev/null; then
+                            _echo "worktree is broken"
+                            rm -rf ${old_git_dir}
+                        else
+                            _echo "worktree seems to be healthy"
+                            setup_worktree=0
+                        fi
+                    fi
                 fi
             fi
 
