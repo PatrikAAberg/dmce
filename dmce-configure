@@ -40,32 +40,30 @@ fcfg.close()
 count = 0
 while count < len(clines):
 
-    clines[count] = clines[count].rstrip()
-
     if not '#' in clines[count]:
 
         # trace profile
         if args.profile == "trace":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
-                clines[count] = "DMCE_NUM_DATA_VARS:5"
+                clines[count] = "DMCE_NUM_DATA_VARS:5\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:usr/share/dmce/dmce-probe-trace-atexit-D5-CB.c"
+                clines[count] = "DMCE_PROBE_SOURCE:usr/share/dmce/dmce-probe-trace-atexit-D5-CB.c\n"
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:dmce-prolog-trace-D5.c"
+                clines[count] = "DMCE_PROBE_PROLOG:dmce-prolog-trace-D5.c\n"
 
 
         # coverage profile
         elif args.profile == "coverage":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
-                clines[count] = "DMCE_NUM_DATA_VARS:0"
+                clines[count] = "DMCE_NUM_DATA_VARS:0\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user-atexit.c"
+                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user-atexit.c\n"
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:path-to-my-dmce-directory/dmce-prolog-default.c"
+                clines[count] = "DMCE_PROBE_PROLOG:path-to-my-dmce-directory/dmce-prolog-default.c\n"
 
         else:
             print("Unkown profile (please use trace or coverage), abort")
@@ -73,7 +71,7 @@ while count < len(clines):
 
 # Modify config folder
 
-    count += 1 
+    count += 1
 
 
 if args.verbose:
@@ -83,13 +81,26 @@ if args.verbose:
     print(excludes)
     print("Included files and/or functions:")
     print(includes)
-    
 
 # write back config file
 fcfg = open(filename, "w")
-
 for line in clines:
-#   pf.write(line)
-   print(line)
-
+   fcfg.write(line)
 fcfg.close()
+
+if args.configdir is None:
+    configdir = homeDirectory + "/.config/dmce"
+else:
+    configdir = args.configdir
+
+# write dmce.exclude file
+fexcl = open(configdir + "/dmce.exclude", "w")
+for line in excludes:
+   fexcl.write(line + "\n")
+fexcl.close()
+
+# write dmce.exclude file
+fincl = open(configdir + "/dmce.include", "w")
+for line in includes:
+   fincl.write(line + "\n")
+fincl.close()
