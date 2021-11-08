@@ -28,6 +28,20 @@ else:
 homeDirectory = os.getenv("HOME")
 
 if args.file is None:
+    if (not os.path.isfile(homeDirectory + "/.dmceconfig")) or (not os.path.exists(homeDirectory + "/.config/dmce")):
+        print("Could not find a dmce configuration in " + homeDirectory)
+        print("Please run dmce-configure-global")
+        print("     or")
+        print("manually create:")
+        print(homeDirectory + "/.dmceconfig")
+        print(homeDirectory + "/.config/dmce/dmce.exclude")
+        print(homeDirectory + "/.config/dmce/dmce.include")
+        print(homeDirectory + "/.config/dmce/cmdlookuphook.sh")
+        print(homeDirectory + "/.config/dmce/constructs.exclude")
+        print(homeDirectory + "/.config/dmce/recognizedexpressions.py")
+        sys.exit(1)
+
+if args.file is None:
     filename =  homeDirectory + "/.dmceconfig"
 else:
     filename = args.file

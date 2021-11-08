@@ -80,7 +80,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
     /* Set up buffer and control if not done */
 #ifdef __cplusplus
     if (dmce_trace_enabled_p == nullptr)
-#else 
+#else
     if (dmce_trace_enabled_p == 0)
 #endif
     {
@@ -91,7 +91,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         /* env var format: enabled buf_p hitcount*/
         if (! dmce_buffer_setup_done) {
             if (! (mkdir("/tmp/dmce-trace-buffer-lock",0))) {
-            
+
                 char s[32 * 3];
                 dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
                                                           sizeof(dmce_probe_entry_t));
