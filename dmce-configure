@@ -63,7 +63,7 @@ while count < len(clines):
                 clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user-atexit.c\n"
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:path-to-my-dmce-directory/dmce-prolog-default.c\n"
+                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c\n"
 
         else:
             print("Unkown profile (please use trace or coverage), abort")
