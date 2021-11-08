@@ -48,10 +48,10 @@ while count < len(clines):
                 clines[count] = "DMCE_NUM_DATA_VARS:5\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:usr/share/dmce/dmce-probe-trace-atexit-D5-CB.c\n"
+                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-trace-atexit-D5-CB.c\n"
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:dmce-prolog-trace-D5.c\n"
+                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-trace-D5.c\n"
 
 
         # coverage profile
