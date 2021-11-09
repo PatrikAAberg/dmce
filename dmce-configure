@@ -12,6 +12,7 @@ parser.add_argument('-f', '--file',   type=str, default = None, help='What confi
 parser.add_argument('-d', '--configdir',   type=str, default = None, help='What config folder to update, default: $HOME/.config/dmce')
 parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-anything', help='Comma separated list of files and functions to exclude: <file,:function,file:function >')
 parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma separated list of files and functions to include: <file,:function,file:function >')
+parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 args = parser.parse_args()
 
@@ -24,6 +25,11 @@ if ".*" not in args.include:
     includes = args.include.split(',')
 else:
     includes = [args.include]
+
+if args.constructs is not None:
+    constructs = args.constructs.split(',')
+else:
+    constructs = []
 
 homeDirectory = os.getenv("HOME")
 
@@ -95,6 +101,8 @@ if args.verbose:
     print(excludes)
     print("Included files and/or functions:")
     print(includes)
+    print("Excluded constructs (textual search):")
+    print(constructs)
 
 # write back config file
 fcfg = open(filename, "w")
@@ -113,8 +121,17 @@ for line in excludes:
    fexcl.write(line + "\n")
 fexcl.close()
 
-# write dmce.exclude file
+# write dmce.include file
 fincl = open(configdir + "/dmce.include", "w")
 for line in includes:
    fincl.write(line + "\n")
-fincl.close()
+fincl.close()# write dmce.include file
+
+if args.constructs is not None:
+    fcon = open(configdir + "/constructs.exclude", "w")
+    for line in constructs:
+        fcon.write(line + "\n")
+    for a in range(ord('A'), ord('Z') + 1):
+        for b in range(ord('A'), ord('Z') + 1):
+            fcon.write(chr(a) + chr(b) + "\n")
+    fcon.close()
