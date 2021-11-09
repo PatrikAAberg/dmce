@@ -7,7 +7,7 @@ import os
 descr = 'Set dmce profile. Modifies .dmceconfig and filter files in the dmce config directory.'
 
 parser = argparse.ArgumentParser(description=descr)
-parser.add_argument('profile',    type=str,    help='Available profiles: trace coverage')
+parser.add_argument('profile',    type=str,    help='Available profiles: trace coverage syslog')
 parser.add_argument('-f', '--file',   type=str, default = None, help='What config file to update, default: $HOME/.dmceconfig')
 parser.add_argument('-d', '--configdir',   type=str, default = None, help='What config folder to update, default: $HOME/.config/dmce')
 parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-anything', help='Comma separated list of files and functions to exclude: <file,:function,file:function >')
@@ -85,8 +85,19 @@ while count < len(clines):
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c\n"
 
+        # syslog profile
+        elif args.profile == "syslog":
+            if "DMCE_NUM_DATA_VARS" in clines[count]:
+                clines[count] = "DMCE_NUM_DATA_VARS:0\n"
+
+            if "DMCE_PROBE_SOURCE" in clines[count]:
+                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-syslog.c\n"
+
+            if "DMCE_PROBE_PROLOG" in clines[count]:
+                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c\n"
+
         else:
-            print("Unkown profile (please use trace or coverage), abort")
+            print("Unkown profile (please use trace, coverage or syslog), abort")
             sys.exit(1)
 
 # Modify config folder
