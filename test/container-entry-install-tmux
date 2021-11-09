@@ -10,7 +10,7 @@ dpkg -i dmce-1.2-0.deb
 cd ..
 git clone https://github.com/tmux/tmux.git
 export USER="root" # not set in docker container
-dmce-configure-global
+dmce-setup
 cd tmux
 git checkout 2.9
 dmce-launcher -n 10000

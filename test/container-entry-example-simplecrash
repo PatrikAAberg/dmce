@@ -10,7 +10,7 @@ dpkg -i dmce-*.deb
 cd ..
 git clone https://github.com/PatrikAAberg/dmce-examples.git
 export USER="root" # not set in docker container
-dmce-configure-global
+dmce-setup
 cd dmce-examples
 ./config-trace
 dmce-launcher -n 10000

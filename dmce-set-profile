@@ -4,7 +4,7 @@ import sys
 import argparse
 import os
 
-descr = 'Print DMCE coverage, hit and total number of instrumentation probes.'
+descr = 'Set dmce profile. Modifies .dmceconfig and filter files in the dmce config directory.'
 
 parser = argparse.ArgumentParser(description=descr)
 parser.add_argument('profile',    type=str,    help='Available profiles: trace coverage')
@@ -36,7 +36,7 @@ homeDirectory = os.getenv("HOME")
 if args.file is None:
     if (not os.path.isfile(homeDirectory + "/.dmceconfig")) or (not os.path.exists(homeDirectory + "/.config/dmce")):
         print("Could not find a dmce configuration in " + homeDirectory)
-        print("Please run dmce-configure-global")
+        print("Please run dmce-setup")
         print("     or")
         print("manually create:")
         print(homeDirectory + "/.dmceconfig")
