@@ -310,7 +310,7 @@ for c in ${mandatory_configs[@]}; do
 done
 
 if ! DMCE_VERSION=$(git -C "$DMCE_EXEC_PATH" describe --tags --always --dirty --long 2> /dev/null); then
-    DMCE_VERSION="TBD"
+    DMCE_VERSION=$(cat /usr/share/dmce/version)
 fi
 export DMCE_VERSION
 if [ "${quiet}" = "false" ]; then
