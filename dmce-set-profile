@@ -13,6 +13,7 @@ parser.add_argument('-d', '--configdir',   type=str, default = None, help='What 
 parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-anything', help='Comma separated list of files and functions to exclude: <file,:function,file:function >')
 parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma separated list of files and functions to include: <file,:function,file:function >')
 parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
+parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 args = parser.parse_args()
 
@@ -56,6 +57,12 @@ fcfg = open(filename)
 clines = fcfg.readlines()
 fcfg.close()
 
+def setProbeOrProlog(cstring, basename):
+    if not args.keeppaths:
+        return cstring.split(':')[0] + ":/usr/share/dmce/" + basename + "\n"
+    else:
+        return cstring.split(':')[0] + ":" + os.path.dirname(cstring.split(':')[1]) + "/" + basename + "\n"
+
 # Modify config file
 count = 0
 while count < len(clines):
@@ -68,11 +75,10 @@ while count < len(clines):
                 clines[count] = "DMCE_NUM_DATA_VARS:5\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-trace-atexit-D5-CB.c\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-trace-atexit-D5-CB.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-trace-D5.c\n"
-
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-D5.c")
 
         # coverage profile
         elif args.profile == "coverage":
@@ -80,10 +86,10 @@ while count < len(clines):
                 clines[count] = "DMCE_NUM_DATA_VARS:0\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user-atexit.c\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-user-atexit.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
         # syslog profile
         elif args.profile == "syslog":
@@ -91,10 +97,10 @@ while count < len(clines):
                 clines[count] = "DMCE_NUM_DATA_VARS:0\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = "DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-syslog.c\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-syslog.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = "DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
         else:
             print("Unkown profile (please use trace, coverage or syslog), abort")
