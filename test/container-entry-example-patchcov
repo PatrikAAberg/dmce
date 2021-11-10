@@ -12,7 +12,7 @@ git clone https://github.com/PatrikAAberg/dmce-examples.git
 export USER="root" # not set in docker container
 dmce-setup
 cd dmce-examples
-./config-patchcov
+dmce-set-profile coverage -i patchcov
 pushd patchcov
 git apply 000-patchcov.patch
 popd

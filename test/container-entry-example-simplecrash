@@ -12,7 +12,7 @@ git clone https://github.com/PatrikAAberg/dmce-examples.git
 export USER="root" # not set in docker container
 dmce-setup
 cd dmce-examples
-./config-trace
+dmce-set-profile trace -i simplecrash
 dmce-launcher -n 10000
 pushd simplecrash
 ./build

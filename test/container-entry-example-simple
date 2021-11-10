@@ -11,7 +11,7 @@ git clone https://github.com/PatrikAAberg/dmce-examples.git
 export USER="root" # not set in docker container
 dmce-setup
 cd dmce-examples
-./config-simple
+dmce-set-profile printf -i simple -e simplecrash
 dmce-launcher -n 10000
 git diff
 cd simple
