@@ -628,6 +628,9 @@ else
     for ((i = 0; i < ${#str[@]}; i++)); do
         echo "${str[$i]}" >> "$dmcepath/expr-references.log"
     done
+
+    # Create a probe ref file with original line numbers
+    cat $dmcepath/probe-references.log | awk -v len="$size_of_user" -F: '{print $1 ":" $2 ":" $3 - len ":" $4}' > $dmcepath/probe-references-original.log
 fi
 
 _echo "$(basename "$git_top") summary:"
