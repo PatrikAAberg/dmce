@@ -65,6 +65,10 @@ DMCE_LOG_FILES:/tmp/$USER/dmce
 
 # git diff algorithm
 DMCE_GIT_DIFF_ALGORITHM:histogram
+
+# Some probes need a path for binary output files
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/$USER/dmce/dmcebuffer.bin"
+
 NoWord
 
 echo "Creating dmce config directory as $HOME/.config/dmce"

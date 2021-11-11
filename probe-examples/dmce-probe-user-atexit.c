@@ -7,6 +7,10 @@
 #include <stdint.h>
 #define DMCE_NUM_PROBES (100000*6)
 
+#ifndef DMCE_PROBE_OUTPUT_FILE_BIN
+#define DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/dmcebuffer.bin"
+#endif
+
 static uint32_t* dmce_buffer;
 static uint32_t* dmce_tmp_buffer;
 static int registered_at_exit = 0;
@@ -17,13 +21,13 @@ static void dmce_atexit(void){
     size_t n;
     int i;
 
-    if (!(fp = fopen("/tmp/dmcebuffer.bin", "r"))) {
+    if (!(fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "r"))) {
 
-        fp = fopen("/tmp/dmcebuffer.bin", "w");
+        fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
         fwrite(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
         fclose(fp);
 
-        fp = fopen("/tmp/dmcebuffer.bin", "r");
+        fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "r");
     }
 
     n = fread(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
@@ -34,7 +38,7 @@ static void dmce_atexit(void){
         dmce_tmp_buffer[i] += dmce_buffer[i];
     fclose(fp);
 
-    fp = fopen("/tmp/dmcebuffer.bin", "w");
+    fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
     fwrite(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
     fclose(fp);
 }
