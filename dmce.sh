@@ -48,8 +48,9 @@ function summary {
     echo "Files skipped           $files_skipped"
     echo "Probes inserted         $nbrofprobesinserted"
     if [ $nbrofprobesinserted -ne 0 ]; then
-        echo "Probes                  $dmcepath/probe-references.log"
-        echo "Expressions             $dmcepath/expr-references.log"
+        echo "Probe metadata                    $dmcepath/probe-references.log"
+        echo "Probe metadata (original files)   $dmcepath/probe-references-original.log"
+        echo "Expressions                       $dmcepath/expr-references.log"
     fi
     echo "DMCE version            $DMCE_VERSION"
     echo "==============================================="
