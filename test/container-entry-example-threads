@@ -17,10 +17,10 @@ dmce-launcher -n 10000
 pushd threads
 ./build
 set +e
-rm -f /tmp/dmcebuffer.bin
-rm -rf /tmp/dmce-trace-buffer-lock
+rm -f /tmp/$USER/dmce/dmcebuffer.bin
+rm -rf /tmp/$USER/dmce-trace-buffer-lock
 ./threads
 set -e
 popd
-dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/$USER/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 bash
