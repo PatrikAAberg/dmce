@@ -267,8 +267,8 @@ When dmce is searching for added expressions between two git revisions it uses g
 #### Passing defines to dmce probes
 Sometimes it is useful to be able to pass custom information from the .dmceconfig file to the currently used probe. Below is an example:
 
-    DMCE_DEFINE:FOO
-    DMCE_DEFINE:BAR (42)
+    DMCE_PROBE_DEFINE:FOO
+    DMCE_PROBE_DEFINE:BAR (42)
 
 These lines will insert the following after the probed c-file but before the probe code:
 
