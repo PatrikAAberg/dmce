@@ -253,7 +253,10 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
 # Variable set up and config
 
-git_root=$(pwd -P)
+if ! git_root=$(git rev-parse --show-toplevel); then
+        _echo "error: could not get git root"
+	exit 1
+fi
 git_name=$(basename "${git_root}")
 export DMCE_GIT_NAME=$git_name
 
