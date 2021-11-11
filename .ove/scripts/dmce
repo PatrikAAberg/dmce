@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 
-cd ${OVE_BASE_DIR}
+set -e
+
+if ! cd "${OVE_BASE_DIR:?}"; then
+	echo "error: 'cd ${OVE_BASE_DIR}' failed"
+	exit 1
+fi
+
+dmce_launcher="${OVE_ACTIVE_REPO_DIR:?}/dmce-launcher"
+if [ ! -e "$dmce_launcher" ]; then
+	echo "error: can not find DMCE launcher"
+	exit 1
+fi
+
 try_to_identify_repo=0
 if [ $# -eq 0 ]; then
 	repos="$OVE_REPO_LIST"
 	try_to_identify_repo=1
 else
 	while true; do
-		[ "$*" == "" ] && break
+		[ "x$*" = "x" ] && break
 
 		# sanity check
 		if ! [ -d "$1" ] || \
@@ -15,25 +27,33 @@ else
 			shift
 			continue
 		fi
-		repos+="$(readlink -f $1) "
+		repos+="$(readlink -f "$1") "
 		shift
 	done
 
 fi
 
-if [ "${repos}" == "" ]; then
+if [ "x${repos}" = "x" ]; then
 	echo "error: no git repos found, try again"
 	exit 1
 fi
 
-git_dir=$(git -C ${BASH_SOURCE[0]%/*} rev-parse --show-toplevel)
-git_dir=$(cd ${git_dir}; pwd -P)
+
+git_dir=$(git -C "${BASH_SOURCE[0]%/*}" rev-parse --show-toplevel)
+if ! git_dir=$(cd "${git_dir}" || exit; pwd -P); then
+	echo "error: 'cd ${git_dir}' failed"
+	exit 1
+fi
 
 # $1: dir
 # returns 0 if one or more c/c++ file (based on file extension)
 function determine_if_repo_is_dmceable {
-	nbr_of_files=$(find $1 -type f -name '*.c' -or -name '*.cpp' | wc -l)
-	[ ${nbr_of_files} -gt 0 ] && return 0 || return 1
+	nbr_of_files=$(find "$1" -type f -name '*.c' -or -name '*.cpp' | wc -l)
+	if [ "${nbr_of_files}" -gt 0 ]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 for repo in $repos; do
@@ -41,7 +61,7 @@ for repo in $repos; do
 	[ "${repo}" == "${git_dir}" ] && continue
 
 	# skip repos without C or C++ files
-	if [ ${try_to_identify_repo} -eq 1 ] && ! determine_if_repo_is_dmceable ${repo}; then
+	if [ ${try_to_identify_repo} -eq 1 ] && ! determine_if_repo_is_dmceable "${repo}"; then
 		echo "repo: '${repo}' does not look like a C/C++ repo, skipping"
 		continue
 	fi
@@ -49,7 +69,7 @@ for repo in $repos; do
 	launch_dmce_repos+="${repo} "
 done
 
-if [ "${launch_dmce_repos}" == "" ]; then
+if [ "x${launch_dmce_repos}" = "x" ]; then
 	echo "error: no git repos found, try again"
 	exit 1
 fi
@@ -60,7 +80,7 @@ if [ -t 1 ]; then
 	echo "number of commits to probe?"
 	echo "this dialog will timeout in ${timeout} seconds and use ${default_n} commits."
 	while true; do
-		read -t ${timeout} -p "#commits: "
+		read -r -t ${timeout} -p "#commits: "
 		ret=$?
 		if [ $ret -gt 128 ]; then
 			n=${default_n}
@@ -80,21 +100,29 @@ else
 	n=${default_n}
 fi
 
-dmce_launcher="${OVE_ACTIVE_REPO_DIR:?}/dmce-launcher"
-if [ ! -e $dmce_launcher ]; then
-	echo "error: can not find DMCE launcher"
+run() {
+	local cmd
+
+	cmd="$*"
+	echo "$ $cmd"
+	if ! $cmd; then
+		echo "error: '$cmd' failed"
+		return 1
+	fi
+}
+
+# set syslog profile
+if ! run "${OVE_ACTIVE_REPO_DIR:?}/dmce-set-profile -p syslog"; then
 	exit 1
 fi
-dmce_launcher_args="-n ${n} -q"
 
+# run 'dmce-launcher' on all repos
 for repo in ${launch_dmce_repos}; do
-	echo "$ cd ${repo}"
-	if ! cd ${repo}; then
-		echo "error: 'cd ${repo}' failed"
+	if ! run "cd ${repo}"; then
 		exit 1
+	elif ! run "${dmce_launcher} -c -q"; then
+		continue
+	elif ! run "${dmce_launcher} -n ${n} -q"; then
+		continue
 	fi
-	echo "$ ${dmce_launcher} -c -q"
-	${dmce_launcher} -c -q
-	echo "$ ${dmce_launcher} ${dmce_launcher_args}"
-	${dmce_launcher} ${dmce_launcher_args}
 done

@@ -111,10 +111,13 @@ function init() {
 		exit 1
 	fi
 
-	out=$("${OVE_ACTIVE_REPO_DIR:?}"/dmce-launcher -c)
-	if ! grep -q 'DMCE_PROBE_SOURCE=.*dmce-probe-syslog.c' <<<"${out}"; then
-		echo "error: DMCE_PROBE_SOURCE must use 'dmce-probe-syslog.c'. Output from 'dmce-launcher -c':"
-		printf "%s\n" "$out" | grep --color -E '^|DMCE_PROBE_SOURCE.*'
+	if ! "${OVE_ACTIVE_REPO_DIR:?}/dmce-launcher" -c; then
+		echo "error: 'dmce-launcher -c' failed"
+		exit 1
+	fi
+
+	if ! "${OVE_ACTIVE_REPO_DIR}/dmce-set-profile" -p syslog; then
+		echo "error: 'dmce-set-profile -p syslog' failed"
 		exit 1
 	fi
 
