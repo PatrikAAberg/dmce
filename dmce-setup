@@ -69,6 +69,8 @@ DMCE_GIT_DIFF_ALGORITHM:histogram
 # Some probes need a path for binary output files
 DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/$USER/dmce/dmcebuffer.bin"
 
+# Some probes need a system wide lock dir
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/$USER/dmce-trace-buffer-lock"
 NoWord
 
 echo "Creating dmce config directory as $HOME/.config/dmce"

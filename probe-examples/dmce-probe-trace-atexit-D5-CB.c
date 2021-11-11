@@ -9,6 +9,15 @@
 #include <string.h>
 #define DMCE_MAX_HITS 10000
 #define DMCE_TRACE_RINGBUFFER
+
+#ifndef DMCE_PROBE_LOCK_DIR
+#define DMCE_PROBE_LOCK_DIR "/tmp/dmce-trace-buffer-lock"
+#endif
+
+#ifndef DMCE_PROBE_OUTPUT_FILE_BIN
+#define DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/dmcebuffer.bin"
+#endif
+
 typedef struct {
 
     uint64_t timestamp;
@@ -40,7 +49,7 @@ static void dmce_atexit(void) {
 
     FILE *fp;
 
-    fp = fopen("/tmp/dmcebuffer.bin", "w");
+    fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
 #ifdef DMCE_TRACE_RINGBUFFER
     unsigned int buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
     int i;
@@ -54,7 +63,7 @@ static void dmce_atexit(void) {
     fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 #endif
     fclose(fp);
-    remove("/tmp/dmce-trace-buffer-lock");
+    remove("DMCE_PROBE_LOCK_DIR");
 }
 
 static void dmce_signal_handler(int sig) {
@@ -90,7 +99,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         /* TODO: Make this less racy maybe, but only a prooblem if threads spawned before the first probe */
         /* env var format: enabled buf_p hitcount*/
         if (! dmce_buffer_setup_done) {
-            if (! (mkdir("/tmp/dmce-trace-buffer-lock",0))) {
+            if (! (mkdir(DMCE_PROBE_LOCK_DIR,0))) {
 
                 char s[32 * 3];
                 dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
