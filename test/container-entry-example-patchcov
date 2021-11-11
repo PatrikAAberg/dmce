@@ -18,7 +18,7 @@ git apply 000-patchcov.patch
 popd
 dmce-launcher -n 1
 git diff
-rm -f /tmp/dmcebuffer.bin
+rm -f /tmp/${USER}/dmce/dmcebuffer.bin
 cd patchcov
 ./build && ./test-patchcov
-dmce-summary-bin -v /tmp/dmcebuffer.bin /tmp/root/dmce/dmce-examples/probe-references.log
+dmce-summary-bin -v /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log

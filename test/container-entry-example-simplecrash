@@ -22,5 +22,5 @@ rm -rf /tmp/dmce-trace-buffer-lock
 ./simplecrash
 set -e
 popd
-dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 bash
