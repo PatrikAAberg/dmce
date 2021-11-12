@@ -116,8 +116,8 @@ function init() {
 		exit 1
 	fi
 
-	if ! "${OVE_ACTIVE_REPO_DIR}/dmce-set-profile" -p syslog; then
-		echo "error: 'dmce-set-profile -p syslog' failed"
+	if ! "${OVE_ACTIVE_REPO_DIR}/dmce-set-profile" -d "${OVE_ACTIVE_REPO_DIR}" -p syslog; then
+		echo "error: 'dmce-set-profile -d ${OVE_ACTIVE_REPO_DIR} -p syslog' failed"
 		exit 1
 	fi
 
