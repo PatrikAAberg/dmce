@@ -254,8 +254,8 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 # Variable set up and config
 
 if ! git_root=$(git rev-parse --show-toplevel); then
-        _echo "error: could not get git root"
-	exit 1
+    _echo "error: could not get git root"
+    exit 1
 fi
 git_name=$(basename "${git_root}")
 export DMCE_GIT_NAME=$git_name
@@ -334,7 +334,7 @@ if [ "$(readlink -f ${DMCE_EXEC_PATH})" = "${git_root}" ]; then
 fi
 
 _echo "config file: $USE_DMCE_CONFIG_FILE"
-dmce_double=$(find -name "*.dmceoriginal")
+dmce_double=$(find ${git_root} -name "*.dmceoriginal")
 if [ "$dmce_double" != "" ]; then
     _echo "restoring old probe state"
     for f in $dmce_double; do

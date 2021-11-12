@@ -31,28 +31,28 @@ function summary {
 
     padding=$(wc -L <<<$(printf "$oldsha\n$newsha\n"))
     echo "==============================================="
-    echo "git repository          $PWD"
+    echo "git repository                    $PWD"
     if [ "$oldsha" != "$oldsha_rev" ]; then
-            echo "Old SHA-1               $(printf %-${padding}s $oldsha) ($oldsha_rev)"
+            echo "Old SHA-1                         $(printf %-${padding}s $oldsha) ($oldsha_rev)"
     else
-            echo "Old SHA-1               $oldsha"
+            echo "Old SHA-1                         $oldsha"
             padding=0
     fi
     if [ "$newsha" != "$newsha_rev" ]; then
-            echo "New SHA-1               $(printf %-${padding}s $newsha) ($newsha_rev)"
+            echo "New SHA-1                         $(printf %-${padding}s $newsha) ($newsha_rev)"
     else
-            echo "New SHA-1               $newsha"
+            echo "New SHA-1                         $newsha"
     fi
-    echo "Files examined          $nbr_of_files"
-    echo "Files probed            $files_probed"
-    echo "Files skipped           $files_skipped"
-    echo "Probes inserted         $nbrofprobesinserted"
+    echo "Files examined                    $nbr_of_files"
+    echo "Files probed                      $files_probed"
+    echo "Files skipped                     $files_skipped"
+    echo "Probes inserted                   $nbrofprobesinserted"
     if [ $nbrofprobesinserted -ne 0 ]; then
         echo "Probe metadata                    $dmcepath/probe-references.log"
         echo "Probe metadata (original files)   $dmcepath/probe-references-original.log"
         echo "Expressions                       $dmcepath/expr-references.log"
     fi
-    echo "DMCE version            $DMCE_VERSION"
+    echo "DMCE version                      $DMCE_VERSION"
     echo "==============================================="
 }
 
