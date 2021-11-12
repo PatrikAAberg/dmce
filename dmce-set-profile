@@ -35,9 +35,11 @@ else:
 homeDirectory = os.getenv("HOME")
 
 if args.file is None:
-    if (not os.path.isfile(homeDirectory + "/.dmceconfig")) or (not os.path.exists(homeDirectory + "/.config/dmce")):
+    if (not os.path.isfile(homeDirectory + "/.dmceconfig")):
         print("Could not find a dmce configuration in " + homeDirectory)
         print("Please run dmce-setup")
+        print("     or")
+        print("./dmce-configure-local # from the dmce git root")
         print("     or")
         print("manually create:")
         print(homeDirectory + "/.dmceconfig")
