@@ -76,6 +76,8 @@ Enter the dmce directory (cloned or un-tar'ed) and run the local configure scrip
 
 This will produce a .dmceconfig file in the home directory which uses the dmce directory as source for all execution and configuration. Any call to dmce executables in the following examples need to be prepended by the path to the dmce directory.
 
+#### Please note! The examples below assume an alt. 1 installation above. If you choose alt. 2, you can use the -p flag for "dmce-set-profile" to not tamper with the paths to the dmce git.
+
 ## Example 1: A simple, general example of probing
 
 This is a basic example just showing how DMCE probes are inserted without changing SW behaviour with respect to the original function.
