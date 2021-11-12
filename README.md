@@ -53,13 +53,13 @@ python 3+
 ## How to get started
 
 ### Alternative 1: Install Using .deb package
-Find the latest released debian package in "releases" to the right on this page. Download it, install and configure dmce:
+Find the latest released debian package in "releases" to the right on this page. Download it, install and set up dmce:
 
     $ dpkg -i dmce-X.Y-Z.deb    # To uninstall: $ dpkg -r dmce
 
-    $ dmce-configure-global
+    $ dmce-setup
 
-This will produce a .dmceconfig file at /home/$USER and a dmce configuration directory at /home/$USER/.config. Use the files in this directory to control DMCE behaviour.
+This will produce a .dmceconfig file at /home/$USER and a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" tool which has some pre-set profiles that handle common use-cases.
 
 ### Alternative 2: Clone the git or download tarball
 
@@ -84,9 +84,9 @@ Please note that this walkthrough assumes you use the install alternative 1 abov
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Set up a git local .dmceconfig file using this helper:
+Modify the dmce configuration using the "dmce-set-profile tool" to use a printf probe. We want to include the "simple" directory and exclude the "simplecrash" directory:
 
-    $ ./config-simple
+    $ dmce-set-profile printf -i simple -e simplecrash
 
 Run dmce for more commits than are actually in the git, making it probe everything:
 
@@ -118,9 +118,9 @@ Please note that this walkthrough assumes you use the install alternative 1 abov
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Set up a git local .dmceconfig file using this helper:
+Modify the dmce configuration to use a trace probe, including only the "simplecrash" folder:
 
-    $ ./config-trace
+    $ dmce-set-profile trace -i simplecrash
 
 Run dmce for more commits than are actually in the git, making it probe everything:
 
@@ -135,13 +135,13 @@ It crashes! Let's find out why. Step up to the git root again and run dmce-trace
 
     $ pip3 install colorama numpy
 
-    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
-This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo.
+This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo. Please note that the path where the raw trace file end up is decided by the probe through a DMCE_PROBE_DEFINE in the ".dmceconfig" file.
 
 For larger traces than this one, something to try out is to pipe the results to less for easy view and search, like this:
 
-    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
+    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
 
@@ -153,9 +153,9 @@ Please note that this walkthrough assumes you use the install alternative 1 abov
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Set up a git local .dmceconfig file using this helper:
+Set up dmce to do coverage, including only the "patchcov" directory:
 
-    $ ./config-patchcov
+    $ dmce-set-profile coverage -i patchcov
 
 Apply the patch in the patchcov dir:
 
@@ -171,17 +171,17 @@ Check that the patch was probed:
 
     $ git diff
     
-Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/dmcebuffer.bin files if it is not the intention to collect several runs in the same file:
+Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/$USER/dmce/dmcebuffer.bin file if it is not the intention to collect several runs in the same file:
 
-    $ rm -f /tmp/dmcebuffer.bin
+    $ rm -f /tmp/$USER/dmce/dmcebuffer.bin
     $ cd patchcov
     $ ./build && ./test-patchcov
     
 Use dmce summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
 
-    $ dmce-summary-bin -v /tmp/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references.log
+    $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
     
-The probe that was set up by the config-patchcov script writes its output to /tmp/dmcebuffer.bin, so that's wehere we pick it up. 
+The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's wehere we pick it up. Also note that the probe reference file foor this is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones. 
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
 ## Mandatory entries in .dmceconfig
