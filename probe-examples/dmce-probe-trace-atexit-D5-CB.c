@@ -77,8 +77,9 @@ static void dmce_signal_handler(int sig) {
 #ifdef _GNU_SOURCE
 #include <sched.h>
 #else
-int getcpu(unsigned int *cpu, unsigned int *node);
+int sched_getcpu(void);
 #endif
+
 static void dmce_probe_body(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
@@ -152,7 +153,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         index = index % DMCE_MAX_HITS;
 #endif
         dmce_probe_entry_t* e_p = &dmce_buf_p[index];
-        getcpu(&cpu, 0);
+        cpu = sched_getcpu();
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
         e_p->cpu = cpu;
