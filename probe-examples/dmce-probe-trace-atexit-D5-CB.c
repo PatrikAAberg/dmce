@@ -63,7 +63,7 @@ static void dmce_atexit(void) {
     fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 #endif
     fclose(fp);
-    remove("DMCE_PROBE_LOCK_DIR");
+    remove(DMCE_PROBE_LOCK_DIR);
 }
 
 static void dmce_signal_handler(int sig) {
