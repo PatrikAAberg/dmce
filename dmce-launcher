@@ -253,12 +253,10 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 
 # Variable set up and config
 
-if ! git_root=$(git rev-parse --show-toplevel); then
-    _echo "error: could not get git root"
-    exit 1
+if git_root=$(git rev-parse --show-toplevel 2> /dev/null); then
+    git_name=$(basename "${git_root}")
+    export DMCE_GIT_NAME=$git_name
 fi
-git_name=$(basename "${git_root}")
-export DMCE_GIT_NAME=$git_name
 
 # Find out what config file to use. Look in this order: cmd line, git root, home dir
 if  [ "$config_file_cmd" != "" ]; then
@@ -269,7 +267,7 @@ if  [ "$config_file_cmd" != "" ]; then
         _echo "Could not find config file: $config_file_cmd, abort"
         exit 1
     fi
-elif [ -e "${git_root}"/.dmceconfig ]; then
+elif [ "x${git_root}" != "x" ] && [ -e "${git_root}"/.dmceconfig ]; then
     USE_DMCE_CONFIG_FILE="${git_root}"/.dmceconfig
 elif [ -e "$HOME"/.dmceconfig ]; then
     USE_DMCE_CONFIG_FILE=$HOME/.dmceconfig
@@ -312,8 +310,18 @@ for c in ${mandatory_configs[@]}; do
     fi
 done
 
-if ! DMCE_VERSION=$(git -C "$DMCE_EXEC_PATH" describe --tags --always --dirty --long 2> /dev/null); then
+dmce_dir="${BASH_SOURCE[0]}"
+dmce_dir="${dmce_dir%/*}"
+dmce_dir="$(cd "${dmce_dir}" && pwd -P)"
+if [ -d "${dmce_dir}"/.git ]; then
+    DMCE_VERSION=$(GIT_CEILING_DIRECTORIES="$dmce_dir" git -C "$dmce_dir" describe --tags --always --dirty --long 2> /dev/null)
+elif [[ "${dmce_dir}" =~ /usr* ]] && [ -s /usr/share/dmce/version ]; then
     DMCE_VERSION=$(cat /usr/share/dmce/version)
+elif [ -s "${dmce_dir}/debian/control" ]; then
+    DMCE_VERSION=$(grep '^Version:' "${dmce_dir}/debian/control" | cut -d' ' -f2)
+fi
+if [ "x${DMCE_VERSION}" = "x" ]; then
+    DMCE_VERSION="unknown"
 fi
 export DMCE_VERSION
 if [ "${quiet}" = "false" ]; then
