@@ -183,16 +183,16 @@ Use dmce summary to display the results. For this example, we use a binary forma
 
     $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
     
-The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's wehere we pick it up. Also note that the probe reference file foor this is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones. 
+The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones. 
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
 ## Mandatory entries in .dmceconfig
 
 Valid for both alternatives above:
-Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-configure-global). This way, in a multi-git project, each git can have its own dmce configuration.
+Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-setup). This way, in a multi-git project, each git can have its own dmce configuration.
 
 ### .dmceconfig walkthrough
-(showing default values written by dmce-configure-global)
+(showing default values written by dmce-setup)
 
 #### DMCE exec path
 Where DMCE finds it's executables (dmce-launcher, dmce-trace):
