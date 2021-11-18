@@ -190,6 +190,10 @@ git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|
 # add modified/untracked files
 git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
 
+if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
+    git show -l99999 --diff-filter=MA --name-status $oldsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 >> $dmcepath/latest.cache
+fi
+
 # uniq
 sort -o $dmcepath/latest.cache -u $dmcepath/latest.cache
 
@@ -323,6 +327,7 @@ fi
 progress
 
 _echo "copy files and dmce-remove-relpaths.sh"
+> $dmcepath/workarea/clang-list.old
 for c_file in $FILE_LIST; do
     {
         if [[ $c_file == */* ]]; then
@@ -334,8 +339,11 @@ for c_file in $FILE_LIST; do
         mkdir -p $newdestdir
         cp $c_file $newdestdir/
 
-        # If the file does not exist in $oldsha, create an empty file
-        if ! [ -e $old_git_dir/${c_file} ]; then
+        # Probe the entire history? Just create an empty clang file
+        if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
+            touch_files+="$dmcepath/old/$c_file.clang "
+        # c_file does not exist in $oldsha, create an empty file AND clang file
+        elif ! [ -e $old_git_dir/${c_file} ]; then
             touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
         else
             cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file
@@ -343,13 +351,16 @@ for c_file in $FILE_LIST; do
         fi
     }
 done
-[ "${touch_files}" != "" ] && touch $touch_files
+
+if [ "x${touch_files}" != "x" ]; then
+    touch $touch_files
+fi
 $binpath/dmce-remove-relpaths.sh $dmcepath/new &
 $binpath/dmce-remove-relpaths.sh $dmcepath/old &
 wait
 
 FILE_LIST_NEW="${FILE_LIST}"
-if [ -e $dmcepath/workarea/clang-list.old ]; then
+if [ -s $dmcepath/workarea/clang-list.old ]; then
     FILE_LIST_OLD=""
     while read -r c_file; do
         FILE_LIST_OLD+="$c_file "

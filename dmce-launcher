@@ -52,6 +52,7 @@ SYNOPSIS
     $NAME [options]
 
 OPTIONS
+    -a, --all        Probe entire history
     -c               Restore source code state
     -d val           Number of weeks from HEAD
     --head[=]<val>   <val> is the HEAD to which comparison is done
@@ -80,6 +81,9 @@ DESCRIPTION
 EXAMPLES
     # Run DMCE on your latest changes
     $ ../dmce/$NAME
+
+    # Run DMCE on the entire git history
+    $ ../dmce/$NAME -a
 
     # Run DMCE on the last 15 commits
     $ ../dmce/$NAME -n 15
@@ -121,6 +125,7 @@ if ! command -v git > /dev/null; then
     exit 1
 fi
 
+optspec+="a"
 optspec+="c"
 optspec+="d:"
 optspec+="h"
@@ -146,6 +151,7 @@ progress=false
 quiet=false
 config_file_cmd=""
 _jobs=$(getconf _NPROCESSORS_ONLN)
+probe_all=0
 
 while getopts "$optspec" optchar; do
     case "${optchar}" in
@@ -179,6 +185,9 @@ while getopts "$optspec" optchar; do
                 skip)
                     skip=true
                     ;;
+                all)
+                    probe_all=1
+                    ;;
                 debug)
                     debug=true
                     ;;
@@ -196,6 +205,9 @@ while getopts "$optspec" optchar; do
                     ;;
             esac;;
 
+        a)
+            probe_all=1
+            ;;
         h)
             usage
             ;;
@@ -247,6 +259,7 @@ export DMCE_QUIET_MODE="${quiet}"
 export DMCE_PROGRESS="${progress}"
 export DMCE_DEBUG="${debug}"
 export DMCE_JOBS="${_jobs}"
+export DMCE_PROBE_ALL=${probe_all}
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
@@ -378,7 +391,10 @@ if [ "$checkout_head" = true ]; then
     fi
 fi
 
-if [ "$search_method" == "weeks" ]; then
+if [ "${probe_all}" -eq 1 ]; then
+    number_of_commits=$(git rev-list --count HEAD)
+    old=$(git log --oneline -"$number_of_commits" --pretty=%h | tail -1)
+elif [ "$search_method" == "weeks" ]; then
     _echo "search by weeks (${weeks[0]})"
     old=$(git log -n 1 --before="${weeks[0]}".weeks --pretty=%h | head -n 1)
 elif [ "$search_method" == "commits" ]; then
