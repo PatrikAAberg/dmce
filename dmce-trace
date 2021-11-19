@@ -18,6 +18,8 @@ parser.add_argument('-A',               type=int, default=0,        help='Number
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('-c',               type=str, default="nocores",help='Comma-separated list of cores to display')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
+parser.add_argument('--delimiter',      type=str, default=":",      help='Delimiter. Default: :')
+parser.add_argument('--format',         type=str, default="column", help='Output format (column|raw)')
 parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
 
@@ -37,9 +39,9 @@ probefile = args.probefile
 codetree = args.codetree
 entrysize64 = 2 + args.numvars + 1
 
-print("Raw input file: " + dfile)
-print("Probe ref file: " + probefile)
-print("Code tree     : " + codetree)
+print("Raw input file: " + dfile, file=sys.stderr)
+print("Probe ref file: " + probefile, file=sys.stderr)
+print("Code tree     : " + codetree, file=sys.stderr)
 
 # Read probe refs file
 pf = open(probefile)
@@ -65,8 +67,8 @@ else:
 
 length = int(len(data) / entrysize64)
 if ( (entrysize64 * length) != len(data) ):
-    print("Datafile has wrong alignment, abort")
-    sys.exit(0)
+    print("error: datafile has wrong alignment, abort", file=sys.stderr)
+    sys.exit(1)
 
 data = np.reshape(data, (length, entrysize64))
 
@@ -92,7 +94,7 @@ def stripProbeExtractVars(sl, vs):
         regexp = regexp + '\,(?:\(uint64_t\))*([^\,]*)'
 
     regexp = regexp + "\)\, (.*)"
-    richvs = ""
+    richvs = args.delimiter
 
     slm = re.match(regexp, sl)
     if slm:
@@ -103,7 +105,7 @@ def stripProbeExtractVars(sl, vs):
 
         for i in range (0, args.numvars):
             if slm.group(i + 2) != '0':
-                richvs = richvs + slm.group(i + 2) + ": 0x" + vs[i] + " "
+                richvs = richvs + slm.group(i + 2) + ":0x" + vs[i] + " "
     return sl, richvs
 
 def notComplete(timestamp):
@@ -151,7 +153,7 @@ for n in range(length):
         # Retrieve source code from cache
         lsource = treedict[codetree + "/" + fname]
 
-        fname = ":" + str(cpu) + ":" + fname
+        fname = args.delimiter + str(cpu) + args.delimiter + fname
 
         if showtimestamps:
             fname = str(data[n, 0]) + " " + fname
@@ -171,18 +173,24 @@ for n in range(length):
                     else:
                         sldummy, vs = stripProbeExtractVars(sl, vs)
                     if not args.hl:
-                        out = [fname + ":" + str(lcount) + ":" + func, sl, vs]
+                        out = [fname + args.delimiter + "+" + str(lcount) + args.delimiter + func + args.delimiter, sl, vs]
                     else:
-                        out = [fname + ":" + str(lcount) + ":" + func, Back.BLUE + sl + Style.RESET_ALL, vs]
+                        out = [fname + args.delimiter + "+" + str(lcount) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
                 else:
                     if not args.showprobes:
                         sl = stripProbe(sl)
                     out = ["", sl, ""]
 
-                fwidth = longestpath
-                if showtimestamps:
-                    fwidth += 22
-                fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                if (args.format == "column"):
+                    fwidth = longestpath
+                    if showtimestamps:
+                        fwidth += 22
+                    fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                elif (args.format == "raw"):
+                    fmt = "{} {} {}"
+                else:
+                    print("error: unknown format", file=sys.stderr)
+                    sys.exit(1)
                 print(fmt.format(*out))
 
 # end of file
