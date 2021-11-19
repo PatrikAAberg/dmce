@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+function usage() {
+	local projs
+	local repos
+
+	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+	repos="${repos/dmce/}"
+	repos="${repos/  / }"
+	projs="${OVE_PROJECT_LIST/dmce/}"
+	projs="${projs/  / }"
+	echo "usage:"
+	echo "  $(basename $0) git proj"
+	echo
+	echo "git:"
+	echo "  choose one from: ${repos}"
+	echo
+	echo "proj:"
+	echo "  choose one from: ${projs}"
+
+	exit 1
+}
+
+function main() {
+	git="$1"
+	ove_proj="$2"
+	git_full="${OVE_BASE_DIR:?}/$1"
+
+	# usage and sanity checks
+	if [ $# -lt 2 ]; then
+		usage
+	elif [ ! -d "${git_full}" ]; then
+		echo "error: ${git_full} is not a directory"
+		usage
+	elif [ ! -d "${git_full}"/.git ]; then
+		echo "error: ${git_full} does not appear to be a git repo"
+		usage
+	fi
+
+	name="$(basename "$0")-${git}"
+
+	if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ]; then
+		echo "WARNING: this script will do a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this repo: ${git_full}"
+		read -p "continue? (y/N) " -r
+		if ! [[ "${REPLY}" =~ ^[Yy]$ ]]; then
+			exit 1
+		fi
+		read -p "are you REALLY sure? (y/N) " -r
+		if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
+			exit 1
+		fi
+	fi
+
+	echo "$ cd ${git_full}"
+	if ! cd "${git_full}"; then
+		echo "error: 'cd ${git_full}' failed, weird!"
+		exit 1
+	fi
+
+	launch=1
+	stash=$(git stash list | grep 'dmce')
+	if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ] && [ "x${stash}" != "x" ]; then
+		read -t 3 -p "use stashed instrumentation (this dialog will timeout in 3 seconds)? (y/N) " -r
+		ret=$?
+		if [ ${ret} -gt 128 ]; then
+			echo
+		elif [[ ${REPLY} =~ ^[Yy]$ ]]; then
+			printf "%s\n" "$stash"
+			nbr_stash=$(printf "%s\n" "$stash" | wc -l)
+			if [ "${nbr_stash}" -eq 1 ]; then
+				stash_idx="$(printf "%s\n" "${stash}" | cut -d: -f1)"
+				echo "$ git -C ${git_full} pop -q ${stash_idx}"
+				if ! git stash pop -q "${stash_idx}"; then
+					exit 1
+				fi
+			else
+				read -p "stash: " -r
+				if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+					[ "${REPLY}" != "" ] && \
+						echo "error: just numbers"
+					exit 1
+				fi
+
+				if ! git stash pop -q "stash@{$REPLY}"; then
+					exit 1
+				fi
+			fi
+			launch=0
+		fi
+	fi
+
+	if [ ${launch} -eq 1 ]; then
+		echo "$ dmce-set-profile -d ${OVE_ACTIVE_REPO_DIR} -p trace"
+		if ! "${OVE_ACTIVE_REPO_DIR}/dmce-set-profile" -d "${OVE_ACTIVE_REPO_DIR}" -p trace; then
+			echo "error: 'dmce-set-profile -p trace' failed"
+			exit 1
+		fi
+
+		echo "$ git -C ${git_full} clean -dfxq"
+		if ! git -C "${git_full}" clean -dfxq; then
+			ove_echo_red_noprefix "error: 'git clean -dfxq' failed"
+			exit 1
+		elif git -C ${git_full} grep -q 'DMCE_PROBE('; then
+			ove_echo_red_noprefix "error: the git is full of probes. Cleanup!"
+			exit 1
+		fi
+
+		# save any local modifications
+		dmce_trace_diff="${OVE_TMP}/${name}.diff"
+		git diff > "${dmce_trace_diff}"
+		if [ -s "${dmce_trace_diff}" ]; then
+			echo "$ git diff > ${dmce_trace_diff}"
+		else
+			rm "${dmce_trace_diff}"
+		fi
+
+		echo "$ dmce-launcher -a"
+		out=$("${OVE_ACTIVE_REPO_DIR:?}"/dmce-launcher -a)
+		ret=$?
+		if [ ${ret} -ne 0 ]; then
+			if [[ ${out} == *error* ]]; then
+				err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
+			else
+				err_string="'dmce-launcher -a' failed"
+			fi
+			ove_echo_red_noprefix "${err_string}"
+			exit 1
+		fi
+
+		# still no probes?
+		if ! git grep -q 'DMCE_PROBE('; then
+			err_string="no probes inserted"
+			ove_echo_red_noprefix "${err_string}"
+			exit 1
+		fi
+
+		# clean
+		find "${PWD}" -name '*.dmceoriginal' -exec rm  {} \;
+	fi
+
+	echo "$ ove buildme-parallel ${ove_proj}"
+	if ! ove buildme-parallel "${ove_proj}" > /dev/null; then
+		err_string="ove buildme-parallel ${ove_proj} failed"
+		ove_echo_red_noprefix "${err_string}"
+		if [ -s "${OVE_LAST_COMMAND}" ]; then
+			cat "${OVE_LAST_COMMAND}"
+		fi
+
+		# remove DMCE probes and keep local modifications
+		git stash; git stash drop -q
+		git apply "${dmce_trace_diff}"
+		exit 1
+	fi
+
+	nbr_of_probes=$(git grep 'DMCE_PROBE([0-9]\+' | grep -o 'DMCE_PROBE([0-9]\+' | cut -d'(' -f2 | sort -V | tail -1)
+	echo "NOTE: repo '${git_full}' is instrumented with ${nbr_of_probes} probe(s). Run a testcase and when done run:"
+	echo "$ ove dmce-trace-decode ${git}"
+
+	exit 0
+}
+
+main "$@"

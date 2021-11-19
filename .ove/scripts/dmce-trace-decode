@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+
+function usage() {
+	local repos
+
+	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+	repos="${repos/dmce/}"
+	repos="${repos/  / }"
+	echo "usage:"
+	echo "  $(basename $0) git"
+	echo
+	echo "choose from: $repos"
+	exit 1
+}
+
+function init() {
+	# usage and sanity checks
+	if [ $# -ne 1 ]; then
+		usage
+	fi
+
+	git="$1"
+	git_full="${OVE_BASE_DIR:?}/$1"
+	name="$(basename "$0")-$git"
+
+	if [ ! -d "${git_full}" ]; then
+		echo "error: ${git_full} is not a directory"
+		usage
+	elif [ ! -d "${git_full}"/.git ]; then
+		echo "error: ${git_full} does not appear to be a git repo"
+		usage
+	fi
+
+	if ! cd "${git_full}"; then
+		echo "error: 'cd ${git_full}' failed, weird!"
+		exit 1
+	fi
+}
+
+function cleanup() {
+	for f in $files; do
+		if [ -e "$f" ]; then
+			rm "$f"
+		fi
+	done
+}
+
+function main() {
+	init "$@"
+
+	trap cleanup EXIT
+
+	# nothing probed, see if we have something in the git stash
+	if ! git grep -q 'DMCE_PROBE('; then
+		stash=$(git stash list | grep 'dmce')
+		if [ "x$stash" = "x" ]; then
+			echo "error: nothing saved in stash for '$git', try to run 'ove dmce-trace-prepare $git ...'"
+			exit 1
+		fi
+
+		nbr_stash=$(printf "%s\n" "$stash" | wc -l)
+		if [ "$nbr_stash" -eq 1 ]; then
+			stash_idx="$(printf "%s\n" "$stash" | cut -d: -f1)"
+			echo "$ git -C ${git_full} pop -q $stash_idx"
+			if ! git stash pop -q "$stash_idx"; then
+				exit 1
+			fi
+		else
+			read -t 3 -p "use stashed instrumentation (this dialog will timeout in 3 seconds and use the latest stash)? (Y/n) " -r
+			ret=$?
+			# timeout? use the first stash
+			if [ $ret -gt 128 ]; then
+				echo
+				stash_idx="$(printf "%s\n" "$stash" | cut -d: -f1 | head -1)"
+				echo "$ git -C ${git_full} pop -q $stash_idx"
+				if ! git stash pop -q "$stash_idx"; then
+					exit 1
+				fi
+			elif [[ ${REPLY} =~ ^[Yy]$ ]]; then
+				printf "%s\n" "$stash"
+				read -p "stash: " -r
+				if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+					[ "${REPLY}" != "" ] && \
+						echo "error: just numbers"
+					exit 1
+				fi
+
+				echo "$ git -C ${git_full} pop -q stash@{$REPLY}"
+				if ! git stash pop -q "stash@{$REPLY}"; then
+					exit 1
+				fi
+			fi
+		fi
+
+		# sanity check
+		if ! git grep -q 'DMCE_PROBE('; then
+			echo "error: the code is not instrumented, try to run 'ove dmce-trace-prepare'"
+			exit 1
+		fi
+	fi
+
+	dmce_trace_log="$OVE_TMP/$name.log"
+	if ! command -v fzf > /dev/null; then
+		fzf=0
+		if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace --hl --format 'raw' --delimiter '@' -t --numvars 5 /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $OVE_BASE_DIR/$git > ${dmce_trace_log}; then
+			echo "error: dmce-trace failed"
+			exit 1
+		fi
+	else
+		fzf=1
+		echo "$ dmce-trace --delimiter '@' --format 'raw' --numvars 5 -t /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $git_full"
+		if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace --delimiter '@' --format 'raw' --numvars 5 -t /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $git_full > ${dmce_trace_log} 2> /dev/null; then
+			echo "error: dmce-trace failed"
+			exit 1
+		fi
+	fi
+
+	# sanity check
+	if [ ! -s ${dmce_trace_log} ]; then
+		echo "error: dmce-trace was successful but we got no output"
+		exit 1
+	fi
+	files+=" ${dmce_trace_log}"
+
+	echo "$ cd ${git_full}"
+	if ! cd "${git_full}"; then
+		echo "error: 'cd ${git_full}' failed, weird!"
+		exit 1
+	fi
+
+	if [ $fzf -eq 1 ]; then
+		# get prolog length
+		c=$(git diff | grep -m1 '^@@')
+		b=$(echo "$c" | cut -d',' -f3| cut -d' ' -f1)
+		a=$(echo "$c" | cut -d',' -f2| cut -d' ' -f1)
+		export DMCE_PROLOG_LEN=$((b-a))
+		DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
+		export DMCE_PLUS_SIGN="+"
+
+		# swap core and timestamp
+		# add fullpath to file
+		sed -i -e "s,^\([0-9]\+\) @\([0-9]\+\)@\(.*$\),\2@\1@$OVE_BASE_DIR/$git/\3,g" "${dmce_trace_log}"
+		true > ${dmce_trace_log}_view
+		while IFS='@' read -r core ts f n func line vars; do
+			printf "%s\n" "$core@$ts@$f@+$((n - DMCE_PROLOG_LEN))@$func@$line@$vars"
+		done <${dmce_trace_log} | column -t -s@ > ${dmce_trace_log}_view
+		files+=" ${dmce_trace_log}_view"
+
+	fi
+
+	# remove previous stash(es)
+	while true; do
+		stash=$(git stash list | grep 'dmce@' | head -1 | cut -d':' -f1)
+		if [ "x${stash}" = "x" ]; then
+			break
+		fi
+		echo "$ git -C ${git_full} stash drop ${stash}"
+		git stash drop "${stash}"
+	done
+
+	now=$(\date '+%Y%m%d-%H%M%S')
+	stash_msg="dmce@$now: #probes:$(wc -l < /tmp/$OVE_USER/dmce/$git/probe-references.log) #prolog:$DMCE_PROLOG_LEN stat:$(git diff --shortstat)"
+	echo "$ git -C ${git_full} stash -m $stash_msg"
+	if ! git -C ${git_full} stash push -q -m "$stash_msg"; then
+		echo "error: 'git stash push' failed"
+		exit 1
+	fi
+
+	# restore any local modifications saved by 'dmce-trace-prepare'
+	dmce_trace_diff="$OVE_TMP/dmce-trace-prepare-$git.diff"
+	if [ -s "${dmce_trace_diff}" ]; then
+		git apply "${dmce_trace_diff}" 2> /dev/null
+	fi
+
+	# none-fzf: simply display the log
+	if [ $fzf -eq 0 ]; then
+		column -t -s'@' ${dmce_trace_log}
+		exit 0
+	fi
+
+	# fzf only below...
+	t_old="${OVE_TMP}/$name.told"
+	true > "${t_old}"
+	files+=" ${t_old}"
+
+	preview_left="${OVE_TMP}/$name.left"
+	preview_right="${OVE_TMP}/$name.right"
+	files+=" $preview_left"
+	files+=" $preview_right"
+
+	< ${dmce_trace_log}_view fzf \
+		--tac \
+		--preview-window=down \
+		--preview '
+		lineno={n}
+		((lineno++))
+		# get core
+		c=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f1)
+
+		# timestamp
+		t=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f2)
+
+		if [ -s '${t_old}' ]; then
+			t_old=$(cat '${t_old}');
+			if [ $t -ge $t_old ]; then
+				t_diff=$((t-t_old))
+			else
+				t_diff=$((t_old-t))
+			fi
+		else
+			t_old=0
+			t_diff=0
+		fi
+		# save old t value
+		echo "$t" > '${t_old}';
+
+		# get filename
+		f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)
+
+		# get line number
+		n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4 | cut -b2-)
+
+		# compensate for prolog
+		n=$((n-'$DMCE_PROLOG_LEN'))
+
+		# get func name
+		func=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f5 | xargs)
+
+		# get variables
+		vars=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f7)
+
+		# display filename, line, core and diff at the top
+		echo "$f +$n core: $c diff: $t_diff"
+
+		# delimiter
+		echo "---"
+
+		# number of lines
+		f_len=$(wc -l < $f)
+
+		# the whole file fit in the preview window?
+		if [ $f_len -lt $FZF_PREVIEW_LINES ]; then
+			p_lines=$((FZF_PREVIEW_LINES))
+		# is current line above halv preview?
+		elif [ $n -lt $((FZF_PREVIEW_LINES/2)) ]; then
+			p_lines=$((FZF_PREVIEW_LINES))
+		else
+			p_lines=$((FZF_PREVIEW_LINES/2))
+		fi
+
+		# default grep colors
+		if [ ! -v GREP_COLORS ]; then
+			export GREP_COLORS="ms=38;5;0;48;5;14"
+		fi
+
+		# get the whole file with line numbers
+		# highlight our line
+		grep -n ".*" $f | grep -C$p_lines "^$n:.*" | grep -C$p_lines --color=always -E "^$n:.*" > '${preview_left}'
+
+		# sort the variables and do some pretty printing
+		printf "%s\n" $vars | sort | column -t -s: | sed -e "s,^,  ,g" > '${preview_right}'
+
+		# calclulate the length of the two files
+		left_len=$(wc -l < '${preview_left}')
+		right_len=$(wc -l < '${preview_right}')
+
+		# use pr to produce some nice columns
+		pr -w $FZF_PREVIEW_COLUMNS -t -m <(head -$right_len '${preview_left}') <(head -$right_len '${preview_right}')
+
+		# display the remaining part of the file
+		tail -n +$((right_len+1)) '${preview_left}'' \
+			--bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
+			--bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
+
+	exit 0
+}
+
+main "$@"

@@ -1,0 +1,1 @@
+dmce-trace-decode:git:output trace on stdout OR if 'fzf' is installed open an interactive trace viewer
