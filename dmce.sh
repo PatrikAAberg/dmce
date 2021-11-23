@@ -216,7 +216,7 @@ _echo "updating filecache removing exceptions. "
 grep -E -v '^#|^$' $configpath/dmce.include | cut -d':' -f1 > $dmcepath/workarea/dmce.include
 
 # Exclude comments, blank rows and file:function lines for exclude
-grep -E -v '^#|^$|:' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude
+grep -E -v '^#|^$|:' $configpath/dmce.exclude > $dmcepath/workarea/dmce.exclude || :
 
 if ! quiet_mode; then
     _echo "includes: "
