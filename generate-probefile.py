@@ -479,12 +479,17 @@ while (lineindex < linestotal):
         exp_extra = 1
         lstart = exp_pos_update.group(1)
         lend = exp_pos_update.group(5)
-        scopelstart = lstart
-        scopecstart = cstart
         cstart = exp_pos_update.group(2)
         cend = exp_pos_update.group(6)
         skiplend = exp_pos_update.group(3)
         skipcend = exp_pos_update.group(4)
+
+        if int(lstart) > int(lend):
+            scopelstart = lstart
+            scopecstart = cstart
+        else:
+            scopelstart = lend
+            scopecstart = cend
 
         if (in_parsed_file):
             trailing=1
@@ -832,7 +837,7 @@ while (lineindex < linestotal):
     print("in parsed file: " + str(in_parsed_file))
 
     # update section info and any declarations
-    if not backtrailing and not inside_expression and not skip_scope and in_parsed_file and numDataVars > 0:
+    if not inside_expression and not skip_scope and in_parsed_file and numDataVars > 0:
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
 
