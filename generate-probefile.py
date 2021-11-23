@@ -735,7 +735,7 @@ while (lineindex < linestotal):
     if inside_expression:
         print("Inside expresson wating to pass l: " + str(cur_lend) + "   c: " + str(cur_cend))
         # If we reached the last subexpression in the expression or next expression or statement
-        if ( (int(lstart) > cur_lend) or ( (int(lstart) == cur_lend) and (int(cstart) > cur_cend) ) ):
+        if ( (int(scopelstart) > cur_lend) or ( (int(scopelstart) == cur_lend) and (int(scopecstart) > cur_cend) ) ):
             expdb_lineend.append(int(lstart))
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
