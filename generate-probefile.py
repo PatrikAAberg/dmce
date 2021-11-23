@@ -290,6 +290,7 @@ re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
 re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
 re_update_pos_H             = re.compile(r'.*, line:(\d*):(\d*)>.*')
 re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
+re_update_pos_I             = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
 re_parsed_file            = re.compile(".*\,\s" + parsed_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
@@ -470,6 +471,30 @@ while (lineindex < linestotal):
     # MATCH F
     # MATCH A
     # MATCH D
+
+    # I
+    exp_pos_update = re_update_pos_I.match(linebuf[lineindex])
+    if exp_pos_update:
+        col_position_updated = 1
+        exp_extra = 1
+        lend = exp_pos_update.group(4)
+        cstart = exp_pos_update.group(1)
+        cend = exp_pos_update.group(5)
+        skiplend = exp_pos_update.group(2)
+        skipcend = exp_pos_update.group(3)
+
+        if int(lstart) > int(lend):
+            scopelstart = lstart
+            scopecstart = cstart
+        else:
+            scopelstart = lend
+            scopecstart = cend
+
+        if (in_parsed_file):
+            trailing=1
+
+        if do_print == 2:
+            print("MATCH I: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # G
     exp_pos_update = re_update_pos_G.match(linebuf[lineindex])
