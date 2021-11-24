@@ -289,6 +289,7 @@ re_update_pos_D             = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
 re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
 re_update_pos_H             = re.compile(r'.*, line:(\d*):(\d*)>.*')
+re_update_pos_J             = re.compile(r'.*, line:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_pos_I             = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
@@ -622,6 +623,26 @@ while (lineindex < linestotal):
             skipcend = cend
             if do_print == 2:
                 print("MATCH D: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
+
+    # J
+    if not line_position_updated:
+        exp_pos_update = re_update_pos_J.match(linebuf[lineindex])
+        if exp_pos_update:
+            line_position_updated=1
+            col_position_updated = 1
+            lend = exp_pos_update.group(1)
+            cend = exp_pos_update.group(2)
+            skiplend = lend
+            skipcend = cend
+            lstart = exp_pos_update.group(3)
+            lend = exp_pos_update.group(4)
+            scopelstart = lstart
+            scopelend = lend
+            if (in_parsed_file):
+                trailing=1
+
+            if do_print == 2:
+                print("MATCH J: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
 
     # H
     if not line_position_updated:
