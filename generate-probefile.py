@@ -276,7 +276,7 @@ if do_print:
 
 re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
 
-re_file_ref_left            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
+re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*:\d*.*')
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
 re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*')
 re_compound                 = re.compile(r'.*CompoundStmt.*')
@@ -373,24 +373,24 @@ while (lineindex < linestotal):
         in_function_scope = False
 
     # file refs
-    left = re_file_ref_left.match(linebuf[lineindex])
+    anypos = re_file_ref_anypos.match(linebuf[lineindex])
     middle = re_file_ref_middle.match(linebuf[lineindex])
     right = re_file_ref_right.match(linebuf[lineindex])
 
     # Compound statement
     compound = re_compound.match(linebuf[lineindex])
 
-    leftself = False
+    anyposself = False
     middleself = False
     rightself = False
     rightother = False
     middleother = False
-    leftother = False
+    anyposother = False
 
-    if left:
-        leftself = (parsed_file in left.group(1))
-        if not leftself:
-            leftother = True
+    if anypos:
+        anyposself = (parsed_file in anypos.group(1))
+        if not anyposself:
+            anyposother = True
     if middle:
         middleself = (parsed_file in middle.group(1))
         if not middleself:
@@ -432,7 +432,7 @@ while (lineindex < linestotal):
     linebuf[lineindex] = re.sub(parsed_file_exp, "line", linebuf[lineindex])
 
     # Check if we are leaving (entering is checked after expression search)
-    if (rightother) or (middleother and not rightself) or (leftother and not rightself and not middleself):
+    if (rightother) or (middleother and not rightself) or (anyposother and not rightself and not middleself):
         in_parsed_file = 0
         trailing=0
         if numDataVars > 0:
@@ -441,7 +441,7 @@ while (lineindex < linestotal):
                 skip_scope_tab = tab
 
     # Special: For this one we get full position info, so we can set the flag before check for expressions
-    if leftself and not (middle or right):
+    if anyposself and not (middle or right):
         in_parsed_file = 1
 
     # A compound expression always gives us a new scope
@@ -839,7 +839,7 @@ while (lineindex < linestotal):
 
             i+=1
 
-    if (rightself) or (middleself and not rightother) or (leftself and not middleother and not rightother):
+    if (rightself) or (middleself and not rightother) or (anyposself and not middleother and not rightother):
         in_parsed_file = 1
 
     # If lstart or curstart moved forward in parsed c file, update
