@@ -598,13 +598,13 @@ while (lineindex < linestotal):
             lstart = exp_pos_update.group(1)
             lend = exp_pos_update.group(3)
             cstart = exp_pos_update.group(2)
-            scopelstart = lstart
-            scopecstart = cstart
             cend = exp_pos_update.group(4)
             skiplend = lend
             skipcend = cend
             if (in_parsed_file):
                 trailing=1
+                scopelstart = lstart
+                scopecstart = cstart
 
             if do_print == 2:
                 print("MATCH A: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
