@@ -752,8 +752,13 @@ while (lineindex < linestotal):
 #            cur_lend = 0
 #            cur_cend = 0
 
+    # Special case: We can always pop the stack as far as possible at function entries
+    at_func_entry = False
+    if "-FunctionDecl" in linebuf[lineindex]:
+        at_func_entry = True
+
     # pop section stack?
-    if (in_parsed_file and not inside_expression and numDataVars > 0):
+    if ((in_parsed_file or at_func_entry) and not inside_expression and numDataVars > 0):
         while True:
             if len(secStackPos) > 0:
                 l, c = secStackPos[len(secStackPos) - 1]
