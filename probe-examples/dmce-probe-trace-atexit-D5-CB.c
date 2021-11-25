@@ -100,7 +100,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         /* TODO: Make this less racy maybe, but only a prooblem if threads spawned before the first probe */
         /* env var format: enabled buf_p hitcount*/
         if (! dmce_buffer_setup_done) {
-            if (! (mkdir(DMCE_PROBE_LOCK_DIR,0))) {
+            if (! (mkdir(DMCE_PROBE_LOCK_DIR, 0))) {
 
                 char s[32 * 3];
                 dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
@@ -136,7 +136,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
             }
             else {
                /* Buffer already exist, wait for env var to be available and only init local pointers */
-               while (NULL == (s_control_p  = getenv("dmce_trace_control")));
+               while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
                sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
             }
             dmce_buffer_setup_done = 1;
