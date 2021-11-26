@@ -278,7 +278,7 @@ function main() {
 		right_len=$(wc -l < '${preview_right}')
 
 		# use pr to produce some nice columns
-		pr -w $FZF_PREVIEW_COLUMNS -t -m <(head -$right_len '${preview_left}') <(head -$right_len '${preview_right}')
+		pr -w $FZF_PREVIEW_COLUMNS -e -t -m <(head -$right_len '${preview_left}') <(head -$right_len '${preview_right}')
 
 		# display the remaining part of the file
 		tail -n +$((right_len+1)) '${preview_left}'' \
