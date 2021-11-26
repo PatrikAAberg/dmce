@@ -37,7 +37,7 @@ function main() {
 		usage
 	fi
 
-	name="$(basename "$0")-${git}"
+	name="$(basename "$0")-${git/\//_}"
 
 	if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ]; then
 		echo "WARNING: this script will do a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this repo: ${git_full}"
@@ -155,6 +155,9 @@ function main() {
 	nbr_of_probes=$(git grep 'DMCE_PROBE([0-9]\+' | grep -o 'DMCE_PROBE([0-9]\+' | cut -d'(' -f2 | sort -V | tail -1)
 	echo "NOTE: repo '${git_full}' is instrumented with ${nbr_of_probes} probe(s). Run a testcase and when done run:"
 	echo "$ ove dmce-trace-decode ${git}"
+	echo
+	echo "Executable ELF files within the '${git}' repo:"
+	find ${git_full} -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n
 
 	exit 0
 }

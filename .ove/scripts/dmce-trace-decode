@@ -20,8 +20,9 @@ function init() {
 	fi
 
 	git="$1"
+	git_base="${1##*/}"
 	git_full="${OVE_BASE_DIR:?}/$1"
-	name="$(basename "$0")-$git"
+	name="$(basename "$0")-${git/\//_}"
 
 	if [ ! -d "${git_full}" ]; then
 		echo "error: ${git_full} is not a directory"
@@ -100,19 +101,25 @@ function main() {
 	fi
 
 	dmce_trace_log="$OVE_TMP/$name.log"
+	dmce_trace_args=
+	dmce_trace_args+=" --delimiter @"
+	dmce_trace_args+=" --format raw"
+	dmce_trace_args+=" --numvars 5"
+	dmce_trace_args+=" -t"
+	dmce_trace_args+=" /tmp/dmcebuffer.bin"
+	dmce_trace_args+=" /tmp/$OVE_USER/dmce/${git_base}/probe-references.log"
+	dmce_trace_args+=" ${git_full}"
 	if ! command -v fzf > /dev/null; then
 		fzf=0
-		if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace --hl --format 'raw' --delimiter '@' -t --numvars 5 /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $OVE_BASE_DIR/$git > ${dmce_trace_log}; then
-			echo "error: dmce-trace failed"
-			exit 1
-		fi
+		dmce_trace_args+=" --hl"
 	else
 		fzf=1
-		echo "$ dmce-trace --delimiter '@' --format 'raw' --numvars 5 -t /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $git_full"
-		if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace --delimiter '@' --format 'raw' --numvars 5 -t /tmp/dmcebuffer.bin /tmp/$OVE_USER/dmce/$git/probe-references.log $git_full > ${dmce_trace_log} 2> /dev/null; then
-			echo "error: dmce-trace failed"
-			exit 1
-		fi
+	fi
+
+	echo "$ dmce-trace ${dmce_trace_args}"
+	if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace ${dmce_trace_args} > ${dmce_trace_log}; then
+		echo "error: dmce-trace failed"
+		exit 1
 	fi
 
 	# sanity check
@@ -130,7 +137,13 @@ function main() {
 
 	if [ $fzf -eq 1 ]; then
 		# get prolog length
-		c=$(git diff | grep -m1 '^@@')
+		random_file=$(git grep 'DMCE_PROBE(' | cut -d: -f1 | tail -1)
+		if [ "x${random_file}" = "x" ]; then
+			echo "error: weird, random probed file not found"
+			exit 1
+		fi
+
+		c=$(git diff -- $random_file | grep -m1 '^@@')
 		b=$(echo "$c" | cut -d',' -f3| cut -d' ' -f1)
 		a=$(echo "$c" | cut -d',' -f2| cut -d' ' -f1)
 		export DMCE_PROLOG_LEN=$((b-a))
