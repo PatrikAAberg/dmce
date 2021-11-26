@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 if ! cd "${OVE_BASE_DIR:?}"; then
 	echo "error: 'cd ${OVE_BASE_DIR}' failed"
 	exit 1
@@ -80,7 +78,7 @@ if [ -t 1 ]; then
 	echo "number of commits to probe?"
 	echo "this dialog will timeout in ${timeout} seconds and use ${default_n} commits."
 	while true; do
-		read -r -t ${timeout} -p "#commits: "
+		read -r -t ${timeout} -p "#commits (0 = entire git history): "
 		ret=$?
 		if [ $ret -gt 128 ]; then
 			n=${default_n}
@@ -116,13 +114,19 @@ if ! run "${OVE_ACTIVE_REPO_DIR:?}/dmce-set-profile -d ${OVE_ACTIVE_REPO_DIR} -p
 	exit 1
 fi
 
+if [ $n -eq 0 ]; then
+	args="-a"
+else
+	args="-n ${n}"
+fi
+
 # run 'dmce-launcher' on all repos
 for repo in ${launch_dmce_repos}; do
 	if ! run "cd ${repo}"; then
 		exit 1
 	elif ! run "${dmce_launcher} -c -q"; then
 		continue
-	elif ! run "${dmce_launcher} -n ${n} -q"; then
+	elif ! run "${dmce_launcher} $args -q"; then
 		continue
 	fi
 done
