@@ -503,9 +503,14 @@ while (lineindex < linestotal):
         line_position_updated=1
         col_position_updated = 1
         exp_extra = 1
-        lstart = exp_pos_update.group(1)
+        if in_parsed_file:
+            lstart = exp_pos_update.group(1)
+            cstart = exp_pos_update.group(2)
+        else:
+            lstart = exp_pos_update.group(5)
+            cstart = exp_pos_update.group(6)
+
         lend = exp_pos_update.group(5)
-        cstart = exp_pos_update.group(2)
         cend = exp_pos_update.group(6)
         skiplend = exp_pos_update.group(3)
         skipcend = exp_pos_update.group(4)
