@@ -424,26 +424,35 @@ if [ "$skip" = false ]; then
         if git help -a | grep -w -q worktree; then
             _echo "set up old SHA-1: ${old_git_dir} using 'git worktree'"
             setup_worktree=1
+            remove_old_git_dir=0
 
             # remove any old repos laying around
             if [ -d "${old_git_dir}"/.git ] ; then
-                rm -rf ${old_git_dir}
+                _echo "a none-worktree repo found at '$old_git_dir' - remove repo"
+                remove_old_git_dir=1
             elif [ -e "${old_git_dir}"/.git ] ; then
                 if ! git -C $old_git_dir status --porcelain &> /dev/null; then
-                    _echo "worktree is broken"
-                    rm -rf ${old_git_dir}
+                    _echo "worktree is broken (git status fails) - remove repo"
+                    remove_old_git_dir=1
                 else
                     worktree=$(grep gitdir: "${old_git_dir}"/.git | awk '{print $2}')
                     if [[ $worktree =~ $git_root ]]; then
                         if ! git -C $old_git_dir status --porcelain &> /dev/null; then
-                            _echo "worktree is broken"
-                            rm -rf ${old_git_dir}
+                            _echo "worktree is broken - remove worktree"
+                            remove_old_git_dir=1
                         else
                             _echo "worktree seems to be healthy"
                             setup_worktree=0
                         fi
+                    else
+                        _echo "worktree '$worktree' does not match '$git_root' - remove worktree"
+                        remove_old_git_dir=1
                     fi
                 fi
+            fi
+
+            if [ $remove_old_git_dir -eq 1 ]; then
+                rm -rf ${old_git_dir}
             fi
 
             if [ $setup_worktree -eq 1 ]; then
