@@ -6,7 +6,7 @@ static int* dmce_trace_enabled_p = nullptr;
 #else
 static int* dmce_trace_enabled_p = 0;
 #endif
-static inline int dmce_trace_is_enabled() { return *dmce_trace_enabled_p; }
+static inline int dmce_trace_is_enabled(void) { return *dmce_trace_enabled_p; }
 static inline void dmce_trace_enable(void) { *dmce_trace_enabled_p = 1; }
 static inline void dmce_trace_disable(void) { *dmce_trace_enabled_p = 0; }
 typedef unsigned long uint64_t;

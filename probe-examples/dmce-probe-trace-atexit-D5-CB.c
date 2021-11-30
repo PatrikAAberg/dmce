@@ -49,9 +49,15 @@ static void dmce_atexit(void) {
 
     FILE *fp;
 
-    fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
 #ifdef DMCE_TRACE_RINGBUFFER
-    unsigned int buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
+    unsigned int buf_pos;
+#endif
+
+    fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
+
+#ifdef DMCE_TRACE_RINGBUFFER
+
+    buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
     int i;
 
     for (i = 0; i < DMCE_MAX_HITS; i++) {
@@ -149,6 +155,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
 #endif
         unsigned int cpu;
         unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_SEQ_CST);
+
 #ifdef DMCE_TRACE_RINGBUFFER
         index = index % DMCE_MAX_HITS;
 #endif
