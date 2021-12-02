@@ -31,6 +31,7 @@ individualcmd=1
 try:
     f = open(sys.argv[2], 'rb')
     lookupfile = f.readlines()
+    f.close()
 except IOError:
     individualcmd=0
     lookupfile = []
@@ -82,6 +83,44 @@ directory = ""
 command = ""
 filename = ""
 
+# Find any referenced system include paths
+re_srcfile = re.compile(".*\.c$|.*\.cc$|.*\.cpp$|.*\.h$|.*\.hh$")
+re_sysinclude = re.compile("#include.*<(.*)>.*")
+includefiles = []
+sysIncludePathsList = []
+sysIncludePaths = ""
+
+    # find the files
+for gdirpath, gdirnames, gfilenames in os.walk("."):
+    for gf in gfilenames:
+        if re_srcfile.match(gf):
+            f = open(gdirpath + "/" + gf, 'r')
+            srclines = f.readlines()
+            f.close()
+            for sline in srclines:
+                m = re_sysinclude.match(sline)
+                if m:
+                    fname = os.path.basename(m.group(1))
+                    if fname not in includefiles:
+                        includefiles.append(fname)
+
+    # find what syspaths they have (if any)
+
+def pathsearch(basepath):
+    global sysIncludePaths
+    for dirpath, dirnames, filenames in os.walk(basepath):
+        for fname in filenames:
+            if fname in includefiles:
+                if dirpath.rstrip() not in sysIncludePathsList:
+                    sysIncludePathsList.append(dirpath.rstrip())
+
+pathsearch("/usr/local/include")
+pathsearch("/usr/include/x86_64-linux-gnu")
+pathsearch("/usr/include")
+
+for incpath in sysIncludePathsList:
+    sysIncludePaths = sysIncludePaths + " -I" + incpath
+
 while (lineindex<linestotal):
       directory = path
       filename = linebuf[lineindex].strip()
@@ -93,11 +132,11 @@ while (lineindex<linestotal):
           m_h = re.match( r'.*\.h$', linebuf[lineindex], re.M|re.I)
 
           if (m_c):
-              command = defaultcmdline_c + " " + includes + " " + filename
+              command = defaultcmdline_c + " " + includes + " " + sysIncludePaths + " " + filename
           elif (m_cc or m_cpp):
-              command = defaultcmdline_cpp + " " + includes + " " + filename
+              command = defaultcmdline_cpp + " " + includes + " " + sysIncludePaths + " " + filename
           elif (m_h):
-              command = defaultcmdline_h + " " + includes + " " + filename
+              command = defaultcmdline_h + " " + includes + " " + sysIncludePaths + " " + filename
           else:
               print("file cache corrupt!")
               exit(-1)
