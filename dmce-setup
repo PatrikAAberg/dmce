@@ -20,7 +20,9 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 cfgpath=$1
+installpath="/$(which dmce-setup | cut -d'/' -f2)"
 
+which dmce-setup
 if [ "$cfgpath" == "--help" ]; then
     echo "Usage: dmce-setup [--help | Path ]"
     echo "Default configuration path (where to setup dmce configuration) is $cfgpath, but can be specified with an optional argument"
@@ -86,10 +88,11 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/$LOGNAME/dmce-trace-buffer-lock"
 NoWord
 
 echo "Creating dmce config directory as $cfgpath/.config/dmce"
-cp /usr/share/dmce/constructs.exclude /$cfgpath/.config/dmce/
-cp /usr/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
-cp /usr/share/dmce/dmce.include  /$cfgpath/.config/dmce/
-cp /usr/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
-cp /usr/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
+echo "Fetching default config from $installpath/share/dmce"
+cp $installpath/share/dmce/constructs.exclude /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/dmce.include  /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
 
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
