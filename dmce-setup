@@ -19,37 +19,49 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+cfgpath=$1
+
+if [ "$cfgpath" == "--help" ]; then
+    echo "Usage: dmce-setup [--help | Path ]"
+    echo "Default configuration path (where to setup dmce configuration) is $cfgpath, but can be specified with an optional argument"
+    exit
+fi
+
+if [ "$cfgpath" == "" ]; then
+    cfgpath=$HOME
+fi
+
 echo "DMCE setup"
 echo "------------------------"
-echo "Creating .dmceconfig file in $HOME"
+echo "Creating .dmceconfig file in $cfgpath"
 
 # Remove old config
-[ -e $HOME/.dmceconfig ] && rm $HOME/.dmceconfig
-[ -e $HOME/.config/dmce ] && rm -r $HOME/.config/dmce
-mkdir -p $HOME/.config/dmce
+[ -e $cfgpath/.dmceconfig ] && rm $cfgpath/.dmceconfig
+[ -e $cfgpath/.config/dmce ] && rm -r $cfgpath/.config/dmce
+mkdir -p $cfgpath/.config/dmce
 
 # Create config file in home directory
-cat > $HOME/.dmceconfig <<- NoWord
+cat > $cfgpath/.dmceconfig <<- NoWord
 # DMCE install path
 DMCE_EXEC_PATH:/usr/share/dmce
 
 # Working directory root
-DMCE_WORK_PATH:/tmp/$USER/dmce
+DMCE_WORK_PATH:/tmp/$LOGNAME/dmce
 
 # config files path. (dmce.exclude, dmce.include etc.)
-DMCE_CONFIG_PATH:$HOME/.config/dmce
+DMCE_CONFIG_PATH:$cfgpath/.config/dmce
 
 # Command line lookup hook (builds list of individual compile commands per file if not enough with the default ones)
-DMCE_CMD_LOOKUP_HOOK:$HOME/.config/dmce/cmdlookuphook.sh
+DMCE_CMD_LOOKUP_HOOK:$cfgpath/.config/dmce/cmdlookuphook.sh
 
 # Default compiler command line for c files
-DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -I/usr/include/sys -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
+DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -I/usr/include/sys -isystem /tmp/$LOGNAME/dmce/inc -I/tmp/$LOGNAME/dmce/inc
 
 # Default compiler command line for cpp files
-DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 -I/usr/include -I/usr/include/sys -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
+DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 -I/usr/include -I/usr/include/sys -isystem /tmp/$LOGNAME/dmce/inc -I/tmp/$LOGNAME/dmce/inc
 
 # Default compiler command line for h files
-DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -I/usr/include/sys -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
+DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -I/usr/include/sys -isystem /tmp/$LOGNAME/dmce/inc -I/tmp/$LOGNAME/dmce/inc
 
 # Number of data variables to probe
 DMCE_NUM_DATA_VARS:0
@@ -61,23 +73,23 @@ DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user.c
 DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
 
 # Log files
-DMCE_LOG_FILES:/tmp/$USER/dmce
+DMCE_LOG_FILES:/tmp/$LOGNAME/dmce
 
 # git diff algorithm
 DMCE_GIT_DIFF_ALGORITHM:histogram
 
 # Some probes need a path for binary output files
-DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/$USER/dmce/dmcebuffer.bin"
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/$LOGNAME/dmce/dmcebuffer.bin"
 
 # Some probes need a system wide lock dir
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/$USER/dmce-trace-buffer-lock"
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/$LOGNAME/dmce-trace-buffer-lock"
 NoWord
 
-echo "Creating dmce config directory as $HOME/.config/dmce"
-cp /usr/share/dmce/constructs.exclude /$HOME/.config/dmce/
-cp /usr/share/dmce/dmce.exclude /$HOME/.config/dmce/
-cp /usr/share/dmce/dmce.include  /$HOME/.config/dmce/
-cp /usr/share/dmce/recognizedexpressions.py /$HOME/.config/dmce/
-cp /usr/share/dmce/cmdlookuphook.sh /$HOME/.config/dmce/
+echo "Creating dmce config directory as $cfgpath/.config/dmce"
+cp /usr/share/dmce/constructs.exclude /$cfgpath/.config/dmce/
+cp /usr/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
+cp /usr/share/dmce/dmce.include  /$cfgpath/.config/dmce/
+cp /usr/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
+cp /usr/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
 
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
