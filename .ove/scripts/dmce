@@ -46,7 +46,7 @@ fi
 # $1: dir
 # returns 0 if one or more c/c++ file (based on file extension)
 function determine_if_repo_is_dmceable {
-	nbr_of_files=$(find "$1" -type f -name '*.c' -or -name '*.cpp' | wc -l)
+	nbr_of_files=$(find "$1" -xdev -type f -name '*.c' -or -name '*.cpp' -or -name '*.cc' 2> /dev/null | wc -l)
 	if [ "${nbr_of_files}" -gt 0 ]; then
 		return 0
 	else
@@ -54,31 +54,32 @@ function determine_if_repo_is_dmceable {
 	fi
 }
 
+_repos=()
 for repo in $repos; do
 	# skip DMCE repo
 	[ "${repo}" == "${git_dir}" ] && continue
 
 	# skip repos without C or C++ files
 	if [ ${try_to_identify_repo} -eq 1 ] && ! determine_if_repo_is_dmceable "${repo}"; then
-		echo "repo: '${repo}' does not look like a C/C++ repo, skipping"
 		continue
 	fi
 
-	launch_dmce_repos+="${repo} "
+	_repos+=("${repo}")
 done
 
-if [ "x${launch_dmce_repos}" = "x" ]; then
+if [ "${#_repos[@]}" -eq 0 ]; then
 	echo "error: no git repos found, try again"
 	exit 1
+elif [ "${#_repos[@]}" -ne 1 ]; then
+	echo "about to launch DMCE on ${#_repos[@]} repos: $(printf "%s " "${_repos[@]}")" | \
+		sed -e "s,$OVE_BASE_DIR/,,g"
 fi
 
 default_n=0
 timeout=3
 if [ -t 1 ]; then
-	echo "number of commits to probe?"
-	echo "this dialog will timeout in ${timeout} seconds and use ${default_n} commits."
 	while true; do
-		read -r -t ${timeout} -p "#commits (0 = entire git history): "
+		read -r -t ${timeout} -p "#commits to probe? (0 = entire git history on current branch) "
 		ret=$?
 		if [ $ret -gt 128 ]; then
 			n=${default_n}
@@ -121,7 +122,7 @@ else
 fi
 
 # run 'dmce-launcher' on all repos
-for repo in ${launch_dmce_repos}; do
+for repo in "${_repos[@]}"; do
 	if ! run "cd ${repo}"; then
 		exit 1
 	elif ! run "${dmce_launcher} -c -q"; then
