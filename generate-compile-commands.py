@@ -26,7 +26,7 @@ import os
 
 lineindex = 0
 
-useSysIncludesEnv = os.getenv('DMCE_NUM_DATA_VARS')
+useSysIncludesEnv = os.getenv('DMCE_SYS_INCLUDES')
 
 useSysIncludes = False
 
