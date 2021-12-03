@@ -74,6 +74,9 @@ DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user.c
 # Prolog definition c file
 DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
 
+# Use system inlcude files (YES | NO)
+DMCE_SYS_INCLUDES:NO
+
 # Log files
 DMCE_LOG_FILES:/tmp/$LOGNAME/dmce
 

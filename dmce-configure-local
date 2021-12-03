@@ -66,10 +66,20 @@ DMCE_PROBE_SOURCE:$install_path/probe-examples/dmce-probe-user.c
 # Prolog definition c file
 DMCE_PROBE_PROLOG:$install_path/probe-examples/dmce-prolog-default.c
 
+# Use system inlcude files (YES | NO)
+DMCE_SYS_INCLUDES:NO
+
 # Log files
 DMCE_LOG_FILES:/tmp/$USER/dmce
 
 # git diff algorithm
 DMCE_GIT_DIFF_ALGORITHM:histogram
+
+# Some probes need a path for binary output files
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/$LOGNAME/dmce/dmcebuffer.bin"
+
+# Some probes need a system wide lock dir
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/$LOGNAME/dmce-trace-buffer-lock"
+
 NoWord
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
