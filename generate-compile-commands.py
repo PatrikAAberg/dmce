@@ -26,6 +26,14 @@ import os
 
 lineindex = 0
 
+useSysIncludesEnv = os.getenv('DMCE_NUM_DATA_VARS')
+
+useSysIncludes = False
+
+if useSysIncludesEnv is not None:
+    if useSysIncludesEnv == "YES":
+        useSysIncludes = True
+
 # If there is a individual command file, read it. Otherwise revert to default command lines defined below
 individualcmd=1
 try:
@@ -84,28 +92,6 @@ command = ""
 filename = ""
 
 # Find any referenced system include paths
-re_srcfile = re.compile(".*\.c$|.*\.cc$|.*\.cpp$|.*\.h$|.*\.hh$")
-re_sysinclude = re.compile("#include.*<(.*)>.*")
-includefiles = []
-sysIncludePathsList = []
-sysIncludePaths = ""
-
-    # find the files
-for gdirpath, gdirnames, gfilenames in os.walk("."):
-    for gf in gfilenames:
-        if re_srcfile.match(gf):
-            f = open(gdirpath + "/" + gf, 'r')
-            srclines = f.readlines()
-            f.close()
-            for sline in srclines:
-                m = re_sysinclude.match(sline)
-                if m:
-                    fname = os.path.basename(m.group(1))
-                    if fname not in includefiles:
-                        includefiles.append(fname)
-
-    # find what syspaths they have (if any)
-
 def pathsearch(basepath):
     global sysIncludePaths
     for dirpath, dirnames, filenames in os.walk(basepath):
@@ -114,12 +100,34 @@ def pathsearch(basepath):
                 if dirpath.rstrip() not in sysIncludePathsList:
                     sysIncludePathsList.append(dirpath.rstrip())
 
-pathsearch("/usr/local/include")
-pathsearch("/usr/include/x86_64-linux-gnu")
-pathsearch("/usr/include")
+re_srcfile = re.compile(".*\.c$|.*\.cc$|.*\.cpp$|.*\.h$|.*\.hh$")
+re_sysinclude = re.compile("#include.*<(.*)>.*")
+includefiles = []
+sysIncludePathsList = []
+sysIncludePaths = ""
 
-for incpath in sysIncludePathsList:
-    sysIncludePaths = sysIncludePaths + " -I" + incpath
+if useSysIncludes:
+    # find the files
+    for gdirpath, gdirnames, gfilenames in os.walk("."):
+        for gf in gfilenames:
+            if re_srcfile.match(gf):
+                f = open(gdirpath + "/" + gf, 'r')
+                srclines = f.readlines()
+                f.close()
+                for sline in srclines:
+                    m = re_sysinclude.match(sline)
+                    if m:
+                        fname = os.path.basename(m.group(1))
+                        if fname not in includefiles:
+                            includefiles.append(fname)
+
+    # find what syspaths they have (if any)
+    pathsearch("/usr/local/include")
+    pathsearch("/usr/include/x86_64-linux-gnu")
+    pathsearch("/usr/include")
+
+    for incpath in sysIncludePathsList:
+        sysIncludePaths = sysIncludePaths + " -I" + incpath
 
 while (lineindex<linestotal):
       directory = path

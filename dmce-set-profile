@@ -15,6 +15,7 @@ parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma
 parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
+parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If set, dmce will use the system include files when parsing code')
 args = parser.parse_args()
 
 if "do-not-exclude-anything" not in args.exclude:
@@ -70,6 +71,13 @@ count = 0
 while count < len(clines):
 
     if not '#' in clines[count]:
+
+        # Use system include files?
+        if "DMCE_SYS_INCLUDES" in clines[count]:
+            if args.sysincludes:
+                clines[count] = "DMCE_SYS_INCLUDES:YES\n"
+            else:
+                clines[count] = "DMCE_SYS_INCLUDES:NO\n"
 
         # trace profile
         if args.profile == "trace":
