@@ -111,7 +111,7 @@ run() {
 }
 
 # set syslog profile
-if ! run "${OVE_ACTIVE_REPO_DIR:?}/dmce-set-profile -d ${OVE_ACTIVE_REPO_DIR} -p syslog"; then
+if ! run "${OVE_ACTIVE_REPO_DIR:?}/dmce-set-profile -s -d ${OVE_ACTIVE_REPO_DIR} -p syslog"; then
 	exit 1
 fi
 
