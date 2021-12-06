@@ -25,7 +25,7 @@ import re
 probes = []
 executed_probes = []
 
-print("Summary (PROBED:NBR:FILE:LINE) ")
+print("Summary (PROBED:NBR:FILE:LINE)")
 
 # Read all executed probes in log
 total=0

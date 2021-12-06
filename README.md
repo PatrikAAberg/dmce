@@ -109,7 +109,7 @@ Of course you want to be able to go back to a non-probed state. You do this usin
     $ cd ..
     $ dmce-launcher -c
     $ git diff
-    
+
 The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce-launcher --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
 
 ## Example 2: How to use dmce trace
@@ -149,7 +149,7 @@ That's it! You should now be able to see the null-pointer bug at the end of exec
 
 ## Example 3: Patch code coverage
 
-This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below. 
+This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
@@ -168,22 +168,22 @@ Apply the patch in the patchcov dir:
 Probe the untracked and modified files, nothing more:
 
     $ dmce-launcher -n 1 --progress
-    
+
 Check that the patch was probed:
 
     $ git diff
-    
+
 Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/$USER/dmce/dmcebuffer.bin file if it is not the intention to collect several runs in the same file:
 
     $ rm -f /tmp/$USER/dmce/dmcebuffer.bin
     $ cd patchcov
     $ ./build && ./test-patchcov
-    
+
 Use dmce summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
 
     $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
-    
-The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones. 
+
+The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones.
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
 ## Mandatory entries in .dmceconfig
@@ -209,7 +209,7 @@ A DMCE run can be configured using the files in this directory:
 
     DMCE_CONFIG_PATH:/home/$USER/.config/dmce
         constructs.exclude          # Regular expressions to textually filter out lines that should not be probed
-        dmce.exclude                # Regular expressions used to exclude files and functions (myfile:myfunction), function can be omitted 
+        dmce.exclude                # Regular expressions used to exclude files and functions (myfile:myfunction), function can be omitted
         dmce.include                # Regular expressions used to include files and functions (myfile:myfunction), function can be omitted
         recognizedexpressions.py    # Advanced usage: Python regexps to choose what types of expressions to probe
         cmdlookuphook.sh            # Advanced usage: This hook makes it possible to produce file-specific compiler switches (typically #ifdefs)

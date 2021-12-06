@@ -48,7 +48,7 @@ done < $USE_DMCE_CONFIG_FILE
 
 # Any probes found?
 if [ -e $DMCE_WORK_PATH/$rel_git_root/probe-references.log ]; then
-	echo "DMCE probe ref log: $DMCE_WORK_PATH/$rel_git_root/probe-references.log "
+	echo "DMCE probe ref log: $DMCE_WORK_PATH/$rel_git_root/probe-references.log"
 	echo "Test result log   : $1"
 	echo "$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log"
 	$DMCE_EXEC_PATH/print_summary.py $1 $DMCE_WORK_PATH/$rel_git_root/probe-references.log

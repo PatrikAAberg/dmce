@@ -56,14 +56,14 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
 # Read probe-references.log
-probe_file = open(sys.argv[1]) 
+probe_file = open(sys.argv[1])
 probe_buf = probe_file.readlines()
 probe_file.close()
 
 # Read expr-references.log
-expr_file = open(sys.argv[2]) 
+expr_file = open(sys.argv[2])
 expr_buf = expr_file.readlines()
 expr_file.close()
 

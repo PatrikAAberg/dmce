@@ -5,9 +5,9 @@ import re
 import numpy as np
 
 parser = argparse.ArgumentParser(description='log2bin')
-parser.add_argument('numprobes', type=str, help='log file (in)')  
-parser.add_argument('logfile', type=str, help='log file (in)')  
-parser.add_argument('binfile', type=str, help='Binary file (out)')  
+parser.add_argument('numprobes', type=str, help='log file (in)')
+parser.add_argument('logfile', type=str, help='log file (in)')
+parser.add_argument('binfile', type=str, help='Binary file (out)')
 
 args = parser.parse_args()
 
