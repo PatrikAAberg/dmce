@@ -44,7 +44,7 @@ mkdir -p $cfgpath/.config/dmce
 # Create config file in home directory
 cat > $cfgpath/.dmceconfig <<- NoWord
 # DMCE install path
-DMCE_EXEC_PATH:/usr/share/dmce
+DMCE_EXEC_PATH:$installpath/share/dmce
 
 # Working directory root
 DMCE_WORK_PATH:/tmp/$LOGNAME/dmce
@@ -68,10 +68,10 @@ DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -I/usr/include/sys -is
 DMCE_NUM_DATA_VARS:0
 
 # Probe definition c file
-DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user.c
+DMCE_PROBE_SOURCE:$installpath/share/dmce/dmce-probe-user.c
 
 # Prolog definition c file
-DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
+DMCE_PROBE_PROLOG:$installpath/share/dmce/dmce-prolog-default.c
 
 # Use system inlcude files (YES | NO)
 DMCE_SYS_INCLUDES:NO
