@@ -20,9 +20,8 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 cfgpath=$1
-installpath="/$(which dmce-setup | cut -d'/' -f2)"
+installpath=$(which dmce-setup | sed -e 's/\/bin\/dmce-setup//')
 
-which dmce-setup
 if [ "$cfgpath" == "--help" ]; then
     echo "Usage: dmce-setup [--help | Path ]"
     echo "Default configuration path (where to setup dmce configuration) is $cfgpath, but can be specified with an optional argument"
