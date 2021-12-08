@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+#
+# MIT License
+#
+# Copyright (c) 2021 Ericsson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+# OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 function usage() {
 	local repos
@@ -6,10 +29,43 @@ function usage() {
 	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
 	repos="${repos/dmce/}"
 	repos="${repos/  / }"
-	echo "usage:"
-	echo "  $(basename $0) git"
-	echo
-	echo "choose from: $repos"
+	cat << EOF
+NAME
+        Decode DMCE trace buffer
+
+SYNOPSIS
+        ove dmce trace-decode git
+
+OPTIONS
+        git:
+          choose one git of: ${repos}
+
+PREREQUISITE
+	A successful run of 'ove dmce trace-prepare'
+
+DESCRIPTION
+        This OVE plugin will decode one DMCE trace buffer and display the raw trace to the user.
+        If 'fzf' (=github.com/junegunn/fzf) is installed an interactive viewer is launched.
+
+        It's possible to force the viewer to 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
+
+CONFIGURATION
+        # select trace viewer tool
+        DMCE_TRACE_VIEWER stdout|stderr|less|fzf|<file>
+
+EXAMPLES
+        # install fzf
+        $ <package manager> install fzf
+
+        # decode the trace buffer and launch an interactive fzf viewer
+        $ ove dmce trace-decode ag
+
+        # decode the trace buffer and display the trace on stdout
+        $ DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
+
+        # decode the trace buffer and save the trace to a file '/tmp/a.trace'
+        $ DMCE_TRACE_VIEWER=/tmp/a.trace ove dmce trace-decode ag
+EOF
 	exit 1
 }
 
@@ -106,19 +162,34 @@ function main() {
 	dmce_trace_args+=" --format raw"
 	dmce_trace_args+=" --numvars 5"
 	dmce_trace_args+=" -t"
-	dmce_trace_args+=" /tmp/dmcebuffer.bin"
+	dmce_trace_args+=" /tmp/$OVE_USER/dmce/dmcebuffer.bin"
 	dmce_trace_args+=" /tmp/$OVE_USER/dmce/${git_base}/probe-references.log"
 	dmce_trace_args+=" ${git_full}"
-	if ! command -v fzf > /dev/null; then
-		fzf=0
-		dmce_trace_args+=" --hl"
+
+	fzf=0
+	# not set, select fzf if it's available
+	if [ "x$DMCE_TRACE_VIEWER" = "x" ]; then
+		if ! command -v fzf > /dev/null; then
+			fzf=0
+			dmce_trace_args+=" --hl"
+		else
+			fzf=1
+		fi
+	elif [ "x$DMCE_TRACE_VIEWER" = "xfzf" ]; then
+		# fzf is forced but not available, fallback to 'less'
+		if ! command -v fzf > /dev/null; then
+			fzf=0
+		else
+			fzf=1
+		fi
 	else
-		fzf=1
+		# fzf is 0, select less/stdout/stderr/file below
+		:
 	fi
 
-	echo "$ dmce-trace ${dmce_trace_args}"
-	if ! "${OVE_ACTIVE_REPO_DIR:?}"/dmce-trace ${dmce_trace_args} > ${dmce_trace_log}; then
-		echo "error: dmce-trace failed"
+	echo "$ ove-dmce-trace ${dmce_trace_args}"
+	if ! ove-dmce trace ${dmce_trace_args} > ${dmce_trace_log}; then
+		echo "error: 'ove-dmce-trace ${dmce_trace_args}' failed"
 		exit 1
 	fi
 
@@ -184,10 +255,21 @@ function main() {
 	if [ -s "${dmce_trace_diff}" ]; then
 		git apply "${dmce_trace_diff}" 2> /dev/null
 	fi
-
 	# none-fzf: simply display the log
 	if [ $fzf -eq 0 ]; then
-		column -t -s'@' ${dmce_trace_log}
+		if [ "x$DMCE_TRACE_VIEWER" = "x" ] || [ "x$DMCE_TRACE_VIEWER" = "xstdout" ]; then
+			column -t -s'@' ${dmce_trace_log}
+		elif [ "x$DMCE_TRACE_VIEWER" = "xless" ]; then
+			column -t -s'@' ${dmce_trace_log} | less -r
+		elif [ "x$DMCE_TRACE_VIEWER" = "xstderr" ]; then
+			column -t -s'@' ${dmce_trace_log} 1>&2
+		else
+			echo "saving trace as '$(readlink -f $DMCE_TRACE_VIEWER)'"
+			if ! column -t -s'@' ${dmce_trace_log} > $DMCE_TRACE_VIEWER; then
+				exit 1
+			fi
+		fi
+
 		exit 0
 	fi
 

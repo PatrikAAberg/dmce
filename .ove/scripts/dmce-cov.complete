@@ -1,7 +1,0 @@
-if [ "${size}" -eq 2 ]; then
-	COMPREPLY=( $(compgen -W "$(a=${OVE_REPO_LIST//$OVE_BASE_DIR\//}; echo ${a/dmce/})" -- "${cur}") )
-elif [ "${size}" -eq 3 ]; then
-	COMPREPLY=( $(compgen -W "${OVE_PROJECT_LIST/dmce/}" -- "${cur}") )
-elif [ "${size}" -eq 4 ]; then
-	COMPREPLY=( $(compgen -W "1 2 3" -- "${cur}") )
-fi

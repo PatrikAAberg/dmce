@@ -34,7 +34,6 @@ cp -a $gitdir/dmce-remove-relpaths.sh dmce-$version/usr/share/dmce/
 cp -a $gitdir/dmce.sh dmce-$version/usr/share/dmce/
 cp -a $gitdir/generate-compile-commands.py dmce-$version/usr/share/dmce/
 cp -a $gitdir/generate-probefile.py dmce-$version/usr/share/dmce/
-cp -a $gitdir/print_summary.py dmce-$version/usr/share/dmce/
 
 cp -a $gitdir/constructs.exclude dmce-$version/usr/share/dmce/
 cp -a $gitdir/dmce.exclude dmce-$version/usr/share/dmce/

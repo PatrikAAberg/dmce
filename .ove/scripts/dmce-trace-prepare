@@ -1,24 +1,71 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+#
+# MIT License
+#
+# Copyright (c) 2021 Ericsson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+# OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 function usage() {
 	local projs
 	local repos
 
 	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	repos="${repos/dmce/}"
 	repos="${repos/  / }"
-	projs="${OVE_PROJECT_LIST/dmce/}"
-	projs="${projs/  / }"
-	echo "usage:"
-	echo "  $(basename $0) git proj"
-	echo
-	echo "git:"
-	echo "  choose one from: ${repos}"
-	echo
-	echo "proj:"
-	echo "  choose one from: ${projs}"
+	projs="${OVE_PROJECT_LIST}"
+	cat << EOF
+NAME
+        Insert DMCE probes into one repo and build it
 
-	exit 1
+SYNOPSIS
+        ove dmce trace-prepare git proj
+
+OPTIONS
+        git:
+          choose one git of: ${repos}
+
+        proj:
+          choose one from: ${projs}
+
+DESCRIPTION
+        This plugin is a helper that will insert probes into one git repo. As OVE
+        know how to build the project 'proj' this plugin will also build the code.
+
+        Use 'ove dmce trace-decode' to decode the trace buffer. Don't forget to install 'fzf'!
+
+EXAMPLES
+        # install fzf
+        $ <package manager> install fzf
+
+        # prepare the git and build it
+        $ ove dmce trace-prepare ag ag
+
+        # run some test, here we're searching for the word 'foobar'
+        $ ag foobar
+
+        # decode the trace buffer and launch an interactive fzf viewer
+        $ ove dmce trace-decode ag
+
+        # oneliner (all of the above in one go)
+        $ ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
+EOF
 }
 
 function main() {
@@ -29,27 +76,18 @@ function main() {
 	# usage and sanity checks
 	if [ $# -lt 2 ]; then
 		usage
+		exit 1
 	elif [ ! -d "${git_full}" ]; then
 		echo "error: ${git_full} is not a directory"
 		usage
+		exit 1
 	elif [ ! -d "${git_full}"/.git ]; then
 		echo "error: ${git_full} does not appear to be a git repo"
 		usage
+		exit 1
 	fi
 
 	name="$(basename "$0")-${git/\//_}"
-
-	if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ]; then
-		echo "WARNING: this script will do a HARD reset (=git reset -q --hard) AND clean up (=git clean -dfxq) this repo: ${git_full}"
-		read -p "continue? (y/N) " -r
-		if ! [[ "${REPLY}" =~ ^[Yy]$ ]]; then
-			exit 1
-		fi
-		read -p "are you REALLY sure? (y/N) " -r
-		if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
-			exit 1
-		fi
-	fi
 
 	echo "$ cd ${git_full}"
 	if ! cd "${git_full}"; then
@@ -60,7 +98,8 @@ function main() {
 	launch=1
 	stash=$(git stash list | grep 'dmce')
 	if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ] && [ "x${stash}" != "x" ]; then
-		read -t 3 -p "use stashed instrumentation (this dialog will timeout in 3 seconds)? (y/N) " -r
+		printf "%s\n" "$stash"
+		read -t 10 -p "use stashed instrumentation (this dialog will timeout in 10 seconds)? (y/N) " -r
 		ret=$?
 		if [ ${ret} -gt 128 ]; then
 			echo
@@ -90,19 +129,32 @@ function main() {
 	fi
 
 	if [ ${launch} -eq 1 ]; then
-		echo "$ dmce-set-profile -d ${OVE_ACTIVE_REPO_DIR} -p trace"
-		if ! "${OVE_ACTIVE_REPO_DIR}/dmce-set-profile" -d "${OVE_ACTIVE_REPO_DIR}" -p trace; then
-			echo "error: 'dmce-set-profile -p trace' failed"
+		echo "$ ove-dmce set-profile trace"
+		if ! ove-dmce set-profile trace; then
+			echo "error: 'ove dmce set-profile trace' failed"
 			exit 1
 		fi
 
-		echo "$ git -C ${git_full} clean -dfxq"
-		if ! git -C "${git_full}" clean -dfxq; then
-			ove_echo_red_noprefix "error: 'git clean -dfxq' failed"
-			exit 1
-		elif git -C ${git_full} grep -q 'DMCE_PROBE('; then
-			ove_echo_red_noprefix "error: the git is full of probes. Cleanup!"
-			exit 1
+		if git -C "${git_full}" grep -q 'DMCE_PROBE('; then
+			if [ "x${DMCE_TRACE_AUTOMATION}" != "x" ] && [ "${DMCE_TRACE_AUTOMATION}" -eq 1 ]; then
+				# do nothing
+				true
+			else
+				read -r -p "info: repo '${git}' is already probed! git stash && git stash drop? (y/N)"
+				if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
+					exit 1
+				fi
+			fi
+
+			if ! git -C "${git_full}" stash -q; then
+				ove_echo_red_noprefix "error: 'git -C ${git_full} stash' failed"
+				exit 1
+			fi
+
+			if ! git -C "${git_full}" stash drop -q; then
+				ove_echo_red_noprefix "error: 'git -C ${git_full} stash drop' failed"
+				exit 1
+			fi
 		fi
 
 		# save any local modifications
@@ -114,14 +166,14 @@ function main() {
 			rm "${dmce_trace_diff}"
 		fi
 
-		echo "$ dmce-launcher -a"
-		out=$("${OVE_ACTIVE_REPO_DIR:?}"/dmce-launcher -a)
+		echo "$ ove-dmce launch -a -- $git_full"
+		out=$(ove-dmce launch -a -- "$git_full")
 		ret=$?
 		if [ ${ret} -ne 0 ]; then
 			if [[ ${out} == *error* ]]; then
 				err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
 			else
-				err_string="'dmce-launcher -a' failed"
+				err_string="'ove-dmce launch -a -- $git_full' failed"
 			fi
 			ove_echo_red_noprefix "${err_string}"
 			exit 1
@@ -138,9 +190,9 @@ function main() {
 		find "${PWD}" -name '*.dmceoriginal' -exec rm  {} \;
 	fi
 
-	echo "$ ove buildme-parallel ${ove_proj}"
-	if ! ove buildme-parallel "${ove_proj}" > /dev/null; then
-		err_string="ove buildme-parallel ${ove_proj} failed"
+	echo "$ ove build ${ove_proj} && ove install ${ove_proj}"
+	if ! ove build "${ove_proj}" > /dev/null || ! ove install "${ove_proj}" > /dev/null; then
+		err_string="ove build or install ${ove_proj} failed"
 		ove_echo_red_noprefix "${err_string}"
 		if [ -s "${OVE_LAST_COMMAND}" ]; then
 			cat "${OVE_LAST_COMMAND}"
@@ -153,11 +205,14 @@ function main() {
 	fi
 
 	nbr_of_probes=$(git grep 'DMCE_PROBE([0-9]\+' | grep -o 'DMCE_PROBE([0-9]\+' | cut -d'(' -f2 | sort -V | tail -1)
-	echo "NOTE: repo '${git_full}' is instrumented with ${nbr_of_probes} probe(s). Run a testcase and when done run:"
-	echo "$ ove dmce-trace-decode ${git}"
-	echo
-	echo "Executable ELF files within the '${git}' repo:"
-	find ${git_full} -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n
+	echo "info: repo '${git_full}' is now instrumented with ${nbr_of_probes} probe(s). Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
+	elfs=$(find "${git_full}" -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n)
+	if [ "x$elfs" = "x" ]; then
+		echo "warning: no executable ELF files found in '${git}'. Building artifacts outside the git repo? Or did you select the wrong OVE project '$ove_proj'?"
+	else
+		echo "ELF files within the '${git}' repo:"
+		printf "%s\n" "$elfs"
+	fi
 
 	exit 0
 }

@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+#
+# MIT License
+#
+# Copyright (c) 2021 Ericsson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+# OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+name=$(basename "$0")
+
+function usage() {
+	local projs
+	local repos
+
+	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+	repos="${repos/dmce/}"
+	repos="${repos/  / }"
+	projs="${OVE_PROJECT_LIST/dmce/}"
+	projs="${projs/  / }"
+	cat << EOF
+NAME
+       run coverage-history on commits not yet published
+
+SYNOPSIS
+       ove ${name} git proj mode
+
+OPTIONS
+        git
+          choose one git of: ${repos}
+
+        proj
+          choose one OVE project from: ${projs}
+
+        mode:
+          see output from 'ove dmce coverage-history'
+
+DESCRIPTION
+
+EXAMPLES
+        # delta code coverage results for commits not yet published
+        $ ove dmce coverage-ahead ag ag 1
+        ...
+        dmce-coverage-history summary:
+        3 iterations in 66 seconds
+        revs (4): 6d5bd60 eb04f4c 465e634 a61f178
+        #  A        date        subject          B        date        subject          C        date        subject          D        date        subject          dexec[AB]  dprobes[AB]  dcov[AB]  sexec[AC]  sprobes[AC]  scov[AC]  fexec[AD]  fprobes[AD]  fcov[AD]  errors
+        1  6d5bd60  2021-12-14  third patch      eb04f4c  2021-12-14  second patch     a61f178  2020-12-16  Merge pull re..  0121e6b  2011-11-19  init             2          3            66.7 %
+        2  eb04f4c  2021-12-14  second patch     465e634  2021-12-14  first patch      a61f178  2020-12-16  Merge pull re..  0121e6b  2011-11-19  init             2          2            100.0 %
+        3  465e634  2021-12-14  first patch      a61f178  2020-12-16  Merge pull re..  a61f178  2020-12-16  Merge pull re..  0121e6b  2011-11-19  init             1          1            100.0 %                                                                       d@ove test ag failed
+EOF
+}
+
+main() {
+	local git_full
+
+	git="$1"
+	git_full="${OVE_BASE_DIR:?}/$1"
+
+	# usage and sanity checks
+	if [ $# -lt 3 ]; then
+		usage
+		exit 1
+	elif [ ! -d "${git_full}" ]; then
+		echo "error: ${git_full} is not a directory"
+		usage
+		exit 1
+	elif [ ! -d "${git_full}"/.git ]; then
+		echo "error: ${git_full} does not appear to be a git repo"
+		usage
+		exit 1
+	fi
+
+	ove_proj="$2"
+	mode="$3"
+	shift 3
+
+	# get revs ahead for 'git'
+	mapfile -t revs <<<"$(ove-ahead "$git" | \grep -o '^[a-f0-9]\+')"
+	nbr_revs=${#revs[@]}
+	if [ "${nbr_revs}" -eq 0 ]; then
+		echo "error: no revs"
+		exit 1
+	fi
+
+	# get parent
+	if ! parent=$(git -C "$git_full" show "${revs[$((nbr_revs-1))]}"^1 --pretty=%H); then
+		exit 1
+	fi
+	revs+=("$parent")
+	nbr_revs=${#revs[@]}
+
+	# sanity check
+	for i in $(seq 0 $((nbr_revs - 1))); do
+		if ! git -C "$git_full" cat-file -e "${revs[i]}" &> /dev/null; then
+			echo "error: '${revs[i]}' is not a valid rev"
+			exit 1
+		fi
+	done
+
+	echo "revs (${nbr_revs}): ${revs[*]}"
+
+	echo "run 'ove-dmce coverage-history $git $ove_proj $mode ${revs[*]}'"
+	if ! ove-dmce coverage-history "$git" "$ove_proj" "$mode" "${revs[*]}"; then
+		exit 1
+	fi
+}
+
+main "$@"
