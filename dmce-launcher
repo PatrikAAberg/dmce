@@ -329,7 +329,7 @@ dmce_dir="$(cd "${dmce_dir}" && pwd -P)"
 if [ -d "${dmce_dir}"/.git ]; then
     DMCE_VERSION=$(GIT_CEILING_DIRECTORIES="$dmce_dir" git -C "$dmce_dir" describe --tags --always --dirty --long 2> /dev/null)
 elif [[ "${dmce_dir}" =~ /usr* ]] && [ -s /usr/share/dmce/version ]; then
-    DMCE_VERSION=$(cat /usr/share/dmce/version)
+    DMCE_VERSION=$(cat $DMCE_EXEC_PATH/version)
 elif [ -s "${dmce_dir}/debian/control" ]; then
     DMCE_VERSION=$(grep '^Version:' "${dmce_dir}/debian/control" | cut -d' ' -f2)
 fi
