@@ -30,10 +30,7 @@ function usage() {
 	local repos
 
 	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	repos="${repos/dmce/}"
-	repos="${repos/  / }"
-	projs="${OVE_PROJECT_LIST/dmce/}"
-	projs="${projs/  / }"
+	projs="${OVE_PROJECT_LIST}"
 	cat << EOF
 NAME
        run coverage-history on commits not yet published
@@ -88,13 +85,16 @@ main() {
 	fi
 
 	ove_proj="$2"
-	mode="$3"
-	shift 3
+	shift 2
+	mode="$@"
 
 	# get revs ahead for 'git'
 	mapfile -t revs <<<"$(ove-ahead "$git" | \grep -o '^[a-f0-9]\+')"
 	nbr_revs=${#revs[@]}
 	if [ "${nbr_revs}" -eq 0 ]; then
+		echo "error: no revs"
+		exit 1
+	elif [ "${nbr_revs}" -eq 1 ] && [ "x${revs[0]}" = "x" ]; then
 		echo "error: no revs"
 		exit 1
 	fi
@@ -117,7 +117,7 @@ main() {
 	echo "revs (${nbr_revs}): ${revs[*]}"
 
 	echo "run 'ove-dmce coverage-history $git $ove_proj $mode ${revs[*]}'"
-	if ! ove-dmce coverage-history "$git" "$ove_proj" "$mode" "${revs[*]}"; then
+	if ! ove-dmce coverage-history "$git" "$ove_proj" $mode ${revs[*]}; then
 		exit 1
 	fi
 }
