@@ -47,7 +47,7 @@ function dmce_build_test() {
 
 	err_string=
 
-	ove_echo_cyan_error "ove-dmce launch $dmce_args -- $git"
+	ove-echo cyan "ove-dmce launch $dmce_args -- $git"
 	out=$(ove-dmce launch "$dmce_args" -- "$git")
 	ret=$?
 	if [ ${ret} -ne 0 ]; then
@@ -56,7 +56,7 @@ function dmce_build_test() {
 		else
 			err_string="dmce-launcher -q -r $1 failed"
 		fi
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		return 1
 	fi
 
@@ -70,7 +70,7 @@ function dmce_build_test() {
 	probe_ref="$(grep DMCE_WORK_PATH "$OVE_BASE_DIR"/.dmceconfig | cut -d: -f2)/$git/probe-references.log"
 	if [ ! -s "$probe_ref" ]; then
 		err_string="probe-references.log not found"
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		return 1
 	fi
 
@@ -80,22 +80,22 @@ function dmce_build_test() {
 	diff=$((now - probe_last_mod))
 	if [ $diff -gt 3 ]; then
 		err_string="$probe_ref is too old. age: $diff seconds"
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		return 1
 	fi
 
-	ove_echo_cyan_error "ove buildme-parallel ${ove_proj}"
+	ove-echo cyan "ove buildme-parallel ${ove_proj}"
 	if ! ove buildme-parallel "${ove_proj}" > /dev/null; then
 		err_string="ove buildme-parallel ${ove_proj} failed"
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		return 1
 	fi
 
 	test_start=$(date '+%Y-%m-%d %H:%M:%S')
-	ove_echo_cyan_error "ove test ${ove_proj}"
+	ove-echo cyan "ove test ${ove_proj}"
 	if ! ove test "${ove_proj}"; then
 		err_string="ove test ${ove_proj} failed"
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		ret=2
 	else
 		ret=0
@@ -106,12 +106,12 @@ function dmce_build_test() {
 		cut -d: -f4- | \
 		sort -V -u > "${OVE_TMP:?}/${name}.log"; then
 		err_string="journalctl failed"
-		ove_echo_red_noprefix "$err_string"
+		ove-echo red "$err_string"
 		return 1
 	fi
 
 	if ! ove dmce summary-txt "${OVE_TMP:?}/${name}.log" "$probe_ref"; then
-		ove_echo_red_noprefix "dmce-summary-txt failed"
+		ove-echo red "dmce-summary-txt failed"
 		err_string="'ove dmce summary-txt' failed"
 		return 1
 	fi
@@ -289,7 +289,7 @@ function init() {
 		fi
 	fi
 
-	ove_echo_cyan_error "${name}: delta: $delta full: $full series: $series"
+	ove-echo cyan "${name}: delta: $delta full: $full series: $series"
 
 	if [ $# -eq 0 ]; then
 		mapfile -t revs <<<"$(git -C "${git_full}" tag --sort=-version:refname)"
@@ -327,7 +327,7 @@ function init() {
 
 	worktree="${OVE_TMP}/${name}"
 	ove-worktree remove "$worktree" || true
-	ove_echo_cyan_error "ove-worktree add ${worktree}"
+	ove-echo cyan "ove-worktree add ${worktree}"
 	if ! ove-worktree add "$worktree"; then
 		echo "error: 'ove-worktree add ${worktree}' failed"
 		exit 1
@@ -355,7 +355,7 @@ function init() {
 		exit 1
 	fi
 
-	ove_echo_cyan_error "ove-dmce set-profile syslog"
+	ove-echo cyan "ove-dmce set-profile syslog"
 	if ! ove dmce set-profile syslog; then
 		echo "error: 'ove-dmce set-profile syslog' failed"
 		exit 1
@@ -399,14 +399,14 @@ function main() {
 	init "$@"
 	trap summary EXIT
 
-	ove_echo_cyan_error "ove reset-hard ${git}"
+	ove-echo cyan "ove reset-hard ${git}"
 	if ! ove reset-hard "${git}"; then
-		ove_echo_red_noprefix "error: 'ove reset-hard ${git}' failed"
+		ove-echo red "error: 'ove reset-hard ${git}' failed"
 		exit 1
 	fi
-	ove_echo_cyan_error "git clean -dfxq"
+	ove-echo cyan "git clean -dfxq"
 	if ! git clean -dfxq; then
-		ove_echo_red_noprefix "error: 'git clean -dfxq' failed"
+		ove-echo red "error: 'git clean -dfxq' failed"
 		exit 1
 	fi
 
@@ -445,13 +445,13 @@ function main() {
 		fi
 
 		# cleanup
-		ove_echo_cyan_error "ove reset-hard ${git}"
+		ove-echo cyan "ove reset-hard ${git}"
 		ove reset-hard "${git}"
-		ove_echo_cyan_error "git clean -dfxq"
+		ove-echo cyan "git clean -dfxq"
 		git clean -dfxq
 
 		# checkout head
-		ove_echo_cyan_error "git checkout -q ${head}"
+		ove-echo cyan "git checkout -q ${head}"
 		if ! git checkout -q "${head}"; then
 			echo "${prefix}${delimiter}${na_string}${delimiter}git checkout ${head} failed"
 			continue
@@ -464,7 +464,7 @@ function main() {
 		delta_probes=" "
 		delta_coverage=" "
 		if [ "${delta}" -eq 1 ]; then
-			ove_echo_cyan_error "delta coverage ${base}"
+			ove-echo cyan "delta coverage ${base}"
 			run_one "${base}"
 			ret=$?
 			if [ $ret -eq 1 ]; then
@@ -489,7 +489,7 @@ function main() {
 		series_probes=" "
 		series_coverage=" "
 		if [ "${series}" -eq 1 ]; then
-			ove_echo_cyan_error "series coverage ${series_base}"
+			ove-echo cyan "series coverage ${series_base}"
 			run_one "${series_base}"
 			ret=$?
 			if [ $ret -eq 1 ]; then
@@ -514,7 +514,7 @@ function main() {
 		full_probes=" "
 		full_coverage=" "
 		if [ "${full}" -eq 1 ]; then
-			ove_echo_cyan_error "full coverage ${first}"
+			ove-echo cyan "full coverage ${first}"
 			run_one "${first}"
 			ret=$?
 			if [ $ret -eq 1 ]; then

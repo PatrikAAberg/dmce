@@ -147,12 +147,12 @@ function main() {
 			fi
 
 			if ! git -C "${git_full}" stash -q; then
-				ove_echo_red_noprefix "error: 'git -C ${git_full} stash' failed"
+				ove-echo red "error: 'git -C ${git_full} stash' failed"
 				exit 1
 			fi
 
 			if ! git -C "${git_full}" stash drop -q; then
-				ove_echo_red_noprefix "error: 'git -C ${git_full} stash drop' failed"
+				ove-echo red "error: 'git -C ${git_full} stash drop' failed"
 				exit 1
 			fi
 		fi
@@ -175,14 +175,14 @@ function main() {
 			else
 				err_string="'ove-dmce launch -a -- $git_full' failed"
 			fi
-			ove_echo_red_noprefix "${err_string}"
+			ove-echo red "${err_string}"
 			exit 1
 		fi
 
 		# still no probes?
 		if ! git grep -q 'DMCE_PROBE('; then
 			err_string="no probes inserted"
-			ove_echo_red_noprefix "${err_string}"
+			ove-echo red "${err_string}"
 			exit 1
 		fi
 
@@ -193,7 +193,7 @@ function main() {
 	echo "$ ove build ${ove_proj} && ove install ${ove_proj}"
 	if ! ove build "${ove_proj}" > /dev/null || ! ove install "${ove_proj}" > /dev/null; then
 		err_string="ove build or install ${ove_proj} failed"
-		ove_echo_red_noprefix "${err_string}"
+		ove-echo red "${err_string}"
 		if [ -s "${OVE_LAST_COMMAND}" ]; then
 			cat "${OVE_LAST_COMMAND}"
 		fi
