@@ -84,7 +84,10 @@ def stripProbe(s):
 
     substr = substr + '\), '
     s = re.sub(substr, '', s)
-    s = re.sub('(.*\(.*\))*\)(.*)', r'\1\2', s)
+    # last paren
+    m = re.search('.*(\(.*\))*(\))',s)
+    if m:
+        s = s[:m.start(2)] + s[m.end(2):]
     return s
 
 def stripProbeExtractVars(sl, vs):
@@ -100,8 +103,10 @@ def stripProbeExtractVars(sl, vs):
     if slm:
         sl = slm.group(1) + slm.group(args.numvars + 2)
 
-        # remove last right parentesis
-        sl = re.sub('(.*\(.*\))*\)(.*)', r'\1\2', sl)
+        # last paren
+        m = re.search('.*(\(.*\))*(\))', sl)
+        if m:
+            sl = sl[:m.start(2)] + sl[m.end(2):]
 
         for i in range (0, args.numvars):
             if slm.group(i + 2) != '0':
