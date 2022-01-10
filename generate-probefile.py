@@ -304,6 +304,7 @@ re_sections_to_not_skip = []
 re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*referenced class.*'))
 re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*class.*definition.*'))
 
+# The ones to skip
 re_sections_to_skip = []
 re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*-InitListExpr.*'))
@@ -317,6 +318,11 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
 
+# Variable stack barriers
+re_var_barriers = []
+re_var_barriers.append(re.compile(r'.*-CXXRecordDecl.*'))
+
+# Variable and param var declarations
 re_parmdeclarations = []
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'size_t\' (cinit|listinit).*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'size_t\':\'unsigned long\' (cinit|listinit).*'))
@@ -401,13 +407,13 @@ while (lineindex < linestotal):
         if not rightself:
             rightother = True
 
-#    print("left: " + str(left))
+#    print("anypos: " + str(anypos))
 #    print("right: " + str(right))
 #    print("middle: " + str(middle))
-#    print("leftself: " + str(leftself))
+#    print("anyposself: " + str(anyposself))
 #    print("rightself: " + str(rightself))
 #    print("middleself: " + str(middleself))
-#    print("leftother: " + str(leftother))
+#    print("anyposother: " + str(anyposotherother))
 #    print("rightother: " + str(rightother))
 #    print("middleother: " + str(middleother))
 
@@ -929,12 +935,23 @@ while (lineindex < linestotal):
                 secStackVars.append(m.group(2))
 
         else:
+            # Skip?
             skipthis = False
             for section in re_skip_scopes:
                 m = section.match(linebuf[lineindex])
                 if m:
                     skipthis = True
-            if not skipthis:
+
+            # Barrier?
+            for section in re_var_barriers:
+                barrier = section.match(linebuf[lineindex])
+                if barrier:
+                    secStackVars.append("### VAR BARRIER ###")
+                    secStackPos.append((currentSectionLend, currentSectionCend))
+                    print("MATCHED VAR BARRIER: " + linebuf[lineindex])
+                    break
+
+            if not skipthis and not barrier:
                 secStackVars.append("")
                 secStackPos.append((currentSectionLend, currentSectionCend))
 
@@ -985,6 +1002,8 @@ while (i < expdb_index):
     if numDataVars > 0:
         vlist = []
         for s in reversed(expdb_secstackvars[i]):
+            if s == "### VAR BARRIER ###":
+                break
             if s != "":
                 vlist.append(s)
 
