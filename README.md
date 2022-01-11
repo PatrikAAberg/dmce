@@ -173,6 +173,8 @@ Check that the patch was probed:
 
     $ git diff
 
+Note, doxygen annotations are treated as code. Changing a doxygen comments may result in that following source code declaration gets instrumented.
+
 Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/$USER/dmce/dmcebuffer.bin file if it is not the intention to collect several runs in the same file:
 
     $ rm -f /tmp/$USER/dmce/dmcebuffer.bin
