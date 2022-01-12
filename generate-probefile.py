@@ -914,7 +914,7 @@ while (lineindex < linestotal):
 
         # TODO: Add lvalue vars
 
-        if m:
+        if m and not backtrailing:
             # top level ?
             top = True
             count = 0
