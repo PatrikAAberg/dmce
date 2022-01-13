@@ -192,15 +192,15 @@ function main() {
 
     echo "$ ove build ${ove_proj} && ove install ${ove_proj}"
     if ! ove build "${ove_proj}" > /dev/null || ! ove install "${ove_proj}" > /dev/null; then
-        err_string="ove build or install ${ove_proj} failed"
+        err_string="ove build or install for probed project ${ove_proj} failed"
         ove-echo red "${err_string}"
         if [ -s "${OVE_LAST_COMMAND}" ]; then
             cat "${OVE_LAST_COMMAND}"
         fi
 
         # remove DMCE probes and keep local modifications
-        git stash; git stash drop -q
-        git apply "${dmce_trace_diff}"
+        ove-dmce launch -c -- $git_full
+
         exit 1
     fi
 
@@ -213,6 +213,12 @@ function main() {
         echo "ELF files within the '${git}' repo:"
         printf "%s\n" "$elfs"
     fi
+
+    # remove DMCE probes and keep local modifications
+    ove-dmce launch -c -- $git_full
+
+    # remove any already existing trace lock file at dmce-configure-local default path
+    rm -rf /tmp/$LOGNAME/dmce-trace-buffer-lock
 
     exit 0
 }
