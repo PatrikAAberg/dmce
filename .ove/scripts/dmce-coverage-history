@@ -34,98 +34,98 @@ delimiter="|"
 
 # $1: rev
 function dmce_build_test() {
-	local dmce_args
-	local out
-	local ret
-	local test_start
+    local dmce_args
+    local out
+    local ret
+    local test_start
 
-	if [ "$1" = "$first" ]; then
-		dmce_args="-q -a"
-	else
-		dmce_args="-q -r $1"
-	fi
+    if [ "$1" = "$first" ]; then
+        dmce_args="-q -a"
+    else
+        dmce_args="-q -r $1"
+    fi
 
-	err_string=
+    err_string=
 
-	ove-echo cyan "ove-dmce launch $dmce_args -- $git"
-	out=$(ove-dmce launch "$dmce_args" -- "$git")
-	ret=$?
-	if [ ${ret} -ne 0 ]; then
-		if [[ ${out} == *error* ]]; then
-			err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
-		else
-			err_string="dmce-launcher -q -r $1 failed"
-		fi
-		ove-echo red "${err_string}"
-		return 1
-	fi
+    ove-echo cyan "ove-dmce launch $dmce_args -- $git"
+    out=$(ove-dmce launch "$dmce_args" -- "$git")
+    ret=$?
+    if [ ${ret} -ne 0 ]; then
+        if [[ ${out} == *error* ]]; then
+            err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
+        else
+            err_string="dmce-launcher -q -r $1 failed"
+        fi
+        ove-echo red "${err_string}"
+        return 1
+    fi
 
-	# still no probes?
-	if ! git grep -q DMCE_PROBE; then
-		err_string="no probes inserted"
-		return 1
-	fi
+    # still no probes?
+    if ! git grep -q DMCE_PROBE; then
+        err_string="no probes inserted"
+        return 1
+    fi
 
-	# find probe-references.log
-	probe_ref="$(grep DMCE_WORK_PATH "$OVE_BASE_DIR"/.dmceconfig | cut -d: -f2)/$git/probe-references.log"
-	if [ ! -s "$probe_ref" ]; then
-		err_string="probe-references.log not found"
-		ove-echo red "${err_string}"
-		return 1
-	fi
+    # find probe-references.log
+    probe_ref="$(grep DMCE_WORK_PATH "$OVE_BASE_DIR"/.dmceconfig | cut -d: -f2)/$git/probe-references.log"
+    if [ ! -s "$probe_ref" ]; then
+        err_string="probe-references.log not found"
+        ove-echo red "${err_string}"
+        return 1
+    fi
 
-	# sanity check the age of probe-references.log
-	now=$(date +%s)
-	probe_last_mod=$(stat -c %Y "$probe_ref")
-	diff=$((now - probe_last_mod))
-	if [ $diff -gt 3 ]; then
-		err_string="$probe_ref is too old. age: $diff seconds"
-		ove-echo red "${err_string}"
-		return 1
-	fi
+    # sanity check the age of probe-references.log
+    now=$(date +%s)
+    probe_last_mod=$(stat -c %Y "$probe_ref")
+    diff=$((now - probe_last_mod))
+    if [ $diff -gt 3 ]; then
+        err_string="$probe_ref is too old. age: $diff seconds"
+        ove-echo red "${err_string}"
+        return 1
+    fi
 
-	ove-echo cyan "ove buildme-parallel ${ove_proj}"
-	if ! ove buildme-parallel "${ove_proj}" > /dev/null; then
-		err_string="ove buildme-parallel ${ove_proj} failed"
-		ove-echo red "${err_string}"
-		return 1
-	fi
+    ove-echo cyan "ove buildme-parallel ${ove_proj}"
+    if ! ove buildme-parallel "${ove_proj}" > /dev/null; then
+        err_string="ove buildme-parallel ${ove_proj} failed"
+        ove-echo red "${err_string}"
+        return 1
+    fi
 
-	test_start=$(date '+%Y-%m-%d %H:%M:%S')
-	ove-echo cyan "ove test ${ove_proj}"
-	if ! ove test "${ove_proj}"; then
-		err_string="ove test ${ove_proj} failed"
-		ove-echo red "${err_string}"
-		ret=2
-	else
-		ret=0
-	fi
+    test_start=$(date '+%Y-%m-%d %H:%M:%S')
+    ove-echo cyan "ove test ${ove_proj}"
+    if ! ove test "${ove_proj}"; then
+        err_string="ove test ${ove_proj} failed"
+        ove-echo red "${err_string}"
+        ret=2
+    else
+        ret=0
+    fi
 
-	if ! journalctl -q --since "${test_start}" | \
-		grep -o 'DMCE_PROBE.*' | \
-		cut -d: -f4- | \
-		sort -V -u > "${OVE_TMP:?}/${name}.log"; then
-		err_string="journalctl failed"
-		ove-echo red "$err_string"
-		return 1
-	fi
+    if ! journalctl -q --since "${test_start}" | \
+        grep -o 'DMCE_PROBE.*' | \
+        cut -d: -f4- | \
+        sort -V -u > "${OVE_TMP:?}/${name}.log"; then
+        err_string="journalctl failed"
+        ove-echo red "$err_string"
+        return 1
+    fi
 
-	if ! ove dmce summary-txt "${OVE_TMP:?}/${name}.log" "$probe_ref"; then
-		ove-echo red "dmce-summary-txt failed"
-		err_string="'ove dmce summary-txt' failed"
-		return 1
-	fi
+    if ! ove dmce summary-txt "${OVE_TMP:?}/${name}.log" "$probe_ref"; then
+        ove-echo red "dmce-summary-txt failed"
+        err_string="'ove dmce summary-txt' failed"
+        return 1
+    fi
 
-	return $ret
+    return $ret
 }
 
 function usage() {
-	local projs
-	local repos
+    local projs
+    local repos
 
-	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	projs="${OVE_PROJECT_LIST}"
-	cat << EOF
+    repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+    projs="${OVE_PROJECT_LIST}"
+    cat << EOF
 NAME
        create C/C++ coverage history
 
@@ -235,345 +235,345 @@ EOF
 }
 
 function init() {
-	local i
-	local j
-	local out
+    local i
+    local j
+    local out
 
-	# usage and sanity checks
-	if [ $# -lt 3 ]; then
-		usage
-		exit 1
-	elif [ ! -d "${git_full}" ]; then
-		echo "error: ${git_full} is not a directory"
-		usage
-		exit 1
-	elif [ ! -d "${git_full}"/.git ]; then
-		echo "error: ${git_full} does not appear to be a git repo"
-		usage
-		exit 1
-	fi
+    # usage and sanity checks
+    if [ $# -lt 3 ]; then
+        usage
+        exit 1
+    elif [ ! -d "${git_full}" ]; then
+        echo "error: ${git_full} is not a directory"
+        usage
+        exit 1
+    elif [ ! -d "${git_full}"/.git ]; then
+        echo "error: ${git_full} does not appear to be a git repo"
+        usage
+        exit 1
+    fi
 
-	ove_proj="$2"
-	shift 2
+    ove_proj="$2"
+    shift 2
 
-	delta=0
-	full=0
-	series=0
-	if [[ $* == *delta* ]] || [[ $* == *series* ]] || [[ $* == *full* ]]; then
-		for i in "$@"; do
-			if [[ "$i" != "delta" ]] && [[ "$i" != "series" ]] && [[ "$i" != "full" ]]; then
-				continue
-			fi
-			eval "$i"=1
-			shift
-		done
-	else
-		mode="$1"
-		shift
-		if [[ ! "${mode}" =~ ^[1-7]$ ]]; then
-			echo "error: unknown mode: '$mode'"
+    delta=0
+    full=0
+    series=0
+    if [[ $* == *delta* ]] || [[ $* == *series* ]] || [[ $* == *full* ]]; then
+        for i in "$@"; do
+            if [[ "$i" != "delta" ]] && [[ "$i" != "series" ]] && [[ "$i" != "full" ]]; then
+                continue
+            fi
+            eval "$i"=1
+            shift
+        done
+    else
+        mode="$1"
+        shift
+        if [[ ! "${mode}" =~ ^[1-7]$ ]]; then
+            echo "error: unknown mode: '$mode'"
 
-			#usage
-			exit 1
-		fi
-		if [ $((mode & 0x1)) -eq 1 ]; then
-			delta=1
-		fi
+            #usage
+            exit 1
+        fi
+        if [ $((mode & 0x1)) -eq 1 ]; then
+            delta=1
+        fi
 
-		if [ $((mode & 0x2)) -eq 2 ]; then
-			full=1
-		fi
+        if [ $((mode & 0x2)) -eq 2 ]; then
+            full=1
+        fi
 
-		if [ $((mode & 0x4)) -eq 4 ]; then
-			series=1
-		fi
-	fi
+        if [ $((mode & 0x4)) -eq 4 ]; then
+            series=1
+        fi
+    fi
 
-	ove-echo cyan "${name}: delta: $delta full: $full series: $series"
+    ove-echo cyan "${name}: delta: $delta full: $full series: $series"
 
-	if [ $# -eq 0 ]; then
-		mapfile -t revs <<<"$(git -C "${git_full}" tag --sort=-version:refname)"
-	else
-		revs=("$@")
-	fi
+    if [ $# -eq 0 ]; then
+        mapfile -t revs <<<"$(git -C "${git_full}" tag --sort=-version:refname)"
+    else
+        revs=("$@")
+    fi
 
-	nbr_revs=${#revs[@]}
-	if [ "${nbr_revs}" -eq 0 ]; then
-		echo "error: no revs"
-		exit 1
-	elif [ "${nbr_revs}" -eq 1 ]; then
-		echo "error: provide at least two revisions"
-		exit 1
-	fi
+    nbr_revs=${#revs[@]}
+    if [ "${nbr_revs}" -eq 0 ]; then
+        echo "error: no revs"
+        exit 1
+    elif [ "${nbr_revs}" -eq 1 ]; then
+        echo "error: provide at least two revisions"
+        exit 1
+    fi
 
-	# sanity check
-	for i in $(seq 0 $((nbr_revs - 1))); do
-		if ! git -C "${git_full}" cat-file -e "${revs[i]}" &> /dev/null; then
-			echo "error: '${revs[i]}' is not a valid rev"
-			exit 1
-		fi
+    # sanity check
+    for i in $(seq 0 $((nbr_revs - 1))); do
+        if ! git -C "${git_full}" cat-file -e "${revs[i]}" &> /dev/null; then
+            echo "error: '${revs[i]}' is not a valid rev"
+            exit 1
+        fi
 
-		j=
-		# use tags if available
-		if ! j=$(git -C "${git_full}" name-rev --name-only --tags --no-undefined "${revs[$i]}" &> /dev/null); then
-			# no name-rev? use short hash
-			j=$(git -C "${git_full}" rev-parse --short "${revs[$i]}")
-		fi
+        j=
+        # use tags if available
+        if ! j=$(git -C "${git_full}" name-rev --name-only --tags --no-undefined "${revs[$i]}" &> /dev/null); then
+            # no name-rev? use short hash
+            j=$(git -C "${git_full}" rev-parse --short "${revs[$i]}")
+        fi
 
-		if [ "x$j" != "x" ]; then
-			revs[$i]="$j"
-		fi
-	done
+        if [ "x$j" != "x" ]; then
+            revs[$i]="$j"
+        fi
+    done
 
-	worktree="${OVE_TMP}/${name}"
-	ove-worktree remove "$worktree" || true
-	ove-echo cyan "ove-worktree add ${worktree}"
-	if ! ove-worktree add "$worktree"; then
-		echo "error: 'ove-worktree add ${worktree}' failed"
-		exit 1
-	fi
+    worktree="${OVE_TMP}/${name}"
+    ove-worktree remove "$worktree" || true
+    ove-echo cyan "ove-worktree add ${worktree}"
+    if ! ove-worktree add "$worktree"; then
+        echo "error: 'ove-worktree add ${worktree}' failed"
+        exit 1
+    fi
 
-	if ! cd "${worktree}"; then
-		echo "error: 'cd ${worktree}' failed, weird!"
-		exit 1
-	fi
+    if ! cd "${worktree}"; then
+        echo "error: 'cd ${worktree}' failed, weird!"
+        exit 1
+    fi
 
-	# shellcheck disable=SC1091
-	source ove
-	if ! ove buildme dmce; then
-		echo "error: 'ove buildme dmce' failed, weird!"
-		exit 1
-	fi
+    # shellcheck disable=SC1091
+    source ove
+    if ! ove buildme dmce; then
+        echo "error: 'ove buildme dmce' failed, weird!"
+        exit 1
+    fi
 
-	if ! cd "${worktree}/${git}"; then
-		echo "error: 'cd ${worktree}/${git}' failed, weird!"
-		exit 1
-	fi
+    if ! cd "${worktree}/${git}"; then
+        echo "error: 'cd ${worktree}/${git}' failed, weird!"
+        exit 1
+    fi
 
-	if ! ove dmce launch -c -q -- "$git"; then
-		echo "error: 'ove-dmce launch -c -q -- $git' failed"
-		exit 1
-	fi
+    if ! ove dmce launch -c -q -- "$git"; then
+        echo "error: 'ove-dmce launch -c -q -- $git' failed"
+        exit 1
+    fi
 
-	ove-echo cyan "ove-dmce set-profile syslog"
-	if ! ove dmce set-profile syslog; then
-		echo "error: 'ove-dmce set-profile syslog' failed"
-		exit 1
-	fi
+    ove-echo cyan "ove-dmce set-profile syslog"
+    if ! ove dmce set-profile syslog; then
+        echo "error: 'ove-dmce set-profile syslog' failed"
+        exit 1
+    fi
 
-	if ! command -v journalctl > /dev/null; then
-		echo "error: command 'journalctl' is missing"
-		exit 1
-	fi
+    if ! command -v journalctl > /dev/null; then
+        echo "error: command 'journalctl' is missing"
+        exit 1
+    fi
 
-	# get current branch
-	if ! current_branch=$(git rev-parse --abbrev-ref HEAD); then
-		exit 1
-	fi
+    # get current branch
+    if ! current_branch=$(git rev-parse --abbrev-ref HEAD); then
+        exit 1
+    fi
 
-	echo "revs (${nbr_revs}): ${revs[*]}"
+    echo "revs (${nbr_revs}): ${revs[*]}"
 }
 
 function summary() {
-	ove-dmce launch -c -q -- "$git" || true
-	git checkout -q "${current_branch}" || true
+    ove-dmce launch -c -q -- "$git" || true
+    git checkout -q "${current_branch}" || true
 
-	if [ -s "${logfile}" ] && grep -q ^iteration "${logfile}"; then
-		echo
-		echo "${name} summary:"
-		echo "$(grep -c ^iteration "${logfile}") iterations in $((SECONDS - _time)) seconds"
-		echo "revs (${nbr_revs}): ${revs[*]}"
-		while true; do
-			echo "#${delimiter}A${delimiter}date${delimiter}subject${delimiter}B${delimiter}date${delimiter}subject${delimiter}C${delimiter}date${delimiter}subject${delimiter}D${delimiter}date${delimiter}subject${delimiter}dexec[AB]${delimiter}dprobes[AB]${delimiter}dcov[AB]${delimiter}sexec[AC]${delimiter}sprobes[AC]${delimiter}scov[AC]${delimiter}fexec[AD]${delimiter}fprobes[AD]${delimiter}fcov[AD]${delimiter}errors"
-			grep ^iteration "${logfile}" | sed 's,^iteration ,,g'
-			break
-		done | column -t -s"${delimiter}"
-	fi
+    if [ -s "${logfile}" ] && grep -q ^iteration "${logfile}"; then
+        echo
+        echo "${name} summary:"
+        echo "$(grep -c ^iteration "${logfile}") iterations in $((SECONDS - _time)) seconds"
+        echo "revs (${nbr_revs}): ${revs[*]}"
+        while true; do
+            echo "#${delimiter}A${delimiter}date${delimiter}subject${delimiter}B${delimiter}date${delimiter}subject${delimiter}C${delimiter}date${delimiter}subject${delimiter}D${delimiter}date${delimiter}subject${delimiter}dexec[AB]${delimiter}dprobes[AB]${delimiter}dcov[AB]${delimiter}sexec[AC]${delimiter}sprobes[AC]${delimiter}scov[AC]${delimiter}fexec[AD]${delimiter}fprobes[AD]${delimiter}fcov[AD]${delimiter}errors"
+            grep ^iteration "${logfile}" | sed 's,^iteration ,,g'
+            break
+        done | column -t -s"${delimiter}"
+    fi
 }
 
 function main() {
-	local base_date
-	local head_date
-	local _errors=0
+    local base_date
+    local head_date
+    local _errors=0
 
-	init "$@"
-	trap summary EXIT
+    init "$@"
+    trap summary EXIT
 
-	ove-echo cyan "ove reset-hard ${git}"
-	if ! ove reset-hard "${git}"; then
-		ove-echo red "error: 'ove reset-hard ${git}' failed"
-		exit 1
-	fi
-	ove-echo cyan "git clean -dfxq"
-	if ! git clean -dfxq; then
-		ove-echo red "error: 'git clean -dfxq' failed"
-		exit 1
-	fi
+    ove-echo cyan "ove reset-hard ${git}"
+    if ! ove reset-hard "${git}"; then
+        ove-echo red "error: 'ove reset-hard ${git}' failed"
+        exit 1
+    fi
+    ove-echo cyan "git clean -dfxq"
+    if ! git clean -dfxq; then
+        ove-echo red "error: 'git clean -dfxq' failed"
+        exit 1
+    fi
 
-	first=$(git --no-pager -C "${git_full}" log --oneline --pretty=%h | tail -1)
-	first_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$first")
-	# shellcheck disable=SC2116
-	first_subject=$(echo "$first_subject")
-	first_date=$(git -C "${git_full}" log --pretty=%ai "${first}" -1 | awk '{print $1}')
+    first=$(git --no-pager -C "${git_full}" log --oneline --pretty=%h | tail -1)
+    first_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$first")
+    # shellcheck disable=SC2116
+    first_subject=$(echo "$first_subject")
+    first_date=$(git -C "${git_full}" log --pretty=%ai "${first}" -1 | awk '{print $1}')
 
-	series_base="${revs[$((nbr_revs - 1))]}"
-	series_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$series_base")
-	# shellcheck disable=SC2116
-	series_subject=$(echo "$series_subject")
-	series_date=$(git -C "${git_full}" log --pretty=%ai "${series_base}" -1 | awk '{print $1}')
+    series_base="${revs[$((nbr_revs - 1))]}"
+    series_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$series_base")
+    # shellcheck disable=SC2116
+    series_subject=$(echo "$series_subject")
+    series_date=$(git -C "${git_full}" log --pretty=%ai "${series_base}" -1 | awk '{print $1}')
 
-	na_string="NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA"
-	for i in $(seq 0 $((nbr_revs - 2))); do
-		head=${revs[i]}
-		head_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$head")
-		# shellcheck disable=SC2116
-		head_subject=$(echo "$head_subject")
-		head_date=$(git -C "${git_full}" log --pretty=%ai "${head}" -1)
-		head_date=${head_date%% *}
+    na_string="NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA${delimiter}NA"
+    for i in $(seq 0 $((nbr_revs - 2))); do
+        head=${revs[i]}
+        head_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$head")
+        # shellcheck disable=SC2116
+        head_subject=$(echo "$head_subject")
+        head_date=$(git -C "${git_full}" log --pretty=%ai "${head}" -1)
+        head_date=${head_date%% *}
 
-		base=${revs[i+1]}
-		base_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$base")
-		# shellcheck disable=SC2116
-		base_subject=$(echo "$base_subject")
-		base_date=$(git -C "${git_full}" log --pretty=%ai "${base}" -1)
-		base_date=${base_date%% *}
+        base=${revs[i+1]}
+        base_subject=$(git -C "${git_full}" log --pretty="%<(15,trunc)%s" -1 "$base")
+        # shellcheck disable=SC2116
+        base_subject=$(echo "$base_subject")
+        base_date=$(git -C "${git_full}" log --pretty=%ai "${base}" -1)
+        base_date=${base_date%% *}
 
-		prefix="iteration $((i+1))${delimiter}${head}${delimiter}${head_date}${delimiter}${head_subject}${delimiter}${base}${delimiter}${base_date}${delimiter}${base_subject}${delimiter}${series_base}${delimiter}${series_date}${delimiter}${series_subject}${delimiter}${first}${delimiter}${first_date}${delimiter}${first_subject}"
-		if [ "${head}" = "${base}" ]; then
-			echo "${prefix}${delimiter}${na_string}${delimiter}head=base"
-			continue
-		fi
+        prefix="iteration $((i+1))${delimiter}${head}${delimiter}${head_date}${delimiter}${head_subject}${delimiter}${base}${delimiter}${base_date}${delimiter}${base_subject}${delimiter}${series_base}${delimiter}${series_date}${delimiter}${series_subject}${delimiter}${first}${delimiter}${first_date}${delimiter}${first_subject}"
+        if [ "${head}" = "${base}" ]; then
+            echo "${prefix}${delimiter}${na_string}${delimiter}head=base"
+            continue
+        fi
 
-		# cleanup
-		ove-echo cyan "ove reset-hard ${git}"
-		ove reset-hard "${git}"
-		ove-echo cyan "git clean -dfxq"
-		git clean -dfxq
+        # cleanup
+        ove-echo cyan "ove reset-hard ${git}"
+        ove reset-hard "${git}"
+        ove-echo cyan "git clean -dfxq"
+        git clean -dfxq
 
-		# checkout head
-		ove-echo cyan "git checkout -q ${head}"
-		if ! git checkout -q "${head}"; then
-			echo "${prefix}${delimiter}${na_string}${delimiter}git checkout ${head} failed"
-			continue
-		fi
+        # checkout head
+        ove-echo cyan "git checkout -q ${head}"
+        if ! git checkout -q "${head}"; then
+            echo "${prefix}${delimiter}${na_string}${delimiter}git checkout ${head} failed"
+            continue
+        fi
 
-		overall_err_string=
+        overall_err_string=
 
-		# delta coverage
-		delta_exec=" "
-		delta_probes=" "
-		delta_coverage=" "
-		if [ "${delta}" -eq 1 ]; then
-			ove-echo cyan "delta coverage ${base}"
-			run_one "${base}"
-			ret=$?
-			if [ $ret -eq 1 ]; then
-				((_errors++))
-			else
-				delta_exec=${a_exec}
-				delta_probes=${a_probes}
-				delta_coverage=${a_coverage}
-			fi
+        # delta coverage
+        delta_exec=" "
+        delta_probes=" "
+        delta_coverage=" "
+        if [ "${delta}" -eq 1 ]; then
+            ove-echo cyan "delta coverage ${base}"
+            run_one "${base}"
+            ret=$?
+            if [ $ret -eq 1 ]; then
+                ((_errors++))
+            else
+                delta_exec=${a_exec}
+                delta_probes=${a_probes}
+                delta_coverage=${a_coverage}
+            fi
 
-			if [ "x$err_string" != "x" ]; then
-				if [ "x$overall_err_string" = "x" ]; then
-					overall_err_string="d@$err_string"
-				else
-					overall_err_string+=" d@$err_string"
-				fi
-			fi
-		fi
+            if [ "x$err_string" != "x" ]; then
+                if [ "x$overall_err_string" = "x" ]; then
+                    overall_err_string="d@$err_string"
+                else
+                    overall_err_string+=" d@$err_string"
+                fi
+            fi
+        fi
 
-		# series coverage
-		series_exec=" "
-		series_probes=" "
-		series_coverage=" "
-		if [ "${series}" -eq 1 ]; then
-			ove-echo cyan "series coverage ${series_base}"
-			run_one "${series_base}"
-			ret=$?
-			if [ $ret -eq 1 ]; then
-				((_errors++))
-			else
-				series_exec=${a_exec}
-				series_probes=${a_probes}
-				series_coverage=${a_coverage}
-			fi
+        # series coverage
+        series_exec=" "
+        series_probes=" "
+        series_coverage=" "
+        if [ "${series}" -eq 1 ]; then
+            ove-echo cyan "series coverage ${series_base}"
+            run_one "${series_base}"
+            ret=$?
+            if [ $ret -eq 1 ]; then
+                ((_errors++))
+            else
+                series_exec=${a_exec}
+                series_probes=${a_probes}
+                series_coverage=${a_coverage}
+            fi
 
-			if [ "x$err_string" != "x" ]; then
-				if [ "x$overall_err_string" = "x" ]; then
-					overall_err_string="s@$err_string"
-				else
-					overall_err_string+=" s@$err_string"
-				fi
-			fi
-		fi
+            if [ "x$err_string" != "x" ]; then
+                if [ "x$overall_err_string" = "x" ]; then
+                    overall_err_string="s@$err_string"
+                else
+                    overall_err_string+=" s@$err_string"
+                fi
+            fi
+        fi
 
-		# full coverage
-		full_exec=" "
-		full_probes=" "
-		full_coverage=" "
-		if [ "${full}" -eq 1 ]; then
-			ove-echo cyan "full coverage ${first}"
-			run_one "${first}"
-			ret=$?
-			if [ $ret -eq 1 ]; then
-				((_errors++))
-			else
-				full_exec=${a_exec}
-				full_probes=${a_probes}
-				full_coverage=${a_coverage}
-			fi
+        # full coverage
+        full_exec=" "
+        full_probes=" "
+        full_coverage=" "
+        if [ "${full}" -eq 1 ]; then
+            ove-echo cyan "full coverage ${first}"
+            run_one "${first}"
+            ret=$?
+            if [ $ret -eq 1 ]; then
+                ((_errors++))
+            else
+                full_exec=${a_exec}
+                full_probes=${a_probes}
+                full_coverage=${a_coverage}
+            fi
 
-			if [ "x$err_string" != "x" ]; then
-				if [ "x$overall_err_string" = "x" ]; then
-					overall_err_string="f@$err_string"
-				else
-					overall_err_string+=" f@$err_string"
-				fi
-			fi
-		fi
+            if [ "x$err_string" != "x" ]; then
+                if [ "x$overall_err_string" = "x" ]; then
+                    overall_err_string="f@$err_string"
+                else
+                    overall_err_string+=" f@$err_string"
+                fi
+            fi
+        fi
 
-		echo "---"
-		echo "${prefix}${delimiter}${delta_exec}${delimiter}${delta_probes}${delimiter}${delta_coverage}${delimiter}${series_exec}${delimiter}${series_probes}${delimiter}${series_coverage}${delimiter}${full_exec}${delimiter}${full_probes}${delimiter}${full_coverage}${delimiter}${overall_err_string}"
-		echo "---"
-	done
+        echo "---"
+        echo "${prefix}${delimiter}${delta_exec}${delimiter}${delta_probes}${delimiter}${delta_coverage}${delimiter}${series_exec}${delimiter}${series_probes}${delimiter}${series_coverage}${delimiter}${full_exec}${delimiter}${full_probes}${delimiter}${full_coverage}${delimiter}${overall_err_string}"
+        echo "---"
+    done
 
-	if [ $_errors -ge $((i+1)) ]; then
-		exit 1
-	fi
+    if [ $_errors -ge $((i+1)) ]; then
+        exit 1
+    fi
 
-	exit 0
+    exit 0
 }
 
 function run_one {
-	local ret
+    local ret
 
-	ove reset-hard "${git}"
-	git clean -dfxq
+    ove reset-hard "${git}"
+    git clean -dfxq
 
-	dmce_build_test "$1"
-	ret=$?
-	if [ $ret -eq 1 ]; then
-		a_coverage=0
-		a_probes=0
-		a_exec=0
-		return 1
-	fi
+    dmce_build_test "$1"
+    ret=$?
+    if [ $ret -eq 1 ]; then
+        a_coverage=0
+        a_probes=0
+        a_exec=0
+        return 1
+    fi
 
-	a_exec=$(grep '^Uniq probes executed:' "${logfile}" | tail -1)
-	a_exec=${a_exec#*: }
-	a_exec=${a_exec//$'\r'/}
+    a_exec=$(grep '^Uniq probes executed:' "${logfile}" | tail -1)
+    a_exec=${a_exec#*: }
+    a_exec=${a_exec//$'\r'/}
 
-	a_probes=$(grep '^Number of probes:' "${logfile}" | tail -1)
-	a_probes=${a_probes#*: }
-	a_probes=${a_probes//$'\r'/}
+    a_probes=$(grep '^Number of probes:' "${logfile}" | tail -1)
+    a_probes=${a_probes#*: }
+    a_probes=${a_probes//$'\r'/}
 
-	a_coverage=$(grep '^Test coverage:' "${logfile}" | tail -1)
-	a_coverage=${a_coverage#*: }
-	a_coverage=${a_coverage//$'\r'/}
+    a_coverage=$(grep '^Test coverage:' "${logfile}" | tail -1)
+    a_coverage=${a_coverage#*: }
+    a_coverage=${a_coverage//$'\r'/}
 
-	return $ret
+    return $ret
 }
 
 main "$@"

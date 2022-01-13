@@ -24,8 +24,8 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 if [ ! -e "${OVE_BASE_DIR:?}/.dmceconfig" ]; then
-	echo "error: '\$OVE_BASE_DIR/.dmceconfig' not found, try to install DMCE by running 'ove install dmce'"
-	exit 1
+    echo "error: '\$OVE_BASE_DIR/.dmceconfig' not found, try to install DMCE by running 'ove install dmce'"
+    exit 1
 fi
 
 default_args="-f ${OVE_BASE_DIR:?}/.dmceconfig"
@@ -64,26 +64,26 @@ LOW-LEVEL COMMANDS
 
 HIGH-LEVEL COMMANDS
 EOF
-	for f in "${OVE_ACTIVE_REPO_DIR}"/.ove/scripts/dmce-*; do
-		g=${f##*/}
-		if [[ $g == *.* ]]; then
-			continue
-		fi
-		g=${g/dmce-}
+    for f in "${OVE_ACTIVE_REPO_DIR}"/.ove/scripts/dmce-*; do
+        g=${f##*/}
+        if [[ $g == *.* ]]; then
+            continue
+        fi
+        g=${g/dmce-}
 
-		echo "        $g:"
-		echo "          # run 'ove dmce $g' for detailed description"
-		echo
-	done
-	echo "FILES"
-	echo "        \$OVE_BASE_DIR/.dmceconfig"
-	if [ -d "${OVE_BASE_DIR}"/.config/dmce ]; then
-		find "${OVE_BASE_DIR}"/.config/dmce | sed -e "s,$OVE_BASE_DIR,\$OVE_BASE_DIR," -e 's,^,        ,g'
-	else
-		echo "  ${OVE_BASE_DIR}/.config/dmce/*"
-	fi
-	echo
-	cat << EOF
+        echo "        $g:"
+        echo "          # run 'ove dmce $g' for detailed description"
+        echo
+    done
+    echo "FILES"
+    echo "        \$OVE_BASE_DIR/.dmceconfig"
+    if [ -d "${OVE_BASE_DIR}"/.config/dmce ]; then
+        find "${OVE_BASE_DIR}"/.config/dmce | sed -e "s,$OVE_BASE_DIR,\$OVE_BASE_DIR," -e 's,^,        ,g'
+    else
+        echo "  ${OVE_BASE_DIR}/.config/dmce/*"
+    fi
+    echo
+    cat << EOF
 EXAMPLES
         # set 'trace' profile
         $ ove dmce set-profile trace
@@ -97,117 +97,117 @@ EOF
 }
 
 function _getopts {
-	local args
+    local args
 
-	args="$*"
-	if [[ ${args} = *--[[:space:]]* ]]; then
-		opts=${args%%-- *}
-		repos=${args##*--}
-		repos="${repos//${OVE_BASE_DIR}\//}"
-	else
-		opts=${args}
-		repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	fi
+    args="$*"
+    if [[ ${args} = *--[[:space:]]* ]]; then
+        opts=${args%%-- *}
+        repos=${args##*--}
+        repos="${repos//${OVE_BASE_DIR}\//}"
+    else
+        opts=${args}
+        repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+    fi
 }
 
 # $1: prog
 function _find {
-	# try to find binary
-	if ! command -v "${1}" > /dev/null; then
-		prog="${OVE_ACTIVE_REPO_DIR:?}/${1}"
-	else
-		prog="$(command -v "${1}")"
-	fi
+    # try to find binary
+    if ! command -v "${1}" > /dev/null; then
+        prog="${OVE_ACTIVE_REPO_DIR:?}/${1}"
+    else
+        prog="$(command -v "${1}")"
+    fi
 
-	if [ ! -e "${prog}" ]; then
-		echo "error: can not find '${1}'"
-		exit 1
-	fi
+    if [ ! -e "${prog}" ]; then
+        echo "error: can not find '${1}'"
+        exit 1
+    fi
 }
 
 function run {
-	echo "$ ${prog} ${opts}" 1>&2
-	eval "${prog}" "${opts}"
+    echo "$ ${prog} ${opts}" 1>&2
+    eval "${prog}" "${opts}"
 }
 
 function set_profile {
-	local args
+    local args
 
-	shift
-	_find "dmce-set-profile"
-	_getopts "$@"
-	opts="$default_args -p -d $OVE_BASE_DIR/.config/dmce $opts"
-	run
+    shift
+    _find "dmce-set-profile"
+    _getopts "$@"
+    opts="$default_args -p -d $OVE_BASE_DIR/.config/dmce $opts"
+    run
 }
 
 function launch {
-	local opts
-	local r
-	local repos
+    local opts
+    local r
+    local repos
 
-	shift
+    shift
 
-	_find "dmce-launcher"
-	if [ $# -eq 0 ]; then
-		opts="-a -q"
-		repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	else
-		_getopts "$@"
-	fi
+    _find "dmce-launcher"
+    if [ $# -eq 0 ]; then
+        opts="-a -q"
+        repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+    else
+        _getopts "$@"
+    fi
 
-	opts="$default_args $opts"
-	for r in $repos; do
-		[ -d "$OVE_BASE_DIR"/"$r" ] || continue
-		cd "$OVE_BASE_DIR/$r" || continue
-		if [ "x$PWD" = "x${OVE_ACTIVE_REPO_DIR}" ]; then
-			continue
-		fi
-		run
-	done
+    opts="$default_args $opts"
+    for r in $repos; do
+        [ -d "$OVE_BASE_DIR"/"$r" ] || continue
+        cd "$OVE_BASE_DIR/$r" || continue
+        if [ "x$PWD" = "x${OVE_ACTIVE_REPO_DIR}" ]; then
+            continue
+        fi
+        run
+    done
 }
 
 function trace {
-	shift
-	_find "dmce-trace"
-	_getopts "$@"
-	run
+    shift
+    _find "dmce-trace"
+    _getopts "$@"
+    run
 }
 
 function summary_bin {
-	shift
-	_find "dmce-summary-bin"
-	_getopts "$@"
-	run
+    shift
+    _find "dmce-summary-bin"
+    _getopts "$@"
+    run
 }
 
 function summary_txt {
-	shift
-	_find "dmce-summary-txt"
-	_getopts "$@"
-	run
+    shift
+    _find "dmce-summary-txt"
+    _getopts "$@"
+    run
 }
 
 function main {
-	if [ $# -eq 0 ]; then
-		usage
-		exit 1
-	fi
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
 
-	cmd=$1
-	n="${OVE_ACTIVE_REPO_DIR}/.ove/scripts/dmce-${cmd/_/-}"
-	if [ -s "${n}" ]; then
-		shift
-		if ! "${n}" "$@"; then
-			exit 1
-		fi
-	elif [ "x$(type -t "${1/-/_}")" != "xfunction" ]; then
-		echo "error: '$1' unknown command"
-		exit 1
-	else
-		if ! ${1/-/_} "$@"; then
-			exit 1
-		fi
-	fi
+    cmd=$1
+    n="${OVE_ACTIVE_REPO_DIR}/.ove/scripts/dmce-${cmd/_/-}"
+    if [ -s "${n}" ]; then
+        shift
+        if ! "${n}" "$@"; then
+            exit 1
+        fi
+    elif [ "x$(type -t "${1/-/_}")" != "xfunction" ]; then
+        echo "error: '$1' unknown command"
+        exit 1
+    else
+        if ! ${1/-/_} "$@"; then
+            exit 1
+        fi
+    fi
 }
 
 main "$@"

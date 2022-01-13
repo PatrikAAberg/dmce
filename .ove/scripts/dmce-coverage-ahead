@@ -26,12 +26,12 @@
 name=$(basename "$0")
 
 function usage() {
-	local projs
-	local repos
+    local projs
+    local repos
 
-	repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-	projs="${OVE_PROJECT_LIST}"
-	cat << EOF
+    repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
+    projs="${OVE_PROJECT_LIST}"
+    cat << EOF
 NAME
        run coverage-history on commits not yet published
 
@@ -65,61 +65,61 @@ EOF
 }
 
 main() {
-	local git_full
+    local git_full
 
-	git="$1"
-	git_full="${OVE_BASE_DIR:?}/$1"
+    git="$1"
+    git_full="${OVE_BASE_DIR:?}/$1"
 
-	# usage and sanity checks
-	if [ $# -lt 3 ]; then
-		usage
-		exit 1
-	elif [ ! -d "${git_full}" ]; then
-		echo "error: ${git_full} is not a directory"
-		usage
-		exit 1
-	elif [ ! -d "${git_full}"/.git ]; then
-		echo "error: ${git_full} does not appear to be a git repo"
-		usage
-		exit 1
-	fi
+    # usage and sanity checks
+    if [ $# -lt 3 ]; then
+        usage
+        exit 1
+    elif [ ! -d "${git_full}" ]; then
+        echo "error: ${git_full} is not a directory"
+        usage
+        exit 1
+    elif [ ! -d "${git_full}"/.git ]; then
+        echo "error: ${git_full} does not appear to be a git repo"
+        usage
+        exit 1
+    fi
 
-	ove_proj="$2"
-	shift 2
-	mode="$@"
+    ove_proj="$2"
+    shift 2
+    mode="$@"
 
-	# get revs ahead for 'git'
-	mapfile -t revs <<<"$(ove-ahead "$git" | \grep -o '^[a-f0-9]\+')"
-	nbr_revs=${#revs[@]}
-	if [ "${nbr_revs}" -eq 0 ]; then
-		echo "error: no revs"
-		exit 1
-	elif [ "${nbr_revs}" -eq 1 ] && [ "x${revs[0]}" = "x" ]; then
-		echo "error: no revs"
-		exit 1
-	fi
+    # get revs ahead for 'git'
+    mapfile -t revs <<<"$(ove-ahead "$git" | \grep -o '^[a-f0-9]\+')"
+    nbr_revs=${#revs[@]}
+    if [ "${nbr_revs}" -eq 0 ]; then
+        echo "error: no revs"
+        exit 1
+    elif [ "${nbr_revs}" -eq 1 ] && [ "x${revs[0]}" = "x" ]; then
+        echo "error: no revs"
+        exit 1
+    fi
 
-	# get parent
-	if ! parent=$(git -C "$git_full" show "${revs[$((nbr_revs-1))]}"^1 --pretty=%H); then
-		exit 1
-	fi
-	revs+=("$parent")
-	nbr_revs=${#revs[@]}
+    # get parent
+    if ! parent=$(git -C "$git_full" show "${revs[$((nbr_revs-1))]}"^1 --pretty=%H); then
+        exit 1
+    fi
+    revs+=("$parent")
+    nbr_revs=${#revs[@]}
 
-	# sanity check
-	for i in $(seq 0 $((nbr_revs - 1))); do
-		if ! git -C "$git_full" cat-file -e "${revs[i]}" &> /dev/null; then
-			echo "error: '${revs[i]}' is not a valid rev"
-			exit 1
-		fi
-	done
+    # sanity check
+    for i in $(seq 0 $((nbr_revs - 1))); do
+        if ! git -C "$git_full" cat-file -e "${revs[i]}" &> /dev/null; then
+            echo "error: '${revs[i]}' is not a valid rev"
+            exit 1
+        fi
+    done
 
-	echo "revs (${nbr_revs}): ${revs[*]}"
+    echo "revs (${nbr_revs}): ${revs[*]}"
 
-	echo "run 'ove-dmce coverage-history $git $ove_proj $mode ${revs[*]}'"
-	if ! ove-dmce coverage-history "$git" "$ove_proj" $mode ${revs[*]}; then
-		exit 1
-	fi
+    echo "run 'ove-dmce coverage-history $git $ove_proj $mode ${revs[*]}'"
+    if ! ove-dmce coverage-history "$git" "$ove_proj" $mode ${revs[*]}; then
+        exit 1
+    fi
 }
 
 main "$@"
