@@ -95,73 +95,18 @@ function main() {
         exit 1
     fi
 
-    launch=1
-    stash=$(git stash list | grep 'dmce')
-    if [ "x${DMCE_TRACE_AUTOMATION}" = "x" ] && [ "x${stash}" != "x" ]; then
-        printf "%s\n" "$stash"
-        read -t 10 -p "use stashed instrumentation (this dialog will timeout in 10 seconds)? (y/N) " -r
-        ret=$?
-        if [ ${ret} -gt 128 ]; then
-            echo
-        elif [[ ${REPLY} =~ ^[Yy]$ ]]; then
-            printf "%s\n" "$stash"
-            nbr_stash=$(printf "%s\n" "$stash" | wc -l)
-            if [ "${nbr_stash}" -eq 1 ]; then
-                stash_idx="$(printf "%s\n" "${stash}" | cut -d: -f1)"
-                echo "$ git -C ${git_full} pop -q ${stash_idx}"
-                if ! git stash pop -q "${stash_idx}"; then
-                    exit 1
-                fi
-            else
-                read -p "stash: " -r
-                if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
-                    [ "${REPLY}" != "" ] && \
-                        echo "error: just numbers"
-                    exit 1
-                fi
-
-                if ! git stash pop -q "stash@{$REPLY}"; then
-                    exit 1
-                fi
-            fi
-            launch=0
-        fi
+    echo "$ ove-dmce set-profile trace"
+    if ! ove-dmce set-profile trace; then
+        echo "error: 'ove dmce set-profile trace' failed"
+        exit 1
     fi
 
-    if [ ${launch} -eq 1 ]; then
-        echo "$ ove-dmce set-profile trace"
-        if ! ove-dmce set-profile trace; then
-            echo "error: 'ove dmce set-profile trace' failed"
-            exit 1
-        fi
-
-        if git -C "${git_full}" grep -q 'DMCE_PROBE('; then
-            if [ "x${DMCE_TRACE_AUTOMATION}" != "x" ] && [ "${DMCE_TRACE_AUTOMATION}" -eq 1 ]; then
-                # do nothing
-                true
-            else
-                read -r -p "info: repo '${git}' is already probed! git stash && git stash drop? (y/N)"
-                if ! [[ ${REPLY} =~ ^[Yy]$ ]]; then
-                    exit 1
-                fi
-            fi
-
-            if ! git -C "${git_full}" stash -q; then
-                ove-echo red "error: 'git -C ${git_full} stash' failed"
-                exit 1
-            fi
-
-            if ! git -C "${git_full}" stash drop -q; then
-                ove-echo red "error: 'git -C ${git_full} stash drop' failed"
-                exit 1
-            fi
-        fi
-
-        # save any local modifications
-        dmce_trace_diff="${OVE_TMP}/${name}.diff"
-        git diff > "${dmce_trace_diff}"
-        if [ -s "${dmce_trace_diff}" ]; then
-            echo "$ git diff > ${dmce_trace_diff}"
+    echo "$ ove-dmce launch -a -- $git_full"
+    out=$(ove-dmce launch -a -- "$git_full")
+    ret=$?
+    if [ ${ret} -ne 0 ]; then
+        if [[ ${out} == *error* ]]; then
+            err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
         else
             rm "${dmce_trace_diff}"
         fi
@@ -178,16 +123,8 @@ function main() {
             ove-echo red "${err_string}"
             exit 1
         fi
-
-        # still no probes?
-        if ! git grep -q 'DMCE_PROBE('; then
-            err_string="no probes inserted"
-            ove-echo red "${err_string}"
-            exit 1
-        fi
-
-        # clean
-        find "${PWD}" -name '*.dmceoriginal' -exec rm  {} \;
+        ove-echo red "${err_string}"
+        exit 1
     fi
 
     echo "$ ove build ${ove_proj} && ove install ${ove_proj}"
