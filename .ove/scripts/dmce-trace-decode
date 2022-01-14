@@ -159,17 +159,8 @@ function main() {
 
     if [ $fzf -eq 1 ]; then
         # get prolog length
-        random_file=$(git grep 'DMCE_PROBE(' | cut -d: -f1 | tail -1)
-        if [ "x${random_file}" = "x" ]; then
-            echo "error: weird, random probed file not found"
-            exit 1
-        fi
-
-        c=$(git diff -- $random_file | grep -m1 '^@@')
-        b=$(echo "$c" | cut -d',' -f3| cut -d' ' -f1)
-        a=$(echo "$c" | cut -d',' -f2| cut -d' ' -f1)
-        export DMCE_PROLOG_LEN=$((b-a))
-        DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
+        DMCE_PROLOG_LEN="24"
+        export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
         export DMCE_PLUS_SIGN="+"
 
         # swap core and timestamp
@@ -177,8 +168,7 @@ function main() {
         sed -i -e "s,^\([0-9]\+\) @\([0-9]\+\)@\(.*$\),\2@\1@$OVE_BASE_DIR/$git/\3,g" "${dmce_trace_log}"
         true > ${dmce_trace_log}_view
         while IFS='@' read -r core ts f n func line vars; do
-#            printf "%s\n" "$core@$ts@$f@+$((n - DMCE_PROLOG_LEN))@$func@$line@$vars"
-            printf "%s\n" "$core@$ts@$f@+$((n+1))@$func@$line@$vars"
+            printf "%s\n" "$core@$ts@$f@+$((n - DMCE_PROLOG_LEN))@$func@$line@$vars"
         done <${dmce_trace_log} | column -t -s@ > ${dmce_trace_log}_view
         files+=" ${dmce_trace_log}_view"
 
@@ -206,12 +196,10 @@ function main() {
     t_old="${OVE_TMP}/$name.told"
     true > "${t_old}"
     files+=" ${t_old}"
-
     preview_left="${OVE_TMP}/$name.left"
     preview_right="${OVE_TMP}/$name.right"
     files+=" $preview_left"
     files+=" $preview_right"
-
     < ${dmce_trace_log}_view fzf \
         --tac \
         --preview-window=down \
