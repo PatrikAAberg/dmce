@@ -228,6 +228,7 @@ function main() {
 
         # get filename
         f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)
+        f="$f.dmceoriginal"
 
         # get line number
         n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4 | cut -b2-)
@@ -281,8 +282,8 @@ function main() {
 
         # display the remaining part of the file
         tail -n +$((right_len+1)) '${preview_left}'' \
-            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
-            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
+            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3).dmceoriginal; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
+            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3).dmceoriginal; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
 
     exit 0
 }
