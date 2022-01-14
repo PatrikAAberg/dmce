@@ -108,20 +108,7 @@ function main() {
         if [[ ${out} == *error* ]]; then
             err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
         else
-            rm "${dmce_trace_diff}"
-        fi
-
-        echo "$ ove-dmce launch -a -- $git_full"
-        out=$(ove-dmce launch -a -- "$git_full")
-        ret=$?
-        if [ ${ret} -ne 0 ]; then
-            if [[ ${out} == *error* ]]; then
-                err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
-            else
-                err_string="'ove-dmce launch -a -- $git_full' failed"
-            fi
-            ove-echo red "${err_string}"
-            exit 1
+            err_string="'ove-dmce launch -a -- $git_full' failed"
         fi
         ove-echo red "${err_string}"
         exit 1
@@ -135,9 +122,6 @@ function main() {
             cat "${OVE_LAST_COMMAND}"
         fi
 
-        # remove DMCE probes and keep local modifications
-        ove-dmce launch -c -- $git_full
-
         exit 1
     fi
 
@@ -150,9 +134,6 @@ function main() {
         echo "ELF files within the '${git}' repo:"
         printf "%s\n" "$elfs"
     fi
-
-    # remove DMCE probes and keep local modifications
-    ove-dmce launch -c -- $git_full
 
     # remove any already existing trace lock file at dmce-configure-local default path
     rm -rf /tmp/$LOGNAME/dmce-trace-buffer-lock
