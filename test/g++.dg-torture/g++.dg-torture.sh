@@ -151,6 +151,7 @@ rm_file_list+=" paren1.cpp"                           # use of deleted function
 rm_file_list+=" constexpr-array19.cpp"                # static_assert()
 rm_file_list+=" header_plugin.c"                      # gcc-plugin.h: no such file or directory
 rm_file_list+=" fn-template3.cpp"                     # std=c++2a
+rm_file_list+=" cpp2a/lambda-uneval9.h"               # std=c++2a
 rm_file_list+=" ia64-1.cpp"                           # __asm
 rm_file_list+=" opaque-2.cpp"                         # __ev64_opaque__
 rm_file_list+=" opaque-1.cpp"                         # __ev64_opaque__
