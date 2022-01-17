@@ -14,10 +14,10 @@ DMCE_CMD_LOOKUP_HOOK:
 DMCE_DEFAULT_C_COMMAND_LINE:gcc -isystem $DMCE_WORK_PATH/inc -I$DMCE_WORK_PATH/inc
 
 # Default compiler command line for cpp files
-DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++17 /usr/include -isystem $DMCE_WORK_PATH/inc -I$DMCE_WORK_PATH/inc
+DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem /tmp/epatabe/dmce/inc -I/tmp/epatabe/dmce/inc
 
 # Default compiler command line for h files
-DMCE_DEFAULT_H_COMMAND_LINE:gcc -isystem $DMCE_WORK_PATH/inc -I$DMCE_WORK_PATH/inc
+DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem /tmp/epatabe/dmce/inc -I/tmp/epatabe/dmce/inc
 
 # Probe definition c file
 DMCE_PROBE_SOURCE:
