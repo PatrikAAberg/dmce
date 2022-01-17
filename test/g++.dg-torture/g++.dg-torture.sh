@@ -119,6 +119,7 @@ rm_file_list+=" asan_oob_test.cc"                     # #error, lack gtest
 rm_file_list+=" asan_str_test.cc"                     # #error, lack gtest
 rm_file_list+=" asan_globals_test.cc"                 # #error, lack gtest
 rm_file_list+=" asan_test.cc"                         # #error, lack gtest
+rm_file_list+=" asan_test_utils.h"                     # #error, lack gtest
 rm_file_list+=" sanitizer_test_utils.h"               # include file "vector" not found
 rm_file_list+=" range-test-1.cpp"                     # range-test-1.C: No such file or directory
 rm_file_list+=" range-test-2.cpp"                     # range-test-2.C: No such file or directory
@@ -140,6 +141,7 @@ rm_file_list+=" nontype-class1.cpp"                   # std=c++2a
 rm_file_list+=" lambda-uneval4.cpp"                   # std=c++2a
 rm_file_list+=" lambda-uneval3.cpp"                   # std=c++2a
 rm_file_list+=" lambda-uneval7.cpp"                   # std=c++2a
+rm_file_list+=" lambda-uneval9.h"                     # std=c++2a
 rm_file_list+=" comment_plugin.c"                     # gcc-plugin.h: no such file or directory
 rm_file_list+=" altivec-cell-4.cpp"                   # ppc
 rm_file_list+=" multiple-overflow-warn-2.cpp"         # DMCE_PROBE(TBD), crash?
@@ -210,6 +212,7 @@ rm_file_list+=" bitfield1.cpp"                        # typedef typeof
 rm_file_list+=" simd-5.cpp"                           # simd5 switch
 rm_file_list+=" typename12.cpp"                       # a bug (not following standard) in gcc around the comma separator?
 rm_file_list+=" typename6.cpp"                        # a bug (not following standard) in gcc around the comma separator?
+rm_file_list+=" asan_test_config.h"              # library support lacking for g++
 rm_file_list+=" pr68220.cpp"                          # file not yet examined
 rm_file_list+=" pr45572-1.cpp"                        # file not yet examined
 rm_file_list+=" pr68388.cpp"                          # file not yet examined
