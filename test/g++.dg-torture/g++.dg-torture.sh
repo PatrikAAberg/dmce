@@ -281,7 +281,7 @@ _max_jobs=200
 set +e
 while read -r f; do
 	{
-		timeout $_timeout gcc -w -c $gcc_opts ${f} &> /dev/null
+		timeout $_timeout g++ -w -c $gcc_opts ${f} &> /dev/null
 		ret=$?
 		if [ $ret -eq 124 ]; then
 			echo ${f} >> ${my_work_path}/compile-timeouts
@@ -344,7 +344,7 @@ fi
 
 while read -r f; do
 	{
-		if ! gcc -w -c $gcc_opts ${f} 2>> "${f}".err; then
+		if ! g++ -w -c $gcc_opts ${f} 2>> "${f}".err; then
 			echo ${f} >> ${my_work_path}/compile-errors;
 		fi
 	} &
