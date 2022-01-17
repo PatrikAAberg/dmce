@@ -131,6 +131,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
                     sigaction(SIGSEGV,  &sa, NULL);
                     sigaction(SIGSYS,   &sa, NULL);
                     sigaction(SIGTRAP,  &sa, NULL);
+                    sigaction(SIGABRT,  &sa, NULL);
                 }
 
                 /* Handler for normal exit */
