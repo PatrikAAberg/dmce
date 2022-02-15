@@ -1,0 +1,126 @@
+#!/usr/bin/python3
+
+import argparse
+from tensorflow.keras.models import load_model
+import numpy as np
+import sys
+import os
+import netshooter
+from termcolor import colored
+import socket
+import re
+
+parser = argparse.ArgumentParser(usage=__doc__)
+parser.add_argument('datapath',        type=str,   help='Path to data files')
+parser.add_argument('modelpath',         type=str,   help='Path to model files')
+parser.add_argument('--port',        type=int,   help='Labels file', default=12345)
+parser.add_argument('--batch',             action='store_true', help='batch mode')
+parser.add_argument('--verbose',           action='store_true', help='verbose output')
+parser.add_argument('--suggestions',       action='store_true', help='give suggestions on what classes to merge')
+parser.add_argument('--merge-threshold',   type=float, help="Merge threshold value. Default: 0.1", default=0.0000001)
+parser.add_argument('--train-threshold',   type=float, help="Train threshold value. Default: 0.3", default=0.3)
+parser.add_argument('--mode',              type=str, help='batch mode', default="train")
+args = parser.parse_args()
+
+nsc = netshooter.NetShooterData()
+nsc.setVerbose(args.verbose)
+ns = nsc.load(args.modelpath)
+ns.setVerbose(args.verbose)
+
+def main():
+    fdata = args.datapath + "/data"
+    flabels = args.datapath + "/labels"
+
+    # Only go ahead with currently supported models
+    if ( ns.regression):
+        print("dmfe-confusion: Configuration not supported yet")
+        sys.exit(0)
+
+    num_classes = ns.num_classes
+    num_features = ns.features
+
+    labels_train, num_labels = ns.labelsLoad(flabels)
+    data = ns.dataLoad(fdata)
+
+    if ns.csv:
+        data = ns.normalize(data)
+
+    prediction = ns.predict(data)
+
+    labels_pred = np.zeros((num_labels, num_classes))
+
+    # training: use a threshold
+    if args.mode == "train":
+        for i in range(num_labels):
+            for j in range(num_classes):
+                if (prediction[i, j] > args.train_threshold):
+                    labels_pred[i, j] = 1
+    # prediction: use max
+    elif args.mode == "predict":
+        labels_pred[0, prediction.argmax()] = 1
+
+    precision = ns.binaryCrossAccuracy(labels_train, labels_pred)
+
+    if (args.verbose):
+        print("Binary cross accuracy error rate: " + str(1 - precision))
+
+    # exit early if no errors
+    if precision == 1.0:
+        if args.batch:
+            return '0:{}:OK'.format(ns.name)
+        else:
+            print(colored('0:{}:OK'.format(ns.name), 'green'))
+            sys.exit(0)
+
+    yellow=False
+    if num_labels == 1:
+        for j in range(num_classes):
+            if labels_train[0, j] == 1 and labels_pred[0, j] == 1:
+                yellow=True
+                break
+
+
+    confmatrix = ns.confmatrix(labels_train, labels_pred)
+
+    ret=0
+    if num_labels == 1:
+        none_zeros=np.nonzero(confmatrix)[1]
+        a=' '.join(map(str, none_zeros))
+        if (yellow):
+            ret=1
+            if not args.batch:
+                print(colored('{}:{}: NOK {}'.format(ret, ns.name, a), 'yellow'))
+        else:
+            ret=2
+            if not args.batch:
+                print(colored('{}:{}: NOK {}'.format(ret, ns.name, a), 'red'))
+
+        if args.batch:
+            return '{}:{}:NOK {}'.format(ret, ns.name, a)
+
+    if args.verbose:
+        ns.printConfMatrix(confmatrix)
+
+    if (args.suggestions):
+        # The skip list is hardcoded for now, TODO: make it stick to the data set folder in config
+        skiplist = [0]
+        merges = ns.suggestMerges(confmatrix, args.merge_threshold, skiplist)
+        for merge in merges:
+            print("merge: {} {} {}".format(ns.name, merge[0], merge[1]))
+
+if not args.batch:
+    main()
+    sys.exit(0)
+
+# ---- batch mode below
+s = socket.socket()
+s.bind(('', args.port))
+while True:
+    s.listen(1)
+    c, addr = s.accept()
+    r_data = c.recv(1024).decode().strip()
+    if r_data != "":
+        fdata=re.split(":", r_data)[0]
+        flabels=re.split(":", r_data)[1]
+        a=main()
+        c.send(a.encode('utf-8'))

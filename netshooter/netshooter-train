@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+import sys
+import importlib
+import argparse
+import tensorflow as tf
+import numpy as np
+import tensorflow.keras as keras
+import os
+import subprocess
+import re
+import textwrap as tw
+import matplotlib.pyplot as plt
+import netshooter
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import CSVLogger
+from numpy.random import seed
+
+seed(3)
+tf.random.set_seed(5)
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+#parser.add_argument('datafile',            type=str,                      help='data file')
+#parser.add_argument('labels',              type=str,                      help='labels file')
+#parser.add_argument('classes',             type=str,                      help='classes file')
+parser.add_argument('--batch-size',        type=int, default=20,          help='batch size default: 20')
+parser.add_argument('--csv',               action='store_true', help='use csv file as data input (classes file will be ignored)')
+parser.add_argument('--regression',        action='store_true', help='general switch for regression nets')
+parser.add_argument('--dropout',           action='store_true', help='use dropout when training')
+parser.add_argument('--epochs',            type=int, default=500,          help='number of EPOCHs default: 50')
+parser.add_argument('--net',               type=str,                      help='name of net to use (bfnet if omitted)')
+parser.add_argument('--modelpath',        type=str, default='./',          help='where to put model files')
+parser.add_argument('--datapath',        type=str, default='./',          help='where to read data files')
+parser.add_argument('--delim',             type=str, default=' ',          help='data delimiter character')
+parser.add_argument('--name',              type=str, default='No model name available', help='model name identifier')
+parser.add_argument('--features',          type=int, default=1,          help='Number of features per probe')
+parser.add_argument('--valsplit',          type=float, default=0.2,          help='Validation split')
+parser.add_argument('--corlimit',          type=float, default=0.05,          help='Correctness limit for reg interval biacc')
+
+args = parser.parse_args()
+
+# create file config file from parameters (or default ones) if not there
+if not os.path.exists(args.datapath + '/.config'):
+    with open(args.datapath + '/.config', 'w') as f:
+        f.write("# netshooter config file\n")
+        f.write('name:' + str(args.name) + "\n")
+        f.write('batchsize:' + str(args.batch_size) + "\n")
+        f.write('csv:' + str(args.csv) + "\n")
+        f.write('regression:' + str(args.regression) + "\n")
+        f.write('epochs:' + str(args.epochs) + "\n")
+        f.write('net:' + args.net + "\n")
+        f.write('delim:' + args.delim + "\n")
+        f.write('features:' + str(args.features) + "\n")
+        f.write('valsplit:' + str(args.valsplit) + "\n")
+        f.write('corlimit:' + str(args.corlimit) + "\n")
+        f.close()
+
+if not os.path.exists(args.modelpath):
+    os.makedirs(args.modelpath, exist_ok=True)
+
+ns = netshooter.NetShooterData()
+ns.setVerbose(True)
+ns.train(args.datapath, args.modelpath);
+
+#keras.utils.plot_model(
+#    model,
+#    to_file="model.png",
+#    show_shapes=True,
+#    show_layer_names=True,
+#    rankdir="LR",
+#    expand_nested=True,
+#    dpi=96,
+#)
