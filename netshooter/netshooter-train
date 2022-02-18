@@ -11,7 +11,7 @@ import subprocess
 import re
 import textwrap as tw
 import matplotlib.pyplot as plt
-import netshooter
+from dmce import netshooter
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import CSVLogger
 from numpy.random import seed
