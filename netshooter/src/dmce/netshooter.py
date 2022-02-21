@@ -543,20 +543,20 @@ class NetShooterData():
             csv_logger = CSVLogger(modelpath + '/results.csv', separator=';')
             if self.regression:
                 model.compile(loss='mse', optimizer='adam', metrics=[baiacc])
-                callbacks_list = [ keras.callbacks.ModelCheckpoint(filepath=modelpath + 'netshooter-model.h5', monitor='baiacc', save_best_only=True), epoch_callback, csv_logger]
+                callbacks_list = [ keras.callbacks.ModelCheckpoint(filepath=modelpath + '/netshooter-model.h5', monitor='baiacc', save_best_only=True), epoch_callback, csv_logger]
             else:
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[binary_cross_accuracy])
-                callbacks_list = [ keras.callbacks.ModelCheckpoint(filepath=modelpath + 'netshooter-model.h5', monitor='binary_cross_accuracy', save_best_only=True), keras.callbacks.EarlyStopping(monitor='binary_cross_accuracy', patience=1000), epoch_callback, csv_logger]
+                callbacks_list = [ keras.callbacks.ModelCheckpoint(filepath=modelpath + '/netshooter-model.h5', monitor='binary_cross_accuracy', save_best_only=True), keras.callbacks.EarlyStopping(monitor='binary_cross_accuracy', patience=1000), epoch_callback, csv_logger]
         print(np.shape(data_train))
         print(np.shape(labels_train))
 
         history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
 
-        with open(modelpath + "netshooter.info", 'w') as f:
+        with open(modelpath + "/netshooter.info", 'w') as f:
             f.write("Name: " + self.name + "\n")
 
         self.__save(modelpath)
-        model.save(modelpath + "netshooter-model.h5")
+        model.save(modelpath + "/netshooter-model.h5")
 
 
     def train(self, datapath, modelpath):
