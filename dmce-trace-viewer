@@ -152,7 +152,7 @@ function main() {
 
     if [ $fzf -eq 1 ]; then
         # get prolog length
-        DMCE_PROLOG_LEN="24"
+        DMCE_PROLOG_LEN="20"
         export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
         export DMCE_PLUS_SIGN="+"
 
