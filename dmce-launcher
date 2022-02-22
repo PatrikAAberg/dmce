@@ -54,6 +54,7 @@ SYNOPSIS
 OPTIONS
     -a, --all        Probe entire history
     -c               Restore source code state
+    --doublecheck    Exit with error if any file is already probed
     -d val           Number of weeks from HEAD
     --head[=]<val>   <val> is the HEAD to which comparison is done
     -h, --help       This help
@@ -148,6 +149,7 @@ stupid=false
 checkout_head=false
 print_version_and_exit=false
 progress=false
+doublecheck=false
 quiet=false
 config_file_cmd=""
 _jobs=$(getconf _NPROCESSORS_ONLN)
@@ -181,6 +183,9 @@ while getopts "$optspec" optchar; do
                 progress)
                     progress=true
                     quiet=true
+                    ;;
+                doublecheck)
+                    doublecheck=true
                     ;;
                 skip)
                     skip=true
@@ -269,6 +274,15 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 if git_root=$(git rev-parse --show-toplevel 2> /dev/null); then
     git_name=$(basename "${git_root}")
     export DMCE_GIT_NAME=$git_name
+fi
+
+# Double probing?
+if [ "${doublecheck}" == "true" ]; then
+    probefound="false" && grep -r "DMCE_PROBE" ${git_root} &> /dev/null && probefound="true"
+    if [ "${probefound}" == "true" ]; then
+        _echo "git repo ${git_root} already seems to contain DMCE probes, abort"
+        exit 1
+    fi
 fi
 
 # Find out what config file to use. Look in this order: cmd line, git root, home dir
