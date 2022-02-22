@@ -10,8 +10,8 @@
 #define DMCE_MAX_HITS 10000
 #define DMCE_TRACE_RINGBUFFER
 
-#ifndef DMCE_PROBE_LOCK_DIR
-#define DMCE_PROBE_LOCK_DIR "/tmp/dmce-trace-buffer-lock"
+#ifndef DMCE_PROBE_LOCK_DIR_ENTRY
+#define DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/dmce-trace-buffer-lock-entry"
 #endif
 
 #ifndef DMCE_PROBE_OUTPUT_FILE_BIN
@@ -53,23 +53,28 @@ static void dmce_atexit(void) {
     unsigned int buf_pos;
 #endif
 
-    fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
+    /* Only do this once (exit dir needs to be removed at startup) */
+
+    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
+
+        fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
 
 #ifdef DMCE_TRACE_RINGBUFFER
 
-    buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
-    int i;
+        buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
+        int i;
 
-    for (i = 0; i < DMCE_MAX_HITS; i++) {
+        for (i = 0; i < DMCE_MAX_HITS; i++) {
 
-        unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-        fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
-    }
+            unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
+            fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
+        }
 #else
-    fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
+        fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 #endif
-    fclose(fp);
-    remove(DMCE_PROBE_LOCK_DIR);
+        fclose(fp);
+        remove(DMCE_PROBE_LOCK_DIR_ENTRY);
+    }
 }
 
 static void dmce_signal_handler(int sig) {
@@ -94,6 +99,7 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
                             uint64_t dmce_param_e) {
 
     /* Set up buffer and control if not done */
+
 #ifdef __cplusplus
     if (dmce_trace_enabled_p == nullptr)
 #else
@@ -103,10 +109,14 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
         char* s_control_p;
 
         /* If first time: allocate buffer, init env var and set up exit hook */
-        /* TODO: Make this less racy maybe, but only a prooblem if threads spawned before the first probe */
         /* env var format: enabled buf_p hitcount*/
+
         if (! dmce_buffer_setup_done) {
-            if (! (mkdir(DMCE_PROBE_LOCK_DIR, 0))) {
+            if (! (mkdir(DMCE_PROBE_LOCK_DIR_ENTRY, 0))) {
+
+                /* remove any previous exit lock */
+
+                remove(DMCE_PROBE_LOCK_DIR_EXIT);
 
                 char s[32 * 3];
                 dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
@@ -142,7 +152,9 @@ static void dmce_probe_body(unsigned int dmce_probenbr,
                 dmce_trace_enable();
             }
             else {
+
                /* Buffer already exist, wait for env var to be available and only init local pointers */
+
                while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
                sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
             }
