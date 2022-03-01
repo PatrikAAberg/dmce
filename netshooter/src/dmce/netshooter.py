@@ -445,6 +445,9 @@ class NetShooterData():
             num_classes = self.features;
             print(cfile + " not found, setting number of classes to number of features (feature prediction use-case)")
 
+    def getClassName(self, ind):
+        return self.classes[ind]
+
     def __readDataAndLabels(self, dfile, lfile):
         global data_train
         global labels_train
