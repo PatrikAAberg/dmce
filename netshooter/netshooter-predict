@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import sys
+import importlib
+import argparse
+import tensorflow as tf
+import numpy as np
+import tensorflow.keras as keras
+import os
+import subprocess
+import re
+import textwrap as tw
+import matplotlib.pyplot as plt
+from dmce import netshooter
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import CSVLogger
+from numpy.random import seed
+
+seed(3)
+tf.random.set_seed(5)
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+parser.add_argument('modelpath',       type=str, default='./',          help='where to put model files')
+parser.add_argument('datapath',        type=str, default='./',          help='where to read data files')
+
+args = parser.parse_args()
+
+# create file config file from parameters (or default ones) if not there
+if not os.path.exists(args.datapath + '/data'):
+    print("netshooter predict: No data file found at " + args.datapath)
+
+if not os.path.exists(args.modelpath + '/.config'):
+    print("netshooter predict: No .config file found at " + args.modelpath)
+    exit(1)
+
+nsc = netshooter.NetShooterData()
+nsc.setVerbose(True)
+ns = nsc.load(args.modelpath)
+data = ns.dataLoad(args.datapath + '/data')
+ns.predict(data);

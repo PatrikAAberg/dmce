@@ -324,11 +324,18 @@ class NetShooterData():
             print("---------------------------------------------------------------------------------------")
             print("Loading model info from " + path + "/netshooter.bin")
             print("Netshooter info")
-            print("     model name   : " + str(nsinstance.name))
-            print("     num features : " + str(nsinstance.features))
-            print("     num classes  : " + str(nsinstance.num_classes))
-            print("     csv file     : " + str(nsinstance.csv))
-            print("     regression   : " + str(nsinstance.regression))
+            print("    name:        " + str(nsinstance.name))
+            print("    batchsize:   " + str(nsinstance.batchsize))
+            print("    csv:         " + str(nsinstance.csv))
+            print("    regression:  " + str(nsinstance.regression))
+            print("    epochs:      " + str(nsinstance.epochs))
+            print("    net:         " + str(nsinstance.net))
+            print("    delim:       " + ">" + str(nsinstance.delim) + "<")
+            print("    features:    " + str(nsinstance.features))
+            print("    numprobes:   " + str(nsinstance.num_probes))
+            print("    valsplit:    " + str(nsinstance.valsplit))
+            print("    corlimit:    " + str(nsinstance.corlimit))
+
             print("Class names")
             for name in nsinstance.classes:
                 print("     " + name)
@@ -394,6 +401,8 @@ class NetShooterData():
             self.valsplit = float(val)
         elif    (p == "corlimit"):
             self.corlimit = float(val)
+        elif (p == "numprobes"):
+            self.num_probes = float(val)
 
     def __printConfig(self):
         print("    name:        " + str(self.name))
@@ -404,6 +413,7 @@ class NetShooterData():
         print("    net:         " + str(self.net))
         print("    delim:       " + ">" + str(self.delim) + "<")
         print("    features:    " + str(self.features))
+        print("    numprobes:   " + str(self.num_probes))
         print("    valsplit:    " + str(self.valsplit))
         print("    corlimit:    " + str(self.corlimit))
 
