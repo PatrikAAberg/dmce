@@ -305,6 +305,10 @@ class NetShooterData():
         num_labels = int(total_num_probes / (self.num_probes * self.features))
         data = np.reshape(data, (num_labels, self.num_probes, self.features))
 
+        # normalize if csv
+        if self.csv:
+            data = self.normalize(data)
+
         # sanity check data size
         if ( (self.num_probes * num_labels * self.features) != total_num_probes ):
             print("error: number of labels and features does not match total number of probes!")
