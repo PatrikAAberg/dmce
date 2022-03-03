@@ -133,11 +133,13 @@ expdb_in_c_file= []
 expdb_tab = []
 expdb_exppatternmode = []
 expdb_secstackvars = []
+expdb_reffedvars = []
 expdb_func = []
 expdb_index = 0
 
 secStackPos = []
 secStackVars = []
+reffedVars = []
 
 def printSecStackVars():
     i=0
@@ -338,6 +340,10 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'unsigned int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
+
+# Variable references
+re_reffedvars = []
+re_reffedvars.append(re.compile(r'.*DeclRefExpr Hexnumber.*Var Hexnumber \'(\w*)\'.*'))
 
 # scopes to skip
 re_skip_scopes = []
@@ -774,6 +780,7 @@ while (lineindex < linestotal):
             expdb_func.append(current_function)
             if not in_parmdecl:
                 expdb_secstackvars.append(secStackVars.copy())
+                expdb_reffedvars.append(reffedVars.copy())
             else:
                 expdb_secstackvars.append([])
 
@@ -834,6 +841,7 @@ while (lineindex < linestotal):
                    expdb_func.append(current_function)
                    if not in_parmdecl:
                        expdb_secstackvars.append(secStackVars.copy())
+                       expdb_reffedvars.append(reffedVars.copy())
                    else:
                        expdb_secstackvars.append([])
                    expdb_index +=1
@@ -955,9 +963,24 @@ while (lineindex < linestotal):
                 secStackVars.append("")
                 secStackPos.append((currentSectionLend, currentSectionCend))
 
+        # Check if any references to variables should be added to reffedVars
+        for ref in re_reffedvars:
+            m = ref.match(linebuf[lineindex])
+            if m:
+                print("MATCHED VAR REF: " + linebuf[lineindex])
+                reffedvar = m.group(1)
+                if reffedvar not in reffedVars:
+                    reffedVars.append(reffedvar)
+                else:
+                    # move to most recent pos
+                    reffedVars.append(reffedVars.pop(reffedVars.index(reffedvar)))
+                break
+
     print("Scope stack after decl check: ")
     print(secStackPos)
     print(secStackVars)
+    print("Reffed vars:")
+    print(reffedVars)
 
     # Finally, update input file line index
     lineindex+=1
@@ -971,6 +994,7 @@ if inside_expression:
     expdb_func.append(current_function)
     if not in_parmdecl:
         expdb_secstackvars.append(secStackVars.copy())
+        expdb_reffedvars.append(reffedVars.copy())
     else:
         expdb_secstackvars.append([])
     expdb_index +=1
