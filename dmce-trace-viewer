@@ -167,7 +167,7 @@ function main() {
 
     if [ $fzf -eq 1 ]; then
 
-        export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
+        export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN))
         export DMCE_PLUS_SIGN="+"
 
         # swap core and timestamp
@@ -175,7 +175,7 @@ function main() {
         sed -i -e "s,^\([0-9]\+\) @\([0-9]\+\)@\(.*$\),\2@\1@$git_full/\3,g" "${dmce_trace_log}"
         true > ${dmce_trace_log}_view
         while IFS='@' read -r core ts f n func line vars; do
-            printf "%s\n" "$core@$ts@$f@+$((n - DMCE_PROLOG_LEN))@$func@$line@$vars"
+            printf "%s\n" "$core@$ts@$f@+$((n + 1 - DMCE_PROLOG_LEN))@$func@$line@$vars"
         done <${dmce_trace_log} | column -t -s@ > ${dmce_trace_log}_view
         files+=" ${dmce_trace_log}_view"
 
@@ -241,7 +241,7 @@ function main() {
         n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4 | cut -b2-)
 
         # compensate for prolog
-        n=$((n-'$DMCE_PROLOG_LEN'))
+        n=$((n+1-'$DMCE_PROLOG_LEN'))
 
         # get func name
         func=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f5 | xargs)
