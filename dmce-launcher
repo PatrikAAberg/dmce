@@ -388,8 +388,11 @@ if [ "${quiet}" = "false" ]; then
 fi
 
 if [ "$restore" = true ]; then
+    rm -f .dmce_state_probed
     exit 0
 fi
+
+touch .dmce_state_probed
 
 _echo "initialize log"
 logfile="$(basename "$0" .sh)-$(basename "$git_root")-$(date '+%Y%m%d-%H%M%S').log"
