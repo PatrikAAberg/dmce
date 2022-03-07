@@ -1063,6 +1063,8 @@ while (i < expdb_index):
                     break
                 probe_prolog = probe_prolog + ","
 
+            lr_vlist = lr_vlist[0:numDataVars]
+
         while (count < numDataVars):
             count += 1
             if count == 1:
