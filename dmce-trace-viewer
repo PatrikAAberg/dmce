@@ -36,11 +36,13 @@ SYNOPSIS
 OPTIONS
 
 PREREQUISITE
-    Run dmce on a git, build any executable and run it. Typical input: 
-        /tmp/$USER/dmcebuffer.bin /tmp/$USER/<git name>/probe-references.log <path-to-git> 
+        Setup dmce for trace, run dmce on a git, build any executable and run it.
 
 DESCRIPTION
-        Provides an enahnce, more feature-rich trace view than the output of dmce-trace.
+        Provides an enahnced, more feature-rich trace view than the output of dmce-trace.
+        It is possible to use both a probed  and a non-probed code tree, but it is important to
+        use the corresponding probe reference file.
+
         If 'fzf' (=github.com/junegunn/fzf) is installed an interactive viewer is launched.
 
         It's possible to force the viewer to 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
@@ -54,13 +56,21 @@ EXAMPLES
         $ <package manager> install fzf
 
         # decode the trace buffer and launch an interactive fzf viewer
-        $ dmce-trace-view [data file] [probe file] [code tree path]
+        $ dmce-trace-viewer [data file] [probe file] [code tree path]
 
         # decode the trace buffer and display the trace on stdout
-        $ DMCE_TRACE_VIEWER=stdout dmce-trace-view [data file] [probe file] [code tree path]
+        $ DMCE_TRACE_VIEWER=stdout dmce-trace-viewer [data file] [probe file] [code tree path]
 
         # decode the trace buffer and save the trace to a file '/tmp/a.trace'
-        $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-view [data file] [probe file] [code tree path]
+        $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-viewer [data file] [probe file] [code tree path]
+
+        # Typical example including paths to standard file locations using a __non-probed__ tree
+        $ cd mygit
+        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
+
+        # Typical example including paths to standard file locations using a __probed__ tree
+        $ cd mygit
+        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references.log $(pwd)
 EOF
     exit 1
 }
