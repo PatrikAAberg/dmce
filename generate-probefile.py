@@ -1040,6 +1040,14 @@ while (i < expdb_index):
             if var in vlist:
                 lr_vlist.append(var)
 
+        # Fill up with declared ones that are not referenced if any
+        if len(lr_vlist) < numDataVars:
+            for s in vlist:
+                if s not in lr_vlist:
+                    lr_vlist.append(s)
+                if len(lr_vlist) == numDataVars:
+                    break
+
         print("vlist:")
         print(vlist)
         print("lr_vlist:")
