@@ -343,7 +343,7 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 
 # Variable references
 re_reffedvars = []
-re_reffedvars.append(re.compile(r'.*DeclRefExpr Hexnumber.*Var Hexnumber \'(\w*)\'.*'))
+re_reffedvars.append(re.compile(r'.*DeclRefExpr\sHexnumber.*Var\sHexnumber\s\'(\w*)\'.*'))
 
 # scopes to skip
 re_skip_scopes = []
@@ -783,6 +783,7 @@ while (lineindex < linestotal):
                 expdb_reffedvars.append(reffedVars.copy())
             else:
                 expdb_secstackvars.append([])
+                expdb_reffedvars.append([])
 
             expdb_index +=1
             if do_print:
@@ -844,6 +845,7 @@ while (lineindex < linestotal):
                        expdb_reffedvars.append(reffedVars.copy())
                    else:
                        expdb_secstackvars.append([])
+                       expdb_reffedvars.append([])
                    expdb_index +=1
 
                # Need to look for last sub expression
@@ -963,6 +965,7 @@ while (lineindex < linestotal):
                 secStackVars.append("")
                 secStackPos.append((currentSectionLend, currentSectionCend))
 
+    if in_parsed_file:
         # Check if any references to variables should be added to reffedVars
         for ref in re_reffedvars:
             m = ref.match(linebuf[lineindex])
@@ -985,7 +988,6 @@ while (lineindex < linestotal):
     # Finally, update input file line index
     lineindex+=1
 
-
 # If we were inside an expression when the file ended, take care of the last one
 if inside_expression:
     expdb_lineend.append(int(lstart))
@@ -997,8 +999,9 @@ if inside_expression:
         expdb_reffedvars.append(reffedVars.copy())
     else:
         expdb_secstackvars.append([])
-    expdb_index +=1
+        expdb_reffedvars.append([])
 
+    expdb_index +=1
 
 # Open probe expression data file to append entries
 exp_pdf = open(sys.argv[4], "w")
@@ -1031,10 +1034,21 @@ while (i < expdb_index):
             if s != "":
                 vlist.append(s)
 
+        # Create a list ordered by last referenced
+        lr_vlist = []
+        for var in reversed(expdb_reffedvars[i]):
+            if var in vlist:
+                lr_vlist.append(var)
+
+        print("vlist:")
+        print(vlist)
+        print("lr_vlist:")
+        print(lr_vlist)
+
         count = 0
-        if len(vlist) > 0:
+        if len(lr_vlist) > 0:
             probe_prolog = probe_prolog + ","
-            for s in vlist:
+            for s in lr_vlist:
                 probe_prolog = probe_prolog + "(" + tvtype + ")" + s
                 count += 1
                 if (count == numDataVars):
