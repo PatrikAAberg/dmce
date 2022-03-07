@@ -642,7 +642,7 @@ else
     done
 
     # Create a probe ref file with original line numbers
-    cat $dmcepath/probe-references.log | awk -v len="$size_of_user" -F: '{print $1 ":" $2 ":" $3 - len ":" $4}' > $dmcepath/probe-references-original.log
+    cat $dmcepath/probe-references.log | sed -e "s/:/ /g" | awk -v len="$size_of_user" '{printf $1 " " $2 " " $3 - len " " $4; $1=$2=$3=$3=$4=""; print}' | sed -e "s/  */:/g" | sed -e "s/:*$//" > $dmcepath/probe-references-original.log
 fi
 
 _echo "$(basename "$git_top") summary:"

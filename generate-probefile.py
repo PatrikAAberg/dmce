@@ -1314,7 +1314,14 @@ while (i < expdb_index):
                         probes+=1
 
                         # Update probe file
-                        pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
+                        if numDataVars == 0:
+                            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
+                        else:
+                            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
+                            for var in lr_vlist:
+                                pdf.write( ":" + var)
+                            pdf.write("\n")
+
                         tmp_exp = expdb_exptext[i].rstrip()
                         pat_i = 0
                         while (pat_i < len(exppatternlist)):
