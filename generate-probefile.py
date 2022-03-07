@@ -1048,11 +1048,6 @@ while (i < expdb_index):
                 if len(lr_vlist) == numDataVars:
                     break
 
-        print("vlist:")
-        print(vlist)
-        print("lr_vlist:")
-        print(lr_vlist)
-
         count = 0
         if len(lr_vlist) > 0:
             probe_prolog = probe_prolog + ","
