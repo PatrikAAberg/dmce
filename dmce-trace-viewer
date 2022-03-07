@@ -91,10 +91,15 @@ function init() {
     if [ ! -d "${git_full}" ]; then
         echo "error: ${git_full} is not a directory"
         usage
-    elif [ ! -d "${git_full}"/.git ]; then
-        echo "error: ${git_full} does not appear to be a git repo"
-        usage
     fi
+
+    if [ -f .dmce_state_probed ]; then
+        DMCE_PROLOG_LEN="20"
+        export sfsuffix=".dmceoriginal"
+    else
+        DMCE_PROLOG_LEN="0"
+        export sfsuffix=""
+     fi
 }
 
 function cleanup() {
@@ -161,8 +166,7 @@ function main() {
     fi
 
     if [ $fzf -eq 1 ]; then
-        # get prolog length
-        DMCE_PROLOG_LEN="20"
+
         export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN-1))
         export DMCE_PLUS_SIGN="+"
 
@@ -231,7 +235,7 @@ function main() {
 
         # get filename
         f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)
-        f="$f.dmceoriginal"
+        f=$f'${sfsuffix}'
 
         # get line number
         n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4 | cut -b2-)
@@ -285,8 +289,8 @@ function main() {
 
         # display the remaining part of the file
         tail -n +$((right_len+1)) '${preview_left}'' \
-            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3).dmceoriginal; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
-            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3).dmceoriginal; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
+            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)'${sfsuffix}'; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
+            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)'${sfsuffix}'; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
 
     exit 0
 }
