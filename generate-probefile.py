@@ -333,6 +333,7 @@ re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'int\' (cinit|listinit).*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'unsigned int\' (cinit|listinit).*'))
 re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'.* \*\' (cinit|listinit).*'))
+re_parmdeclarations.append(re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s\'.* \*\*\' (cinit|listinit).*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'size_t\':\'unsigned long\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'size_t\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'long\'.*'))
@@ -340,6 +341,7 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'unsigned int\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
+re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\*\'.*'))
 
 # Variable references
 re_reffedvars = []
