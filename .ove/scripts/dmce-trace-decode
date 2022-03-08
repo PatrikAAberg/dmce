@@ -103,7 +103,7 @@ function main() {
 
     trap cleanup EXIT
 
-    dmce-trace-viewer /tmp/$OVE_USER/dmce/dmcebuffer.bin /tmp/$OVE_USER/dmce/${git_base}/probe-references.log ${git_full}
+    dmce-trace-viewer /tmp/$OVE_USER/dmce/dmcebuffer.bin /tmp/$OVE_USER/dmce/${git_base}/probe-references-original.log ${git_full}
 }
 
 main "$@"

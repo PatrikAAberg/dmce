@@ -125,8 +125,21 @@ function main() {
         exit 1
     fi
 
+    echo "$ ove-dmce launch -c -- $git_full"
+    out=$(ove-dmce launch -c -- "$git_full")
+    ret=$?
+    if [ ${ret} -ne 0 ]; then
+        if [[ ${out} == *error* ]]; then
+            err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
+        else
+            err_string="'ove-dmce launch -c -- $git_full' failed"
+        fi
+        ove-echo red "${err_string}"
+        exit 1
+    fi
+
     nbr_of_probes=$(git grep 'DMCE_PROBE([0-9]\+' | grep -o 'DMCE_PROBE([0-9]\+' | cut -d'(' -f2 | sort -V | tail -1)
-    echo "info: repo '${git_full}' is now instrumented with ${nbr_of_probes} probe(s). Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
+    echo "info: repo '${git_full}' was instrumented with ${nbr_of_probes} probe(s), built and restored to it's normal state. Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
     elfs=$(find "${git_full}" -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n)
     if [ "x$elfs" = "x" ]; then
         echo "warning: no executable ELF files found in '${git}'. Building artifacts outside the git repo? Or did you select the wrong OVE project '$ove_proj'?"
