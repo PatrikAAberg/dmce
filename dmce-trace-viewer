@@ -92,14 +92,6 @@ function init() {
         echo "error: ${git_full} is not a directory"
         usage
     fi
-
-    if [ -f .dmce_state_probed ]; then
-        DMCE_PROLOG_LEN="20"
-        export sfsuffix=".dmceoriginal"
-    else
-        DMCE_PROLOG_LEN="0"
-        export sfsuffix=""
-     fi
 }
 
 function cleanup() {
@@ -165,22 +157,6 @@ function main() {
         exit 1
     fi
 
-    if [ $fzf -eq 1 ]; then
-
-        export DMCE_PROLOG_LEN=$((DMCE_PROLOG_LEN))
-        export DMCE_PLUS_SIGN="+"
-
-        # swap core and timestamp
-        # add fullpath to file
-        sed -i -e "s,^\([0-9]\+\) @\([0-9]\+\)@\(.*$\),\2@\1@$git_full/\3,g" "${dmce_trace_log}"
-        true > ${dmce_trace_log}_view
-        while IFS='@' read -r core ts f n func line vars; do
-            printf "%s\n" "$core@$ts@$f@+$((n + 1 - DMCE_PROLOG_LEN))@$func@$line@$vars"
-        done <${dmce_trace_log} | column -t -s@ > ${dmce_trace_log}_view
-        files+=" ${dmce_trace_log}_view"
-
-    fi
-
     # none-fzf: simply display the log
     if [ $fzf -eq 0 ]; then
         if [ "x$DMCE_TRACE_VIEWER" = "x" ] || [ "x$DMCE_TRACE_VIEWER" = "xstdout" ]; then
@@ -200,6 +176,9 @@ function main() {
     fi
 
     # fzf only below...
+    export DMCE_PLUS_SIGN="+"
+    column -t -s@ <${dmce_trace_log} > ${dmce_trace_log}_view
+    files+=" ${dmce_trace_log}_view"
     t_old="$WORKAREA/res-$git.told"
     true > "${t_old}"
     files+=" ${t_old}"
@@ -222,9 +201,9 @@ function main() {
         if [ -s '${t_old}' ]; then
             t_old=$(cat '${t_old}');
             if [ $t -ge $t_old ]; then
-                t_diff=$((t-t_old))
+                t_diff="$((t-t_old)) ns"
             else
-                t_diff=$((t_old-t))
+                t_diff="$((t_old-t)) ns"
             fi
         else
             t_old=0
@@ -235,13 +214,9 @@ function main() {
 
         # get filename
         f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)
-        f=$f'${sfsuffix}'
 
         # get line number
         n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4 | cut -b2-)
-
-        # compensate for prolog
-        n=$((n+1-'$DMCE_PROLOG_LEN'))
 
         # get func name
         func=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f5 | xargs)
@@ -289,8 +264,8 @@ function main() {
 
         # display the remaining part of the file
         tail -n +$((right_len+1)) '${preview_left}'' \
-            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)'${sfsuffix}'; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
-            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3)'${sfsuffix}'; n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); n=$((n-DMCE_PROLOG_LEN)); echo "vim $f $DMCE_PLUS_SIGN$n"))'
+            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
+            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); echo "vim $f $DMCE_PLUS_SIGN$n"))'
 
     exit 0
 }

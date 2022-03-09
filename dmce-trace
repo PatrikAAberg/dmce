@@ -99,7 +99,7 @@ def getSourceAndVars(sl, vs, varnames):
         richvs = richvs + v + ":0x" + vs[i] + " "
         i += 1
 
-    return sl, richvs
+    return sl, richvs.strip()
 
 def stripProbeExtractVars(sl, vs):
     regexp = r'(.*)\(DMCE_PROBE\(\d*'
@@ -175,19 +175,25 @@ for n in range(length):
         # Retrieve source code from cache
         lsource = treedict[codetree + "/" + fname]
 
-        fname = args.delimiter + str(cpu) + args.delimiter + fname
+        # reset fname
+        fname = str(cpu)
 
         if showtimestamps:
-            fname = str(data[n, 0]) + " " + fname
+            fname += args.delimiter + str(data[n, 0])
+
+        fname += args.delimiter + codetree + "/" + refs[1]
 
         if notComplete(data[n, 0]):
-            fname = "<Trace incomplete>" + fname
+            fname += "<Trace incomplete>"
 
         if leading or trailing:
             print("                                             ---")
         for lcount in range (line - leading, line + 1 + trailing):
             if lcount > 0:
-                sl = lsource[lcount].rstrip()
+                if 0 <= lcount < len(lsource):
+                    sl = lsource[lcount].rstrip()
+                else:
+                    continue
 
                 if lcount == line:
                     if not args.showprobes:
@@ -197,13 +203,13 @@ for n in range(length):
                             sl, vs = stripProbeExtractVars(sl, vs)
                     else:
                         if not probedtree:
-                            print("option --noprobes used with unprobed tree, abort")
-                            exit(1)
+                            print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
+                            sys.exit(1)
                         sldummy, vs = stripProbeExtractVars(sl, vs)
                     if not args.hl:
-                        out = [fname + args.delimiter + "+" + str(lcount) + args.delimiter + func + args.delimiter, sl, vs]
+                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
                     else:
-                        out = [fname + args.delimiter + "+" + str(lcount) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
+                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
                 else:
                     if probedtree and not args.showprobes:
                         sl = stripProbe(sl)
