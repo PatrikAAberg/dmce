@@ -264,8 +264,7 @@ function main() {
 
         # display the remaining part of the file
         tail -n +$((right_len+1)) '${preview_left}'' \
-            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); echo "vim $f $DMCE_PLUS_SIGN$n"))' \
-            --bind 'left-click:execute(lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); echo "vim $f $DMCE_PLUS_SIGN$n"))'
+            --bind 'enter:execute(     lineno={n}; ((lineno++)); < /dev/tty eval $(f=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f3); n=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f4); echo "vim $f $DMCE_PLUS_SIGN$n"))'
 
     exit 0
 }
