@@ -6,11 +6,22 @@ gitdir=$(pwd)
 
 echo "Building deb package version $version"
 
-# Tree structure
-rm -rf /tmp/$USER/dmce/debian-build
-mkdir -p /tmp/$USER/dmce/debian-build
+_user=
+if [ "x${USER}" != "x" ]; then
+	_user="${USER}"
+elif [ "x${LOGNAME}" != "x" ]; then
+	_user="${LOGNAME}"
+elif command -v whoami > /dev/null; then
+	_user="$(whoami)"
+else
+	_user="dmce"
+fi
 
-pushd /tmp/$USER/dmce/debian-build
+# Tree structure
+rm -rf /tmp/${_user}/dmce/debian-build
+mkdir -p /tmp/${_user}/dmce/debian-build
+
+pushd /tmp/${_user}/dmce/debian-build
 mkdir -p dmce-$version/DEBIAN
 mkdir -p dmce-$version/usr
 mkdir -p dmce-$version/usr/bin
@@ -44,6 +55,6 @@ cp -a $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
 echo "$version" > dmce-$version/usr/share/dmce/version
 
 fakeroot dpkg-deb --build dmce-${version}
-cp -a /tmp/$USER/dmce/debian-build/dmce-${version}.deb $gitdir/
+cp -a /tmp/${_user}/dmce/debian-build/dmce-${version}.deb $gitdir/
 popd
 exit 0

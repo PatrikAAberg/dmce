@@ -149,7 +149,7 @@ function main() {
     fi
 
     # remove any already existing trace lock file at dmce-configure-local default path
-    rm -rf /tmp/$LOGNAME/dmce-trace-buffer-lock
+    rm -rf /tmp/$OVE_USER/dmce-trace-buffer-lock
 
     exit 0
 }
