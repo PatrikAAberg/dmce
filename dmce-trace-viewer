@@ -225,7 +225,7 @@ function main() {
         vars=$(sed "${lineno}!d" '${dmce_trace_log}' | cut -d@ -f7)
 
         # display filename, line, core and diff at the top
-        echo "$f +$n core: $c diff: $t_diff"
+        echo "$lineno $f +$n core: $c diff: $t_diff"
 
         # delimiter
         echo "---"
