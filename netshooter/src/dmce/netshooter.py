@@ -129,6 +129,7 @@ class NetShooterData():
     num_labels = None
     num_probes = None
     classes = None
+    classes_labels = None
     data_min_array = None
     data_max_array = None
     data_divider_array = None
@@ -445,6 +446,9 @@ class NetShooterData():
             self.classes = cl.read().splitlines()
             cl.close()
             self.num_classes = len(self.classes)
+            self.classes_labels = []
+            for i in range(self.num_classes):
+                self.classes_labels.append(i)
             print("Read " + str(self.num_classes) + " classes from " + cfile)
         else:
             # num classes is used as num_outputs when doing regression for future prediction, clean this up if other regression is needed
@@ -452,7 +456,11 @@ class NetShooterData():
             print(cfile + " not found, setting number of classes to number of features (feature prediction use-case)")
 
     def getClassName(self, ind):
-        return self.classes[ind]
+        cname = ""
+        for i in range(len(self.classes_labels)):
+            if self.classes_labels[i] == ind:
+                cname = cname + ":" + self.classes[i]
+        return cname
 
     def __readDataAndLabels(self, dfile, lfile):
         global data_train
@@ -600,6 +608,7 @@ class NetShooterData():
                             if labels_train[i][indfrom] == 1:
                                labels_train[i][indfrom] = 0
                                labels_train[i][indto] = 1
+                        self.classes_labels[indfrom] = self.classes_labels[indto]
                     print("Resuming training")
 
                 else:
@@ -611,8 +620,8 @@ class NetShooterData():
 
         with open(modelpath + "/netshooter.info", 'w') as f:
             f.write("Name:" + self.name + "\n")
-            for c in range(len(self.classes)):
-                f.write("Class:" + str(c) + ":" + self.classes[c] + "\n")
+            for c in range(len(self.classes_labels)):
+                f.write("Class:" + str(self.classes_labels[c]) + ":" + self.classes[c] + "\n")
         self.__save(modelpath)
         model.save(modelpath + "/netshooter-model.h5")
 
