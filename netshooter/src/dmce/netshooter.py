@@ -118,6 +118,7 @@ class NetShooterData():
     batchsize = None
     csv = None
     regression = None
+    merge = False
     epochs = None
     net = None
     delim = None
@@ -270,7 +271,7 @@ class NetShooterData():
                     confmatrix[lc, k] += 1
             else:
                 # right most column
-                confmatrix[lc, num_classes] += 1
+                confmatrix[lc, self.num_classes] += 1
         return confmatrix
 
     def labelsLoad(self, flabels):
@@ -393,6 +394,11 @@ class NetShooterData():
                 self.regression = True
             else:
                 self.regression = False
+        elif    (p == "merge"):
+            if (val == "True"):
+                self.merge = True
+            else:
+                self.merge = False
         elif    (p == "epochs"):
             self.epochs = int(val)
         elif    (p == "net"):
@@ -567,11 +573,33 @@ class NetShooterData():
         print(np.shape(data_train))
         print(np.shape(labels_train))
 
-        history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
+        # Merge enabled?
+        if self.merge:
+            continueTrain = True
+            while continueTrain:
+                history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
+
+                # Produce confusion matrix
+                pred = model.predict(data_train)
+                pred[pred >= 0.5] = 1
+                pred[pred < 0.5] = 0
+                labels_predict = pred
+
+                confmatrix = self.confmatrix(labels_train, labels_predict)
+                self.printConfMatrix(confmatrix)
+                merges = self.suggestMerges(confmatrix, 0.1, [])
+
+                print("Suggested merges:")
+                print(merges)
+                continueTrain = False
+        else:
+            # just run once
+            history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
 
         with open(modelpath + "/netshooter.info", 'w') as f:
-            f.write("Name: " + self.name + "\n")
-
+            f.write("Name:" + self.name + "\n")
+            for c in range(len(self.classes)):
+                f.write("Class:" + str(c) + ":" + self.classes[c] + "\n")
         self.__save(modelpath)
         model.save(modelpath + "/netshooter-model.h5")
 
@@ -594,6 +622,7 @@ class NetShooterData():
             sys.exit(1)
 
         self.__readClasses(datapath + "/classes")
+
         self.__readDataAndLabels(datapath + "/data", datapath + "/labels")
         setupGPUs()
         self.__buildAndFit(datapath, modelpath)

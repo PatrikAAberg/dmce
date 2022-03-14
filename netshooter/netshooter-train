@@ -20,9 +20,6 @@ seed(3)
 tf.random.set_seed(5)
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
-#parser.add_argument('datafile',            type=str,                      help='data file')
-#parser.add_argument('labels',              type=str,                      help='labels file')
-#parser.add_argument('classes',             type=str,                      help='classes file')
 parser.add_argument('--batch-size',        type=int, default=20,          help='batch size default: 20')
 parser.add_argument('--csv',               action='store_true', help='use csv file as data input (classes file will be ignored)')
 parser.add_argument('--regression',        action='store_true', help='general switch for regression nets')
@@ -62,12 +59,3 @@ ns = netshooter.NetShooterData()
 ns.setVerbose(True)
 ns.train(args.datapath, args.modelpath);
 
-#keras.utils.plot_model(
-#    model,
-#    to_file="model.png",
-#    show_shapes=True,
-#    show_layer_names=True,
-#    rankdir="LR",
-#    expand_nested=True,
-#    dpi=96,
-#)
