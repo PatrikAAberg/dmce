@@ -589,9 +589,22 @@ class NetShooterData():
                 self.printConfMatrix(confmatrix)
                 merges = self.suggestMerges(confmatrix, 0.1, [])
 
-                print("Suggested merges:")
-                print(merges)
-                continueTrain = False
+                if len(merges) > 0:
+                    print("Identified merges:")
+                    print(merges)
+                    print("Updating labels")
+                    for m in merges:
+                        indfrom = m[1]
+                        indto   = m[0]
+                        for i in range(len(labels_train)):
+                            if labels_train[i][indfrom] == 1:
+                               labels_train[i][indfrom] = 0
+                               labels_train[i][indto] = 1
+                    print("Resuming training")
+
+                else:
+                    print("No identified merges, ending training")
+                    continueTrain = False
         else:
             # just run once
             history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
