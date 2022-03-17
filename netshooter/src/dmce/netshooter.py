@@ -232,7 +232,7 @@ class NetShooterData():
                 if (i != j) and (i not in skiplist):
                     err = confmatrix[i, j] + confmatrix[j, i]
                     tot = err + confmatrix[i, i] + confmatrix[j, j]
-                    if (float(err) / float(tot) > float(precision)):
+                    if (float(err) / float(tot + 0.0000001) > float(precision)):
                         # merge
                         merges.append([i, j])
 
