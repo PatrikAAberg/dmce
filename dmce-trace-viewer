@@ -118,20 +118,29 @@ function main() {
     dmce_trace_args+=" ${git_full}"
 
     fzf=0
+    fzf_cmd="fzf"
     # not set, select fzf if it's available
     if [ "x$DMCE_TRACE_VIEWER" = "x" ]; then
-        if ! command -v fzf > /dev/null; then
+        if command -v fzf-next-selected > /dev/null; then
+            fzf=1
+            fzf_cmd="fzf-next-selected --multi --bind=ctrl-j:next-selected"
+        elif command -v fzf > /dev/null; then
+            fzf=1
+            fzf_cmd="fzf"
+        else
             fzf=0
             dmce_trace_args+=" --hl"
-        else
-            fzf=1
         fi
     elif [ "x$DMCE_TRACE_VIEWER" = "xfzf" ]; then
-        # fzf is forced but not available, fallback to 'less'
-        if ! command -v fzf > /dev/null; then
-            fzf=0
-        else
+        # if fzf is forced but not available, fallback to 'less'
+        if command -v fzf-next-selected > /dev/null; then
             fzf=1
+            fzf_cmd="fzf-next-selected --multi --bind=ctrl-j:next-selected"
+        elif command -v fzf > /dev/null; then
+            fzf=1
+            fzf_cmd="fzf"
+        else
+            fzf=0
         fi
     else
         # fzf is 0, select less/stdout/stderr/file below
@@ -186,7 +195,7 @@ function main() {
     preview_right="${WORKAREA}/res-$git.right"
     files+=" $preview_left"
     files+=" $preview_right"
-    < ${dmce_trace_log}_view fzf \
+    < ${dmce_trace_log}_view $fzf_cmd \
         --tac \
         --preview-window=down \
         --preview '
