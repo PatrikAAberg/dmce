@@ -749,11 +749,11 @@ while (lineindex < linestotal):
         in_parmdecl_tab = tab
 
     # Check if entering function scope
-    if not in_function_scope:
-        for re_f in re_func_inc_list:
-            f_m = re_f.match(linebuf[lineindex])
-            if f_m:
-                current_function = f_m.group(1)
+    for re_f in re_func_inc_list:
+        f_m = re_f.match(linebuf[lineindex])
+        if f_m:
+            current_function = f_m.group(1)
+            if not in_function_scope:
                 in_function_scope = True
                 function_scope_tab = tab
 
