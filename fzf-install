@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "Checking go version..."
+go version
+        [ "$?" != "0" ] && echo "You need to install golang >=1.13 to be able to build fzf, abort" && exit 1
+
+set -e
+
+mkdir -p /tmp/$USER
+pushd /tmp/$USER
+echo "Cloning fzf (mtempling fork) into /tmp/$USER/fzf"
+git clone https://github.com/mtempling/fzf.git
+cd fzf
+git fetch --all
+git checkout -b next-selected origin/next-selected
+echo "Building fzf"
+make
+echo "Installing fzf as /home/$USER/bin/fzf-next-selected"
+cp target/fzf-linux_amd64 /home/$USER/bin/fzf-next-selected
+popd
