@@ -42,7 +42,7 @@ After dmce probing:
 
 ## Dependencies
 
-clang-check 10.0.0+
+clang-check 10.0.0+ (12.0.0+ increase probe density performance)
 
 git 2.10+
 
@@ -90,9 +90,9 @@ Modify the dmce configuration using the "dmce-set-profile tool" to use a printf 
 
     $ dmce-set-profile printf -i simple -e simplecrash
 
-Run dmce for more commits than are actually in the git, making it probe everything:
+Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce-launcher -n 10000 --progress
+    $ dmce-launcher -aq
 
 Check the diff. You should be able to see the inserted dmce probes.
 
@@ -124,9 +124,9 @@ Modify the dmce configuration to use a trace probe, including only the "simplecr
 
     $ dmce-set-profile trace -i simplecrash
 
-Run dmce for more commits than are actually in the git, making it probe everything:
+Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce-launcher -n 10000 --progress
+    $ dmce-launcher -aq
 
 Go into the simplecrash example folder, build the executable and run it.
 
@@ -136,7 +136,6 @@ Go into the simplecrash example folder, build the executable and run it.
 It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 modules colorama and numpy:
 
     $ pip3 install colorama numpy
-
     $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
 This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo. Please note that the path where the raw trace file end up is decided by the probe through a DMCE_PROBE_DEFINE in the ".dmceconfig" file.
@@ -147,7 +146,27 @@ For larger traces than this one, something to try out is to pipe the results to 
 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
 
-## Example 3: Patch code coverage
+## Example 3: Interactive trace viewer
+
+You might want something fancier than less to view your trace. An interactive trace viewer can be invoked instead of using the dmce-trace command in the previous example. Still using the results from example 2 (make sure to still be in the dmce-examples directory), lets's try it out:
+
+    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+    
+Doing this, you will notice dmce probes visible in the code. That's great for being in control what has actually been executed, but maybe not so great for readability. However, the probes can as shown above easily be removed with a simple call to dmce-launcher. Using the "probe-references-original.log" instead of the "probe-references.log" file, the viewer will find the correct code lines for the original versions:
+
+    $ dmce-launcher -c
+    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
+
+The dmce-trace-viewer uses fzf to search through the trace data. Doing this, you typically want bookmarks that can be jumped to. Installing a fork of fzf made by mtempling enables you to use tab to mark bookmarks and ctrl-j to jump between them:
+
+https://github.com/mtempling/fzf.git
+
+It assumes you have golang installed on your computer. In the dmce git you can also find a very simple installer script (also assuming golang is installed):
+
+    $ cd dmce
+    $ ./fzf-installer
+
+## Example 4: Patch code coverage
 
 This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
