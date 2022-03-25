@@ -164,7 +164,7 @@ https://github.com/mtempling/fzf.git
 It assumes you have golang installed on your computer. In the dmce git you can also find a very simple installer script (also assuming golang is installed):
 
     $ cd dmce
-    $ ./fzf-installer
+    $ ./fzf-install
 
 ## Example 4: Patch code coverage
 
