@@ -15,6 +15,6 @@ git fetch --all
 git checkout -b next-selected origin/next-selected
 echo "Building fzf"
 make
-echo "Installing fzf as /home/$USER/bin/fzf-next-selected"
-cp target/fzf-linux_amd64 /home/$USER/bin/fzf-next-selected
+echo "Installing fzf as /home/$USER/.local/bin/fzf-next-selected"
+cp target/fzf-linux_amd64 /home/$USER/.local/bin/fzf-next-selected
 popd
