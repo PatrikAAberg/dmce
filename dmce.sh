@@ -182,10 +182,22 @@ cd $git_top
 
 # directory set up
 rm -rf $dmcepath/{old,new,workarea}
-mkdir -p $dmcepath/{old,new,workarea}
+mkdir -p $dmcepath/{old,new,workarea,cache}
 
-_echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
-git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > $dmcepath/latest.cache
+c="${dmcepath}/cache/${oldsha_rev}-${newsha_rev}"
+# check if we have this interval in our cache
+if [ -e "$c" ] && [ "x$(tail -1 "${c}" | cut -d':' -f1)" = "xDMCE" ]; then
+	_echo "using file cache '$c'"
+	cp -a "${c}" "$dmcepath/latest.cache"
+	# remove watermark
+	sed -i '$ d' $dmcepath/latest.cache
+else
+	_echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
+	git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > "$dmcepath/latest.cache"
+	cp -a "$dmcepath/latest.cache" "${c}"
+	# add watermark
+	echo "DMCE: $(date '+%Y-%m-%d %H:%M:%S')" >> "${c}"
+fi
 
 # add modified/untracked files
 git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
