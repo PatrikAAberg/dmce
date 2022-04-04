@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-import netshooter as ns
+from dmce import netshooter as ns
 
 parser = argparse.ArgumentParser(usage=__doc__)
 parser.add_argument('dfile',        type=str,   help='Data input file')
