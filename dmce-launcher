@@ -53,6 +53,7 @@ SYNOPSIS
 
 OPTIONS
     -a, --all        Probe entire history
+    --ast-cache      Save AST output from clang-check in a local file cache
     -c               Restore source code state
     --doublecheck    Exit with error if any file is already probed
     -d val           Number of weeks from HEAD
@@ -146,6 +147,7 @@ number_of_commits=1
 skip=false
 debug=false
 stupid=false
+ast_cache=false
 checkout_head=false
 print_version_and_exit=false
 progress=false
@@ -198,6 +200,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 stupid)
                     stupid=true
+                    ;;
+                ast-cache)
+                    ast_cache=true
                     ;;
                 version)
                     print_version_and_exit=true
@@ -265,6 +270,7 @@ export DMCE_PROGRESS="${progress}"
 export DMCE_DEBUG="${debug}"
 export DMCE_JOBS="${_jobs}"
 export DMCE_PROBE_ALL=${probe_all}
+export DMCE_AST_CACHE=${ast_cache}
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
