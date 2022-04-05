@@ -522,6 +522,16 @@ for c_file in $FILE_LIST; do
 done
 wait
 
+if [ "$DMCE_DEBUG" = false ]; then
+	_echo "removing files: clang.filtered"
+	removal_list=
+	for c_file in $FILE_LIST; do
+	    removal_list+=" $dmcepath/new/$c_file.clang.filtered"
+	    removal_list+=" $dmcepath/old/$c_file.clang.filtered"
+	done
+	printf "%s\n" "$removal_list" | xargs rm
+fi
+
 progress
 
 _echo "producing clang diffs"
@@ -532,23 +542,51 @@ done
 
 wait
 
+if [ "$DMCE_DEBUG" = false ]; then
+	_echo "removing files: clang and clang.filtereddiff"
+	removal_list=
+	for c_file in $FILE_LIST; do
+	    removal_list+=" $dmcepath/new/$c_file.clang.filtereddiff"
+	    removal_list+=" $dmcepath/new/$c_file.clang"
+	    removal_list+=" $dmcepath/old/$c_file.clang"
+	done
+	printf "%s\n" "$removal_list" | xargs rm
+fi
+
 progress
 
 _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
-    [ ! -e $dmcepath/new/$c_file.clangdiff ] && continue
+    if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
+	    continue
+    fi
     touch $dmcepath/new/$c_file.probedata
-    $binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff >> $dmcepath/new/$c_file.probegen.log &
+    cmd="$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff"
+    if [ "$DMCE_DEBUG" = true ]; then
+	    eval $cmd > $dmcepath/new/$c_file.probegen.log &
+    else
+	    eval $cmd > /dev/null &
+    fi
     jobcap
     memcap
 done
 wait
 
-progress
-
-if ! quiet_mode; then
+if [ "$DMCE_DEBUG" = false ]; then
+	_echo "removing files: clangdiff"
+	removal_list=
+	for c_file in $FILE_LIST; do
+	    if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
+		    continue
+	    fi
+	    removal_list+=" $dmcepath/new/$c_file.clangdiff"
+	done
+	printf "%s\n" "$removal_list" | xargs rm
+elif ! quiet_mode; then
     find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
 fi
+
+progress
 
 _echo "create probe/skip list:"
 find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/probe-list &
