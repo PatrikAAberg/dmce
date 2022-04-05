@@ -346,7 +346,7 @@ class NetShooterData():
             for name in nsinstance.classes:
                 print("     " + name)
 
-            return nsinstance
+        return nsinstance
 
     def __save(self, modelpath):
         filename = modelpath + "/netshooter.bin"
