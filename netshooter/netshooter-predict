@@ -37,15 +37,22 @@ if not os.path.exists(args.modelpath + '/.config'):
 nsc = netshooter.NetShooterData()
 nsc.setVerbose(args.verbose)
 ns = nsc.load(args.modelpath)
+ns.setVerbose(args.verbose)
 data = ns.dataLoad(args.datapath + '/data')
 pred=ns.predict(data);
 pred[pred >= 0.5] = 1
 pred[pred < 0.5] = 0
 pred = pred.astype(int)
+pcount = 0
 for p in pred:
     count = 0
+    found = False
     for c in p:
         if c == 1:
-            print(str(count) + ":" + ns.getClassName(count))
-            continue
+            print(str(pcount) + ":" + str(count) + ":" + ns.getClassName(count))
+            found = True
+            break
         count += 1
+    if not found:
+        print(str(pcount) + ":No match")
+    pcount += 1
