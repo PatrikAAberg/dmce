@@ -369,7 +369,7 @@ for c_file in $FILE_LIST; do
 done
 
 if [ "x${touch_files}" != "x" ]; then
-    touch $touch_files
+    printf "%s\n" "$touch_files" | xargs touch
 fi
 $binpath/dmce-remove-relpaths.sh $dmcepath/new &
 $binpath/dmce-remove-relpaths.sh $dmcepath/old &
