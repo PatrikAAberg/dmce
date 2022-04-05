@@ -342,8 +342,7 @@ fi
 
 progress
 
-_echo "copy files and dmce-remove-relpaths.sh"
-> $dmcepath/workarea/clang-list.old
+_echo "copy files"
 for c_file in $FILE_LIST; do
     {
         if [[ $c_file == */* ]]; then
@@ -352,9 +351,14 @@ for c_file in $FILE_LIST; do
             newdestdir=$dmcepath/new
         fi
 
-        mkdir -p $newdestdir
         cp $c_file $newdestdir/
+    } &
+    jobcap
+done
+wait
 
+> $dmcepath/workarea/clang-list.old
+for c_file in $FILE_LIST; do
         # Probe the entire history? Just create an empty clang file
         if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
             touch_files+="$dmcepath/old/$c_file.clang "
@@ -362,15 +366,19 @@ for c_file in $FILE_LIST; do
         elif ! [ -e $old_git_dir/${c_file} ]; then
             touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
         else
-            cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file
+            cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file &
             echo $c_file >> $dmcepath/workarea/clang-list.old
         fi
-    }
+	jobcap
 done
+wait
 
+_echo "touch files"
 if [ "x${touch_files}" != "x" ]; then
     printf "%s\n" "$touch_files" | xargs touch
 fi
+
+_echo "dmce-remove-relpaths.sh"
 $binpath/dmce-remove-relpaths.sh $dmcepath/new &
 $binpath/dmce-remove-relpaths.sh $dmcepath/old &
 wait
