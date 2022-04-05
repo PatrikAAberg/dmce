@@ -240,8 +240,12 @@ fi
 progress
 
 grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
-_echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
 comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
+if [ ! -s "$dmcepath/files_excluded.log" ]; then
+	_echo "0 files excluded"
+else
+	_echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
+fi
 mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
 if [ $nbr_of_files -eq 0 ]; then
