@@ -187,16 +187,16 @@ mkdir -p $dmcepath/{old,new,workarea,cache}
 c="${dmcepath}/cache/${oldsha_rev}-${newsha_rev}"
 # check if we have this interval in our cache
 if [ -e "$c" ] && [ "x$(tail -1 "${c}" | cut -d':' -f1)" = "xDMCE" ]; then
-	_echo "using file cache '$c'"
-	cp -a "${c}" "$dmcepath/latest.cache"
-	# remove watermark
-	sed -i '$ d' $dmcepath/latest.cache
+    _echo "using file cache '$c'"
+    cp -a "${c}" "$dmcepath/latest.cache"
+    # remove watermark
+    sed -i '$ d' $dmcepath/latest.cache
 else
-	_echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
-	git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > "$dmcepath/latest.cache"
-	cp -a "$dmcepath/latest.cache" "${c}"
-	# add watermark
-	echo "DMCE: $(date '+%Y-%m-%d %H:%M:%S')" >> "${c}"
+    _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
+    git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > "$dmcepath/latest.cache"
+    cp -a "$dmcepath/latest.cache" "${c}"
+    # add watermark
+    echo "DMCE: $(date '+%Y-%m-%d %H:%M:%S')" >> "${c}"
 fi
 
 # add modified/untracked files
@@ -242,9 +242,9 @@ progress
 grep -f $dmcepath/workarea/dmce.include $dmcepath/latest.cache | grep -vf $dmcepath/workarea/dmce.exclude | cat > $dmcepath/latest.cache.tmp
 comm -23 --nocheck-order $dmcepath/latest.cache $dmcepath/latest.cache.tmp > $dmcepath/files_excluded.log
 if [ ! -s "$dmcepath/files_excluded.log" ]; then
-	_echo "0 files excluded"
+    _echo "0 files excluded"
 else
-	_echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
+    _echo "$((nbr_of_files - $(wc -l <$dmcepath/latest.cache.tmp))) files excluded. View these files in $dmcepath/files_excluded.log"
 fi
 mv $dmcepath/latest.cache.tmp $dmcepath/latest.cache
 nbr_of_files=$(wc -l <$dmcepath/latest.cache)
@@ -359,17 +359,17 @@ wait
 
 > $dmcepath/workarea/clang-list.old
 for c_file in $FILE_LIST; do
-        # Probe the entire history? Just create an empty clang file
-        if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
-            touch_files+="$dmcepath/old/$c_file.clang "
-        # c_file does not exist in $oldsha, create an empty file AND clang file
-        elif ! [ -e $old_git_dir/${c_file} ]; then
-            touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
-        else
-            cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file &
-            echo $c_file >> $dmcepath/workarea/clang-list.old
-        fi
-	jobcap
+    # Probe the entire history? Just create an empty clang file
+    if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
+        touch_files+="$dmcepath/old/$c_file.clang "
+    # c_file does not exist in $oldsha, create an empty file AND clang file
+    elif ! [ -e $old_git_dir/${c_file} ]; then
+        touch_files+="$dmcepath/old/$c_file $dmcepath/old/$c_file.clang "
+    else
+        cp -a $old_git_dir/${c_file} $dmcepath/old/$c_file &
+        echo $c_file >> $dmcepath/workarea/clang-list.old
+    fi
+    jobcap
 done
 wait
 
@@ -394,70 +394,70 @@ fi
 progress
 
 if [ "$DMCE_AST_CACHE" = true ]; then
-	clang_check_md5=$(md5sum $(readlink -f $(command -v clang-check)))
-	clang_check_md5=${clang_check_md5%% *};
-	ast_cache="$dmcepath/cache/clang/$clang_check_md5"
-	mkdir -p $ast_cache
-	_echo "local AST cache contains $(find $ast_cache -type f | wc -l) files: $ast_cache"
+    clang_check_md5=$(md5sum $(readlink -f $(command -v clang-check)))
+    clang_check_md5=${clang_check_md5%% *};
+    ast_cache="$dmcepath/cache/clang/$clang_check_md5"
+    mkdir -p $ast_cache
+    _echo "local AST cache contains $(find $ast_cache -type f | wc -l) files: $ast_cache"
 fi
 
 _echo "running clang-check (old)"
 for c_file in $FILE_LIST_OLD; do
-	{
-		if [ "$DMCE_AST_CACHE" = true ]; then
-			md5=$(md5sum $dmcepath/old/$c_file)
-			md5=${md5%% *};
-			md5_s=${md5:0:2}
-			md5_e=${md5:2}
-		fi
+    {
+        if [ "$DMCE_AST_CACHE" = true ]; then
+            md5=$(md5sum $dmcepath/old/$c_file)
+            md5=${md5%% *};
+            md5_s=${md5:0:2}
+            md5_e=${md5:2}
+        fi
 
-		if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
-			cp -a $ast_cache/$md5_s/$md5_e $dmcepath/old/$c_file.clang.xz
-		else
-			eval clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/old/$c_file.clang || true
-			if [ "$DMCE_AST_CACHE" = true ]; then
-				mkdir -p $ast_cache/$md5_s
-				xz -c --keep $dmcepath/old/$c_file.clang > $ast_cache/$md5_s/$md5_e
-			fi
-		fi
-	} &
+        if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
+            cp -a $ast_cache/$md5_s/$md5_e $dmcepath/old/$c_file.clang.xz
+        else
+            eval clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/old/$c_file.clang || true
+            if [ "$DMCE_AST_CACHE" = true ]; then
+                mkdir -p $ast_cache/$md5_s
+                xz -c --keep $dmcepath/old/$c_file.clang > $ast_cache/$md5_s/$md5_e
+            fi
+        fi
+    } &
     jobcap
 done
 wait
 
 _echo "running clang-check (new)"
 for c_file in $FILE_LIST_NEW; do
-	{
-		if [ "$DMCE_AST_CACHE" = true ]; then
-			md5=$(md5sum $dmcepath/new/$c_file)
-			md5=${md5%% *};
-			md5_s=${md5:0:2}
-			md5_e=${md5:2}
-		fi
+    {
+        if [ "$DMCE_AST_CACHE" = true ]; then
+            md5=$(md5sum $dmcepath/new/$c_file)
+            md5=${md5%% *};
+            md5_s=${md5:0:2}
+            md5_e=${md5:2}
+        fi
 
-		if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
-			cp -a $ast_cache/$md5_s/$md5_e $dmcepath/new/$c_file.clang.xz
-		else
-			eval clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/new/$c_file.clang || true
-			if [ "$DMCE_AST_CACHE" = true ]; then
-				mkdir -p $ast_cache/$md5_s
-				xz -c --keep $dmcepath/new/$c_file.clang > $ast_cache/$md5_s/$md5_e
-			fi
-		fi
-	} &
+        if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
+            cp -a $ast_cache/$md5_s/$md5_e $dmcepath/new/$c_file.clang.xz
+        else
+            eval clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/new/$c_file.clang || true
+            if [ "$DMCE_AST_CACHE" = true ]; then
+                mkdir -p $ast_cache/$md5_s
+                xz -c --keep $dmcepath/new/$c_file.clang > $ast_cache/$md5_s/$md5_e
+            fi
+        fi
+    } &
     jobcap
 done
 wait
 
 if [ "$DMCE_AST_CACHE" = true ]; then
-	ff=$(find $dmcepath/new $dmcepath/old -type f -name '*.xz' -print)
-	if [ "x$ff" != "x" ]; then
-		for c_file in $ff; do
-			xz -d $c_file &
-			jobcap
-		done
-	fi
-	wait
+    ff=$(find $dmcepath/new $dmcepath/old -type f -name '*.xz' -print)
+    if [ "x$ff" != "x" ]; then
+        for c_file in $ff; do
+            xz -d $c_file &
+            jobcap
+        done
+    fi
+    wait
 fi
 
 progress
@@ -531,13 +531,13 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-	_echo "removing files: clang.filtered"
-	removal_list=
-	for c_file in $FILE_LIST; do
-	    removal_list+=" $dmcepath/new/$c_file.clang.filtered"
-	    removal_list+=" $dmcepath/old/$c_file.clang.filtered"
-	done
-	printf "%s\n" "$removal_list" | xargs rm
+    _echo "removing files: clang.filtered"
+    removal_list=
+    for c_file in $FILE_LIST; do
+        removal_list+=" $dmcepath/new/$c_file.clang.filtered"
+        removal_list+=" $dmcepath/old/$c_file.clang.filtered"
+    done
+    printf "%s\n" "$removal_list" | xargs rm
 fi
 
 progress
@@ -551,14 +551,14 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-	_echo "removing files: clang and clang.filtereddiff"
-	removal_list=
-	for c_file in $FILE_LIST; do
-	    removal_list+=" $dmcepath/new/$c_file.clang.filtereddiff"
-	    removal_list+=" $dmcepath/new/$c_file.clang"
-	    removal_list+=" $dmcepath/old/$c_file.clang"
-	done
-	printf "%s\n" "$removal_list" | xargs rm
+    _echo "removing files: clang and clang.filtereddiff"
+    removal_list=
+    for c_file in $FILE_LIST; do
+        removal_list+=" $dmcepath/new/$c_file.clang.filtereddiff"
+        removal_list+=" $dmcepath/new/$c_file.clang"
+        removal_list+=" $dmcepath/old/$c_file.clang"
+    done
+    printf "%s\n" "$removal_list" | xargs rm
 fi
 
 progress
@@ -566,14 +566,14 @@ progress
 _echo "inserting probes in $git_top"
 for c_file in $FILE_LIST; do
     if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
-	    continue
+        continue
     fi
     touch $dmcepath/new/$c_file.probedata
     cmd="$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff"
     if [ "$DMCE_DEBUG" = true ]; then
-	    eval $cmd > $dmcepath/new/$c_file.probegen.log &
+        eval $cmd > $dmcepath/new/$c_file.probegen.log &
     else
-	    eval $cmd > /dev/null &
+        eval $cmd > /dev/null &
     fi
     jobcap
     memcap
@@ -581,15 +581,15 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-	_echo "removing files: clangdiff"
-	removal_list=
-	for c_file in $FILE_LIST; do
-	    if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
-		    continue
-	    fi
-	    removal_list+=" $dmcepath/new/$c_file.clangdiff"
-	done
-	printf "%s\n" "$removal_list" | xargs rm
+    _echo "removing files: clangdiff"
+    removal_list=
+    for c_file in $FILE_LIST; do
+        if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
+            continue
+        fi
+        removal_list+=" $dmcepath/new/$c_file.clangdiff"
+    done
+    printf "%s\n" "$removal_list" | xargs rm
 elif ! quiet_mode; then
     find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
 fi
