@@ -557,13 +557,20 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-    _echo "removing files: clang.filtered"
-    removal_list=
+    rm_files=
     for c_file in $FILE_LIST; do
-        removal_list+=" $dmcepath/new/$c_file.clang.filtered"
-        removal_list+=" $dmcepath/old/$c_file.clang.filtered"
+        if [ -e "$dmcepath/new/$c_file.clang.filtered" ]; then
+            rm_files+=" $dmcepath/new/$c_file.clang.filtered"
+        fi
+        if [ -e "$dmcepath/old/$c_file.clang.filtered" ]; then
+            rm_files+=" $dmcepath/old/$c_file.clang.filtered"
+        fi
     done
-    printf "%s\n" "$removal_list" | xargs rm
+
+    if [ "x$rm_files" != "x" ]; then
+        _echo "removing files: clang.filtered"
+        printf "%s\n" "$rm_files" | xargs rm
+    fi
 fi
 
 progress
@@ -577,14 +584,23 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-    _echo "removing files: clang and clang.filtereddiff"
-    removal_list=
+    rm_files=
     for c_file in $FILE_LIST; do
-        removal_list+=" $dmcepath/new/$c_file.clang.filtereddiff"
-        removal_list+=" $dmcepath/new/$c_file.clang"
-        removal_list+=" $dmcepath/old/$c_file.clang"
+        if [ -e "$dmcepath/new/$c_file.clang.filtereddiff" ]; then
+            rm_files+=" $dmcepath/new/$c_file.clang.filtereddiff"
+        fi
+        if [ -e "$dmcepath/new/$c_file.clang" ]; then
+            rm_files+=" $dmcepath/new/$c_file.clang"
+        fi
+        if [ -e "$dmcepath/old/$c_file.clang" ]; then
+            rm_files+=" $dmcepath/old/$c_file.clang"
+        fi
     done
-    printf "%s\n" "$removal_list" | xargs rm
+
+    if [ "x$rm_files" != "x" ]; then
+        _echo "removing files: clang and clang.filtereddiff"
+        printf "%s\n" "$rm_files" | xargs rm
+    fi
 fi
 
 progress
@@ -607,15 +623,16 @@ done
 wait
 
 if [ "$DMCE_DEBUG" = false ]; then
-    _echo "removing files: clangdiff"
-    removal_list=
+    rm_files=
     for c_file in $FILE_LIST; do
-        if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
-            continue
+        if [ -e "$dmcepath/new/$c_file.clangdiff" ]; then
+            rm_files+=" $dmcepath/new/$c_file.clangdiff"
         fi
-        removal_list+=" $dmcepath/new/$c_file.clangdiff"
     done
-    printf "%s\n" "$removal_list" | xargs rm
+    if [ "x$rm_files" != "x" ]; then
+        _echo "removing files: clangdiff"
+        printf "%s\n" "$rm_files" | xargs rm || true
+    fi
 elif ! quiet_mode; then
     find $dmcepath/new -name '*probegen.log' -print0 |  xargs -0 tail -n 1 | sed -e '/^\s*$/d' -e 's/^==> //' -e 's/ <==$//' -e "s|$dmcepath/new/||" | paste - - |  sort -k2 -n -r | awk -F' ' '{printf "%-110s%10.1f ms %10d probes\n", $1, $2, $4}'
 fi
