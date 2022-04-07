@@ -96,14 +96,6 @@ fi
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="real: %3lR user: %3lU sys: %3lS"
 
-quiet_mode() {
-    if [ "x$DMCE_QUIET_MODE" != "x" ] && [ "$DMCE_QUIET_MODE" = "true" ]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 progress_bar() {
     if [ "x$DMCE_PROGRESS" != "x" ] && [ "$DMCE_PROGRESS" = "true" ]; then
         return 0
@@ -124,22 +116,12 @@ if progress_bar; then
     echo -en "|"
 fi
 
-_echo() {
-    if quiet_mode; then
-        return
-    fi
-
-    local diff
-    if [ "x$old_sec" != "x" ]; then
-        diff=$((SECONDS-old_sec))
-    else
-        diff=0
-    fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S') (+${diff}s):dmce.sh:$*"
-    old_sec=$SECONDS
-}
-
 progress
+
+if [ "$(type -t _echo)" != "function" ]; then
+	echo "error: could not find _echo function"
+	exit 1
+fi
 
 _echo "init"
 # Variable set up and config
@@ -653,7 +635,7 @@ nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 
 
 _echo "update probed files"
 if [ -e "$DMCE_PROBE_PROLOG" ]; then
-    _echo "Using prolog file: $DMCE_PROBE_PROLOG"
+    _echo "using prolog file: $DMCE_PROBE_PROLOG"
     cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
     # size_of_user compensates for the header put first in all source files by DMCE
     size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)

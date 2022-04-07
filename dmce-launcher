@@ -21,19 +21,31 @@
 
 NAME=$(basename "$0")
 set -e
-function _echo {
-    if [ "${quiet}" = "true" ]; then
-        return
+
+quiet_mode() {
+    if [ "x$DMCE_QUIET_MODE" != "x" ] && [ "$DMCE_QUIET_MODE" = "true" ]; then
+        return 0
+    else
+        return 1
     fi
+}
+export -f quiet_mode
+
+function _echo {
     local diff
-    if [ "x$old_sec" != "x" ]; then
+
+    if quiet_mode; then
+        return
+    elif [ "x$old_sec" != "x" ]; then
         diff=$((SECONDS-old_sec))
     else
         diff=0
     fi
-    echo "$(date '+%Y-%m-%d %H:%M:%S') (+${diff}s):$NAME:$*"
+    printf "%s:+%-3s:dmce:%s\n" "$(date '+%Y-%m-%d %H:%M:%S')" "${diff}" "$*"
+
     old_sec=$SECONDS
 }
+export -f _echo
 
 function jobcap {
    if [ ${_jobs:?} -eq 0 ]; then
