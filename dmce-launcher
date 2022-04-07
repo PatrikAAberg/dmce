@@ -271,6 +271,9 @@ export DMCE_DEBUG="${debug}"
 export DMCE_JOBS="${_jobs}"
 export DMCE_PROBE_ALL=${probe_all}
 export DMCE_AST_CACHE=${ast_cache}
+if [ "x$DMCE_AST_CACHE_COMPRESS" = "x" ]; then
+    export DMCE_AST_CACHE_COMPRESS=true
+fi
 
 # change the output format for the built in bash command 'time'
 TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"

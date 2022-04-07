@@ -176,6 +176,36 @@ _echo "old git dir: $old_git_dir"
 [ ! -e "$DMCE_PROBE_PROLOG" ] && echo "Error: Could not find prolog: ${DMCE_PROBE_PROLOG}" && exit 1
 [ ! -e "$DMCE_CMD_LOOKUP_HOOK" ] && echo "Error: Could not find lookup hook: ${DMCE_CMD_LOOKUP_HOOK}" && exit 1
 
+# AST cache
+if [ "$DMCE_AST_CACHE" = true ]; then
+    if [ "$DMCE_AST_CACHE_COMPRESS" != "false" ] && [ "$DMCE_AST_CACHE_COMPRESS" != "true" ]; then
+        echo "error: DMCE_AST_CACHE_COMPRESS has none valid value: $DMCE_AST_CACHE_COMPRESS"
+        exit 1
+    fi
+
+    clang_check_md5=$(md5sum $(readlink -f $(command -v clang-check)))
+    clang_check_md5=${clang_check_md5%% *};
+    ast_cache="$dmcepath/cache/clang/$clang_check_md5"
+    mkdir -p $ast_cache
+    ast_cache_files=$(find $ast_cache -type f | wc -l)
+    _echo "local AST cache '$ast_cache' contains $ast_cache_files files"
+
+    # sanity check AST cache
+    if [ $ast_cache_files -ne 0 ]; then
+        _echo "sanity check AST cache"
+        a=$(find $ast_cache -type f | head -1 | xargs file)
+        if  [ "$DMCE_AST_CACHE_COMPRESS" = true ] && [[ "$a" != *"XZ compressed data" ]]; then
+            echo "error: the AST cache is not compressed and you want to run with compression. AST cache: $ast_cache"
+            echo "info: either run without compression 'DMCE_AST_CACHE_COMPRESS=false' or 'rm -rf $ast_cache'"
+            exit 1
+        elif [ "$DMCE_AST_CACHE_COMPRESS" = false ] && [[ "$a" == *"XZ compressed data" ]]; then
+            echo "error: the AST cache is compressed and you want to run without compression. AST cache: $ast_cache"
+            echo "info: either run with compression 'DMCE_AST_CACHE_COMPRESS=true' or 'rm -rf $ast_cache'"
+            exit 1
+        fi
+    fi
+fi
+
 # Lets go!
 _echo "operate on $git_top"
 cd $git_top
@@ -393,63 +423,54 @@ fi
 
 progress
 
-if [ "$DMCE_AST_CACHE" = true ]; then
-    clang_check_md5=$(md5sum $(readlink -f $(command -v clang-check)))
-    clang_check_md5=${clang_check_md5%% *};
-    ast_cache="$dmcepath/cache/clang/$clang_check_md5"
-    mkdir -p $ast_cache
-    _echo "local AST cache contains $(find $ast_cache -type f | wc -l) files: $ast_cache"
-fi
+# $1: _file
+function run_clang {
+    local _base
+    local _file
+
+    _file="$1"
+    if [ "$DMCE_AST_CACHE" = true ]; then
+        md5=$(md5sum $_file)
+        md5=${md5%% *};
+        md5_s=${md5:0:2}
+        _base="${_file/$DMCE_WORK_PATH}"
+        md5_e=${md5:2}${_base//\//_}
+    fi
+
+    if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
+        ext=
+        if [ "$DMCE_AST_CACHE_COMPRESS" = true ]; then
+            ext=".xz"
+        fi
+        cp -a $ast_cache/$md5_s/$md5_e $_file.clang${ext}
+    else
+        eval clang-check $_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $_file.clang || true
+        if [ "$DMCE_AST_CACHE" = true ]; then
+            mkdir -p $ast_cache/$md5_s
+            if [ "$DMCE_AST_CACHE_COMPRESS" = true ]; then
+                xz -c --keep $_file.clang > $ast_cache/$md5_s/$md5_e
+            else
+                cp -a $_file.clang $ast_cache/$md5_s/$md5_e
+            fi
+        fi
+    fi
+}
 
 _echo "running clang-check (old)"
 for c_file in $FILE_LIST_OLD; do
-    {
-        if [ "$DMCE_AST_CACHE" = true ]; then
-            md5=$(md5sum $dmcepath/old/$c_file)
-            md5=${md5%% *};
-            md5_s=${md5:0:2}
-            md5_e=${md5:2}
-        fi
-
-        if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
-            cp -a $ast_cache/$md5_s/$md5_e $dmcepath/old/$c_file.clang.xz
-        else
-            eval clang-check $dmcepath/old/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/old/$c_file.clang || true
-            if [ "$DMCE_AST_CACHE" = true ]; then
-                mkdir -p $ast_cache/$md5_s
-                xz -c --keep $dmcepath/old/$c_file.clang > $ast_cache/$md5_s/$md5_e
-            fi
-        fi
-    } &
+    run_clang $dmcepath/old/$c_file &
     jobcap
 done
 wait
 
 _echo "running clang-check (new)"
 for c_file in $FILE_LIST_NEW; do
-    {
-        if [ "$DMCE_AST_CACHE" = true ]; then
-            md5=$(md5sum $dmcepath/new/$c_file)
-            md5=${md5%% *};
-            md5_s=${md5:0:2}
-            md5_e=${md5:2}
-        fi
-
-        if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
-            cp -a $ast_cache/$md5_s/$md5_e $dmcepath/new/$c_file.clang.xz
-        else
-            eval clang-check $dmcepath/new/$c_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $dmcepath/new/$c_file.clang || true
-            if [ "$DMCE_AST_CACHE" = true ]; then
-                mkdir -p $ast_cache/$md5_s
-                xz -c --keep $dmcepath/new/$c_file.clang > $ast_cache/$md5_s/$md5_e
-            fi
-        fi
-    } &
+    run_clang $dmcepath/new/$c_file &
     jobcap
 done
 wait
 
-if [ "$DMCE_AST_CACHE" = true ]; then
+if [ "$DMCE_AST_CACHE" = true ] && [ "$DMCE_AST_CACHE_COMPRESS" = true ]; then
     ff=$(find $dmcepath/new $dmcepath/old -type f -name '*.xz' -print)
     if [ "x$ff" != "x" ]; then
         for c_file in $ff; do
