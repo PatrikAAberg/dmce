@@ -438,8 +438,11 @@ function run_clang {
         md5=$(md5sum $_file)
         md5=${md5%% *};
         md5_s=${md5:0:2}
-        _base="${_file/$DMCE_WORK_PATH}"
-        md5_e=${md5:2}${_base//\//_}
+        _base="${_file/$dmcepath}"
+        # remove first component "/new/" or "/old/"
+        _base=${_base#*/}
+        _base=${_base#*/}
+        md5_e=${md5:2}_${_base//\//_}
     fi
 
     if [ "$DMCE_AST_CACHE" = true ] && [ -d $ast_cache/$md5_s ] && [ -s $ast_cache/$md5_s/$md5_e ]; then
