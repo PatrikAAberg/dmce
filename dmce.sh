@@ -289,6 +289,11 @@ progress
 # Populate FILE_LIST
 FILE_LIST=""
 while read -r c_file; do
+    # ignore file names with spaces
+    if [[ "$c_file" == *" "* ]]; then
+        _echo "ignore '$c_file' as it contains one or more spaces"
+        continue
+    fi
     [ -e $c_file ] || continue
     FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
