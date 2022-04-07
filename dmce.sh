@@ -60,11 +60,14 @@ function jobcap {
         if [ ${DMCE_JOBS:?} -eq 0 ]; then
                 return
         fi
-        mapfile -t job_list < <(jobs -p -r)
-        if [ "${#job_list[@]}" -lt "${DMCE_JOBS}" ]; then
-                return
-        fi
-        wait -n || true
+
+	while true; do
+		mapfile -t job_list < <(jobs -p -r)
+		if [ "${#job_list[@]}" -lt "${DMCE_JOBS}" ]; then
+			return
+		fi
+		wait -n || true
+	done
 }
 
 function memcap {
