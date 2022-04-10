@@ -4,12 +4,14 @@ import argparse
 from dmce import netshooter as ns
 
 parser = argparse.ArgumentParser(usage=__doc__)
-parser.add_argument('dfile',        type=str,   help='Data input file')
-parser.add_argument('lfile',        type=str,   help='Labels input file')
+parser.add_argument('inpath',        type=str,   help='Data input path')
 parser.add_argument('outfile',        type=str,   help='Outfile file for produced cotton examples')
 parser.add_argument('--numexamples',        type=int,   help='Number of cotton examples to create (default 1)', default=1)
 parser.add_argument('--verbose',           action='store_true', help='verbose output')
 args = parser.parse_args()
 
 print ("Producing cotton...")
-ns.produceCotton(args.dfile, args.lfile, args.outfile, args.numexamples, args.verbose)
+dfile = args.inpath + "/data"
+lfile = args.inpath + "/labels"
+
+ns.produceCotton(dfile, lfile, args.outfile, args.numexamples, args.verbose)

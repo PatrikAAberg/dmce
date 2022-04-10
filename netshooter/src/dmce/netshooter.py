@@ -14,7 +14,7 @@ data_train = None
 netmodule = None
 gpustrategy = None
 
-def produceCotton(dfile, lfile, outfile, nex, verbose):
+def produceCotton(dfile, lfile, outpath, nex, verbose):
     np.set_printoptions(threshold=sys.maxsize)
 
     if verbose:
@@ -30,6 +30,7 @@ def produceCotton(dfile, lfile, outfile, nex, verbose):
 
     if (len(indata) % nlabels != 0):
         print("Number of labels does not match data size, abort")
+        sys.exit(1)
 
     nelem = int(len(indata) / nlabels)
 
@@ -46,6 +47,8 @@ def produceCotton(dfile, lfile, outfile, nex, verbose):
         if verbose:
             print("concats: " + str(i + 1))
         data = np.concatenate((indata, data))
+        labels = labels + labels
+        nlabels = len(labels)
 
     indata = np.copy(data)
 
@@ -66,33 +69,20 @@ def produceCotton(dfile, lfile, outfile, nex, verbose):
         print("Clearing out every 17'th element...")
     data[0::17] = 0
 
-    data = np.reshape(data, (nlabels, nelem))
-    indata = np.reshape(indata, (nlabels, nelem))
-    outdata = np.array([])
-    found = 0
-    i = 0
-    if verbose:
-        print("Checking for duplicates")
-    while (found < nex and i < nlabels):
-        if verbose and i%100 == 0:
-            print("Checked: " + str(i) + "    found: " + str(found))
-
-        if not np.all((data == 0)):
-            equal = indata[i] == data[i]
-            if not equal.all():
-                outdata = np.concatenate((outdata, data[i]))
-                found+=1
-        i+=1
-
     # We might want to check here the cotton examples for being duplicates
     # to examples in the original dataset, but it is time consuming
     # and is deemed to not happen often enough to make a statistical difference
 
-    outdata = np.matrix.flatten(outdata)
-    outdata = outdata[0:nex * nelem]
+    outdata = data[0:nex * nelem]
     if verbose:
-        print("Writing " + str(nex) + " cotton examples to " + outfile)
-    outdata.astype('int32').tofile(outfile)
+        print("Writing " + str(nex) + " cotton examples to " + outpath + "/data")
+    outdata.astype('int32').tofile(outpath + "/data")
+
+    with open(outpath + "/labels", 'w') as f:
+        for i in range(0, nex):
+            f.write("0\n")
+    f.close()
+
 
 def setupGPUs():
     global gpustrategy
