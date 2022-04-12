@@ -577,10 +577,10 @@ class NetShooterData():
             while continueTrain:
                 history = model.fit(data_train, labels_train, batch_size=self.batchsize, epochs=self.epochs, callbacks=callbacks_list, validation_split=self.valsplit, verbose=1)
 
-                # Produce confusion matrix
+                # Produce confusion matrix  (0.3 instead of 0.5 to create hysteresis, rather merge than not merge gives less false negatives!)
                 pred = model.predict(data_train)
-                pred[pred >= 0.5] = 1
-                pred[pred < 0.5] = 0
+                pred[pred >= 0.3] = 1
+                pred[pred < 0.3] = 0
                 labels_predict = pred
 
                 confmatrix = self.confmatrix(labels_train, labels_predict)
