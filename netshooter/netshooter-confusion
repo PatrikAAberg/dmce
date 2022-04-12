@@ -1,126 +1,70 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
-import argparse
-from tensorflow.keras.models import load_model
-import numpy as np
 import sys
+import importlib
+import argparse
+import tensorflow as tf
+import numpy as np
+import tensorflow.keras as keras
 import os
-import netshooter
-from termcolor import colored
-import socket
+import subprocess
 import re
+import textwrap as tw
+import matplotlib.pyplot as plt
+from dmce import netshooter
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import CSVLogger
+from numpy.random import seed
 
-parser = argparse.ArgumentParser(usage=__doc__)
-parser.add_argument('datapath',        type=str,   help='Path to data files')
-parser.add_argument('modelpath',         type=str,   help='Path to model files')
-parser.add_argument('--port',        type=int,   help='Labels file', default=12345)
-parser.add_argument('--batch',             action='store_true', help='batch mode')
-parser.add_argument('--verbose',           action='store_true', help='verbose output')
-parser.add_argument('--suggestions',       action='store_true', help='give suggestions on what classes to merge')
-parser.add_argument('--merge-threshold',   type=float, help="Merge threshold value. Default: 0.1", default=0.0000001)
-parser.add_argument('--train-threshold',   type=float, help="Train threshold value. Default: 0.3", default=0.3)
-parser.add_argument('--mode',              type=str, help='batch mode', default="train")
+seed(3)
+tf.random.set_seed(5)
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+parser.add_argument('modelpath',       type=str, default='./',          help='where to read model files')
+parser.add_argument('datapath',        type=str, default='./',          help='where to read data to predict')
+parser.add_argument('--criteria',        type=str, default='argmax',    help='Classification criteria [argmax | multi] (default: argmax)')
+parser.add_argument('--verbose',       action='store_true',             help='verbose output')
+
 args = parser.parse_args()
+
+crit = args.criteria
+
+if crit != "argmax" and crit != "multi":
+    print("Valid classification criterias are 'argmax' or 'multi'")
+    sys.exit(1)
+
+# create file config file from parameters (or default ones) if not there
+if not os.path.exists(args.datapath + '/data'):
+    print("netshooter confusion: No data file found at " + args.datapath)
+
+if not os.path.exists(args.datapath + '/labels'):
+    print("netshooter confusion: No labels file found at " + args.modelpath)
+    exit(1)
+
+if not os.path.exists(args.modelpath + '/.config'):
+    print("netshooter confusion: No .config file found at " + args.modelpath)
+    exit(1)
 
 nsc = netshooter.NetShooterData()
 nsc.setVerbose(args.verbose)
 ns = nsc.load(args.modelpath)
 ns.setVerbose(args.verbose)
+data = ns.dataLoad(args.datapath + '/data')
+labels_train, num_labels = ns.labelsLoad(args.datapath + '/labels')
+labels_pred = ns.predict(data);
 
-def main():
-    fdata = args.datapath + "/data"
-    flabels = args.datapath + "/labels"
+if crit == "multi":
+    labels_pred[pred >= 0.5] = 1
+    labels_pred[pred < 0.5] = 0
 
-    # Only go ahead with currently supported models
-    if ( ns.regression):
-        print("dmfe-confusion: Configuration not supported yet")
-        sys.exit(0)
+if crit == "argmax":
+    out = np.zeros(np.shape(labels_pred))
+    for i in range(0, len(labels_pred)):
+        p = np.argmax(labels_pred[i])
+        out[i, p] = 1
+    labels_pred = out
 
-    num_classes = ns.num_classes
-    num_features = ns.features
+labels_pred = labels_pred.astype(int)
 
-    labels_train, num_labels = ns.labelsLoad(flabels)
-    data = ns.dataLoad(fdata)
-
-    if ns.csv:
-        data = ns.normalize(data)
-
-    prediction = ns.predict(data)
-
-    labels_pred = np.zeros((num_labels, num_classes))
-
-    # training: use a threshold
-    if args.mode == "train":
-        for i in range(num_labels):
-            for j in range(num_classes):
-                if (prediction[i, j] > args.train_threshold):
-                    labels_pred[i, j] = 1
-    # prediction: use max
-    elif args.mode == "predict":
-        labels_pred[0, prediction.argmax()] = 1
-
-    precision = ns.binaryCrossAccuracy(labels_train, labels_pred)
-
-    if (args.verbose):
-        print("Binary cross accuracy error rate: " + str(1 - precision))
-
-    # exit early if no errors
-    if precision == 1.0:
-        if args.batch:
-            return '0:{}:OK'.format(ns.name)
-        else:
-            print(colored('0:{}:OK'.format(ns.name), 'green'))
-            sys.exit(0)
-
-    yellow=False
-    if num_labels == 1:
-        for j in range(num_classes):
-            if labels_train[0, j] == 1 and labels_pred[0, j] == 1:
-                yellow=True
-                break
-
-
-    confmatrix = ns.confmatrix(labels_train, labels_pred)
-
-    ret=0
-    if num_labels == 1:
-        none_zeros=np.nonzero(confmatrix)[1]
-        a=' '.join(map(str, none_zeros))
-        if (yellow):
-            ret=1
-            if not args.batch:
-                print(colored('{}:{}: NOK {}'.format(ret, ns.name, a), 'yellow'))
-        else:
-            ret=2
-            if not args.batch:
-                print(colored('{}:{}: NOK {}'.format(ret, ns.name, a), 'red'))
-
-        if args.batch:
-            return '{}:{}:NOK {}'.format(ret, ns.name, a)
-
-    if args.verbose:
-        ns.printConfMatrix(confmatrix)
-
-    if (args.suggestions):
-        # The skip list is hardcoded for now, TODO: make it stick to the data set folder in config
-        skiplist = [0]
-        merges = ns.suggestMerges(confmatrix, args.merge_threshold, skiplist)
-        for merge in merges:
-            print("merge: {} {} {}".format(ns.name, merge[0], merge[1]))
-
-if not args.batch:
-    main()
-    sys.exit(0)
-
-# ---- batch mode below
-s = socket.socket()
-s.bind(('', args.port))
-while True:
-    s.listen(1)
-    c, addr = s.accept()
-    r_data = c.recv(1024).decode().strip()
-    if r_data != "":
-        fdata=re.split(":", r_data)[0]
-        flabels=re.split(":", r_data)[1]
-        a=main()
-        c.send(a.encode('utf-8'))
+confmatrix = ns.confmatrix(labels_train, labels_pred)
+ns.printConfMatrix(confmatrix)
