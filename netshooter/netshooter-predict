@@ -22,9 +22,16 @@ tf.random.set_seed(5)
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
 parser.add_argument('modelpath',       type=str, default='./',          help='where to read model files')
 parser.add_argument('datapath',        type=str, default='./',          help='where to read data to predict')
+parser.add_argument('--criteria',        type=str, default='argmax',    help='Classification criteria [argmax | multi] (default: argmax)')
 parser.add_argument('--verbose',       action='store_true',             help='verbose output')
 
 args = parser.parse_args()
+
+crit = args.criteria
+
+if crit != "argmax" and crit != "multi":
+    print("Valid classification criterias are 'argmax' or 'multi'")
+    sys.exit(1)
 
 # create file config file from parameters (or default ones) if not there
 if not os.path.exists(args.datapath + '/data'):
@@ -40,19 +47,29 @@ ns = nsc.load(args.modelpath)
 ns.setVerbose(args.verbose)
 data = ns.dataLoad(args.datapath + '/data')
 pred=ns.predict(data);
-pred[pred >= 0.5] = 1
-pred[pred < 0.5] = 0
+
+if crit == "multi":
+    pred[pred >= 0.5] = 1
+    pred[pred < 0.5] = 0
+
+if crit == "argmax":
+    out = np.zeros(np.shape(pred))
+    for i in range(0, len(pred)):
+        p = np.argmax(pred[i])
+        out[i, p] = 1
+    pred = out
+
 pred = pred.astype(int)
-pcount = 0
+ecount = 1  # First example is numbered 1
 for p in pred:
     count = 0
     found = False
     for c in p:
         if c == 1:
-            print(str(pcount) + ":" + str(count) + ":" + ns.getClassName(count))
+            print(str(ecount) + ":" + str(count) + ":" + ns.getClassName(count))
             found = True
             break
         count += 1
     if not found:
-        print(str(pcount) + ":No match")
-    pcount += 1
+        print(str(ecount) + ":No match")
+    ecount += 1
