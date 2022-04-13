@@ -610,8 +610,15 @@ class NetShooterData():
 
         with open(modelpath + "/netshooter.info", 'w') as f:
             f.write("Name:" + self.name + "\n")
+            f.write("Classes\n")
+            f.write("---------------------------\n")
             for c in range(len(self.classes_labels)):
-                f.write("Class:" + str(self.classes_labels[c]) + ":" + self.classes[c] + "\n")
+                f.write("  Class:" + str(self.classes_labels[c]) + ":" + self.classes[c] + "\n")
+            f.write("Merges\n")
+            f.write("---------------------------\n")
+            for c in range(len(self.classes)):
+                f.write(self.getClassName(c) + "\n")
+            f.close()
         self.__save(modelpath)
         model.save(modelpath + "/netshooter-model.h5")
 
