@@ -20,6 +20,7 @@ parser.add_argument('-c',               type=str, default="nocores",help='Comma-
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
 parser.add_argument('--delimiter',      type=str, default=":",      help='Delimiter. Default: :')
 parser.add_argument('--format',         type=str, default="column", help='Output format (column|raw)')
+parser.add_argument('--sort',           type=str, default="seq",    help='Sorting scheme (seq|heat|uniq|collapse), default: seq')
 parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
 
@@ -149,6 +150,8 @@ for filename in tree:
                 if "DMCE_PROBE" in s:
                     probedtree = True
 
+outbuf = []
+
 for n in range(length):
     pnum = data[n, 1]
     cpu = data[n, entrysize64 - 1]
@@ -225,6 +228,25 @@ for n in range(length):
                 else:
                     print("error: unknown format", file=sys.stderr)
                     sys.exit(1)
-                print(fmt.format(*out))
+
+                outstr = fmt.format(*out)
+
+                if args.sort != "seq":
+                    outbuf.append(outstr)
+                else:
+                    print(outstr)
+
+
+if args.sort != "seq":
+    if args.sort == "uniq":
+        sortedarr = np.unique(outbuf, return_counts=True)
+        for i in range(len(sortedarr[0])):
+            print( sortedarr[0][i] + " occurs:" + str(sortedarr[1][i]))
+
+
+elif args.sort == "heat":
+    print("--sort heat not implemented yet")
+elif args.sort == "collapse":
+    print("--sort collapse not implemented yet")
 
 # end of file
