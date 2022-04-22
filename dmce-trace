@@ -254,30 +254,54 @@ for n in range(length):
                     print(outstr)
 
 
+def lstr(slist):
+    return len(max(slist, key=len))
+
+
 if args.sort != "seq":
     if args.sort == "uniq":
         sortedarr = np.unique(outbuf, return_counts=True)
+        lmax = lstr(sortedarr[0])
+        if args.format == "column":
+            fmt = "{: <" + str(lmax) + "} {}"
+        else:
+            fmt = "{} {}"
+
         for i in range(len(sortedarr[0])):
-            print( sortedarr[0][i] + " occurs:" + str(sortedarr[1][i]))
+            out = [sortedarr[0][i] , " occurs:" + str(sortedarr[1][i])]
+            print( fmt.format(*out) )
 
     elif args.sort == "heat":
         arr, count = np.unique(outbuf, return_counts=True)
         sind = np.argsort(-count)
+        lmax = lstr(arr)
+        if args.format == "column":
+            fmt = "{: <" + str(lmax) + "} {}"
+        else:
+            fmt = "{} {}"
+
         for i in sind:
-            print( arr[i] + " heat:" + str(count[i]))
+            out = [arr[i] , " heat:" + str(count[i]) ]
+            print( fmt.format(*out) )
 
     elif args.sort == "collapse":
         uniqarr, count = np.unique(outbuf, return_counts=True)
         arr_nodata = []
         for i in range(len(uniqarr)):
-
             s = uniqarr[i].split(args.delimiter)
             s = args.delimiter.join(s[:5])
             arr_nodata.append(s)
 
         uniqarr, count = np.unique(arr_nodata, return_counts=True)
+        lmax = lstr(uniqarr)
+        if args.format == "column":
+            fmt = "{: <" + str(lmax) + "} {}"
+        else:
+            fmt = "{} {}"
+
         for i in range(len(uniqarr)):
-            print(uniqarr[i] + " collapsed:" + str(count[i]))
+            out = [uniqarr[i] , " collapsed:" + str(count[i])]
+            print( fmt.format(*out) )
 
 
 # end of file
