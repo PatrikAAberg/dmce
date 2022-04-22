@@ -30,6 +30,15 @@ trailing=args.A
 leading=args.B
 showtimestamps = args.t
 
+if showtimestamps and args.format != "seq":
+    print("dmce-trace: error: -t cannot be combined with --sort, abort")
+    sys.exit(1)
+
+if trailing > 0 or leading > 0:
+    keep_src_indent = True
+else:
+    keep_src_indent = False
+
 if not 'nocores' in args.c:
     cores = args.c.split(',')
 else:
@@ -49,6 +58,16 @@ pf = open(probefile)
 prefs = pf.readlines()
 pf.close()
 
+# Find longest path-func combo
+longestpath=0
+
+for s in prefs:
+    s = ":".join(s.split(":")[1:4])
+    l = len(s)
+    if l > longestpath:
+        longestpath = l
+
+# Read data
 data = np.fromfile(dfile, dtype=np.int64)
 
 # uint64_t timestamp, uint64_t probenbr, n * uint64_t variable value
@@ -75,8 +94,6 @@ data = np.reshape(data, (length, entrysize64))
 
 # Sort on timstamps
 data = data[data[:, 0].argsort()]
-
-longestpath=0
 
 def stripProbe(s):
     substr = '\(DMCE_PROBE\(\d*'
@@ -172,9 +189,6 @@ for n in range(length):
         # Editor line numbers start with 1
         line = line - 1
 
-        if len(fname) > longestpath:
-            longestpath=len(fname) + len(str(line)) + len(func)
-
         # Retrieve source code from cache
         lsource = treedict[codetree + "/" + fname]
 
@@ -194,7 +208,10 @@ for n in range(length):
         for lcount in range (line - leading, line + 1 + trailing):
             if lcount > 0:
                 if 0 <= lcount < len(lsource):
-                    sl = lsource[lcount].rstrip()
+                    if keep_src_indent:
+                        sl = lsource[lcount].rstrip()
+                    else:
+                        sl = lsource[lcount].strip()
                 else:
                     continue
 
