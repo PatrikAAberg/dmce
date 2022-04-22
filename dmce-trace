@@ -243,10 +243,13 @@ if args.sort != "seq":
         for i in range(len(sortedarr[0])):
             print( sortedarr[0][i] + " occurs:" + str(sortedarr[1][i]))
 
+    elif args.sort == "heat":
+        arr, count = np.unique(outbuf, return_counts=True)
+        sind = np.argsort(-count)
+        for i in sind:
+            print( arr[i] + " occurs:" + str(count[i]))
 
-elif args.sort == "heat":
-    print("--sort heat not implemented yet")
-elif args.sort == "collapse":
-    print("--sort collapse not implemented yet")
+    elif args.sort == "collapse":
+        print("--sort collapse not implemented yet")
 
 # end of file
