@@ -30,7 +30,7 @@ trailing=args.A
 leading=args.B
 showtimestamps = args.t
 
-if showtimestamps and args.format != "seq":
+if showtimestamps and args.sort != "seq":
     print("dmce-trace: error: -t cannot be combined with --sort, abort")
     sys.exit(1)
 
