@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-from dmce import netshooter as ns
+from dmce import algorithms as alg
 
 parser = argparse.ArgumentParser(usage=__doc__)
 parser.add_argument('inpath',        type=str,   help='Data input path')
@@ -14,4 +14,4 @@ print ("Producing cotton...")
 dfile = args.inpath + "/data"
 lfile = args.inpath + "/labels"
 
-ns.produceCotton(dfile, lfile, args.outfile, args.numexamples, args.verbose)
+alg.produceCotton(dfile, lfile, args.outfile, args.numexamples, args.verbose)
