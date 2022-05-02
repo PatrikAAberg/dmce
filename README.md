@@ -207,6 +207,44 @@ Use dmce summary to display the results. For this example, we use a binary forma
 The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones.
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
+## Example 5: Heatmap and data code coverage
+
+DMCE can be used to view frequently visited parts of your code as well as provide a form of data code coverage for your tests. To enable these features, simply use the --sort switch together with the dmce-trace command. Current available options for --sort are:
+
+* heat        - What parts of your code are executed most frequently
+* uniq        - How many of each unique variable content combination exist for each executed part of your code 
+* collapse    - How many different variable content combinations exist for each executed part of our code
+
+A simple example for the "heat" option:
+
+    $ git clone https://github.com/PatrikAAberg/dmce-examples.git
+    $ cd dmce-examples
+
+Modify the dmce configuration to use a trace probe, including only the "loops" folder:
+
+    $ dmce-set-profile trace -i loops
+
+Run dmce for all commits in the git, making it probe everything:
+
+    $ dmce-launcher -aq
+
+Go into the loops example folder, build the executable and run it.
+
+    $ cd loops && ./build && ./loops
+    $ cd -
+
+Remove the dmce probes:
+
+    $ dmce-launcher -c
+    
+Run dmce-trace with the sort option "heat" (notice we use the unprobed source tree, and therefore "probe-references-original.log"):
+
+    $ dmce-trace --sort heat /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd) | less
+
+You should now be able to see the most visited parts of our program. Replace "heat" with "uniq" or "collapse" for the other views.
+
+Please note! For larger execution runs, the dmce trace buffer size need to be increased to get the full view and not just the last part of the ring buffer.
+
 ## Mandatory entries in .dmceconfig
 
 Valid for both alternatives above:
