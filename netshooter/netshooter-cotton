@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
+import os
+import sys
 import argparse
+import re
+import psutil as ps
 from dmce import algorithms as alg
 
 parser = argparse.ArgumentParser(usage=__doc__)
@@ -9,6 +13,19 @@ parser.add_argument('outfile',        type=str,   help='Outfile file for produce
 parser.add_argument('--numexamples',        type=int,   help='Number of cotton examples to create (default 1)', default=1)
 parser.add_argument('--verbose',           action='store_true', help='verbose output')
 args = parser.parse_args()
+
+m = re.search("available=(\d*)\,", str(ps.virtual_memory()))
+mem_avail = int(int(m.group(1)) / (1024 * 1024))
+required = int((3 * int(os.path.getsize(args.inpath + "/data"))) / (1024 * 1024))
+
+print("Memory available: " + str(mem_avail) + "MB")
+print("Memory required : " + str(required) + "MB")
+
+if mem_avail < required:
+    print("Memory available: " + str(mem_avail) + "MB")
+    print("Memory required : " + str(required) + "MB")
+    print("netshooter: Not enough memory available, abort")
+    sys.exit(1)
 
 print ("Producing cotton...")
 dfile = args.inpath + "/data"
