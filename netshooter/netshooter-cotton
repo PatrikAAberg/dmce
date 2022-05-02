@@ -18,12 +18,15 @@ m = re.search("available=(\d*)\,", str(ps.virtual_memory()))
 mem_avail = int(int(m.group(1)) / (1024 * 1024))
 required = int((3 * int(os.path.getsize(args.inpath + "/data"))) / (1024 * 1024))
 
-print("Memory available: " + str(mem_avail) + "MB")
-print("Memory required : " + str(required) + "MB")
-
-if mem_avail < required:
+if args.verbose:
     print("Memory available: " + str(mem_avail) + "MB")
     print("Memory required : " + str(required) + "MB")
+
+if mem_avail < required:
+    if not args.verbose:
+        print("Memory available: " + str(mem_avail) + "MB")
+        print("Memory required : " + str(required) + "MB")
+
     print("netshooter: Not enough memory available, abort")
     sys.exit(1)
 
