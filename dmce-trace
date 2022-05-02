@@ -226,10 +226,13 @@ for n in range(length):
                             print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
                             sys.exit(1)
                         sldummy, vs = stripProbeExtractVars(sl, vs)
-                    if not args.hl:
-                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+                    if args.sort == "heat":
+                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, ""]
                     else:
-                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
+                        if not args.hl:
+                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+                        else:
+                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
                 else:
                     if probedtree and not args.showprobes:
                         sl = stripProbe(sl)
