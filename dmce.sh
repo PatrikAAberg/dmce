@@ -215,7 +215,7 @@ else
 fi
 
 # add modified/untracked files
-git status --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
+git status -u --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
 
 if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
     git show -l99999 --diff-filter=MA --name-status $oldsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 >> $dmcepath/latest.cache
