@@ -5,7 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+#ifdef DMCE_NBR_OF_PROBES
+#define DMCE_NUM_PROBES DMCE_NBR_OF_PROBES
+#else
 #define DMCE_NUM_PROBES (100000*6)
+#endif
 
 #ifndef DMCE_PROBE_OUTPUT_FILE_BIN
 #define DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/dmcebuffer.bin"

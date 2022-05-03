@@ -671,6 +671,10 @@ while read -r c_file; do
               cat $dmcepath/probedefines.h >> $dmcepath/workarea/$c_file
       fi
 
+      # built-in defines
+
+      echo "#define DMCE_NBR_OF_PROBES (${nbrofprobesinserted})" >> $dmcepath/workarea/$c_file
+
       # Put the probe in the end
       cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
 
