@@ -7,7 +7,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+
+#ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
+#else
+#define DMCE_MAX_HITS DMCE_PROBE_NBR_TRACE_ENTRIES
+#endif
+
 #define DMCE_TRACE_RINGBUFFER
 
 #ifndef DMCE_PROBE_LOCK_DIR_ENTRY
