@@ -18,6 +18,7 @@ parser.add_argument('-A',               type=int, default=0,        help='Number
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('-c',               type=str, default="nocores",help='Comma-separated list of cores to display')
 parser.add_argument('--showprobes',     action='store_true',        help='Make probes visible')
+parser.add_argument('--verbose',        action='store_true',        help='Verbose output')
 parser.add_argument('--delimiter',      type=str, default=":",      help='Delimiter. Default: :')
 parser.add_argument('--format',         type=str, default="column", help='Output format (column|raw)')
 parser.add_argument('--sort',           type=str, default="seq",    help='Sorting scheme (seq|heat|uniq|collapse), default: seq')
@@ -67,8 +68,12 @@ for s in prefs:
     if l > longestpath:
         longestpath = l
 
+print("Reading trace buffer", file=sys.stderr)
+
 # Read data
 data = np.fromfile(dfile, dtype=np.int64)
+
+print("Sorting out ring buffer", file=sys.stderr)
 
 # uint64_t timestamp, uint64_t probenbr, n * uint64_t variable value
 # Find first timestamp where a buffer is exhausted
@@ -91,6 +96,8 @@ if ( (entrysize64 * length) != len(data) ):
     sys.exit(1)
 
 data = np.reshape(data, (length, entrysize64))
+
+print("Sort timestamps", file=sys.stderr)
 
 # Sort on timstamps
 data = data[data[:, 0].argsort()]
@@ -169,7 +176,16 @@ for filename in tree:
 
 outbuf = []
 
+print("Generating trace output", file=sys.stderr)
+
+steps = int(length / 100)
+
 for n in range(length):
+
+    if args.verbose:
+        if n % steps == 0:
+            print(str(n) + " (" + str(length) + ") " + str(int((n*100) / length)) + "%", file=sys.stderr)
+
     pnum = data[n, 1]
     cpu = data[n, entrysize64 - 1]
 
