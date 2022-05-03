@@ -94,7 +94,7 @@ DMCE_LOG_FILES:/tmp/${_user}/dmce
 DMCE_GIT_DIFF_ALGORITHM:histogram
 
 # Trace probes can use this define for buffer sizes
-DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 1024)
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 32)
 
 # Some probes need a path for binary output files
 DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/${_user}/dmce/dmcebuffer.bin"
