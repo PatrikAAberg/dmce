@@ -243,7 +243,7 @@ Run dmce-trace with the sort option "heat" (notice we use the unprobed source tr
 
 You should now be able to see the most visited parts of our program. Replace "heat" with "uniq" or "collapse" for the other views.
 
-Please note! For larger execution runs, the dmce trace buffer size need to be increased to get the full view and not just the last part of the ring buffer.
+Please note! For larger execution runs, the DMCE trace buffer size need to be increased to get the full view and not just the last part of the ring buffer. How to adjust the size of the DMCE trace buffer is further descibred in later se
 
 ## Mandatory entries in .dmceconfig
 
@@ -325,6 +325,11 @@ When dmce is searching for added expressions between two git revisions it uses g
 
 ### Optional entries in .dmceconfig
 
+#### Changing the type of traced variables
+The dmce trace probe normally cast all variables to uint64_t. However, a custom probe might want to use a different data type. Below is an example of how to change type to unsigned long:
+
+    DMCE_TRACE_VAR_TYPE:unsigned long
+
 #### Passing defines to dmce probes
 Sometimes it is useful to be able to pass custom information from the .dmceconfig file to the currently used probe. Below is an example:
 
@@ -336,8 +341,9 @@ These lines will insert the following after the probed c-file but before the pro
     #define FOO
     #define BAR (42)
 
-#### Changing the type of traced variables
-The dmce trace probe normally cast all variables to uint64_t. However, a custom probe might want to use a different data type. Below is an example of how to change type to unsigned long:
+#### Changing the size of the DMCE trace buffer
+The dmce trace buffer in the dmce default trace example probe "dmce-probe-trace-atexit-D5-CB.c" is set up as a ringbuffer. The number of entries (64 bytes each) can be adjusted by using the following DMCE define:
 
-    DMCE_TRACE_VAR_TYPE:unsigned long
-
+    DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 32)
+    
+The value will be passed to the probe as described in the previous section. Using the default value above (written by dmce-setup or dmce-configure-local) will thus generate a dmcebuffer.bin file with a size around 2MB.
