@@ -158,6 +158,7 @@ cskip = 0
 skip_scope = 0
 skip_scope_tab  = 0
 in_parmdecl = 0
+in_parmdecl_sticky = 0
 in_parmdecl_tab  = 0
 skip_backtrail = 0
 skip_backtrail_tab = 0
@@ -319,6 +320,7 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 # Parameter and variable declarations
 re_sections_parmdecl = []
 re_sections_parmdecl.append(re.compile(r'.*-ParmVarDecl Hexnumber.*'))
+re_sections_parmdecl.append(re.compile(r'.*-VarDecl Hexnumber.*'))
 
 # Variable stack barriers
 re_var_barriers = []
@@ -780,7 +782,7 @@ while (lineindex < linestotal):
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
             expdb_func.append(current_function)
-            if not in_parmdecl:
+            if not in_parmdecl_sticky:
                 expdb_secstackvars.append(secStackVars.copy())
                 expdb_reffedvars.append(reffedVars.copy())
             else:
@@ -867,6 +869,7 @@ while (lineindex < linestotal):
                    #if do_print == 1:
                         #print("START: (" + lstart + "," + cstart + ")")
                    inside_expression = lineindex
+                   in_parmdecl_sticky = in_parmdecl
 
                # Need to look for last sub expression. Also need to add length of keyword
                if (exppatternmode[i] > 2):
@@ -885,6 +888,7 @@ while (lineindex < linestotal):
                    #if do_print == 1:
                         #print("START: (" + lstart + "," + cstart + ")")
                    inside_expression = lineindex
+                   in_parmdecl_sticky = in_parmdecl
 
             i+=1
 
@@ -996,7 +1000,7 @@ if inside_expression:
     expdb_colend.append(int(cstart) - 1)
     expdb_tab.append(tab)
     expdb_func.append(current_function)
-    if not in_parmdecl:
+    if not in_parmdecl_sticky:
         expdb_secstackvars.append(secStackVars.copy())
         expdb_reffedvars.append(reffedVars.copy())
     else:
