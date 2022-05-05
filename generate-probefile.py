@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Print is expensive and can be disabled
-do_print=1
+do_print=0
 
 parsed_file = sys.argv[1]
 
@@ -143,7 +143,8 @@ reffedVars = []
 
 def printSecStackVars():
     i=0
-    print("SECSTACKVARS:")
+    if do_print:
+        print("SECSTACKVARS:")
     while (i < expdb_index):
         print("INDEX: " + str(i))
         print(expdb_secstackvars[i])
@@ -768,14 +769,16 @@ while (lineindex < linestotal):
             if re_f.match(argsstripped):
                 in_function_scope = False
 
-    print("Parsed file: " + parsed_file)
-    print("Parsed AST line:                     " + linebuf[lineindex])
-    print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-    print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
+    if do_print:
+        print("Parsed file: " + parsed_file)
+        print("Parsed AST line:                     " + linebuf[lineindex])
+        print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
-        print("Inside expresson wating to pass l: " + str(cur_lend) + "   c: " + str(cur_cend))
+        if do_print:
+            print("Inside expresson wating to pass l: " + str(cur_lend) + "   c: " + str(cur_cend))
         # If we reached the last subexpression in the expression or next expression or statement
         if ( (int(scopelstart) > cur_lend) or ( (int(scopelstart) == cur_lend) and (int(scopecstart) > cur_cend) ) ):
             expdb_lineend.append(int(lstart))
@@ -813,9 +816,10 @@ while (lineindex < linestotal):
                     break
             else:
                 break
-    print("Scope stack after pop check: ")
-    print(secStackPos)
-    print(secStackVars)
+    if do_print:
+        print("Scope stack after pop check: ")
+        print(secStackPos)
+        print(secStackVars)
 
     if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
         i = 0
@@ -911,8 +915,9 @@ while (lineindex < linestotal):
     lstart = lend
     cstart = cend
 
-    print("Line: " + linebuf[lineindex])
-    print("in parsed file: " + str(in_parsed_file))
+    if do_print:
+        print("Line: " + linebuf[lineindex])
+        print("in parsed file: " + str(in_parsed_file))
 
     # update section info and any declarations
     if not inside_expression and not skip_scope and in_parsed_file and numDataVars > 0:
@@ -925,7 +930,8 @@ while (lineindex < linestotal):
         for section in re_parmdeclarations:
             m = section.match(linebuf[lineindex])
             if m:
-                print("MATCHED PARM DECL: " + linebuf[lineindex])
+                if do_print:
+                    print("MATCHED PARM DECL: " + linebuf[lineindex])
                 break
 
         # TODO: Add lvalue vars
@@ -964,7 +970,8 @@ while (lineindex < linestotal):
                 if barrier:
                     secStackVars.append("### VAR BARRIER ###")
                     secStackPos.append((currentSectionLend, currentSectionCend))
-                    print("MATCHED VAR BARRIER: " + linebuf[lineindex])
+                    if do_print:
+                        print("MATCHED VAR BARRIER: " + linebuf[lineindex])
                     break
 
             if not skipthis and not barrier:
@@ -976,7 +983,8 @@ while (lineindex < linestotal):
         for ref in re_reffedvars:
             m = ref.match(linebuf[lineindex])
             if m:
-                print("MATCHED VAR REF: " + linebuf[lineindex])
+                if do_print:
+                    print("MATCHED VAR REF: " + linebuf[lineindex])
                 reffedvar = m.group(1)
                 if reffedvar not in reffedVars:
                     reffedVars.append(reffedvar)
@@ -985,11 +993,12 @@ while (lineindex < linestotal):
                     reffedVars.append(reffedVars.pop(reffedVars.index(reffedvar)))
                 break
 
-    print("Scope stack after decl check: ")
-    print(secStackPos)
-    print(secStackVars)
-    print("Reffed vars:")
-    print(reffedVars)
+    if do_print:
+        print("Scope stack after decl check: ")
+        print(secStackPos)
+        print(secStackVars)
+        print("Reffed vars:")
+        print(reffedVars)
 
     # Finally, update input file line index
     lineindex+=1
