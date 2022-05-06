@@ -146,8 +146,9 @@ def printSecStackVars():
     if do_print:
         print("SECSTACKVARS:")
     while (i < expdb_index):
-        print("INDEX: " + str(i))
-        print(expdb_secstackvars[i])
+        if do_print:
+            print("INDEX: " + str(i))
+            print(expdb_secstackvars[i])
         i+=1
 
 cur_lend = 0
