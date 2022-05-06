@@ -243,7 +243,7 @@ Run dmce-trace with the sort option "heat" (notice we use the unprobed source tr
 
 You should now be able to see the most visited parts of our program. Replace "heat" with "uniq" or "collapse" for the other views.
 
-Please note! For larger execution runs, the DMCE trace buffer size need to be increased to get the full view and not just the last part of the ring buffer. How to adjust the size of the DMCE trace buffer is further descibred in later se
+Please note! For larger execution runs, the DMCE trace buffer size need to be increased to get the full view and not just the last part of the ring buffer. How to adjust the size of the DMCE trace buffer is further descibred in the config section.
 
 ## Mandatory entries in .dmceconfig
 
