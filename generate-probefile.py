@@ -253,7 +253,7 @@ else:
     #  1    Contained space, use as is
     #  2    Free, need to look for next
     #  x    Free, look for next at colpos + x
-    exppatternmode = [1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+    exppatternmode = [1,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 re_exppatternlist = []
 
