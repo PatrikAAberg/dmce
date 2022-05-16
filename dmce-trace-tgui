@@ -35,6 +35,7 @@ cmd_error_code = ""
 
 core_filter = []
 
+last_search_cmd = ""
 tv_start = 0
 tv_end = 0
 src_start = 0
@@ -179,7 +180,7 @@ def draw(stdscr):
 # cmd view
     if user_input_mode:
         cmdstr = "".join(cmdbuffer)
-        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ": " + cmdstr.ljust(w_screen - (w_screen - wx_varsview), " "))
+        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr.ljust(w_screen - (w_screen - wx_varsview), " "))
     else:
         stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
 
@@ -237,22 +238,39 @@ def cmd_filter(cmds):
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
 
-def cmd_search(cmds):
+def cmd_search(sstr):
     global cmd_error_code
-    cmd_error_code = "Search!"
+    global last_search_cmd
+    global tracebuffer
+    global index
 
-    return
+    if len(sstr) > 1:
+        i = index + 1
+        while i < len(tracebuffer):
+            if sstr[1:] in tracebuffer[i]:
+                nbr_te = tracebuffer[i].split("@")[0]
+                cmd_error_code = "Found at trace entry: " + nbr_te
+                index = i
+                last_search_cmd = sstr
+                return
+            i += 1
+        cmd_error_code = "Not found: " + sstr[1:]
+        return
+    else:
+        cmd_error_code = "Empty search string!"
+        return
 
 def execute_command(cmdstr):
     global cmd_error_code
+
+    if len(cmdstr) == 0:
+        return
+
+    if cmdstr[0] == "/":
+        cmd_search(cmdstr)
+        return
+
     cmds  = cmdstr.split(" ")
-
-    if len(cmds) == 0:
-        return
-
-    if cmds[0][0] == "/":
-        cmd_search(cmds)
-        return
 
     if cmds[0] == "filter":
         cmd_filter(cmds)
@@ -303,6 +321,9 @@ def main(stdscr):
                 break
             elif c == ord(':'):
                 user_input_mode = True
+            elif c == ord('/'):
+                user_input_mode = True
+                cmdbuffer = ['/']
             elif c == ord('g'):
                 if len(numbuffer) > 0:
                     jump = 0
@@ -322,7 +343,10 @@ def main(stdscr):
                 old_srcpath = ""
             elif c == ord('G'):
                 index = len(tracebuffer) - 1
-                old_srcpath = ""
+            elif c == ord('n'):
+                execute_command(last_search_cmd)
+                cmdbuffer = []
+                user_input_mode = False
             elif c == curses.KEY_UP:
                 if index > 0:
                     index -= 1
