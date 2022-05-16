@@ -25,7 +25,7 @@ import re
 import argparse
 import time
 
-# Print is expensive and can be disabled
+# Log prints from this program are expensive and therefore normally disabled
 do_print=0
 
 parsed_file = sys.argv[1]
@@ -173,6 +173,7 @@ lineindex = 0
 
 inside_expression = 0
 in_parsed_file = 0
+just_landed = 0
 
 probed_lines = []
 
@@ -897,17 +898,22 @@ while (lineindex < linestotal):
 
             i+=1
 
+    just_landed = 0
+
     if (rightself) or (middleself and not rightother) or (anyposself and not middleother and not rightother):
-        in_parsed_file = 1
+        if in_parsed_file == 0:
+            in_parsed_file = 1
+            if middleself:
+                just_landed = 1
 
     # If lstart or curstart moved forward in parsed c file, update
-    if ( line_position_updated and in_parsed_file and (int(lstart) > int(last_lstart))):
+    if ( not just_landed and line_position_updated and in_parsed_file and (int(lstart) > int(last_lstart))):
         last_lstart=lstart
         last_cstart=cstart
         if do_print:
             print("Line moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
 
-    if ( col_position_updated and in_parsed_file and (int(lstart) == int(last_lstart)) and ( int(cstart) > int(last_cstart) ) ):
+    if ( not just_landed and col_position_updated and in_parsed_file and (int(lstart) == int(last_lstart)) and ( int(cstart) > int(last_cstart) ) ):
         last_cstart=cstart
         if do_print:
             print("Column moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
