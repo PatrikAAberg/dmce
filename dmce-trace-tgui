@@ -97,26 +97,18 @@ def draw(stdscr):
     global num_tracelines
     global old_srcpath
 
-#    stdscr.addstr(wy_traceview, wx_traceview, "Trace view 1")
-#    stdscr.addstr(wy_traceview + 1, wx_traceview, "Trace view 2")
-#    stdscr.addstr(wy_codeview, wx_codeview, "Code view 1")
-#    stdscr.addstr(wy_codeview + 1, wx_codeview, "Code view 2")
-#    stdscr.addstr(wy_varsview, wx_varsview, "Vars view 1")
-#    stdscr.addstr(wy_varsview + 1, wx_varsview, "Vars view 2")
-#    stdscr.refresh()
-
 # trace view
     for i in range(tv_start, tv_end + 1):
         if i < len(tracebuffer):
             lout = tracebuffer[i].rstrip().split("@")
             tout = '@'.join(lout[0:7]).replace("@", " ")
-        
+            tout = tout.ljust(w_screen - (w_screen - wx_varsview) - 2, " ")
             if i == index:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
             else:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout)
         else:
-            stdscr.hline(wy_traceview + i - tv_start, wx_codeview, ' ', w_screen - (w_screen - wx_varsview))
+            stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', w_screen - wx_varsview)
 
 
 # code view
