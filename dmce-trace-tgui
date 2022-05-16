@@ -295,7 +295,29 @@ def execute_command(cmdstr):
 
 def show_help(stdscr):
     stdscr.clear()
-    stdscr.addstr(0, 0, "The help screen!")
+    stdscr.addstr(0, 0,  "  Keys")
+    stdscr.addstr(1, 0,  "  ---------------------------------------------------------")
+    stdscr.addstr(2, 0,  "  q             - quit")
+    stdscr.addstr(3, 0,  "  arrow up      - move upwards")
+    stdscr.addstr(4, 0,  "  arrow down    - move downwards")
+    stdscr.addstr(5, 0,  "  page up       - move one page up")
+    stdscr.addstr(6, 0,  "  page up       - move one page up")
+    stdscr.addstr(7, 0,  "  :             - Enter command mode")
+    stdscr.addstr(8, 0,  "  /             - Enter command mode and search")
+    stdscr.addstr(9, 0,  "  n             - search downwards")
+    stdscr.addstr(10, 0, "  N             - search upwards")
+    stdscr.addstr(11, 0, "  g             - move to the top")
+    stdscr.addstr(12, 0, "  G             - move to the bottom")
+    stdscr.addstr(13, 0, "  [digits]g     - move to trace entry with index [digits]")
+    stdscr.addstr(14, 0, "  s             - add trace entry to jump list (markers)")
+    stdscr.addstr(15, 0, "  j             - jump to next entry in jump list")
+    stdscr.addstr(16, 0, "  J             - jump to previous entry in jump list")
+    stdscr.addstr(20, 0, "  Commands")
+    stdscr.addstr(21, 0, "  ---------------------------------------------------------")
+    stdscr.addstr(22, 0, "  filter core A,B,C     - filter on core number")
+    stdscr.addstr(23, 0, "  filter core clear     - clear core filter")
+    stdscr.addstr(23, 0, "  filter clear          - clear all filters")
+
     c = stdscr.getch()
 
 def main(stdscr):
