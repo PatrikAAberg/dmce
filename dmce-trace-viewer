@@ -45,11 +45,11 @@ DESCRIPTION
 
         If 'fzf' (=github.com/junegunn/fzf) is installed an interactive viewer is launched.
 
-        It's possible to force the viewer to 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
+        It's possible to force the viewer to 'tgui', 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
 
 CONFIGURATION
         # select trace viewer tool
-        export DMCE_TRACE_VIEWER stdout|stderr|less|fzf|<file>
+        export DMCE_TRACE_VIEWER tgui|stdout|stderr|less|fzf|<file>
 
 EXAMPLES
         # install fzf
@@ -64,13 +64,13 @@ EXAMPLES
         # decode the trace buffer and save the trace to a file '/tmp/a.trace'
         $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-viewer [data file] [probe file] [code tree path]
 
-        # Typical example including paths to standard file locations using a __non-probed__ tree
+        # Typical example including paths to standard file locations using a __non-probed__ tree using 'tgui'
         $ cd mygit
-        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
+        $ DMCE_TRACE_VIEWER=tgui dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
 
-        # Typical example including paths to standard file locations using a __probed__ tree
+        # Typical example including paths to standard file locations using a __probed__ tree using less
         $ cd mygit
-        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references.log $(pwd)
+        $ DMCE_TRACE_VIEWER=less dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references.log $(pwd)
 EOF
     exit 1
 }
@@ -109,14 +109,6 @@ function main() {
 
     dmce_trace_log="$WORKAREA/dmce-trace-$git.log"
     dmce_trace_args=
-    dmce_trace_args+=" --delimiter @"
-    dmce_trace_args+=" --format raw"
-    dmce_trace_args+=" --numvars 5"
-    dmce_trace_args+=" -t"
-    dmce_trace_args+=" $data"
-    dmce_trace_args+=" $probes"
-    dmce_trace_args+=" ${git_full}"
-
     fzf=0
     fzf_cmd="fzf"
     # not set, select fzf if it's available
@@ -147,6 +139,16 @@ function main() {
         :
     fi
 
+    dmce_trace_args+=" --delimiter @"
+    if [ $fzf -eq 1 ]; then
+        dmce_trace_args+=" --format raw"
+        dmce_trace_args+=" --numvars 5"
+    fi
+    dmce_trace_args+=" -t"
+    dmce_trace_args+=" $data"
+    dmce_trace_args+=" $probes"
+    dmce_trace_args+=" ${git_full}"
+
     echo "$ dmce-trace ${dmce_trace_args}"
     if ! dmce-trace ${dmce_trace_args} > ${dmce_trace_log}; then
         echo "error: 'dmce-trace ${dmce_trace_args}' failed"
@@ -174,6 +176,8 @@ function main() {
             column -t -s'@' ${dmce_trace_log} | less -r
         elif [ "x$DMCE_TRACE_VIEWER" = "xstderr" ]; then
             column -t -s'@' ${dmce_trace_log} 1>&2
+        elif [ "x$DMCE_TRACE_VIEWER" = "xtgui" ]; then
+            dmce-trace-tgui ${dmce_trace_log}
         else
             echo "saving trace as '$(readlink -f $DMCE_TRACE_VIEWER)'"
             if ! column -t -s'@' ${dmce_trace_log} > $DMCE_TRACE_VIEWER; then
