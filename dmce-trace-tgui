@@ -36,6 +36,7 @@ cmd_error_code = ""
 core_filter = []
 
 last_search_cmd = ""
+search_dir = "down"
 tv_start = 0
 tv_end = 0
 src_start = 0
@@ -243,17 +244,30 @@ def cmd_search(sstr):
     global last_search_cmd
     global tracebuffer
     global index
+    global search_dir
 
     if len(sstr) > 1:
-        i = index + 1
-        while i < len(tracebuffer):
-            if sstr[1:] in tracebuffer[i]:
-                nbr_te = tracebuffer[i].split("@")[0]
-                cmd_error_code = "Found at trace entry: " + nbr_te
-                index = i
-                last_search_cmd = sstr
-                return
-            i += 1
+        if search_dir == "down":
+            i = index + 1
+            while i < len(tracebuffer):
+                if sstr[1:] in tracebuffer[i]:
+                    nbr_te = tracebuffer[i].split("@")[0]
+                    cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                    index = i
+                    last_search_cmd = sstr
+                    return
+                i += 1
+        else:
+            i = index - 1
+            while i > 0:
+                if sstr[1:] in tracebuffer[i]:
+                    nbr_te = tracebuffer[i].split("@")[0]
+                    cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                    index = i
+                    last_search_cmd = sstr
+                    return
+                i -= 1
+
         cmd_error_code = "Not found: " + sstr[1:]
         return
     else:
@@ -288,6 +302,8 @@ def main(stdscr):
     global tv_start
     global tv_end
     global user_input_mode
+    global search_dir
+
     init(stdscr)
 
 
@@ -296,6 +312,7 @@ def main(stdscr):
 
     while 1:
         if user_input_mode:
+            search_dir = "down"
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 cmdhistory.append(cmdbuffer)
                 cmdhistoryindex = len(cmdhistory)
@@ -344,6 +361,12 @@ def main(stdscr):
             elif c == ord('G'):
                 index = len(tracebuffer) - 1
             elif c == ord('n'):
+                search_dir = "down"
+                execute_command(last_search_cmd)
+                cmdbuffer = []
+                user_input_mode = False
+            elif c == ord('N'):
+                search_dir = "up"
                 execute_command(last_search_cmd)
                 cmdbuffer = []
                 user_input_mode = False
