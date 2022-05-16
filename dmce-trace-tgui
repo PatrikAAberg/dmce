@@ -293,7 +293,13 @@ def execute_command(cmdstr):
     cmd_error_code = "Command not recognized: '" + cmdstr + "'"
     return
 
+def show_help(stdscr):
+    stdscr.clear()
+    stdscr.addstr(0, 0, "The help screen!")
+    c = stdscr.getch()
+
 def main(stdscr):
+    global cmd_error_code
     global tracebuffer
     global numbuffer
     global cmdbuffer
@@ -334,6 +340,8 @@ def main(stdscr):
                     cmdhistoryindex = len(cmdhistory) - 1
                 cmdbuffer = cmdhistory[cmdhistoryindex]
         else:
+            if c == ord('h'):
+                show_help(stdscr)
             if c == ord('q'):
                 break
             elif c == ord(':'):
