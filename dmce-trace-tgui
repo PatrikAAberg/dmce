@@ -101,7 +101,10 @@ def draw(stdscr):
     for i in range(tv_start, tv_end + 1):
         if i < len(tracebuffer):
             lout = tracebuffer[i].rstrip().split("@")
-            tout = '@'.join(lout[0:7]).replace("@", " ")
+            pre = " "
+            if tracebuffer[i].split("@")[0] in jumplist:
+                pre = ">"
+            tout = pre + '@'.join(lout[0:7]).replace("@", " ")
             tout = tout.ljust(w_screen - (w_screen - wx_varsview) - 2, " ")
             if i == index:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
@@ -205,6 +208,7 @@ def filter_cores(cores):
     if cores == "clear":
         core_filter = []
         tracebuffer = full_tracebuffer.copy()
+        cmd_error_code = "Core filter reset"
         return
     else:
         temp = []
@@ -224,6 +228,12 @@ def filter_cores(cores):
         index = 0
         return
 
+def clear_filters():
+    core_filter = []
+    tracebuffer = full_tracebuffer.copy()
+    cmd_error_code = "All filters reset"
+    return
+
 def cmd_filter(cmds):
     global cmd_error_code
     if len(cmds) >= 2:
@@ -231,6 +241,8 @@ def cmd_filter(cmds):
             if len(cmds) >= 3:
                 filter_cores(cmds[2])
                 return
+        elif cmds[1] == "clear":
+            clear_filters()
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
 
@@ -352,8 +364,21 @@ def set_marker():
     global jumpindex
     global jumplist
 
+    curindex = tracebuffer[index].split("@")[0]
+    # unset?
+    if curindex in jumplist:
+        jumplist.remove(curindex)
+        return
+
     jumpindex = len(jumplist)
-    jumplist.append(tracebuffer[index].split("@")[0])
+    jumplist.append(curindex)
+
+def clear_jumplist():
+    global jumpindex
+    global jumplist
+
+    jumpindex = 0
+    jumplist = []
 
 def main(stdscr):
     global cmd_error_code
@@ -366,7 +391,6 @@ def main(stdscr):
     global tv_end
     global user_input_mode
     global search_dir
-
     init(stdscr)
 
 
@@ -452,8 +476,7 @@ def main(stdscr):
             elif c == ord('s'):
                 set_marker()
             elif c == ord('c'):
-                jumpindex = 0
-                jumplist = []
+                clear_jumplist()
             elif c == ord('j'):
                 jump("forward")
             elif c == ord('J'):
