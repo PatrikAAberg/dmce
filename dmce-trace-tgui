@@ -1,0 +1,356 @@
+#!/usr/bin/python3
+
+import curses
+import argparse
+import os
+import sys
+import re
+from curses import wrapper
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+parser.add_argument('tfile',            type=str,                   help='Trace file (output from dmce-trace)')
+args = parser.parse_args()
+
+wx_traceview = 0
+wy_traceview = 0
+wx_codeview = 0
+wy_codeview = 40
+wx_varsview = 100
+wy_varsview = 40
+
+num_srclines = 30
+num_tracelines = 30
+
+h_screen = 0
+w_screen = 0
+
+tracebuffer = []
+full_tracebuffer = []
+codebuffer = []
+varbuffer = []
+numbuffer = []
+cmdbuffer = []
+cmdhistory = [[]]
+cmd_error_code = ""
+
+core_filter = []
+
+tv_start = 0
+tv_end = 0
+src_start = 0
+src_end = 0
+index = 0
+srcindex = 0
+old_srcpath = ""
+
+#log = open("/tmp/dmcetraceviewer.log", "w")
+
+
+user_input_mode = False
+
+def init(stdscr):
+    global tracebuffer
+    global full_tracebuffer
+    global args
+
+    global wy_codeview
+    global wy_varsview
+    global wx_varsview
+    global num_srclines
+    global num_tracelines
+    global w_screen
+    global h_screen
+
+    h_screen, w_screen = stdscr.getmaxyx()
+    wy_codeview = wy_varsview = int(h_screen / 2)
+    num_srclines = num_tracelines = int((h_screen / 2) - 3)
+
+    wx_varsview = w_screen - int(w_screen / 4)
+
+    tf = open(args.tfile)
+    full_tracebuffer = tf.readlines()
+    tf.close()
+
+    i = 0
+    while i < len(full_tracebuffer):
+        full_tracebuffer[i] = str(i) + "@" + full_tracebuffer[i]
+        i += 1
+
+    tracebuffer = full_tracebuffer.copy()
+
+#    print("dmce trace viewer log", file=log)
+
+def draw(stdscr):
+    global tracebuffer
+    global varbuffer
+    global codebuffer
+    global index
+    global tv_start
+    global tv_end
+    global src_start
+    global src_end
+    global num_srclines
+    global num_tracelines
+    global old_srcpath
+
+#    stdscr.addstr(wy_traceview, wx_traceview, "Trace view 1")
+#    stdscr.addstr(wy_traceview + 1, wx_traceview, "Trace view 2")
+#    stdscr.addstr(wy_codeview, wx_codeview, "Code view 1")
+#    stdscr.addstr(wy_codeview + 1, wx_codeview, "Code view 2")
+#    stdscr.addstr(wy_varsview, wx_varsview, "Vars view 1")
+#    stdscr.addstr(wy_varsview + 1, wx_varsview, "Vars view 2")
+#    stdscr.refresh()
+
+# trace view
+    for i in range(tv_start, tv_end + 1):
+        if i < len(tracebuffer):
+            lout = tracebuffer[i].rstrip().split("@")
+            tout = '@'.join(lout[0:6]).replace("@", " ")
+        
+            if i == index:
+                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
+            else:
+                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout)
+        else:
+            stdscr.hline(wy_traceview + i - tv_start, wx_codeview, ' ', w_screen - (w_screen - wx_varsview))
+
+
+# code view
+    srcpath = tracebuffer[index].split("@")[3]
+
+    sf = open(srcpath)
+    codebuffer = sf.readlines()
+    sf.close()
+    srcindex = int(tracebuffer[index].split("@")[4]) - 1
+
+    if old_srcpath != srcpath:
+        src_start = 0
+        old_srcpath = srcpath
+
+    if src_start > srcindex:
+        src_start = srcindex
+    if srcindex > (src_start + num_srclines - 1):
+        src_start = srcindex - num_srclines + 1
+
+    for i in range(num_srclines):
+        if (src_start + i) < len(codebuffer):
+            if (src_start + i) == srcindex:
+                stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i], curses.A_REVERSE)
+            else:
+                stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i])
+        else:
+            stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
+#        stdscr.addstr(wy_codeview, 40, "start: " + str(src_start) + "index: " + str(srcindex) + " h: " + str(h_screen) + " w: " + str(w_screen), curses.A_REVERSE)
+
+# vars view
+    varstr = tracebuffer[index].split("@")[7:]
+    vout = varstr[0].split(" ")
+    i = 0
+    for v in vout:
+        stdscr.addstr(wy_varsview + i, wx_varsview, v)
+        i += 1
+    for j in range(5-i):
+        stdscr.addstr(wy_varsview + i + j, wx_varsview, "                                           ")
+
+# trace info view
+    entry_num = tracebuffer[index].split("@")[0]
+    filename = os.path.basename(srcpath)
+    core = tracebuffer[index].split("@")[1]
+    timestamp = float(tracebuffer[index].split("@")[2])
+    if index > 0:
+        timestamp_prev = float(tracebuffer[index - 1].split("@")[2])
+    else:
+        timestamp_prev = 0
+    diff = int(timestamp - timestamp_prev)
+    timestamp = int(timestamp)
+
+    stdscr.addstr(1, wx_varsview, ("Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(2, wx_varsview, ("File             : " + filename).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(3, wx_varsview, ("Core             : " + core).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(4, wx_varsview, ("Timestamp        : " + str(timestamp)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(5, wx_varsview, ("Timestamp prev   : " + str(int(timestamp_prev))).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(6, wx_varsview, ("Diff             : " + str(diff)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(10, wx_varsview, ("Filters"))
+    stdscr.addstr(11, wx_varsview, ("---------------------"))
+    stdscr.addstr(12, wx_varsview, ("Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
+
+# cmd view
+    if user_input_mode:
+        cmdstr = "".join(cmdbuffer)
+        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ": " + cmdstr.ljust(w_screen - (w_screen - wx_varsview), " "))
+    else:
+        stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
+
+# info / error codes
+    stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
+
+# bars
+    stdscr.hline(wy_codeview - 2, wx_codeview, '_', w_screen)
+    stdscr.hline(wy_codeview + num_srclines, wx_codeview, '_', w_screen)
+    stdscr.vline(0, wx_varsview - 2, '|', h_screen)
+
+
+def cleanup_exit():
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
+
+def filter_cores(cores):
+    global cmd_error_code
+    global core_filter
+    global tracebuffer
+    global full_tracebuffer
+    global index
+
+    if cores == "clear":
+        core_filter = []
+        tracebuffer = full_tracebuffer.copy()
+        return
+    else:
+        temp = []
+        for c in cores.split(","):
+            c = c.strip()
+            if c.isdigit():
+                temp.append(c)
+            else:
+                cmd_error_code = "'filter cores' needs a comma separated list of cores or 'clear'"
+                return
+
+        core_filter = temp
+        f = "|".join(core_filter)
+        sr = '^\d*@(' + f + ')@.*'
+        re_core = re.compile(sr)
+        tracebuffer = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
+        index = 0
+        return
+
+def cmd_filter(cmds):
+    global cmd_error_code
+    if len(cmds) >= 2:
+        if cmds[1] == "core":
+            if len(cmds) >= 3:
+                filter_cores(cmds[2])
+                return
+    cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
+    return
+
+def cmd_search(cmds):
+    global cmd_error_code
+    cmd_error_code = "Search!"
+
+    return
+
+def execute_command(cmdstr):
+    global cmd_error_code
+    cmds  = cmdstr.split(" ")
+
+    if len(cmds) == 0:
+        return
+
+    if cmds[0][0] == "/":
+        cmd_search(cmds)
+        return
+
+    if cmds[0] == "filter":
+        cmd_filter(cmds)
+        return
+
+    cmd_error_code = "Command not recognized: '" + cmdstr + "'"
+    return
+
+def main(stdscr):
+    global tracebuffer
+    global numbuffer
+    global cmdbuffer
+    global cmdhistory
+    global index
+    global tv_start
+    global tv_end
+    global user_input_mode
+    init(stdscr)
+
+
+    index = len(tracebuffer) - 1
+    c = ord('z')
+
+    while 1:
+        if user_input_mode:
+            if c == curses.KEY_ENTER or c == 10 or c == 13:
+                cmdhistory.append(cmdbuffer)
+                cmdhistoryindex = len(cmdhistory)
+                execute_command("".join(cmdbuffer))
+                cmdbuffer = []
+                user_input_mode = False
+            elif len(cmdbuffer) > 0 and c == curses.KEY_BACKSPACE:
+                cmdbuffer.pop()
+            elif c >= 32 and c <= 126:
+                cmdbuffer.append(chr(c))
+            elif c == curses.KEY_UP:
+                cmdhistoryindex -= 1
+                if cmdhistoryindex < 1:
+                    cmdhistoryindex = 1
+                cmdbuffer = cmdhistory[cmdhistoryindex]
+            elif c == curses.KEY_DOWN:
+                cmdhistoryindex += 1
+                if cmdhistoryindex > len(cmdhistory) - 1:
+                    cmdhistoryindex = len(cmdhistory) - 1
+                cmdbuffer = cmdhistory[cmdhistoryindex]
+        else:
+            if c == ord('q'):
+                break
+            elif c == ord(':'):
+                user_input_mode = True
+            elif c == ord('g'):
+                if len(numbuffer) > 0:
+                    jump = 0
+                    dec = 1
+                    for n in reversed(numbuffer):
+                        jump += dec * n
+                        dec = dec * 10
+                    index = jump
+                    if index < 0:
+                        index = 0
+                    if index > (len(tracebuffer) - 1):
+                        index = len(tracebuffer) - 1
+                    numbuffer = []
+                else:
+                    index = 0
+
+                old_srcpath = ""
+            elif c == ord('G'):
+                index = len(tracebuffer) - 1
+                old_srcpath = ""
+            elif c == curses.KEY_UP:
+                if index > 0:
+                    index -= 1
+            elif c == curses.KEY_DOWN:
+                if index < len(tracebuffer) - 1:
+                    index += 1
+            elif c == curses.KEY_PPAGE:
+                index -= num_tracelines
+                if index < 0:
+                    index = 0
+            elif c == curses.KEY_NPAGE:
+                index += num_tracelines
+                if index > (len(tracebuffer) - 1):
+                    index = len(tracebuffer) - 1
+
+            elif c >= ord('0') and c <= ord('9'):
+                numbuffer.append(int(c - ord('0')))
+
+        if index < tv_start:
+            tv_start = index
+        if index >= tv_end:
+            tv_start = index - num_tracelines
+
+        tv_end = tv_start + num_tracelines
+
+        draw(stdscr)
+        c = stdscr.getch()
+
+wrapper(main)
+
+
+
+# EOF
