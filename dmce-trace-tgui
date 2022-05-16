@@ -31,6 +31,8 @@ varbuffer = []
 numbuffer = []
 cmdbuffer = []
 cmdhistory = [[]]
+jumplist = []
+jumpindex = 0
 cmd_error_code = ""
 
 core_filter = []
@@ -174,9 +176,10 @@ def draw(stdscr):
     stdscr.addstr(5, wx_varsview, ("Timestamp        : " + str(timestamp)).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(6, wx_varsview, ("Timestamp prev   : " + str(int(timestamp_prev))).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(7, wx_varsview, ("Diff             : " + str(diff)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(10, wx_varsview, ("Filters"))
-    stdscr.addstr(11, wx_varsview, ("---------------------"))
-    stdscr.addstr(12, wx_varsview, ("Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(8, wx_varsview, ("Filters"))
+    stdscr.addstr(9, wx_varsview, ("---------------------"))
+    stdscr.addstr(10, wx_varsview, ("Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(12, wx_varsview, ("Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
 
 # cmd view
     if user_input_mode:
@@ -310,8 +313,8 @@ def show_help(stdscr):
     stdscr.addstr(12, 0, "  G             - move to the bottom")
     stdscr.addstr(13, 0, "  [digits]g     - move to trace entry with index [digits]")
     stdscr.addstr(14, 0, "  s             - add trace entry to jump list (markers)")
-    stdscr.addstr(15, 0, "  j             - jump to next entry in jump list")
-    stdscr.addstr(16, 0, "  J             - jump to previous entry in jump list")
+    stdscr.addstr(15, 0, "  j             - jump to next marker")
+    stdscr.addstr(16, 0, "  J             - jump to previous marker")
     stdscr.addstr(20, 0, "  Commands")
     stdscr.addstr(21, 0, "  ---------------------------------------------------------")
     stdscr.addstr(22, 0, "  filter core A,B,C     - filter on core number")
@@ -319,6 +322,46 @@ def show_help(stdscr):
     stdscr.addstr(23, 0, "  filter clear          - clear all filters")
 
     c = stdscr.getch()
+
+def jump(direction):
+    global jumplist
+    global jumpindex
+    global tracebuffer
+    global cmd_error_code
+    global index
+
+    if len(jumplist) > 0:
+        if direction == "forward":
+            jumpindex += 1
+            if jumpindex >= len(jumplist):
+                jumpindex = 0
+        else:
+            jumpindex -= 1
+            if jumpindex < 0:
+                jumpindex = len(jumplist) - 1
+
+        # Replace linear search with interval halving later if needed...
+
+        i = 0
+        ejump = jumplist[jumpindex]
+        found = False
+        while i < len(tracebuffer):
+            if tracebuffer[i].split("@")[0] == ejump:
+                index = i
+                found  = True
+                break
+            i += 1
+        if not found:
+            cmd_error_code = "Marker '" + ejump + "' not available in this filter view"
+    else:
+        cmd_error_code = "No markers set!"
+
+def set_marker():
+    global jumpindex
+    global jumplist
+
+    jumpindex = len(jumplist)
+    jumplist.append(tracebuffer[index].split("@")[0])
 
 def main(stdscr):
     global cmd_error_code
@@ -373,12 +416,12 @@ def main(stdscr):
                 cmdbuffer = ['/']
             elif c == ord('g'):
                 if len(numbuffer) > 0:
-                    jump = 0
+                    ijump = 0
                     dec = 1
                     for n in reversed(numbuffer):
-                        jump += dec * n
+                        ijump += dec * n
                         dec = dec * 10
-                    index = jump
+                    index = ijump
                     if index < 0:
                         index = 0
                     if index > (len(tracebuffer) - 1):
@@ -414,7 +457,15 @@ def main(stdscr):
                 index += num_tracelines
                 if index > (len(tracebuffer) - 1):
                     index = len(tracebuffer) - 1
-
+            elif c == ord('s'):
+                set_marker()
+            elif c == ord('c'):
+                jumpindex = 0
+                jumplist = []
+            elif c == ord('j'):
+                jump("forward")
+            elif c == ord('J'):
+                jump("back")
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
 
