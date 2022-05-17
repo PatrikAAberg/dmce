@@ -232,9 +232,30 @@ def filter_cores(cores):
         index = 0
         return
 
+def goto_index(istr):
+    global index
+    global tracebuffer
+
+    # interval halving later if needed!
+    i = 0
+    while i < len(tracebuffer):
+        if (istr == tracebuffer[i].split("@")[0]):
+            index = i
+            return
+        i += 1
+    index = 0
+
 def clear_filters():
+    global cmd_error_code
+    global core_filter
+    global tracebuffer
+    global full_tracebuffer
+    global index
+
     core_filter = []
+    cur_index = tracebuffer[index].split("@")[0]
     tracebuffer = full_tracebuffer.copy()
+    goto_index(cur_index)
     cmd_error_code = "All filters reset"
     return
 
@@ -247,6 +268,7 @@ def cmd_filter(cmds):
                 return
         elif cmds[1] == "clear":
             clear_filters()
+            return
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
 
