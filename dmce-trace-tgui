@@ -125,13 +125,14 @@ def draw(stdscr):
     srcindex = int(tracebuffer[index].split("@")[4]) - 1
 
     if old_srcpath != srcpath:
-        src_start = 0
+        src_start = srcindex - int(num_srclines / 2)
         old_srcpath = srcpath
 
     if src_start > srcindex:
-        src_start = srcindex
+        src_start = srcindex - int(num_srclines / 2)
+
     if srcindex > (src_start + num_srclines - 1):
-        src_start = srcindex - num_srclines + 1
+        src_start = srcindex - int(num_srclines / 2) + 1
 
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer):
