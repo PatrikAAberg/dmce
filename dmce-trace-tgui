@@ -113,7 +113,7 @@ def draw(stdscr):
             else:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout)
         else:
-            stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', w_screen - wx_varsview)
+            stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', wtout)
 
 
 # code view
