@@ -106,7 +106,8 @@ def draw(stdscr):
             if tracebuffer[i].split("@")[0] in jumplist:
                 pre = ">"
             tout = pre + '@'.join(lout[0:7]).replace("@", " ")
-            tout = tout.ljust(w_screen - (w_screen - wx_varsview) - 2, " ")
+            wtout = w_screen - (w_screen - wx_varsview) - 1
+            tout = tout[:wtout].ljust(wtout, " ")
             if i == index:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
             else:
@@ -165,17 +166,18 @@ def draw(stdscr):
     timestamp = int(timestamp)
     function = tracebuffer[index].split("@")[5]
 
-    stdscr.addstr(1, wx_varsview, ("Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(2, wx_varsview, ("File             : " + filename).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(3, wx_varsview, ("Function         : " + function).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(4, wx_varsview, ("Core             : " + core).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(5, wx_varsview, ("Timestamp        : " + str(timestamp)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(6, wx_varsview, ("Timestamp prev   : " + str(int(timestamp_prev))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(7, wx_varsview, ("Diff             : " + str(diff)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(8, wx_varsview, ("Filters"))
-    stdscr.addstr(9, wx_varsview, ("---------------------"))
-    stdscr.addstr(10, wx_varsview, ("Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(12, wx_varsview, ("Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
+#    stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(int(timestamp_prev))).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(7, wx_varsview, (" Diff             : " + str(diff)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(8, wx_varsview, (" Filters"))
+    stdscr.addstr(9, wx_varsview, (" ---------------------"))
+    stdscr.addstr(10, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(12, wx_varsview, (" Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
 
 # cmd view
     if user_input_mode:
@@ -190,7 +192,7 @@ def draw(stdscr):
 # bars
     stdscr.hline(wy_codeview - 2, wx_codeview, '_', w_screen)
     stdscr.hline(wy_codeview + num_srclines, wx_codeview, '_', w_screen)
-    stdscr.vline(0, wx_varsview - 2, '|', h_screen)
+    stdscr.vline(0, wx_varsview - 1, '|', h_screen)
 
 
 def cleanup_exit():
