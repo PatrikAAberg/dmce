@@ -258,26 +258,49 @@ def cmd_search(sstr):
     global search_dir
 
     if len(sstr) > 1:
-        if search_dir == "down":
-            i = index + 1
-            while i < len(tracebuffer):
-                if sstr[1:] in tracebuffer[i]:
-                    nbr_te = tracebuffer[i].split("@")[0]
-                    cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
-                    index = i
-                    last_search_cmd = sstr
-                    return
-                i += 1
+        if sstr[:2] == "/'":
+            r = re.compile(sstr[2:])
+            if search_dir == "down":
+                i = index + 1
+                while i < len(tracebuffer):
+                    if r.search(tracebuffer[i]):
+                        nbr_te = tracebuffer[i].split("@")[0]
+                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                        index = i
+                        last_search_cmd = sstr
+                        return
+                    i += 1
+            else:
+                i = index - 1
+                while i > 0:
+                    if r.search(tracebuffer[i]):
+                        nbr_te = tracebuffer[i].split("@")[0]
+                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                        index = i
+                        last_search_cmd = sstr
+                        return
+                    i -= 1
         else:
-            i = index - 1
-            while i > 0:
-                if sstr[1:] in tracebuffer[i]:
-                    nbr_te = tracebuffer[i].split("@")[0]
-                    cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
-                    index = i
-                    last_search_cmd = sstr
-                    return
-                i -= 1
+            if search_dir == "down":
+                i = index + 1
+                while i < len(tracebuffer):
+                    if sstr[1:] in tracebuffer[i]:
+                        nbr_te = tracebuffer[i].split("@")[0]
+                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                        index = i
+                        last_search_cmd = sstr
+                        return
+                    i += 1
+            else:
+                i = index - 1
+                while i > 0:
+                    if sstr[1:] in tracebuffer[i]:
+                        nbr_te = tracebuffer[i].split("@")[0]
+                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                        index = i
+                        last_search_cmd = sstr
+                        return
+                    i -= 1
 
         cmd_error_code = "Not found: " + sstr[1:]
         return
@@ -328,6 +351,11 @@ def show_help(stdscr):
     stdscr.addstr(22, 0, "  filter core A,B,C     - filter on core number")
     stdscr.addstr(23, 0, "  filter core clear     - clear core filter")
     stdscr.addstr(23, 0, "  filter clear          - clear all filters")
+    stdscr.addstr(27, 0, "  Hints")
+    stdscr.addstr(28, 0, "  ---------------------------------------------------------------------")
+    stdscr.addstr(29, 0, "  - In command mode, any string prepended by '/' will be searched for)")
+    stdscr.addstr(30, 0, "  - Python regular expressions can be used for searches using a ' sign")
+    stdscr.addstr(31, 0, "    Example: :/'.*foo.*bar")
 
     c = stdscr.getch()
 
