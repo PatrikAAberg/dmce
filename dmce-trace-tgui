@@ -53,6 +53,7 @@ relaunch = False
 editor = "vim"
 
 #log = open("/tmp/dmcetraceviewer.log", "w")
+#print("dmce trace viewer log", file=log)
 
 # look for editor configuration
 user = os.environ.get("USER")
@@ -68,26 +69,10 @@ if os.path.exists(cfile):
 
 user_input_mode = False
 
-def init(stdscr):
+def init():
     global tracebuffer
     global full_tracebuffer
     global args
-
-    global wy_codeview
-    global wy_varsview
-    global wx_varsview
-    global num_srclines
-    global num_tracelines
-    global w_screen
-    global h_screen
-
-    curses.curs_set(0)
-
-    h_screen, w_screen = stdscr.getmaxyx()
-    wy_codeview = wy_varsview = int(h_screen / 2)
-    num_srclines = num_tracelines = int((h_screen / 2) - 3)
-
-    wx_varsview = w_screen - int(w_screen / 4)
 
     tf = open(args.tfile)
     full_tracebuffer = tf.readlines()
@@ -100,7 +85,19 @@ def init(stdscr):
 
     tracebuffer = full_tracebuffer.copy()
 
-#    print("dmce trace viewer log", file=log)
+def init_screen(stdscr):
+    global wy_codeview
+    global wy_varsview
+    global wx_varsview
+    global num_srclines
+    global num_tracelines
+    global w_screen
+    global h_screen
+
+    h_screen, w_screen = stdscr.getmaxyx()
+    wy_codeview = wy_varsview = int(h_screen / 2)
+    num_srclines = num_tracelines = int((h_screen / 2) - 3)
+    wx_varsview = w_screen - int(w_screen / 4)
 
 def draw(stdscr):
     global tracebuffer
@@ -479,16 +476,28 @@ def main(stdscr, relaunched = False):
     global user_input_mode
     global search_dir
     global relaunch
+    global w_screen
+    global h_screen
+
+    curses.curs_set(0)
 
     relaunch = False
 
     if not relaunched:
-        init(stdscr)
+        init()
+        init_screen(stdscr)
         index = len(tracebuffer) - 1
 
     c = ord('z')
 
     while 1:
+        # resize stuff
+        if curses.is_term_resized(h_screen, w_screen):
+            init_screen(stdscr)
+            stdscr.clear()
+#            curses.resizeterm(y, x)
+
+        # cmd being written
         if user_input_mode:
             curses.curs_set(1)
             search_dir = "down"
