@@ -30,6 +30,7 @@ codebuffer = []
 varbuffer = []
 numbuffer = []
 cmdbuffer = []
+cmdindex = 0
 cmdhistory = [[]]
 cmdhistoryindex = 0
 jumplist = []
@@ -194,8 +195,10 @@ def draw(stdscr):
     stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
 
     if user_input_mode:
-        cmdstr = "".join(cmdbuffer)
-        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr)
+        cmdstr1 = "".join(cmdbuffer[:cmdindex])
+        cmdstr2 = "".join(cmdbuffer[cmdindex:])
+        stdscr.addstr(wy_codeview + num_srclines + 1, cmdindex + 1, cmdstr2)
+        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr1)
 
 def cleanup_exit():
     curses.nocbreak()
@@ -442,6 +445,7 @@ def main(stdscr):
     global tracebuffer
     global numbuffer
     global cmdbuffer
+    global cmdindex
     global cmdhistory
     global cmdhistoryindex
     global index
@@ -467,9 +471,21 @@ def main(stdscr):
                     cmdbuffer = []
                 user_input_mode = False
             elif len(cmdbuffer) > 0 and c == curses.KEY_BACKSPACE:
-                cmdbuffer.pop()
+                cmdbuffer.pop(cmdindex - 1)
+                cmdindex -= 1
+                if cmdindex < 0:
+                    cmdindex = 0
             elif c >= 32 and c <= 126:
-                cmdbuffer.append(chr(c))
+                cmdbuffer.insert(cmdindex, chr(c))
+                cmdindex += 1
+            elif c == curses.KEY_RIGHT:
+                cmdindex += 1
+                if cmdindex > len(cmdbuffer):
+                    cmdindex = len(cmdbuffer)
+            elif c == curses.KEY_LEFT:
+                cmdindex -= 1
+                if cmdindex < 0:
+                    cmdindex = 0
             elif c == curses.KEY_DOWN:
                 cmdhistoryindex -= 1
                 if cmdhistoryindex < 0:
