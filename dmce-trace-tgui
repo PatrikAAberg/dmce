@@ -66,6 +66,8 @@ def init(stdscr):
     global w_screen
     global h_screen
 
+    curses.curs_set(0)
+
     h_screen, w_screen = stdscr.getmaxyx()
     wy_codeview = wy_varsview = int(h_screen / 2)
     num_srclines = num_tracelines = int((h_screen / 2) - 3)
@@ -180,13 +182,6 @@ def draw(stdscr):
     stdscr.addstr(10, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(12, wx_varsview, (" Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
 
-# cmd view
-    if user_input_mode:
-        cmdstr = "".join(cmdbuffer)
-        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr.ljust(w_screen - (w_screen - wx_varsview), " "))
-    else:
-        stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
-
 # info / error codes
     stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
 
@@ -195,6 +190,12 @@ def draw(stdscr):
     stdscr.hline(wy_codeview + num_srclines, wx_codeview, '_', w_screen)
     stdscr.vline(0, wx_varsview - 1, '|', h_screen)
 
+# cmd view
+    stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
+
+    if user_input_mode:
+        cmdstr = "".join(cmdbuffer)
+        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr)
 
 def cleanup_exit():
     curses.nocbreak()
@@ -456,6 +457,7 @@ def main(stdscr):
 
     while 1:
         if user_input_mode:
+            curses.curs_set(1)
             search_dir = "down"
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 if len(cmdbuffer) > 0:
@@ -479,6 +481,7 @@ def main(stdscr):
                     cmdhistoryindex = 0
                 cmdbuffer = cmdhistory[cmdhistoryindex].copy()
         else:
+            curses.curs_set(0)
             if c == ord('h'):
                 show_help(stdscr)
             if c == ord('q'):
