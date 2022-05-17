@@ -202,6 +202,32 @@ def cleanup_exit():
     curses.echo()
     curses.endwin()
 
+def goto_index(istr):
+    global index
+    global tracebuffer
+
+    # interval halving later if needed!
+    i = 0
+    while i < len(tracebuffer):
+        if (istr == tracebuffer[i].split("@")[0]):
+            index = i
+            return
+        i += 1
+    index = 0
+
+def clear_core_filter():
+    global cmd_error_code
+    global core_filter
+    global tracebuffer
+    global full_tracebuffer
+    global index
+
+    core_filter = []
+    cur_index = tracebuffer[index].split("@")[0]
+    tracebuffer = full_tracebuffer.copy()
+    goto_index(cur_index)
+    cmd_error_code = "Core filter reset"
+
 def filter_cores(cores):
     global cmd_error_code
     global core_filter
@@ -210,9 +236,7 @@ def filter_cores(cores):
     global index
 
     if cores == "clear":
-        core_filter = []
-        tracebuffer = full_tracebuffer.copy()
-        cmd_error_code = "Core filter reset"
+        clear_core_filter()
         return
     else:
         temp = []
@@ -228,35 +252,13 @@ def filter_cores(cores):
         f = "|".join(core_filter)
         sr = '^\d*@(' + f + ')@.*'
         re_core = re.compile(sr)
+        cur_index = tracebuffer[index].split("@")[0]
         tracebuffer = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
-        index = 0
+        goto_index(cur_index)
         return
 
-def goto_index(istr):
-    global index
-    global tracebuffer
-
-    # interval halving later if needed!
-    i = 0
-    while i < len(tracebuffer):
-        if (istr == tracebuffer[i].split("@")[0]):
-            index = i
-            return
-        i += 1
-    index = 0
-
-def clear_filters():
-    global cmd_error_code
-    global core_filter
-    global tracebuffer
-    global full_tracebuffer
-    global index
-
-    core_filter = []
-    cur_index = tracebuffer[index].split("@")[0]
-    tracebuffer = full_tracebuffer.copy()
-    goto_index(cur_index)
-    cmd_error_code = "All filters reset"
+def clear_all_filters():
+    clear_core_filter()
     return
 
 def cmd_filter(cmds):
@@ -267,7 +269,7 @@ def cmd_filter(cmds):
                 filter_cores(cmds[2])
                 return
         elif cmds[1] == "clear":
-            clear_filters()
+            clear_all_filters()
             return
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
