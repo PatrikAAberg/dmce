@@ -31,6 +31,7 @@ varbuffer = []
 numbuffer = []
 cmdbuffer = []
 cmdhistory = [[]]
+cmdhistoryindex = 0
 jumplist = []
 jumpindex = 0
 cmd_error_code = ""
@@ -386,6 +387,7 @@ def main(stdscr):
     global numbuffer
     global cmdbuffer
     global cmdhistory
+    global cmdhistoryindex
     global index
     global tv_start
     global tv_end
@@ -401,25 +403,26 @@ def main(stdscr):
         if user_input_mode:
             search_dir = "down"
             if c == curses.KEY_ENTER or c == 10 or c == 13:
-                cmdhistory.append(cmdbuffer)
-                cmdhistoryindex = len(cmdhistory)
-                execute_command("".join(cmdbuffer))
-                cmdbuffer = []
+                if len(cmdbuffer) > 0:
+                    cmdhistory.insert(1,cmdbuffer.copy())
+                    cmdhistoryindex = 0
+                    execute_command("".join(cmdbuffer))
+                    cmdbuffer = []
                 user_input_mode = False
             elif len(cmdbuffer) > 0 and c == curses.KEY_BACKSPACE:
                 cmdbuffer.pop()
             elif c >= 32 and c <= 126:
                 cmdbuffer.append(chr(c))
-            elif c == curses.KEY_UP:
-                cmdhistoryindex -= 1
-                if cmdhistoryindex < 1:
-                    cmdhistoryindex = 1
-                cmdbuffer = cmdhistory[cmdhistoryindex]
             elif c == curses.KEY_DOWN:
+                cmdhistoryindex -= 1
+                if cmdhistoryindex < 0:
+                    cmdhistoryindex = len(cmdhistory) - 1
+                cmdbuffer = cmdhistory[cmdhistoryindex].copy()
+            elif c == curses.KEY_UP:
                 cmdhistoryindex += 1
                 if cmdhistoryindex > len(cmdhistory) - 1:
-                    cmdhistoryindex = len(cmdhistory) - 1
-                cmdbuffer = cmdhistory[cmdhistoryindex]
+                    cmdhistoryindex = 0
+                cmdbuffer = cmdhistory[cmdhistoryindex].copy()
         else:
             if c == ord('h'):
                 show_help(stdscr)
@@ -492,6 +495,7 @@ def main(stdscr):
         tv_end = tv_start + num_tracelines
 
         draw(stdscr)
+#        stdscr.addstr(50, 0, "DEBUG")
         c = stdscr.getch()
 
 wrapper(main)
