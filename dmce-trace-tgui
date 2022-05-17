@@ -49,8 +49,22 @@ index = 0
 srcindex = 0
 old_srcpath = ""
 
+relaunch = False
+editor = "vim"
+
 #log = open("/tmp/dmcetraceviewer.log", "w")
 
+# look for editor configuration
+user = os.environ.get("USER")
+cfile = "/home/" + user + "/.dmceconfig"
+if os.path.exists(cfile):
+    c = open (cfile)
+    config = c.readlines()
+    c.close()
+    for c in config:
+        if "DMCE_EDITOR" in c:
+            editor = c.split(":")[1].strip()
+            break
 
 user_input_mode = False
 
@@ -374,6 +388,7 @@ def show_help(stdscr):
     stdscr.addstr(14, 0, "  s             - add trace entry to jump list (markers)")
     stdscr.addstr(15, 0, "  j             - jump to next marker")
     stdscr.addstr(16, 0, "  J             - jump to previous marker")
+    stdscr.addstr(17, 0, "  ENTER         - open current source file in editor")
     stdscr.addstr(20, 0, "  Commands")
     stdscr.addstr(21, 0, "  ---------------------------------------------------------")
     stdscr.addstr(22, 0, "  filter core A,B,C     - filter on core number")
@@ -386,6 +401,16 @@ def show_help(stdscr):
     stdscr.addstr(31, 0, "    Example: :/'.*foo.*bar")
 
     c = stdscr.getch()
+
+def launch_editor(stdscr):
+    global tracebuffer
+    global index
+    global relaunch
+    global editor
+
+    filename = tracebuffer[index].split("@")[3]
+    os.system(editor + " " + filename)
+    relaunch = True
 
 def jump(direction):
     global jumplist
@@ -440,7 +465,7 @@ def clear_jumplist():
     jumpindex = 0
     jumplist = []
 
-def main(stdscr):
+def main(stdscr, relaunched = False):
     global cmd_error_code
     global tracebuffer
     global numbuffer
@@ -453,10 +478,14 @@ def main(stdscr):
     global tv_end
     global user_input_mode
     global search_dir
-    init(stdscr)
+    global relaunch
 
+    relaunch = False
 
-    index = len(tracebuffer) - 1
+    if not relaunched:
+        init(stdscr)
+        index = len(tracebuffer) - 1
+
     c = ord('z')
 
     while 1:
@@ -500,8 +529,6 @@ def main(stdscr):
             curses.curs_set(0)
             if c == ord('h'):
                 show_help(stdscr)
-            if c == ord('q'):
-                break
             elif c == ord(':'):
                 user_input_mode = True
             elif c == ord('/'):
@@ -560,7 +587,10 @@ def main(stdscr):
                 jump("back")
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
-
+            elif c == curses.KEY_ENTER or c == 10 or c == 13:
+                launch_editor(stdscr)
+            if c == ord('q') or relaunch:
+                break
         if index < tv_start:
             tv_start = index
         if index >= tv_end:
@@ -573,7 +603,8 @@ def main(stdscr):
         c = stdscr.getch()
 
 wrapper(main)
-
+while relaunch:
+    wrapper(main, relaunched = True)
 
 
 # EOF
