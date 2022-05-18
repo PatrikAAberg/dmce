@@ -568,6 +568,7 @@ def main(stdscr, relaunched = False):
             elif c == ord('/'):
                 user_input_mode = True
                 cmdbuffer = ['/']
+                cmdindex = 1
             elif c == ord('g'):
                 if len(numbuffer) > 0:
                     ijump = 0
