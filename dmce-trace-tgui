@@ -510,12 +510,15 @@ def main(stdscr, relaunched = False):
                     cmdhistoryindex = 0
                     execute_command("".join(cmdbuffer))
                     cmdbuffer = []
+                    cmdindex = 0
                 user_input_mode = False
             elif len(cmdbuffer) > 0 and c == curses.KEY_BACKSPACE:
-                cmdbuffer.pop(cmdindex - 1)
                 cmdindex -= 1
                 if cmdindex < 0:
                     cmdindex = 0
+                    cmdbuffer = []
+                else:
+                    cmdbuffer.pop(cmdindex)
             elif c >= 32 and c <= 126:
                 cmdbuffer.insert(cmdindex, chr(c))
                 cmdindex += 1
@@ -611,7 +614,7 @@ def main(stdscr, relaunched = False):
         tv_end = tv_start + num_tracelines
 
         draw(stdscr)
-#        stdscr.addstr(50, 0, "DEBUG")
+#        stdscr.addstr(50, 0, "INDEX: " + str(cmdindex) + "   LIST: " + str(cmdbuffer))
         c = stdscr.getch()
 
 wrapper(main)
