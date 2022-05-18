@@ -174,27 +174,32 @@ def draw(stdscr):
     entry_num = tracebuffer[index].split("@")[0]
     filename = os.path.basename(srcpath)
     core = tracebuffer[index].split("@")[1]
-    timestamp = float(tracebuffer[index].split("@")[2])
+    timestamp = int(tracebuffer[index].split("@")[2])
     if index > 0:
-        timestamp_prev = float(tracebuffer[index - 1].split("@")[2])
+        timestamp_prev = int(tracebuffer[index - 1].split("@")[2])
     else:
         timestamp_prev = 0
-    diff = int(timestamp - timestamp_prev)
-    timestamp = int(timestamp)
+
+    diff = timestamp - timestamp_prev
+
     function = tracebuffer[index].split("@")[5]
+
+    markers = (", ".join(jumplist)).ljust(w_screen - wx_varsview, " ")
 
     # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(int(timestamp_prev))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(7, wx_varsview, (" Diff             : " + str(diff)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(8, wx_varsview, (" Filters"))
-    stdscr.addstr(9, wx_varsview, (" ---------------------"))
-    stdscr.addstr(10, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(12, wx_varsview, (" Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(7, wx_varsview, (" Diff             : " + str(diff) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(9, wx_varsview, (" Markers: "))
+    stdscr.addstr(10, wx_varsview, (" ---------------------"))
+    stdscr.addstr(11, wx_varsview, " " + markers)
+    stdscr.addstr(13, wx_varsview, (" Filters"))
+    stdscr.addstr(14, wx_varsview, (" ---------------------"))
+    stdscr.addstr(15, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
 
     # info / error codes
     if blink:
