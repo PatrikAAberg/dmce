@@ -35,7 +35,7 @@ cmdhistory = [[]]
 cmdhistoryindex = 0
 jumplist = []
 jumpindex = 0
-cmd_error_code = ""
+cmd_error_code = "Press 'h' for help screen!"
 
 core_filter = []
 
@@ -50,6 +50,8 @@ srcindex = 0
 old_srcpath = ""
 
 relaunch = False
+blink = True
+
 editor = "vim"
 
 #log = open("/tmp/dmcetraceviewer.log", "w")
@@ -111,6 +113,7 @@ def draw(stdscr):
     global num_srclines
     global num_tracelines
     global old_srcpath
+    global blink
 
     # trace view
     wtout = w_screen - (w_screen - wx_varsview) - 1
@@ -194,7 +197,10 @@ def draw(stdscr):
     stdscr.addstr(12, wx_varsview, (" Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
 
     # info / error codes
-    stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
+    if blink:
+        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
+    else:
+        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "))
 
     # bars
     stdscr.hline(wy_codeview - 2, wx_codeview, '_', w_screen)
@@ -388,7 +394,8 @@ def show_help(stdscr):
     stdscr.addstr(14, 0, "  s             - add trace entry to jump list (markers)")
     stdscr.addstr(15, 0, "  j             - jump to next marker")
     stdscr.addstr(16, 0, "  J             - jump to previous marker")
-    stdscr.addstr(17, 0, "  ENTER         - open current source file in editor")
+    stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
+    stdscr.addstr(18, 0, "  ENTER         - open current source file in editor")
     stdscr.addstr(20, 0, "  Commands")
     stdscr.addstr(21, 0, "  ---------------------------------------------------------")
     stdscr.addstr(22, 0, "  filter core A,B,C     - filter on core number")
@@ -409,7 +416,11 @@ def launch_editor(stdscr):
     global editor
 
     filename = tracebuffer[index].split("@")[3]
-    os.system(editor + " " + filename)
+    linenbr = tracebuffer[index].split("@")[4]
+    if editor == "vim" or editor == "vi" or editor == "emacs" or editor == "nano":
+        os.system(editor + " " + linenbr + " " + filename)
+    else:
+        os.system(editor + " " + filename)
     relaunch = True
 
 def jump(direction):
@@ -441,7 +452,9 @@ def jump(direction):
                 break
             i += 1
         if not found:
-            cmd_error_code = "Marker '" + ejump + "' not available in this filter view"
+            cmd_error_code = "Trace entry '" + ejump + "' not available in this filter view"
+        else:
+            cmd_error_code = "Jumped to marker " + str(jumpindex)
     else:
         cmd_error_code = "No markers set!"
 
@@ -481,6 +494,7 @@ def main(stdscr, relaunched = False):
     global relaunch
     global w_screen
     global h_screen
+    global blink
 
     curses.curs_set(0)
 
@@ -600,6 +614,11 @@ def main(stdscr, relaunched = False):
                 jump("forward")
             elif c == ord('J'):
                 jump("back")
+            elif c == ord('b'):
+                if blink:
+                    blink = False
+                else:
+                    blink = True
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
