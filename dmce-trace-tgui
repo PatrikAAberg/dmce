@@ -112,7 +112,8 @@ def draw(stdscr):
     global num_tracelines
     global old_srcpath
 
-# trace view
+    # trace view
+    wtout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(tv_start, tv_end + 1):
         if i < len(tracebuffer):
             lout = tracebuffer[i].rstrip().split("@")
@@ -120,7 +121,6 @@ def draw(stdscr):
             if tracebuffer[i].split("@")[0] in jumplist:
                 pre = ">"
             tout = pre + '@'.join(lout[0:7]).replace("@", " ")
-            wtout = w_screen - (w_screen - wx_varsview) - 1
             tout = tout[:wtout].ljust(wtout, " ")
             if i == index:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
@@ -130,7 +130,7 @@ def draw(stdscr):
             stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', wtout)
 
 
-# code view
+    # code view
     srcpath = tracebuffer[index].split("@")[3]
 
     sf = open(srcpath)
@@ -156,9 +156,8 @@ def draw(stdscr):
                 stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i])
         else:
             stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
-#        stdscr.addstr(wy_codeview, 40, "start: " + str(src_start) + "index: " + str(srcindex) + " h: " + str(h_screen) + " w: " + str(w_screen), curses.A_REVERSE)
 
-# vars view
+    # vars view
     varstr = tracebuffer[index].split("@")[7:]
     vout = varstr[0].split(" ")
     i = 0
@@ -168,7 +167,7 @@ def draw(stdscr):
     for j in range(5-i):
         stdscr.addstr(wy_varsview + i + j, wx_varsview, "                                           ")
 
-# trace info view
+    # trace info view
     entry_num = tracebuffer[index].split("@")[0]
     filename = os.path.basename(srcpath)
     core = tracebuffer[index].split("@")[1]
@@ -181,7 +180,7 @@ def draw(stdscr):
     timestamp = int(timestamp)
     function = tracebuffer[index].split("@")[5]
 
-#    stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
@@ -194,15 +193,15 @@ def draw(stdscr):
     stdscr.addstr(10, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(12, wx_varsview, (" Markers: " + ", ".join(jumplist)).ljust(w_screen - wx_varsview, " "))
 
-# info / error codes
+    # info / error codes
     stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
 
-# bars
+    # bars
     stdscr.hline(wy_codeview - 2, wx_codeview, '_', w_screen)
     stdscr.hline(wy_codeview + num_srclines, wx_codeview, '_', w_screen)
     stdscr.vline(0, wx_varsview - 1, '|', h_screen)
 
-# cmd view
+    # cmd view
     stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
 
     if user_input_mode:
@@ -263,13 +262,17 @@ def filter_cores(cores):
                 cmd_error_code = "'filter cores' needs a comma separated list of cores or 'clear'"
                 return
 
-        core_filter = temp
-        f = "|".join(core_filter)
+        f = "|".join(temp)
         sr = '^\d*@(' + f + ')@.*'
         re_core = re.compile(sr)
         cur_index = tracebuffer[index].split("@")[0]
-        tracebuffer = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
+        tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
+        if len(tracebuffer_tmp) == 0:
+            cmd_error_code = "No cores matching requested filter"
+            return
+        tracebuffer = tracebuffer_tmp.copy()
         goto_index(cur_index)
+        core_filter = temp
         return
 
 def clear_all_filters():
