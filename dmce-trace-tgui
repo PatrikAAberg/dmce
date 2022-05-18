@@ -523,7 +523,11 @@ def main(stdscr, relaunched = False):
         if user_input_mode:
             curses.curs_set(1)
             search_dir = "down"
-            if c == curses.KEY_ENTER or c == 10 or c == 13:
+            if c == 27:
+                cmdbuffer = []
+                cmdindex = 0
+                user_input_mode = False
+            elif c == curses.KEY_ENTER or c == 10 or c == 13:
                 if len(cmdbuffer) > 0:
                     cmdhistory.insert(1,cmdbuffer.copy())
                     cmdhistoryindex = 0
@@ -642,8 +646,10 @@ def main(stdscr, relaunched = False):
 #        stdscr.addstr(50, 0, "INDEX: " + str(cmdindex) + "   LIST: " + str(cmdbuffer))
         c = stdscr.getch()
 
+os.environ.setdefault('ESCDELAY', '25')
 wrapper(main)
 while relaunch:
+    os.environ.setdefault('ESCDELAY', '25')
     wrapper(main, relaunched = True)
 
 
