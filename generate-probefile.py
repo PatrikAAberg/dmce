@@ -122,6 +122,7 @@ probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
 
 current_function = ""
+current_function_sticky = ""
 expdb_exptext = []
 expdb_linestart = []
 expdb_colstart = []
@@ -786,7 +787,7 @@ while (lineindex < linestotal):
             expdb_lineend.append(int(lstart))
             expdb_colend.append(int(cstart) -1 )
             expdb_tab.append(tab)
-            expdb_func.append(current_function)
+            expdb_func.append(current_function_sticky)
             if not in_parmdecl_sticky:
                 expdb_secstackvars.append(secStackVars.copy())
                 expdb_reffedvars.append(reffedVars.copy())
@@ -834,6 +835,9 @@ while (lineindex < linestotal):
                # Sanity check
                if (int(lstart) > int(cf_len)):
                  raise ValueError('{} sanity check failed! lstart: {} cf_len {}'.format(parsed_file, lstart, cf_len))
+
+               # save current function to use when expression is finally saved
+               current_function_sticky = current_function
 
                # Self contained expression
                if (exppatternmode[i] == 1):
@@ -1015,7 +1019,7 @@ if inside_expression:
     expdb_lineend.append(int(lstart))
     expdb_colend.append(int(cstart) - 1)
     expdb_tab.append(tab)
-    expdb_func.append(current_function)
+    expdb_func.append(current_function_sticky)
     if not in_parmdecl_sticky:
         expdb_secstackvars.append(secStackVars.copy())
         expdb_reffedvars.append(reffedVars.copy())
