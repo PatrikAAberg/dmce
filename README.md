@@ -153,6 +153,8 @@ You might want something fancier than less to view your trace. An interactive tr
     
     $ dmce-set-profile trace
     
+    $ git clone https://github.com/PatrikAAberg/dmce-examples.git
+    
     $ cd dmce-examples
     
     $ dmce-launcher -aq
