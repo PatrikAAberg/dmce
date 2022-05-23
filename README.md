@@ -147,6 +147,7 @@ For larger traces than this one, something to try out is to pipe the results to 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
 
 ## Example 3: Interactive trace viewer
+<img width="1180" alt="tgui" src="https://user-images.githubusercontent.com/22773714/169835252-d0d9716f-2dfc-447c-ae8d-b23a39bae3d0.png">
 
 You might want something fancier than less to view your trace. An interactive trace viewer can be invoked instead of using the dmce-trace command in the previous example. This time we will use the "threads" example program (this example assumes you have installed the .deb package followed by executing 'dmce-setup'):
     
