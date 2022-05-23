@@ -296,30 +296,30 @@ def apply_all_filters():
     # core filter
     if len(core_filter) > 0:
         f = "|".join(core_filter)
-        sr = '^\d*@(' + f + ')@.*'
+        sr = '^\d*@' + f + '@.*'
         re_core = re.compile(sr)
         tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
 
 
     # file filter
     if file_filter != "":
-        sr = '^.*@.*@.*@(.*' + file_filter + '.*)@.*@.*@.*'
-        re_core = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), tracebuffer_tmp))
+        sr = '^.*@.*@.*@.*' + file_filter + '.*@.*@.*@.*'
+        re_file = re.compile(sr)
+        tracebuffer_tmp = list(filter(lambda tline: re_file.match(tline), tracebuffer_tmp))
 
 
     # function filter
     if func_filter != "":
-        sr = '^.*@.*@.*@.*@.*@(.*' + func_filter + '.*)@.*'
-        re_core = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), tracebuffer_tmp))
+        sr = '^.*@.*@.*@.*@.*' + func_filter + '.*@.*@.*'
+        re_func = re.compile(sr)
+        tracebuffer_tmp = list(filter(lambda tline: re_func.match(tline), tracebuffer_tmp))
 
 
     # src filter
     if src_filter != "":
-        sr = '^.*@.*@.*@.*@.*@.*@(.*' + src_filter + '.*)'
-        re_core = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), tracebuffer_tmp))
+        sr = '^.*@.*@.*@.*@.*@.*@.*' + src_filter + '.*'
+        re_src = re.compile(sr)
+        tracebuffer_tmp = list(filter(lambda tline: re_src.match(tline), tracebuffer_tmp))
 
 
     if len(tracebuffer_tmp) == 0:
