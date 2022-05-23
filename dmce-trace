@@ -71,7 +71,7 @@ for s in prefs:
 print("Reading trace buffer", file=sys.stderr)
 
 # Read data
-data = np.fromfile(dfile, dtype=np.int64)
+data = np.fromfile(dfile, dtype=np.uint64)
 
 print("Sorting out ring buffer", file=sys.stderr)
 
