@@ -47,18 +47,21 @@ DESCRIPTION
         This OVE plugin will decode one DMCE trace buffer and display the raw trace to the user.
         If 'fzf' (=github.com/junegunn/fzf) is installed an interactive viewer is launched.
 
-        It's possible to force the viewer to 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
+        It's possible to force the viewer to 'tgui', 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
 
 CONFIGURATION
         # select trace viewer tool
-        DMCE_TRACE_VIEWER stdout|stderr|less|fzf|<file>
+        DMCE_TRACE_VIEWER tgui|stdout|stderr|less|fzf|<file>
 
 EXAMPLES
+        # decode the trace buffer and launch the interactive viewer tgui
+        $ ove dmce trace-decode ag
+
         # install fzf
         $ <package manager> install fzf
 
         # decode the trace buffer and launch an interactive fzf viewer
-        $ ove dmce trace-decode ag
+        $ DMCE_TRACE_VIEWER=fzf ove dmce trace-decode ag
 
         # decode the trace buffer and display the trace on stdout
         $ DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
