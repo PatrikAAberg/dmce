@@ -148,24 +148,30 @@ That's it! You should now be able to see the null-pointer bug at the end of exec
 
 ## Example 3: Interactive trace viewer
 
-You might want something fancier than less to view your trace. An interactive trace viewer can be invoked instead of using the dmce-trace command in the previous example. Still using the results from example 2 (make sure to still be in the dmce-examples directory), lets's try it out:
-
-    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+You might want something fancier than less to view your trace. An interactive trace viewer can be invoked instead of using the dmce-trace command in the previous example. This time we will use the "threads" example program (this example assumes you have installed the .deb package followed by executing 'dmce-setup'):
     
-Doing this, you will notice dmce probes visible in the code. That's great for being in control what has actually been executed, but maybe not so great for readability. However, the probes can as shown above easily be removed with a simple call to dmce-launcher. Using the "probe-references-original.log" instead of the "probe-references.log" file, the viewer will find the correct code lines for the original versions:
-
-    $ dmce-launcher -c
+    $ dmce-set-profile trace
+    
+    $ cd dmce-examples
+    
+    $ dmce-launcher -aq
+    
+    $ cd threads
+    
+    $ ./build
+    
+    $ ./threads
+    
+    $ cd ..
+    
+    $ dmce-launcher -c    # Here we use a non-probed tree for increased visibility (and therefore we use the 'original' probe file below)
+        
     $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
 
-The dmce-trace-viewer uses fzf to search through the trace data. Doing this, you typically want bookmarks that can be jumped to. Installing a fork of fzf made by mtempling enables you to use tab to mark bookmarks and ctrl-j to jump between them:
+There are multiple output formats and GUIs to choose from, for more information please see the help text:
 
-https://github.com/mtempling/fzf.git
-
-It assumes you have golang installed on your computer. In the dmce git you can also find a very simple installer script (also assuming golang is installed):
-
-    $ cd dmce
-    $ ./fzf-install
-
+    $ dmce-trace-viewer
+    
 ## Example 4: Patch code coverage
 
 This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
