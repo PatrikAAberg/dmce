@@ -200,7 +200,7 @@ def draw(stdscr):
     stdscr.addstr(11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     pos = wx_varsview + 1
     for m in jumplist:
-        if str(index) != m:
+        if str(entry_num) != m:
             stdscr.addstr(11, pos, str(m) + " ")
         else:
             stdscr.addstr(11, pos, str(m) + " ", curses.A_REVERSE)
