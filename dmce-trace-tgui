@@ -121,7 +121,7 @@ def draw(stdscr):
     # trace view
     wtout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(tv_start, tv_end + 1):
-        if i < len(tracebuffer):
+        if i < len(tracebuffer) and i >= 0:
             lout = tracebuffer[i].rstrip().split("@")
             pre = " "
             if tracebuffer[i].split("@")[0] in jumplist:
@@ -155,7 +155,7 @@ def draw(stdscr):
         src_start = srcindex - int(num_srclines / 2) + 1
 
     for i in range(num_srclines):
-        if (src_start + i) < len(codebuffer):
+        if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
             if (src_start + i) == srcindex:
                 stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i], curses.A_REVERSE)
             else:
