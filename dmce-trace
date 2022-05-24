@@ -209,7 +209,10 @@ for n in range(length):
         lsource = treedict[codetree + "/" + fname]
 
         # reset fname
-        fname = str(cpu)
+        if args.sort == "heat" or args.sort == "collapse" or args.sort == "uniq":
+            fname = ""
+        else:
+            fname = str(cpu)
 
         if showtimestamps:
             fname += args.delimiter + str(data[n, 0])
