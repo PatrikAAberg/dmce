@@ -168,10 +168,10 @@ def draw(stdscr):
     vout = varstr[0].split(" ")
     i = 0
     for v in vout:
-        stdscr.addstr(wy_varsview + i, wx_varsview, v)
+        stdscr.addstr(wy_varsview + i, wx_varsview, v.ljust(w_screen - wx_varsview, " "))
         i += 1
     for j in range(5-i):
-        stdscr.addstr(wy_varsview + i + j, wx_varsview, "                                           ")
+        stdscr.addstr(wy_varsview + i, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
 
     # trace info view
     entry_num = tracebuffer[index].split("@")[0]
