@@ -332,6 +332,11 @@ When dmce is searching for added expressions between two git revisions it uses g
         minimal
         patience
 
+#### Text editor
+Some utilities (e.g. the dmce-trace-viewer) use an editor to view code. Specify the editor preference using this config.
+
+    DMCE_EDITOR:vim
+
 ### Optional entries in .dmceconfig
 
 #### Changing the type of traced variables
