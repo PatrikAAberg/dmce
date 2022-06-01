@@ -54,6 +54,7 @@ old_srcpath = ""
 
 relaunch = False
 blink = True
+ts_min = sys.maxsize
 
 editor = "vim"
 
@@ -78,6 +79,7 @@ def init():
     global tracebuffer
     global full_tracebuffer
     global args
+    global ts_min
 
     tf = open(args.tfile)
     full_tracebuffer = tf.readlines()
@@ -85,6 +87,11 @@ def init():
 
     i = 0
     while i < len(full_tracebuffer):
+        # find smallest ts to normalize the rest
+        ts = int(full_tracebuffer[i].split("@")[1])
+        if ts < ts_min:
+            ts_min = ts
+        # prepend with trace entry nbr
         full_tracebuffer[i] = str(i) + "@" + full_tracebuffer[i]
         i += 1
 
@@ -192,8 +199,8 @@ def draw(stdscr):
     stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp) + " (cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(7, wx_varsview, (" Diff             : " + str(diff) + " (cc)").ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(9, wx_varsview, (" Markers: "))
     stdscr.addstr(10, wx_varsview, (" ---------------------"))
