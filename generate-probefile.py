@@ -357,13 +357,21 @@ re_reffedvars.append(re.compile(r'.*DeclRefExpr\sHexnumber.*Var\sHexnumber\s\'(\
 re_skip_scopes = []
 re_skip_scopes.append(re.compile(r'.*-DeclStmt Hexnumber.*'))
 
+# AST entries to skip
+re_skip_ast_entry = re.compile(r'.*(<<NULL>>|<<invalid sloc>>).*')
+
+# Attributes cant backtrail, so special case for them
+re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
 
 # Populate c expression database
 while (lineindex < linestotal):
     if do_print:
         print("---------------------")
         print("Pre-filtered AST line:           " + linebuf[lineindex])
-    if '<<<NULL>>>' in linebuf[lineindex] or '<<invalid sloc>>' in linebuf[lineindex]:
+
+    if re_skip_ast_entry.match(linebuf[lineindex]):
+        if do_print:
+            print("Skipped ast entry!")
         lineindex+=1
         continue
 
@@ -480,6 +488,11 @@ while (lineindex < linestotal):
     # G <line:97:5, line:101:5> line:98:15\s
 
     backtrailing = 0
+    is_attribute = False
+
+    if re_is_attribute.match(linebuf[lineindex]):
+        is_attribute = True
+
     exp_extra = 0
     col_position_updated=0
     line_position_updated=0
@@ -911,7 +924,7 @@ while (lineindex < linestotal):
                 just_landed = 1
 
     # If lstart or curstart moved forward in parsed c file, update
-    if ( not just_landed and line_position_updated and in_parsed_file and (int(lstart) > int(last_lstart))):
+    if ( not is_attribute and not just_landed and line_position_updated and in_parsed_file and (int(lstart) > int(last_lstart))):
         last_lstart=lstart
         last_cstart=cstart
         if do_print:
