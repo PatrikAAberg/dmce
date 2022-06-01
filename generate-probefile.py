@@ -308,7 +308,7 @@ re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*")
 
 # Regexps below skips (not_to_skip overrides skip) entire blocks
 re_sections_to_not_skip = []
-re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*referenced class.*'))
+re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*(referenced|implicit) class.*'))
 re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*class.*definition.*'))
 
 # The ones to skip
