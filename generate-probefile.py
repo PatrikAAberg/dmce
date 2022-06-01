@@ -1187,7 +1187,7 @@ while (i < expdb_index):
        if (ls not in probed_lines):
             line = pbuf[ls]
 
-            iline = line[:cs] + "(DMCE_PROBE(TBD)," + line[cs:ce+1] + ")" + line[ce+1:]
+            iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + "; /* Function entry: " + expdb_func[i] + " */ " + line[cs:]
             if do_print:
                 print("Old single line: " + line.rstrip())
             if do_print:
@@ -1198,7 +1198,11 @@ while (i < expdb_index):
             probes += 1
             if do_print:
                 print("1 Added line :" + str(ls))
-            pdf.write(parsed_file + ":" + str(ls) + "\n")
+            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
+            for var in lr_vlist:
+                pdf.write( ":" + var)
+            pdf.write("\n")
+
     else:
         # Multiple lines
         # Insert on first line and last line
