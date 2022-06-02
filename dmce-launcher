@@ -80,6 +80,7 @@ OPTIONS
     -f <path/file>   Manually point out a custom .dmceconfig file
     --skip           Skip include file retrieval
     --stupid         DMCE include files awareness disabled
+    --calltrace      Only probe entry and exit of calls
     -v, --version    Get DMCE version
 
 DESCRIPTION
@@ -89,6 +90,11 @@ DESCRIPTION
 
     $ cd /path/to/git/
     $ ../dmce/$NAME ...
+
+    Output file locations:
+        Probe reference file:                       /tmp/$USER/dmce/gitname/probe-references-original.log
+        Probe reference file (probed line numbers): /tmp/$USER/dmce/gitname/probe-references.log
+        Default tracebuffer location:               /tmp/$USER/dmce/dmcebuffer.bin
 
     Details? Check out README.md!
 
@@ -200,6 +206,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 doublecheck)
                     doublecheck=true
+                    ;;
+                calltrace)
+                    export DMCE_PARSER_MODE=calltrace
                     ;;
                 skip)
                     skip=true
