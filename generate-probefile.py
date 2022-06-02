@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
-do_print=1
+do_print=0
 function_trace = 0
 
 parsed_file = sys.argv[1]
@@ -361,6 +361,9 @@ re_ftrace_entry.append(re.compile(r'.*FunctionDecl.*'))
 
 # Accepted function trace compound
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
+
+# function trace return statement
+re_ftrace_return_statement = re.compile(r'.*ReturnStmt Hexnumber <.*\,.*>.*')
 
 # Variable references
 re_reffedvars = []
@@ -876,6 +879,8 @@ while (lineindex < linestotal):
                         ftrace_infunc = False
                         if do_print:
                             print("Compound detected for endmark: " + ftrace_lend + ":" + ftrace_cend)
+
+                        # entry
                         lpos = int(lstart)
                         cpos = int(cstart) + 1
                         expdb_linestart.append(lpos)
@@ -892,6 +897,46 @@ while (lineindex < linestotal):
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_reffedvars.append(reffedVars.copy())
                         expdb_index +=1
+
+                        # exit
+                        lpos = int(ftrace_lend)
+                        cpos = int(ftrace_cend)
+                        expdb_linestart.append(lpos)
+                        expdb_colstart.append(cpos)
+                        expdb_lineend.append(lpos)
+                        expdb_colend.append(cpos)
+                        expdb_elineend.append(lpos)
+                        expdb_ecolend.append(cpos)
+                        expdb_exptext.append(linebuf[lineindex])
+                        expdb_in_c_file.append(in_parsed_file)
+                        expdb_tab.append(tab)
+                        expdb_exppatternmode.append(-2)
+                        expdb_func.append(current_function)
+                        expdb_secstackvars.append(secStackVars.copy())
+                        expdb_reffedvars.append(reffedVars.copy())
+                        expdb_index +=1
+
+            # Return statement?
+            m = re_ftrace_return_statement.match(linebuf[lineindex])
+            if m:
+                cur_lstart = int(lstart)
+                cur_cstart = int(cstart) + 6
+                cur_lend = int(lend)
+                cur_cend = int(cend)
+                cur_tab = tab
+                expdb_linestart.append(int(lstart))
+                expdb_colstart.append(int(cstart) + 6)
+                expdb_elineend.append(int(lend))
+                expdb_ecolend.append(int(cend))
+                expdb_exptext.append(linebuf[lineindex])
+                expdb_in_c_file.append(in_parsed_file)
+                expdb_exppatternmode.append(2)
+                inside_expression = lineindex
+                in_parmdecl_sticky = in_parmdecl
+                current_function_sticky = current_function
+                if do_print == 1:
+                     print("Return statement found at " + lstart + ":" + cstart + " :" + linebuf[lineindex])
+
         else:
             i = 0
             while (i < len(re_exppatternlist)):
@@ -1183,11 +1228,13 @@ while (i < expdb_index):
 
     #single line
     #    if (ls==le):
-    if (expdb_exppatternmode[i] == -1):
+    if (expdb_exppatternmode[i] < 0):
        if (ls not in probed_lines):
             line = pbuf[ls]
-
-            iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + "; /* Function entry: " + expdb_func[i] + " */ " + line[cs:]
+            comment = "; /* Function entry: "
+            if expdb_exppatternmode[i] == -2:
+                comment = "; /* Function exit: "
+            iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
             if do_print:
                 print("Old single line: " + line.rstrip())
             if do_print:
