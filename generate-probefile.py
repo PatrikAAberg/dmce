@@ -363,7 +363,7 @@ re_ftrace_entry.append(re.compile(r'.*FunctionDecl.*'))
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
 
 # function trace return statement
-re_ftrace_return_statement = re.compile(r'.*ReturnStmt Hexnumber <.*\,.*>.*')
+re_ftrace_return_statement = re.compile(r'.*ReturnStmt Hexnumber.*')
 
 # Variable references
 re_reffedvars = []
@@ -853,8 +853,7 @@ while (lineindex < linestotal):
         print(secStackPos)
         print(secStackVars)
 
-    if ((exp_extra) and (trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
-
+    if ((trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
         if function_trace:
 
             i = 0
@@ -919,25 +918,26 @@ while (lineindex < linestotal):
             # Return statement?
             m = re_ftrace_return_statement.match(linebuf[lineindex])
             if m:
-                cur_lstart = int(lstart)
-                cur_cstart = int(cstart) + 6
-                cur_lend = int(lend)
-                cur_cend = int(cend)
-                cur_tab = tab
-                expdb_linestart.append(int(lstart))
-                expdb_colstart.append(int(cstart) + 6)
-                expdb_elineend.append(int(lend))
-                expdb_ecolend.append(int(cend))
+                lpos = int(lstart)
+                cpos = int(cstart)
+                expdb_linestart.append(lpos)
+                expdb_colstart.append(cpos)
+                expdb_lineend.append(lpos)
+                expdb_colend.append(cpos)
+                expdb_elineend.append(lpos)
+                expdb_ecolend.append(cpos)
                 expdb_exptext.append(linebuf[lineindex])
                 expdb_in_c_file.append(in_parsed_file)
-                expdb_exppatternmode.append(2)
-                inside_expression = lineindex
-                in_parmdecl_sticky = in_parmdecl
-                current_function_sticky = current_function
+                expdb_tab.append(tab)
+                expdb_exppatternmode.append(-2)
+                expdb_func.append(current_function)
+                expdb_secstackvars.append(secStackVars.copy())
+                expdb_reffedvars.append(reffedVars.copy())
+                expdb_index +=1
                 if do_print == 1:
                      print("Return statement found at " + lstart + ":" + cstart + " :" + linebuf[lineindex])
 
-        else:
+        elif (exp_extra):
             i = 0
             while (i < len(re_exppatternlist)):
                 re_exp = re_exppatternlist[i]
