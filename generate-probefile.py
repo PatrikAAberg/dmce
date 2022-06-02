@@ -1245,7 +1245,18 @@ while (i < expdb_index):
             comment = "; /* Function entry: "
             if expdb_exppatternmode[i] == -2:
                 comment = "; /* Function exit: "
-            iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+
+            # Due to a bug in clang-check sometimes adds 1 to the column position, we try
+            # to mitigate by using any spaces to the left when inserting probes at the end
+
+            if cs >= 2 and expdb_exppatternmode[i] == -2:
+                if line[cs-2] != ' ':
+                    iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+                else:
+                    iline = line[:cs-1] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs-1:]
+            else:
+                iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+
             if do_print:
                 print("Old single line: " + line.rstrip())
             if do_print:
