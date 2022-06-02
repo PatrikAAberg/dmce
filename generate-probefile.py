@@ -394,6 +394,7 @@ while (lineindex < linestotal):
         print("---------------------")
         print("Pre-filtered AST line:           " + linebuf[lineindex])
 
+    linebuf[lineindex] = linebuf[lineindex].replace(", <invalid sloc>","")
     if re_skip_ast_entry.match(linebuf[lineindex]):
         if do_print:
             print("Skipped ast entry!")
@@ -887,6 +888,7 @@ while (lineindex < linestotal):
                         ftrace_infunc = False
                         if do_print:
                             print("Compound detected for endmark: " + ftrace_lend + ":" + ftrace_cend)
+                            print("Compound start: " + lstart + ":" + cstart)
 
                         # entry
                         lpos = int(lstart)
