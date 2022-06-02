@@ -27,9 +27,15 @@ import time
 
 # Log prints from this program are expensive and therefore normally disabled
 do_print=0
-function_trace = 0
 
 parsed_file = sys.argv[1]
+
+# Get parser mode
+parser_mode = os.getenv('DMCE_PARSER_MODE')
+if parser_mode == "calltrace":
+    function_trace = 1
+else:
+    function_trace = 0
 
 # Get number of data variables
 ndvs = os.getenv('DMCE_NUM_DATA_VARS')
