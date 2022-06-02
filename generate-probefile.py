@@ -363,7 +363,10 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 
 # function trace entry triggers
 re_ftrace_entry = []
-re_ftrace_entry.append(re.compile(r'.*FunctionDecl.*'))
+re_ftrace_entry.append(re.compile(r'.*-FunctionDecl.*'))
+re_ftrace_entry.append(re.compile(r'.*-CXXMethodDecl.*'))
+re_ftrace_entry.append(re.compile(r'.*-CXXConstructorDecl.*'))
+re_ftrace_entry.append(re.compile(r'.*-CXXDestructorDecl.*'))
 
 # Accepted function trace compound
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
