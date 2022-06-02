@@ -341,6 +341,7 @@ re_sections_parmdecl.append(re.compile(r'.*-VarDecl Hexnumber.*'))
 # Variable stack barriers
 re_var_barriers = []
 re_var_barriers.append(re.compile(r'.*-CXXRecordDecl.*'))
+re_var_barriers.append(re.compile(r'.*-LambdaExpr.*'))
 
 # Variable and param var declarations
 re_parmdeclarations = []
