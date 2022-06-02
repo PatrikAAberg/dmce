@@ -62,7 +62,11 @@ EXAMPLES
         # decode the trace buffer and save the trace to a file '/tmp/a.trace'
         $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-viewer [data file] [probe file] [code tree path]
 
-        # Typical example including paths to standard file locations using a __non-probed__ tree using 'fzf'
+        # Typical example including paths to default file locations using a __non-probed__ tree
+        $ cd mygit
+        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
+
+        # Typical example including paths to default file locations using a __non-probed__ tree using 'fzf'
         $ cd mygit
         $ DMCE_TRACE_VIEWER=fzf dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
 
