@@ -347,6 +347,14 @@ def filter_cores(cores):
     else:
         core_filter_copy = core_filter
 
+        # replace any intervals with comma-separated list
+        for r in re.finditer("(\d*)-(\d*)", cores):
+            expand = ""
+            for i in range(int(r.group(1)), int(r.group(2)) + 1):
+                expand = expand  + str(i) + ","
+            expand = re.sub(",$","",expand)
+            cores = cores.replace(r.group(1) + "-" + r.group(2), expand)
+
         core_filter = []
         for c in cores.split(","):
             c = c.strip()
@@ -539,7 +547,7 @@ def show_help(stdscr):
     stdscr.addstr(19, 0, "  ESCAPE        - exit command mode")
     stdscr.addstr(21, 0, "  Commands")
     stdscr.addstr(22, 0, "  ---------------------------------------------------------")
-    stdscr.addstr(23, 0, "  filter core A,B,C     - filter on core number")
+    stdscr.addstr(23, 0, "  filter core A,B,C-F   - filter on core number")
     stdscr.addstr(24, 0, "  filter core clear     - clear core filter")
     stdscr.addstr(25, 0, "  filter file <regexp>  - filter on path/filename")
     stdscr.addstr(26, 0, "  filter file clear     - clear file filter")
