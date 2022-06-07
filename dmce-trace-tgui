@@ -320,7 +320,7 @@ def apply_all_filters():
     # core filter
     if len(core_filter) > 0:
         f = "|".join(core_filter)
-        sr = '^\d*@' + f + '@.*'
+        sr = '^\d*@(' + f + ')@.*'
         re_core = re.compile(sr)
         tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
 
