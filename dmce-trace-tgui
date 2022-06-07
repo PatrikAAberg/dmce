@@ -194,6 +194,23 @@ def draw(stdscr):
 
     function = tracebuffer[index].split("@")[5]
 
+    compressed = ""
+    if len(core_filter) > 0:
+        seq = False
+        for i in range(len(core_filter) - 1):
+            if not seq:
+                if int(core_filter[i]) == int(core_filter[i + 1]) - 1:
+                    seq = True
+                    compressed = compressed + core_filter[i] + "-"
+                else:
+                    compressed = compressed + core_filter[i] + ","
+            else:
+                if int(core_filter[i]) != int(core_filter[i + 1]) - 1:
+                    seq = False
+                    compressed = compressed + core_filter[i] + ","
+
+        compressed = compressed + core_filter[len(core_filter) - 1]
+
     # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
@@ -214,7 +231,7 @@ def draw(stdscr):
         pos += len(m) + 1
     stdscr.addstr(13, wx_varsview, (" Filters"))
     stdscr.addstr(14, wx_varsview, (" ---------------------"))
-    stdscr.addstr(15, wx_varsview, (" Cores: " + ", ".join(core_filter)).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(16, wx_varsview, (" Files: " + file_filter).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(17, wx_varsview, (" Funcs: " + func_filter).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(18, wx_varsview, (" Srcs : " + src_filter).ljust(w_screen - wx_varsview, " "))
