@@ -709,6 +709,14 @@ def main(stdscr, relaunched = False):
                     cmdbuffer = []
                 else:
                     cmdbuffer.pop(cmdindex)
+            elif len(cmdbuffer) > cmdindex and c == curses.KEY_DC:
+                cmdbuffer.pop(cmdindex)
+            elif c == curses.KEY_HOME:
+                cmdindex = 0
+            elif c == curses.KEY_END:
+                cmdindex = len(cmdbuffer)
+                if cmdindex < 0:
+                    cmdindex = 0
             elif c >= 32 and c <= 126:
                 cmdbuffer.insert(cmdindex, chr(c))
                 cmdindex += 1
