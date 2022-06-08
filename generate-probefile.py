@@ -373,7 +373,7 @@ re_ftrace_entry.append(re.compile(r'.*-CXXDestructorDecl.*'))
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
 
 # function trace return statement
-re_ftrace_return_statement = re.compile(r'.*ReturnStmt Hexnumber.*')
+re_ftrace_return_statement = re.compile(r'.*ReturnStmt Hexnumber <.*\,.*>.*')
 
 # Variable references
 re_reffedvars = []
@@ -865,7 +865,7 @@ while (lineindex < linestotal):
         print(secStackVars)
 
     if ((trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
-        if function_trace:
+        if function_trace and not re_ftrace_return_statement.match(linebuf[lineindex]):
 
             i = 0
             while i < len(re_ftrace_entry):
@@ -926,28 +926,6 @@ while (lineindex < linestotal):
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_reffedvars.append(reffedVars.copy())
                         expdb_index +=1
-
-            # Return statement?
-            m = re_ftrace_return_statement.match(linebuf[lineindex])
-            if m:
-                lpos = int(lstart)
-                cpos = int(cstart)
-                expdb_linestart.append(lpos)
-                expdb_colstart.append(cpos)
-                expdb_lineend.append(lpos)
-                expdb_colend.append(cpos)
-                expdb_elineend.append(lpos)
-                expdb_ecolend.append(cpos)
-                expdb_exptext.append(linebuf[lineindex])
-                expdb_in_c_file.append(in_parsed_file)
-                expdb_tab.append(tab)
-                expdb_exppatternmode.append(-2)
-                expdb_func.append(current_function)
-                expdb_secstackvars.append(secStackVars.copy())
-                expdb_reffedvars.append(reffedVars.copy())
-                expdb_index +=1
-                if do_print == 1:
-                     print("Return statement found at " + lstart + ":" + cstart + " :" + linebuf[lineindex])
 
         elif (exp_extra):
             i = 0
