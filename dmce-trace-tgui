@@ -175,7 +175,7 @@ def draw(stdscr):
     vout = varstr[0].split(" ")
     i = 0
     for v in vout:
-        stdscr.addstr(wy_varsview + i, wx_varsview, v.ljust(w_screen - wx_varsview, " "))
+        stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview, " "))
         i += 1
     for j in range(5-i):
         stdscr.addstr(wy_varsview + i, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
@@ -715,8 +715,6 @@ def main(stdscr, relaunched = False):
                 cmdindex = 0
             elif c == curses.KEY_END:
                 cmdindex = len(cmdbuffer)
-                if cmdindex < 0:
-                    cmdindex = 0
             elif c >= 32 and c <= 126:
                 cmdbuffer.insert(cmdindex, chr(c))
                 cmdindex += 1
