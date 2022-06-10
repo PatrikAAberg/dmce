@@ -308,6 +308,16 @@ def clear_src_filter():
     cmd_error_code = "src filter reset"
 
 
+def re_compile_and_check(s):
+    global cmd_error_code
+    cmd_error_code = ""
+    try:
+        r = re.compile(s)
+    except:
+        cmd_error_code = "Invalid regexp"
+        return None
+    return r
+
 def apply_all_filters():
     global core_filter
     global tracebuffer
@@ -321,30 +331,38 @@ def apply_all_filters():
     if len(core_filter) > 0:
         f = "|".join(core_filter)
         sr = '^\d*@(' + f + ')@.*'
-        re_core = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
-
+        re_core = re_compile_and_check(sr)
+        if re_core is not None:
+            tracebuffer_tmp = list(filter(lambda tline: re_core.match(tline), full_tracebuffer))
+        else:
+            return
 
     # file filter
     if file_filter != "":
         sr = '^.*@.*@.*@.*' + file_filter + '.*@.*@.*@.*'
-        re_file = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_file.match(tline), tracebuffer_tmp))
-
+        re_file = re_compile_and_check(sr)
+        if re_file is not None:
+            tracebuffer_tmp = list(filter(lambda tline: re_file.match(tline), tracebuffer_tmp))
+        else:
+            return
 
     # function filter
     if func_filter != "":
         sr = '^.*@.*@.*@.*@.*' + func_filter + '.*@.*@.*'
-        re_func = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_func.match(tline), tracebuffer_tmp))
-
+        re_func = re_compile_and_check(sr)
+        if re_func is not None:
+            tracebuffer_tmp = list(filter(lambda tline: re_func.match(tline), tracebuffer_tmp))
+        else:
+            return
 
     # src filter
     if src_filter != "":
         sr = '^.*@.*@.*@.*@.*@.*@.*' + src_filter + '.*'
-        re_src = re.compile(sr)
-        tracebuffer_tmp = list(filter(lambda tline: re_src.match(tline), tracebuffer_tmp))
-
+        re_src = re_compile_and_check(sr)
+        if re_src is not None:
+            tracebuffer_tmp = list(filter(lambda tline: re_src.match(tline), tracebuffer_tmp))
+        else:
+            return
 
     if len(tracebuffer_tmp) == 0:
         cmd_error_code = "No trace entries matching requested filter"
@@ -463,6 +481,7 @@ def cmd_filter(cmds):
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
 
+
 def cmd_search(sstr):
     global cmd_error_code
     global last_search_cmd
@@ -472,27 +491,30 @@ def cmd_search(sstr):
 
     if len(sstr) > 1:
         if sstr[:2] == "/'":
-            r = re.compile(sstr[2:])
-            if search_dir == "down":
-                i = index + 1
-                while i < len(tracebuffer):
-                    if r.search(tracebuffer[i]):
-                        nbr_te = tracebuffer[i].split("@")[0]
-                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
-                        index = i
-                        last_search_cmd = sstr
-                        return
-                    i += 1
+            r = re_compile_and_check(sstr[2:])
+            if r is not None:
+                if search_dir == "down":
+                    i = index + 1
+                    while i < len(tracebuffer):
+                        if r.search(tracebuffer[i]):
+                            nbr_te = tracebuffer[i].split("@")[0]
+                            cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                            index = i
+                            last_search_cmd = sstr
+                            return
+                        i += 1
+                else:
+                    i = index - 1
+                    while i > 0:
+                        if r.search(tracebuffer[i]):
+                            nbr_te = tracebuffer[i].split("@")[0]
+                            cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
+                            index = i
+                            last_search_cmd = sstr
+                            return
+                        i -= 1
             else:
-                i = index - 1
-                while i > 0:
-                    if r.search(tracebuffer[i]):
-                        nbr_te = tracebuffer[i].split("@")[0]
-                        cmd_error_code = "Found '" + sstr[1:] + "' at trace entry: " + nbr_te
-                        index = i
-                        last_search_cmd = sstr
-                        return
-                    i -= 1
+                return
         else:
             if search_dir == "down":
                 i = index + 1
@@ -741,6 +763,7 @@ def main(stdscr, relaunched = False):
             if c == ord('h'):
                 show_help(stdscr)
             elif c == ord(':'):
+                cmd_error_code = ""
                 user_input_mode = True
             elif c == ord('/'):
                 user_input_mode = True
