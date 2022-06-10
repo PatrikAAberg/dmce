@@ -447,7 +447,7 @@ def cmd_filter(cmds):
                 return
         elif cmds[1] == "file":
             if len(cmds) >= 3:
-                filter_files(cmds[2])
+                filter_files(cmds[2].replace("@", "@\+"))
                 return
         elif cmds[1] == "func":
             if len(cmds) >= 3:
@@ -564,19 +564,19 @@ def show_help(stdscr):
     stdscr.addstr(19, 0, "  ESCAPE        - exit command mode")
     stdscr.addstr(21, 0, "  Commands")
     stdscr.addstr(22, 0, "  ---------------------------------------------------------")
-    stdscr.addstr(23, 0, "  filter core A,B,C-F   - filter on core number")
-    stdscr.addstr(24, 0, "  filter core clear     - clear core filter")
-    stdscr.addstr(25, 0, "  filter file <regexp>  - filter on path/filename")
-    stdscr.addstr(26, 0, "  filter file clear     - clear file filter")
-    stdscr.addstr(27, 0, "  filter func <regexp>  - filter on function name")
-    stdscr.addstr(28, 0, "  filter func clear     - clear func filter")
-    stdscr.addstr(29, 0, "  filter src <regexp>   - filter on src line")
-    stdscr.addstr(30, 0, "  filter src clear      - clear src filter")
-    stdscr.addstr(31, 0, "  filter clear          - clear all filters")
+    stdscr.addstr(23, 0, "  filter core A,B,C-F             - filter on core number")
+    stdscr.addstr(24, 0, "  filter core clear               - clear core filter")
+    stdscr.addstr(25, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
+    stdscr.addstr(26, 0, "  filter file clear               - clear file filter")
+    stdscr.addstr(27, 0, "  filter func <regexp>            - filter on function name")
+    stdscr.addstr(28, 0, "  filter func clear               - clear func filter")
+    stdscr.addstr(29, 0, "  filter src <regexp>             - filter on src line")
+    stdscr.addstr(30, 0, "  filter src clear                - clear src filter")
+    stdscr.addstr(31, 0, "  filter clear                    - clear all filters")
     stdscr.addstr(33, 0, "  Hints")
     stdscr.addstr(34, 0, "  ---------------------------------------------------------------------")
     stdscr.addstr(35, 0, "  - In command mode, any string prepended by '/' will be searched for)")
-    stdscr.addstr(36, 0, "  - Python regular expressions can be used for searches using a ' sign")
+    stdscr.addstr(36, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
     stdscr.addstr(37, 0, "    Example: :/'.*foo.*bar")
 
     c = stdscr.getch()
