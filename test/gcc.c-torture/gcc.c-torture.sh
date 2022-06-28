@@ -175,10 +175,10 @@ if [[ "$numVars" -eq "0" ]]; then
     sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test.c|" .dmceconfig
 else
-    echo "5 variables probes enabled"
-    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test-D5.c|" .dmceconfig
-    sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test-D5.c|" .dmceconfig
-    echo "DMCE_NUM_DATA_VARS:5" >> .dmceconfig
+    echo "10 variables probes enabled"
+    sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test-DX.c|" .dmceconfig
+    sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test-DX.c|" .dmceconfig
+    echo "DMCE_NUM_DATA_VARS:10" >> .dmceconfig
     echo "DMCE_TRACE_VAR_TYPE:unsigned long" >> .dmceconfig
 fi
 

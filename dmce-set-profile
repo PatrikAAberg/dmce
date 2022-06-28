@@ -82,13 +82,13 @@ while count < len(clines):
         # trace profile
         if args.profile == "trace":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
-                clines[count] = "DMCE_NUM_DATA_VARS:5\n"
+                clines[count] = "DMCE_NUM_DATA_VARS:10\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-trace-atexit-D5-CB.c")
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-trace-atexit-DX-CB.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-D5.c")
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-DX.c")
 
         # coverage profile
         elif args.profile == "coverage":

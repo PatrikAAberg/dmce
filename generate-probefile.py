@@ -1179,24 +1179,23 @@ while (i < expdb_index):
 
         count = 0
         if len(lr_vlist) > 0:
-            probe_prolog = probe_prolog + ","
             for s in lr_vlist:
-                probe_prolog = probe_prolog + "(" + tvtype + ")" + s
+                probe_prolog = probe_prolog + ",(" + tvtype + ")" + s
                 count += 1
                 if (count == numDataVars):
                     break
-                probe_prolog = probe_prolog + ","
 
             lr_vlist = lr_vlist[0:numDataVars]
 
-        while (count < numDataVars):
-            count += 1
-            if count == 1:
-                probe_prolog = probe_prolog + ",0,"
-            elif count == numDataVars:
-                probe_prolog = probe_prolog + "0"
-            else:
-                probe_prolog = probe_prolog + "0,"
+#        while (count < numDataVars):
+#            count += 1
+#            if count == 1:
+#                probe_prolog = probe_prolog + ",0,"
+#            elif count == numDataVars:
+#                probe_prolog = probe_prolog + "0"
+#            else:
+#                probe_prolog = probe_prolog + "0,"
+        probe_prolog = probe_prolog.replace("DMCE_PROBE", "DMCE_PROBE" + str(count))
 
     probe_prolog = probe_prolog + "), "
 
