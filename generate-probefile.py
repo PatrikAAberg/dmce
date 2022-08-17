@@ -177,12 +177,17 @@ skip_lvalue_tab = 0
 
 function_scope_tab = 0
 
+in_conditional_sequence_point = False
+conditional_sequence_point_tab = 0
+in_member_expr = False
+member_expr_tab = 0
+
+
 lineindex = 0
 
 inside_expression = 0
 in_parsed_file = 0
 just_landed = 0
-
 probed_lines = []
 
 trailing = 0
@@ -299,7 +304,6 @@ re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.h|.*\.hh):\d*
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*>.*')
 re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.h|.*\.hh):.*')
 re_compound                 = re.compile(r'.*CompoundStmt.*')
-
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
 re_update_pos_B             = re.compile(r'.*<line:(\d*):(\d*)\,\scol:(\d*)>.*')
@@ -362,6 +366,17 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\*\'.*'))
 
+# Member vars
+re_memberdeclarations = []
+re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*> \'.*\' lvalue (->\w*).*'))
+
+# Conditional sequence points
+re_csp_list = []
+re_csp_list.append(re.compile(r'.*BinaryOperator.*(\'\|\|\'|\'\&\&\').*'))
+
+# Declaration reference
+re_declref = re.compile(r'.*-DeclRefExpr Hexnumber.*Var Hexnumber \'(\S*)\' \'.*\*\'.*')
+
 # function trace entry triggers
 re_ftrace_entry = []
 re_ftrace_entry.append(re.compile(r'.*-FunctionDecl.*'))
@@ -388,6 +403,16 @@ re_skip_ast_entry = re.compile(r'.*(<<NULL>>|<<invalid sloc>>).*')
 
 # Attributes cant backtrail, so special case for them
 re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
+
+# Some helpers
+
+def clean_stackvars():
+    i = 0
+    while (i < len(secStackVars)):
+        if "$" in secStackVars[i]:
+            secStackVars.pop(i)
+            secStackPos.pop(i)
+        i+=1
 
 # Populate c expression database
 while (lineindex < linestotal):
@@ -427,6 +452,10 @@ while (lineindex < linestotal):
         in_parmdecl=0
     if (in_function_scope) and (tab <= function_scope_tab):
         in_function_scope = False
+    if (in_conditional_sequence_point) and (tab <= conditional_sequence_point_tab):
+        in_conditional_sequence_point = False
+    if (in_member_expr) and (tab <= member_expr_tab):
+        in_member_expr = False
 
     # file refs
     anypos = re_file_ref_anypos.match(linebuf[lineindex])
@@ -803,6 +832,12 @@ while (lineindex < linestotal):
                 in_function_scope = True
                 function_scope_tab = tab
 
+    # Check for conditional sequence points && and || TODO: add ?
+    for re_csp in re_csp_list:
+        if not in_conditional_sequence_point and re_csp.match(linebuf[lineindex]):
+            in_conditional_sequence_point = True
+            conditional_sequence_point_tab = tab
+
     # Get a copy of linebuf[lineindex] without argument list to only search func names
     argsstripped = re.sub('\'.*\'','',linebuf[lineindex])
 
@@ -816,7 +851,7 @@ while (lineindex < linestotal):
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
         print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope))
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -834,6 +869,8 @@ while (lineindex < linestotal):
             else:
                 expdb_secstackvars.append([])
                 expdb_reffedvars.append([])
+            # Clean any member refs
+            clean_stackvars()
 
             expdb_index +=1
             if do_print:
@@ -848,7 +885,7 @@ while (lineindex < linestotal):
         at_func_entry = True
 
     # pop section stack?
-    if ((in_parsed_file or at_func_entry) and not inside_expression and numDataVars > 0):
+    if ((in_parsed_file or at_func_entry) and numDataVars > 0):
         while True:
             if len(secStackPos) > 0:
                 l, c = secStackPos[len(secStackPos) - 1]
@@ -907,6 +944,7 @@ while (lineindex < linestotal):
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_reffedvars.append(reffedVars.copy())
+                        clean_stackvars()
                         expdb_index +=1
 
                         # exit
@@ -925,6 +963,7 @@ while (lineindex < linestotal):
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_reffedvars.append(reffedVars.copy())
+                        clean_stackvars()
                         expdb_index +=1
 
         elif (exp_extra):
@@ -963,6 +1002,7 @@ while (lineindex < linestotal):
                        else:
                            expdb_secstackvars.append([])
                            expdb_reffedvars.append([])
+                       clean_stackvars()
                        expdb_index +=1
 
                    # Need to look for last sub expression
@@ -1034,11 +1074,11 @@ while (lineindex < linestotal):
         print("in parsed file: " + str(in_parsed_file))
 
     # update section info and any declarations
-    if not inside_expression and not skip_scope and in_parsed_file and numDataVars > 0:
+    found = 0
+    lookforvars = not skip_scope and in_parsed_file and numDataVars > 0
+    if lookforvars and not inside_expression:
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
-
-        # push new sections
 
         # var declarations in parameter declarations
         for section in re_parmdeclarations:
@@ -1046,51 +1086,81 @@ while (lineindex < linestotal):
             if m:
                 if do_print:
                     print("MATCHED PARM DECL: " + linebuf[lineindex])
+                varname = m.group(2)
+                found = 1
                 break
+
+    if not in_member_expr and not found and lineindex < len(linebuf) - 2 and in_parsed_file and numDataVars > 0:
+        foundmember = False
+        for section in re_memberdeclarations:
+            in_member_expr = True
+            member_expr_tab = tab
+            # first some exceptions for members
+            if not "struct" in linebuf[lineindex]:
+                m = section.match(linebuf[lineindex])
+                if m:
+                    if do_print:
+                        print("MATCHED MEMBER DECL: " + linebuf[lineindex])
+                    varname = m.group(1)
+                    foundmember = True
+                    break
+
+        foundrefdecl = False
+        m = re_declref.match(linebuf[lineindex + 2])
+        # Check for corresponding struct or class and make sure its a sub node
+        if m:
+            if do_print:
+                print("MATCHED MEMBER DECL AND DECL: " + linebuf[lineindex])
+            refname = m.group(1)
+            foundrefdecl = True
+
+        if inside_expression and foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
+            varname = "$" + refname + varname
+            found = 1
 
         # TODO: Add lvalue vars
 
-        if m and not backtrailing:
-            # top level ?
-            top = True
-            count = 0
-            for l, c in secStackPos:
-                if l != sys.maxsize:
-                    top = False
-                    break
-                count += 1
+    if found and not backtrailing:
+        # top level ?
+        top = True
+        count = 0
+        for l, c in secStackPos:
+            if l != sys.maxsize:
+                top = False
+                break
+            count += 1
 
-            if top:
-                secStackPos.append((sys.maxsize, 0))
-                secStackVars.append(m.group(2))
-            else:
-                # copy scope, add new var
-                scope = secStackPos.pop()
-                secStackPos.append(scope)
-                secStackPos.append(scope)
-                secStackVars.append(m.group(2))
-
+        if top:
+            secStackPos.append((sys.maxsize, 0))
+            secStackVars.append(varname)
         else:
-            # Skip?
-            skipthis = False
-            for section in re_skip_scopes:
-                m = section.match(linebuf[lineindex])
-                if m:
-                    skipthis = True
+            # copy scope, add new var
+            scope = secStackPos.pop()
+            secStackPos.append(scope)
+            secStackPos.append(scope)
+            secStackVars.append(varname)
 
-            # Barrier?
-            for section in re_var_barriers:
-                barrier = section.match(linebuf[lineindex])
-                if barrier:
-                    secStackVars.append("### VAR BARRIER ###")
-                    secStackPos.append((currentSectionLend, currentSectionCend))
-                    if do_print:
-                        print("MATCHED VAR BARRIER: " + linebuf[lineindex])
-                    break
+    elif lookforvars:
+        # Skip?
+        skipthis = False
+        for section in re_skip_scopes:
+            m = section.match(linebuf[lineindex])
+            if m:
+                skipthis = True
 
-            if not skipthis and not barrier:
-                secStackVars.append("")
+        # Barrier?
+        for section in re_var_barriers:
+            barrier = section.match(linebuf[lineindex])
+            if barrier:
+                secStackVars.append("### VAR BARRIER ###")
                 secStackPos.append((currentSectionLend, currentSectionCend))
+                if do_print:
+                    print("MATCHED VAR BARRIER: " + linebuf[lineindex])
+                break
+
+        if not skipthis and not barrier:
+            secStackVars.append("")
+            secStackPos.append((currentSectionLend, currentSectionCend))
 
     if in_parsed_file:
         # Check if any references to variables should be added to reffedVars
@@ -1130,6 +1200,7 @@ if inside_expression:
         expdb_secstackvars.append([])
         expdb_reffedvars.append([])
 
+    clean_stackvars()
     expdb_index +=1
 
 # Open probe expression data file to append entries
@@ -1160,6 +1231,7 @@ while (i < expdb_index):
         for s in reversed(expdb_secstackvars[i]):
             if s == "### VAR BARRIER ###":
                 break
+            s = s.replace("$","")
             if s != "":
                 vlist.append(s)
 
