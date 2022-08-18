@@ -851,7 +851,7 @@ while (lineindex < linestotal):
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
         print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point))
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -1093,14 +1093,14 @@ while (lineindex < linestotal):
     if not in_member_expr and not found and lineindex < len(linebuf) - 2 and in_parsed_file and numDataVars > 0:
         foundmember = False
         for section in re_memberdeclarations:
-            in_member_expr = True
-            member_expr_tab = tab
-            # first some exceptions for members
+           # first some exceptions for members
             if not "struct" in linebuf[lineindex]:
                 m = section.match(linebuf[lineindex])
                 if m:
                     if do_print:
                         print("MATCHED MEMBER DECL: " + linebuf[lineindex])
+                    in_member_expr = True
+                    member_expr_tab = tab
                     varname = m.group(1)
                     foundmember = True
                     break
