@@ -366,9 +366,10 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\*\'.*'))
 
-# Member vars
+# De-reffed member vars and pointers
 re_memberdeclarations = []
-re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*> \'.*\' lvalue (->\w*).*'))
+re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue (->\w*).*'))
+re_memberdeclarations.append(re.compile(r'.*-UnaryOperator Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue prefix \'(\*)\' .*'))
 
 # Conditional sequence points
 re_csp_list = []
@@ -1093,17 +1094,19 @@ while (lineindex < linestotal):
     if not in_member_expr and not found and lineindex < len(linebuf) - 2 and in_parsed_file and numDataVars > 0:
         foundmember = False
         for section in re_memberdeclarations:
-           # first some exceptions for members
-            if not "struct" in linebuf[lineindex]:
-                m = section.match(linebuf[lineindex])
-                if m:
-                    if do_print:
-                        print("MATCHED MEMBER DECL: " + linebuf[lineindex])
-                    in_member_expr = True
-                    member_expr_tab = tab
-                    varname = m.group(1)
-                    foundmember = True
-                    break
+            # first some exceptions for members
+            m = section.match(linebuf[lineindex])
+            if m:
+                if do_print:
+                    print("MATCHED MEMBER DECL: " + linebuf[lineindex])
+                varname = m.group(2)
+                foundmember = True
+                break
+
+        # If we are in a member expr that we do not handle, we still must skip underlaying member exprs
+        if "-MemberExpr" in linebuf[lineindex] or "-ArraySubscriptExpr" in linebuf[lineindex]:
+            in_member_expr = True
+            member_expr_tab = tab
 
         foundrefdecl = False
         m = re_declref.match(linebuf[lineindex + 2])
@@ -1115,7 +1118,11 @@ while (lineindex < linestotal):
             foundrefdecl = True
 
         if inside_expression and foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
-            varname = "$" + refname + varname
+            # member or pointer deref?
+            if varname == "*":
+                varname = "$*" + refname
+            else:
+                varname = "$" + refname + varname
             found = 1
 
         # TODO: Add lvalue vars
