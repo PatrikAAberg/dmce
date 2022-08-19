@@ -1135,7 +1135,7 @@ while (lineindex < linestotal):
                 refname = m.group(1)
                 foundrefdecl = True
 
-        if foundmember and inside_expression and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
+        if foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
             # member or pointer deref?
             if varname == "*":
                 varname = "$*" + refname
