@@ -1075,6 +1075,7 @@ while (lineindex < linestotal):
         print("in parsed file: " + str(in_parsed_file))
 
     # update section info and any declarations
+    varname = ""
     found = 0
     lookforvars = not skip_scope and in_parsed_file and numDataVars > 0
     if lookforvars and not inside_expression:
@@ -1091,16 +1092,32 @@ while (lineindex < linestotal):
                 found = 1
                 break
 
-    if not in_member_expr and not found and lineindex < len(linebuf) - 2 and in_parsed_file and numDataVars > 0:
+    if not in_member_expr and not found and in_parsed_file and numDataVars > 0:
         foundmember = False
-        for section in re_memberdeclarations:
-            # first some exceptions for members
-            m = section.match(linebuf[lineindex])
-            if m:
-                if do_print:
-                    print("MATCHED MEMBER DECL: " + linebuf[lineindex])
-                varname = m.group(2)
+        member_offset = 0
+
+        # limit ourselves to 8 derefs
+        while member_offset < 16 and (lineindex + member_offset + 2) < len(linebuf):
+            matchmember = False
+            for section in re_memberdeclarations:
+                m = section.match(linebuf[lineindex + member_offset])
+                if m:
+                    # Just handle the pattern with ImpCast directly after for now
+                    if "ImplicitCastExpr" in linebuf[lineindex + member_offset + 1]:
+                        if do_print:
+                            print("MATCHED MEMBER DECL: " + linebuf[lineindex])
+                        varname = m.group(2) + varname
+                        matchmember = True
+                        break
+                    else:
+                        # skip if not following this pattern
+                        in_member_expr = True
+                        member_expr_tab = tab
+
+            if matchmember:
+                member_offset += 2
                 foundmember = True
+            else:
                 break
 
         # If we are in a member expr that we do not handle, we still must skip underlaying member exprs
@@ -1108,19 +1125,22 @@ while (lineindex < linestotal):
             in_member_expr = True
             member_expr_tab = tab
 
-        foundrefdecl = False
-        m = re_declref.match(linebuf[lineindex + 2])
-        # Check for corresponding struct or class and make sure its a sub node
-        if m:
-            if do_print:
-                print("MATCHED MEMBER DECL AND DECL: " + linebuf[lineindex])
-            refname = m.group(1)
-            foundrefdecl = True
+        if foundmember:
+            foundrefdecl = False
+            m = re_declref.match(linebuf[lineindex + member_offset])
+            # Check for corresponding struct or class and make sure its a sub node
+            if m:
+                if do_print:
+                    print("MATCHED REF DECL: " + linebuf[lineindex])
+                refname = m.group(1)
+                foundrefdecl = True
 
-        if inside_expression and foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
+        if foundmember and inside_expression and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
             # member or pointer deref?
             if varname == "*":
                 varname = "$*" + refname
+            elif varname =="**":
+                varname = "$**" + refname
             else:
                 varname = "$" + refname + varname
             found = 1
