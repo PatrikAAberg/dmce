@@ -413,7 +413,8 @@ def clean_stackvars():
         if "$" in secStackVars[i]:
             secStackVars.pop(i)
             secStackPos.pop(i)
-        i+=1
+        else:
+            i+=1
 
 # Populate c expression database
 while (lineindex < linestotal):
@@ -1092,7 +1093,7 @@ while (lineindex < linestotal):
                 found = 1
                 break
 
-    if not in_member_expr and not found and in_parsed_file and numDataVars > 0:
+    if inside_expression and not in_member_expr and not found and in_parsed_file and numDataVars > 0:
         foundmember = False
         member_offset = 0
 
