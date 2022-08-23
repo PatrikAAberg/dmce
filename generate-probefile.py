@@ -423,6 +423,7 @@ while (lineindex < linestotal):
         print("Pre-filtered AST line:           " + linebuf[lineindex])
 
     linebuf[lineindex] = linebuf[lineindex].replace(", <invalid sloc>","")
+    linebuf[lineindex] = linebuf[lineindex].replace("<invalid sloc>, ","")
     if re_skip_ast_entry.match(linebuf[lineindex]):
         if do_print:
             print("Skipped ast entry!")
