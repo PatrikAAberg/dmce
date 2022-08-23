@@ -1144,7 +1144,14 @@ while (lineindex < linestotal):
             elif varname =="**":
                 varname = "$**" + refname
             else:
-                varname = "$" + refname + varname
+                if "**" in varname:
+                    varname = varname.replace("**", "")
+                    varname = "$**" + refname + varname
+                elif "*" in varname:
+                    varname = varname.replace("*", "")
+                    varname = "$*" + refname + varname
+                else:
+                    varname = "$" + refname + varname
             found = 1
 
         # TODO: Add lvalue vars
