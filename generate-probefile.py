@@ -336,6 +336,7 @@ re_sections_to_skip.append(re.compile(r'.*-EnumDecl Hexnumber.*'))
 re_sections_to_skip.append(re.compile(r'.*<.*>.*\sconstexpr\s.*'))
 re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
+re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix \'*\'.*'))
 
 # Parameter and variable declarations
 re_sections_parmdecl = []
