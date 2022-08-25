@@ -890,16 +890,26 @@ while (lineindex < linestotal):
 
     # pop section stack?
     if ((in_parsed_file or at_func_entry) and numDataVars > 0):
-        while True:
-            if len(secStackPos) > 0:
-                l, c = secStackPos[len(secStackPos) - 1]
-                if (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
-                    secStackPos.pop()
-                    secStackVars.pop()
-                else:
-                    break
+        i = 0
+        while (i < len(secStackPos)):
+            l, c = secStackPos[i]
+            if (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
+                secStackVars.pop(i)
+                secStackPos.pop(i)
             else:
-                break
+                i+=1
+
+#        while True:
+#            if len(secStackPos) > 0:
+#                l, c = secStackPos[len(secStackPos) - 1]
+#                if (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
+#                    secStackPos.pop()
+#                    secStackVars.pop()
+#                else:
+#                    break
+#            else:
+#                break
+
     if do_print:
         print("Scope stack after pop check: ")
         print(secStackPos)
