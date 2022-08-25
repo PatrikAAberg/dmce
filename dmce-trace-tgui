@@ -600,6 +600,8 @@ def show_help(stdscr):
     stdscr.addstr(35, 0, "  - In command mode, any string prepended by '/' will be searched for)")
     stdscr.addstr(36, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
     stdscr.addstr(37, 0, "    Example: :/'.*foo.*bar")
+    stdscr.addstr(38, 0, "  - To search for a trace entry where a variable contains a certain value:")
+    stdscr.addstr(39, 0, "    Example: /foo:0x0042")
 
     c = stdscr.getch()
 
