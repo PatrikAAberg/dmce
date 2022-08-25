@@ -71,7 +71,8 @@ function jobcap {
 }
 
 function memcap {
-    let memlimit=50
+
+    let memlimit=$DMCE_MEMORY_LIMIT
     while true; do
         mem=$(free | grep "Mem")
         tot=$(echo $mem | cut -d' ' -f2)

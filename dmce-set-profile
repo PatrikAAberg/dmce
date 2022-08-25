@@ -12,6 +12,7 @@ parser.add_argument('-f', '--file',   type=str, default = None, help='What confi
 parser.add_argument('-d', '--configdir',   type=str, default = None, help='What config folder to update, default: $HOME/.config/dmce')
 parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-anything', help='Comma separated list of files and functions to exclude: <file,:function,file:function >')
 parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma separated list of files and functions to include: <file,:function,file:function >')
+parser.add_argument('-m', '--memlimit',   type=str, default = '50',   help='If used memory on the system exceeds this limit, DMCE will halt and not spawn new jobs until used memory goes below the limit again (default: 50)')
 parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
@@ -71,6 +72,10 @@ count = 0
 while count < len(clines):
 
     if not '#' in clines[count]:
+
+        # Modify memory limit?
+        if "DMCE_MEMORY_LIMIT" in clines[count]:
+            clines[count] = "DMCE_MEMORY_LIMIT:" + args.memlimit + "\n"
 
         # Use system include files?
         if "DMCE_SYS_INCLUDES" in clines[count]:
