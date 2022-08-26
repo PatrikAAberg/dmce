@@ -1,3 +1,5 @@
+DMCE_MEMORY_LIMIT:50
+
 # DMCE install path
 DMCE_EXEC_PATH:
 

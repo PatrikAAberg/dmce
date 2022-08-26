@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
-do_print=0
+do_print=1
 
 parsed_file = sys.argv[1]
 
@@ -143,6 +143,7 @@ expdb_exppatternmode = []
 expdb_secstackvars = []
 expdb_reffedvars = []
 expdb_func = []
+expdb_frp = []
 expdb_index = 0
 
 secStackPos = []
@@ -176,6 +177,8 @@ skip_lvalue = 0
 skip_lvalue_tab = 0
 
 function_scope_tab = 0
+
+function_returns_pointer = False
 
 in_conditional_sequence_point = False
 conditional_sequence_point_tab = 0
@@ -385,6 +388,13 @@ re_ftrace_entry.append(re.compile(r'.*-FunctionDecl.*'))
 re_ftrace_entry.append(re.compile(r'.*-CXXMethodDecl.*'))
 re_ftrace_entry.append(re.compile(r'.*-CXXConstructorDecl.*'))
 re_ftrace_entry.append(re.compile(r'.*-CXXDestructorDecl.*'))
+
+# Functions that returns pointer
+re_function_returns_pointer = []
+re_function_returns_pointer.append(re.compile(r'.*-FunctionDecl.*\'\w* \*\(.*'))
+
+re_return_zero = re.compile(r'.*return\(DMCE_PROBE.*\)\,\s*0\s*\)')
+resub_return_zero = re.compile(r'\,\s*0\s*\)')
 
 # Accepted function trace compound
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
@@ -862,7 +872,7 @@ while (lineindex < linestotal):
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
         print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr))
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) )
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -894,6 +904,12 @@ while (lineindex < linestotal):
     at_func_entry = False
     if "-FunctionDecl" in linebuf[lineindex]:
         at_func_entry = True
+
+        # Does the function return a pointer?
+        function_returns_pointer = False
+        for frp in re_function_returns_pointer:
+            if frp.match(linebuf[lineindex]):
+                function_returns_pointer = True
 
     # pop section stack?
     if ((in_parsed_file or at_func_entry) and numDataVars > 0):
@@ -961,6 +977,7 @@ while (lineindex < linestotal):
                         expdb_exptext.append(linebuf[lineindex])
                         expdb_in_c_file.append(in_parsed_file)
                         expdb_tab.append(tab)
+                        expdb_frp.append(function_returns_pointer)
                         expdb_exppatternmode.append(-1)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
@@ -980,6 +997,7 @@ while (lineindex < linestotal):
                         expdb_exptext.append(linebuf[lineindex])
                         expdb_in_c_file.append(in_parsed_file)
                         expdb_tab.append(tab)
+                        expdb_frp.append(function_returns_pointer)
                         expdb_exppatternmode.append(-2)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
@@ -1015,6 +1033,7 @@ while (lineindex < linestotal):
                        expdb_exptext.append(linebuf[lineindex])
                        expdb_in_c_file.append(in_parsed_file)
                        expdb_tab.append(tab)
+                       expdb_frp.append(function_returns_pointer)
                        expdb_exppatternmode.append(1)
                        expdb_func.append(current_function)
                        if not in_parmdecl:
@@ -1040,6 +1059,7 @@ while (lineindex < linestotal):
                        expdb_exptext.append(linebuf[lineindex])
                        expdb_in_c_file.append(in_parsed_file)
                        expdb_exppatternmode.append(2)
+                       expdb_frp.append(function_returns_pointer)
                        #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
                        inside_expression = lineindex
@@ -1059,6 +1079,7 @@ while (lineindex < linestotal):
                        expdb_exptext.append(linebuf[lineindex])
                        expdb_in_c_file.append(in_parsed_file)
                        expdb_exppatternmode.append(2)
+                       expdb_frp.append(function_returns_pointer)
                        #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
                        inside_expression = lineindex
@@ -1265,6 +1286,16 @@ pdf = open(sys.argv[3], "w")
 
 printSecStackVars()
 
+def afterburner(line, frp):
+    if c_plusplus:
+         print("IS CPLUSPLUS! Line: " + line)
+         if frp and re_return_zero.match(line):
+            print("RETURN ZERO MATCH!")
+            print("Line before: " + line)
+            line = re.sub(resub_return_zero, ", nullptr)", line)
+            print("Line after: " + line)
+    return line
+
 # Insert probes
 if do_print:
     print("Probing starting at {}".format(parsed_file))
@@ -1277,7 +1308,9 @@ while (i < expdb_index):
     le = expdb_lineend[i] - 1
     ce = expdb_colend[i] #- 1
     ele = expdb_elineend[i] - 1
-
+    frp = expdb_frp[i]
+    print("___________FRP " + str(i) + "___________:" + str(frp))
+    print(str(expdb_frp))
     probe_prolog = "(DMCE_PROBE(TBD"
 
     if numDataVars > 0:
@@ -1360,6 +1393,8 @@ while (i < expdb_index):
                     iline = line[:cs-1] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs-1:]
             else:
                 iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+
+            iline = afterburner(iline, frp)
 
             if do_print:
                 print("Old single line: " + line.rstrip())
@@ -1556,6 +1591,7 @@ while (i < expdb_index):
                     if (ls == le):
                         ce+= len(probe_prolog)
 
+
                     # Last time to regret ourselves! Check for obvious errors on line containing prolog. If more is needed create a list instead like for sections to skip!
                     regret = re_regret_insertion.match(iline_start)
 
@@ -1578,8 +1614,8 @@ while (i < expdb_index):
 
                         # Insert epilog
                         pbuf.pop(le)
+                        iline_end = afterburner(iline_end, frp)
                         pbuf.insert(le,iline_end)
-
                         probes+=1
 
                         # Update probe file
@@ -1629,7 +1665,7 @@ while (i < expdb_index):
 # write back c file
 pf = open(sys.argv[2],"w")
 for line in pbuf:
-   pf.write(line)
+    pf.write(line)
 
 pdf.close()
 exp_pdf.close()
