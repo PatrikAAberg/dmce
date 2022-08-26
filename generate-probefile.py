@@ -785,6 +785,7 @@ while (lineindex < linestotal):
 
     # Check for sections to skip
 
+    # Normal regexp
     found_section_to_skip=0
     for section in re_sections_to_skip:
         m = section.match(linebuf[lineindex])
@@ -793,8 +794,14 @@ while (lineindex < linestotal):
             if not_section.match(linebuf[lineindex]):
                 mnot = True
         if (m and not mnot):
-            found_section_to_skip=1
+            found_section_to_skip = 1
 
+    # special case for some attributes
+    # pragma unroll
+    if lineindex < (len(linebuf) + 1) and "AttributedStmt" in linebuf[lineindex] and "LoopHintAttr" in linebuf[lineindex + 1]:
+        found_section_to_skip = 1
+
+    # Act if skip this section
     if (found_section_to_skip and in_parsed_file):
         lskip_temp = int(skiplend)
         cskip_temp = int(skipcend)
