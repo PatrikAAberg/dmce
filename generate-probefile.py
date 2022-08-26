@@ -392,6 +392,7 @@ re_ftrace_entry.append(re.compile(r'.*-CXXDestructorDecl.*'))
 # Functions that returns pointer
 re_function_returns_pointer = []
 re_function_returns_pointer.append(re.compile(r'.*-FunctionDecl.*\'\w* \*\(.*'))
+re_function_returns_pointer.append(re.compile(r'.*-CXXMethodDecl.*\'.* \*\(.*'))
 
 re_return_zero = re.compile(r'.*return\(DMCE_PROBE.*\)\,\s*0\s*\)')
 resub_return_zero = re.compile(r'\,\s*0\s*\)')
@@ -902,7 +903,7 @@ while (lineindex < linestotal):
 
     # Special case: We can always pop the stack as far as possible at function entries
     at_func_entry = False
-    if "-FunctionDecl" in linebuf[lineindex]:
+    if "-FunctionDecl" in linebuf[lineindex] or "-CXXMethodDecl" in linebuf[lineindex]:
         at_func_entry = True
 
         # Does the function return a pointer?
