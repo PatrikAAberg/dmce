@@ -352,6 +352,9 @@ if [ ! -s $DMCE_WORK_PATH/$git_name/probedefines.h ]; then
     rm $DMCE_WORK_PATH/$git_name/probedefines.h
 fi
 
+export DMCE_PROBE_REFERENCES="$DMCE_WORK_PATH/$git_name/probe-references.log"
+export DMCE_PROBE_REFERENCES_ORIGINAL="$DMCE_WORK_PATH/$git_name/probe-references-original.log"
+
 mandatory_configs=
 mandatory_configs+=("DMCE_EXEC_PATH")
 mandatory_configs+=("DMCE_CONFIG_PATH")
@@ -544,6 +547,11 @@ if ! "$DMCE_EXEC_PATH"/dmce.sh "${git_root}" "${new}" "${old}" "${old_git_dir}" 
     _echo "error: dmce.sh failed - check logs"
     exit 1
 fi
+
+if [ ”X${DMCE_POST_HOOK}” != ”X” ]; then
+    $DMCE_POST_HOOK
+fi
+
 if [ "$DMCE_DEBUG" = false ]; then
     rm -rf "${DMCE_WORK_PATH}"/$git_name/{old,new,inc,workarea} &> /dev/null
 else

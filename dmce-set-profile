@@ -95,6 +95,9 @@ while count < len(clines):
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-DX.c")
 
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = "DMCE_POST_HOOK:\n"
+
         # coverage profile
         elif args.profile == "coverage":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
@@ -105,6 +108,9 @@ while count < len(clines):
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
+
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = "DMCE_POST_HOOK:\n"
 
         # syslog profile
         elif args.profile == "syslog":
@@ -117,6 +123,9 @@ while count < len(clines):
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = "DMCE_POST_HOOK:\n"
+
         # printf profile
         elif args.profile == "printf":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
@@ -127,6 +136,23 @@ while count < len(clines):
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
+
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = "DMCE_POST_HOOK:\n"
+
+        # racecheck profile
+        elif args.profile == "racecheck":
+            if "DMCE_NUM_DATA_VARS" in clines[count]:
+                clines[count] = "DMCE_NUM_DATA_VARS:0\n"
+
+            if "DMCE_PROBE_SOURCE" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-racecheck.c")
+
+            if "DMCE_PROBE_PROLOG" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-racecheck.c")
+
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racecheck")
 
         else:
             print("Unkown profile (please use trace, coverage or syslog), abort")
