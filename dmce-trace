@@ -59,6 +59,31 @@ pf = open(probefile)
 prefs = pf.readlines()
 pf.close()
 
+# Sanity check if original files  - probed state combo
+original = False
+if "original" in probefile:
+    original = True
+
+state_probed = False
+if os.path.exists(codetree + "/.dmce_state_probed"):
+    state_probed  = True
+
+if state_probed and original:
+    print("dmce trace: Detected a probed code tree combined with " + probefile  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
+    exit (1)
+
+if not state_probed and not original:
+    print("dmce trace: Detected a non-probed code tree combined with probe-references.log. Please probe the tree or use probe-references-original.log instead, abort", file=sys.stderr)
+    exit (1)
+
+
+# Sanity check if files in probe ref file exist in code tree
+for ref in prefs:
+    # Check if referenced files exist
+    if not os.path.exists(codetree + "/" + ref.rstrip().split(':')[1]):
+        print("dmce trace: Probe reference file refers to the file " + codetree + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
+        exit (1)
+
 # Find longest path-func combo
 longestpath=0
 
