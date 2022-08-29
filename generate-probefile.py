@@ -379,6 +379,9 @@ re_memberdeclarations = []
 re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue (->\w*).*'))
 re_memberdeclarations.append(re.compile(r'.*-UnaryOperator Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue prefix \'(\*)\' .*'))
 
+re_memberdeclarations_ignore = []
+re_memberdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 10 sometimes confuses string.length() with de-reffed member variable type
+
 # Conditional sequence points
 re_csp_list = []
 re_csp_list.append(re.compile(r'.*BinaryOperator.*(\'\|\|\'|\'\&\&\').*'))
@@ -1154,17 +1157,23 @@ while (lineindex < linestotal):
             for section in re_memberdeclarations:
                 m = section.match(linebuf[lineindex + member_offset])
                 if m:
-                    # Just handle the pattern with ImpCast directly after for now
-                    if "ImplicitCastExpr" in linebuf[lineindex + member_offset + 1]:
-                        if do_print:
-                            print("MATCHED MEMBER DECL: " + linebuf[lineindex])
-                        varname = m.group(2) + varname
-                        matchmember = True
-                        break
-                    else:
-                        # skip if not following this pattern
-                        in_member_expr = True
-                        member_expr_tab = tab
+                    ignore_member = False
+                    for ignore in re_memberdeclarations_ignore:
+                        if ignore.match(linebuf[lineindex]):
+                            ignore_member = True
+                            break
+                    if not ignore_member:
+                        # Just handle the pattern with ImpCast directly after for now
+                        if "ImplicitCastExpr" in linebuf[lineindex + member_offset + 1]:
+                            if do_print:
+                                print("MATCHED MEMBER DECL: " + linebuf[lineindex])
+                            varname = m.group(2) + varname
+                            matchmember = True
+                            break
+                        else:
+                            # skip if not following this pattern
+                            in_member_expr = True
+                            member_expr_tab = tab
 
             if matchmember:
                 member_offset += 2
