@@ -370,6 +370,10 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\*\'.*'))
 
+# Variable and param var declarations to ignore
+re_parmdeclarations_ignore = []
+re_parmdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 10 sometimes confuses string.length() with de-reffed member variable type
+
 # De-reffed member vars and pointers
 re_memberdeclarations = []
 re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue (->\w*).*'))
@@ -1128,11 +1132,17 @@ while (lineindex < linestotal):
         for section in re_parmdeclarations:
             m = section.match(linebuf[lineindex])
             if m:
-                if do_print:
-                    print("MATCHED PARM DECL: " + linebuf[lineindex])
-                varname = m.group(2)
-                found = 1
-                break
+                ignore_section = False
+                for ignore in re_parmdeclarations_ignore:
+                    if ignore.match(linebuf[lineindex]):
+                        ignore_section = True
+                        break
+                if not ignore_section:
+                    if do_print:
+                        print("MATCHED PARM DECL: " + linebuf[lineindex])
+                    varname = m.group(2)
+                    found = 1
+                    break
 
     if inside_expression and not in_member_expr and not found and in_parsed_file and numDataVars > 0:
         foundmember = False
