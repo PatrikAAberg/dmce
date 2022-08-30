@@ -110,7 +110,7 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/${_user}/dmce-trace-buffer-loc
 DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT "/tmp/${_user}/dmce-trace-buffer-lock-exit"
 
 # Some probes need a deafult setting for trace enabled at program entry
-DMCE_TRACE_ENABLED: YES
+DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
 
 # Some utilties need an editor
 DMCE_EDITOR:vim

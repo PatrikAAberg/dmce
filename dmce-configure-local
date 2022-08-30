@@ -96,7 +96,7 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/${_user}/dmce/dmcebuffer.bin"
 DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/${_user}/dmce-trace-buffer-lock"
 
 # Some probes need a deafult setting for trace enabled at program entry
-DMCE_TRACE_ENABLED: YES
+DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
 
 # Some utilties need an editor
 DMCE_EDITOR:vim

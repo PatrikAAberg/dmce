@@ -109,7 +109,9 @@ static inline void dmce_probe_body1(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+    }
 }
 
 static inline void dmce_probe_body2(unsigned int dmce_probenbr,
@@ -118,8 +120,10 @@ static inline void dmce_probe_body2(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+    }
 }
 
 static inline void dmce_probe_body3(unsigned int dmce_probenbr,
@@ -129,9 +133,11 @@ static inline void dmce_probe_body3(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+    }
 }
 
 static inline void dmce_probe_body4(unsigned int dmce_probenbr,
@@ -142,10 +148,12 @@ static inline void dmce_probe_body4(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+    }
 }
 
 static inline void dmce_probe_body5(unsigned int dmce_probenbr,
@@ -157,11 +165,13 @@ static inline void dmce_probe_body5(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+    }
 }
 
 static inline void dmce_probe_body6(unsigned int dmce_probenbr,
@@ -174,12 +184,14 @@ static inline void dmce_probe_body6(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
-    e_p->vars[5] = dmce_param_f;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+        e_p->vars[5] = dmce_param_f;
+    }
 }
 
 static inline void dmce_probe_body7(unsigned int dmce_probenbr,
@@ -193,13 +205,15 @@ static inline void dmce_probe_body7(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
-    e_p->vars[5] = dmce_param_f;
-    e_p->vars[6] = dmce_param_g;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+        e_p->vars[5] = dmce_param_f;
+        e_p->vars[6] = dmce_param_g;
+    }
 }
 
 static inline void dmce_probe_body8(unsigned int dmce_probenbr,
@@ -214,14 +228,16 @@ static inline void dmce_probe_body8(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
-    e_p->vars[5] = dmce_param_f;
-    e_p->vars[6] = dmce_param_g;
-    e_p->vars[7] = dmce_param_h;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+        e_p->vars[5] = dmce_param_f;
+        e_p->vars[6] = dmce_param_g;
+        e_p->vars[7] = dmce_param_h;
+    }
 }
 
 static inline void dmce_probe_body9(unsigned int dmce_probenbr,
@@ -236,16 +252,17 @@ static inline void dmce_probe_body9(unsigned int dmce_probenbr,
                             uint64_t dmce_param_i) {
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
-
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
-    e_p->vars[5] = dmce_param_f;
-    e_p->vars[6] = dmce_param_g;
-    e_p->vars[7] = dmce_param_h;
-    e_p->vars[8] = dmce_param_i;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+        e_p->vars[5] = dmce_param_f;
+        e_p->vars[6] = dmce_param_g;
+        e_p->vars[7] = dmce_param_h;
+        e_p->vars[8] = dmce_param_i;
+    }
 }
 
 static inline void dmce_probe_body10(unsigned int dmce_probenbr,
@@ -262,16 +279,18 @@ static inline void dmce_probe_body10(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    e_p->vars[0] = dmce_param_a;
-    e_p->vars[1] = dmce_param_b;
-    e_p->vars[2] = dmce_param_c;
-    e_p->vars[3] = dmce_param_d;
-    e_p->vars[4] = dmce_param_e;
-    e_p->vars[5] = dmce_param_f;
-    e_p->vars[6] = dmce_param_g;
-    e_p->vars[7] = dmce_param_h;
-    e_p->vars[8] = dmce_param_i;
-    e_p->vars[9] = dmce_param_j;
+    if (e_p) {
+        e_p->vars[0] = dmce_param_a;
+        e_p->vars[1] = dmce_param_b;
+        e_p->vars[2] = dmce_param_c;
+        e_p->vars[3] = dmce_param_d;
+        e_p->vars[4] = dmce_param_e;
+        e_p->vars[5] = dmce_param_f;
+        e_p->vars[6] = dmce_param_g;
+        e_p->vars[7] = dmce_param_h;
+        e_p->vars[8] = dmce_param_i;
+        e_p->vars[9] = dmce_param_j;
+    }
 }
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
@@ -287,7 +306,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         char* s_control_p;
 
         /* If first time: allocate buffer, init env var and set up exit hook */
-        /* env var format: enabled buf_p hitcount*/
+        /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
 
         if (! dmce_buffer_setup_done) {
             if (! (mkdir(DMCE_PROBE_LOCK_DIR_ENTRY, 0))) {
@@ -307,6 +326,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
                 setenv("dmce_trace_control", s, 0);
 
                 /* Handler for smth-went-wrong signals */
+
                 {
                     struct sigaction sa;
                     memset(&sa, 0, sizeof(sa));
@@ -323,11 +343,14 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
                 }
 
                 /* Handler for normal exit */
+
                 atexit(dmce_atexit);
 
-                /* Just to avoid unused-function warnings */
+                /* Enable trace at program entry? */
+
                 dmce_trace_disable();
-                dmce_trace_enable();
+                if (DMCE_PROBE_TRACE_ENABLED)
+                    dmce_trace_enable();
             }
             else {
 
