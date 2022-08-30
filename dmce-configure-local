@@ -95,5 +95,11 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_FILE_BIN "/tmp/${_user}/dmce/dmcebuffer.bin"
 # Some probes need a system wide lock dir
 DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/${_user}/dmce-trace-buffer-lock"
 
+# Some probes need a deafult setting for trace enabled at program entry
+DMCE_TRACE_ENABLED: YES
+
+# Some utilties need an editor
+DMCE_EDITOR:vim
+
 NoWord
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
