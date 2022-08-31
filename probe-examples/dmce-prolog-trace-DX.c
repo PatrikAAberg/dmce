@@ -7,8 +7,8 @@ static int* dmce_trace_enabled_p = nullptr;
 static volatile int* volatile dmce_trace_enabled_p = 0;
 #endif
 static inline int dmce_trace_is_enabled(void) { return *dmce_trace_enabled_p; }
-static inline void dmce_trace_enable(void) { *dmce_trace_enabled_p = 1; }
-static inline void dmce_trace_disable(void) { *dmce_trace_enabled_p = 0; }
+static inline void dmce_trace_enable(void) { __atomic_store_n (dmce_trace_enabled_p, 1, __ATOMIC_SEQ_CST); }
+static inline void dmce_trace_disable(void) { __atomic_store_n (dmce_trace_enabled_p, 0, __ATOMIC_SEQ_CST); }
 typedef unsigned long uint64_t;
 static void dmce_probe_body0(unsigned int dmce_probenbr);
 static void dmce_probe_body1(unsigned int dmce_probenbr, uint64_t dmce_param_a);
@@ -34,5 +34,5 @@ static void dmce_probe_body10(unsigned int dmce_probenbr, uint64_t dmce_param_a,
 #define DMCE_PROBE10(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i, dmce_param_j) (dmce_probe_body10(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i, dmce_param_j))
 
 /* Remove any GCC warnings caused by DMCE since some put warnings as errors */
-#pragma GCC diagnostic ignored "-Wsequence-point"
+#pragma GCC diagnostic ignored "-Wsequence-point" /* Better to get either lvalue or rvalue of de-reffed pointer with post-incr than nothing at all */
 #endif

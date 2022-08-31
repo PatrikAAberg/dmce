@@ -295,72 +295,76 @@ static inline void dmce_probe_body10(unsigned int dmce_probenbr,
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
-    /* Set up buffer and control if not done */
+    /* The fast check followed by the thread safe check (this one can only go from 0 to 1 and never changes) */
 
-#ifdef __cplusplus
-    if (dmce_trace_enabled_p == nullptr)
-#else
-    if (dmce_trace_enabled_p == 0)
-#endif
-    {
-        char* s_control_p;
+    if ((!dmce_buffer_setup_done) || (!__atomic_load_n (&dmce_buffer_setup_done, __ATOMIC_SEQ_CST))) {
+        if (! (mkdir(DMCE_PROBE_LOCK_DIR_ENTRY, 0))) {
 
-        /* If first time: allocate buffer, init env var and set up exit hook */
-        /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
+            /* This is the first thread executing a probe for ANY source file part of this process */
 
-        if (! dmce_buffer_setup_done) {
-            if (! (mkdir(DMCE_PROBE_LOCK_DIR_ENTRY, 0))) {
+            /* remove any previous exit lock */
 
-                /* remove any previous exit lock */
+            remove(DMCE_PROBE_LOCK_DIR_EXIT);
 
-                remove(DMCE_PROBE_LOCK_DIR_EXIT);
+            /* If first time: allocate buffer, init env var and set up exit hook */
+            /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
 
-                char s[32 * 3];
-                dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10,   /* room for race until we introduce a lock */
-                                                          sizeof(dmce_probe_entry_t));
+            char s[32 * 3];
+            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10, sizeof(dmce_probe_entry_t));
 
-                dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
-                dmce_probe_hitcount_p = (unsigned int*)calloc(1, sizeof(int));
+            dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
+            dmce_probe_hitcount_p = (unsigned int*)calloc(1, sizeof(int));
 
-                sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
-                setenv("dmce_trace_control", s, 0);
+            __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
 
-                /* Handler for smth-went-wrong signals */
+            sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
+            setenv("dmce_trace_control", s, 0);
 
-                {
-                    struct sigaction sa;
-                    memset(&sa, 0, sizeof(sa));
-                    sa.sa_handler = dmce_signal_handler;
-                    sigaction(SIGBUS,   &sa, NULL);
-                    sigaction(SIGFPE,   &sa, NULL);
-                    sigaction(SIGILL,   &sa, NULL);
-                    sigaction(SIGINT,   &sa, NULL);
-                    sigaction(SIGKILL,  &sa, NULL);
-                    sigaction(SIGSEGV,  &sa, NULL);
-                    sigaction(SIGSYS,   &sa, NULL);
-                    sigaction(SIGTRAP,  &sa, NULL);
-                    sigaction(SIGABRT,  &sa, NULL);
-                }
+            /* Handler for smth-went-wrong signals */
 
-                /* Handler for normal exit */
-
-                atexit(dmce_atexit);
-
-                /* Enable trace at program entry? */
-
-                dmce_trace_disable();
-                if (DMCE_PROBE_TRACE_ENABLED)
-                    dmce_trace_enable();
+            {
+                struct sigaction sa;
+                memset(&sa, 0, sizeof(sa));
+                sa.sa_handler = dmce_signal_handler;
+                sigaction(SIGBUS,   &sa, NULL);
+                sigaction(SIGFPE,   &sa, NULL);
+                sigaction(SIGILL,   &sa, NULL);
+                sigaction(SIGINT,   &sa, NULL);
+                sigaction(SIGKILL,  &sa, NULL);
+                sigaction(SIGSEGV,  &sa, NULL);
+                sigaction(SIGSYS,   &sa, NULL);
+                sigaction(SIGTRAP,  &sa, NULL);
+                sigaction(SIGABRT,  &sa, NULL);
             }
-            else {
 
-               /* Buffer already exist, wait for env var to be available and only init local pointers */
+            /* Handler for normal exit */
 
-               while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
-               sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
-            }
-            dmce_buffer_setup_done = 1;
+            atexit(dmce_atexit);
+
+            /* Enable trace at program entry? */
+
+            dmce_trace_disable();
+            if (DMCE_PROBE_TRACE_ENABLED)
+                dmce_trace_enable();
         }
+        else {
+
+            /* Buffer already exist for this process, but local variables for this source file are not set.                  */
+            /* Wait for trace control env var to be available and init local pointers for this source file with it contents. */
+
+            char* s_control_p;
+
+            /* Yield to make sure the mkdir can finish if ongoing, sched is non-favourable and cores are scarse */
+
+            while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
+            sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
+            __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
+        }
+        __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
     }
 
 #ifndef DMCE_TRACE_RINGBUFFER
@@ -384,7 +388,9 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 #ifndef DMCE_TRACE_RINGBUFFER
     else {
         dmce_trace_disable();
+
         /* Mark this trace buffer as full */
+
         dmce_buf_p[DMCE_MAX_HITS - 1].probenbr = 0xdeadbeef;
         dmce_buf_p[DMCE_MAX_HITS - 1].timestamp = dmce_tsc();
     }
@@ -392,8 +398,5 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     return 0;
 }
 #endif
-
-
-
 
 /* end of file */
