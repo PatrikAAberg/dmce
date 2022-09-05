@@ -1761,8 +1761,6 @@ if gen_struct_macros:
     for line in struct_src:
         sf.write(line)
     sf.close()
-else:
-    pf.write("/* DMCE: No struct information requested for this source file */\n")
 
 for line in pbuf:
     pf.write(line)

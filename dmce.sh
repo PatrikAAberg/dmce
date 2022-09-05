@@ -640,6 +640,9 @@ if [ "X${DMCE_STRUCTS}" != "X" ]; then
     cat $dmcepath/workarea/skip-list >> $dmcepath/workarea/probe-list
     rm -f $dmcepath/workarea/skip-list
     touch $dmcepath/workarea/skip-list
+    size_of_user=1
+else
+    size_of_user=0
 fi
 
 progress
@@ -651,7 +654,7 @@ if [ -e "$DMCE_PROBE_PROLOG" ]; then
     _echo "using prolog file: $DMCE_PROBE_PROLOG"
     cat $DMCE_PROBE_PROLOG > $dmcepath/workarea/probe-header
     # size_of_user compensates for the header put first in all source files by DMCE
-    size_of_user=$(wc -l<$DMCE_PROBE_PROLOG)
+    ((size_of_user = size_of_user + $(wc -l<$DMCE_PROBE_PROLOG)))
 else
     cat > $dmcepath/workarea/probe-header << EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
@@ -662,7 +665,7 @@ static void dmce_probe_body(unsigned int probenbr);
 #endif
 EOF
     # size_of_user compensates for the header put first in all source files by DMCE
-    size_of_user=$(wc -l <$dmcepath/workarea/probe-header)
+    ((size_of_user = size_of_user + $(wc -l <$dmcepath/workarea/probe-header)))
 fi
 
 while read -r c_file; do
@@ -742,7 +745,7 @@ else
     declare -a file_list=()
     declare -a str=()
     while IFS=':' read -r file line func; do
-        ((line = line + size_of_user + 1 + 1)) # compensate for prolog and extra #include line
+        ((line = line + size_of_user + 1)) # compensate for prolog and extra #include line
 
         if [ "$nextfile" == "" ]; then
             # First time, create 'sed' expression
