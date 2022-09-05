@@ -485,9 +485,9 @@ def find_data_structures():
                 struct_src.append("\n#ifndef DMCE_STRUCT_API_" +  struct_name + "\n")
                 struct_src.append("\n#define DMCE_STRUCT_API_" +  struct_name + "\n")
                 struct_src.append("#define dmce_print_" + struct_name + "(p) {\\\n")
-                struct_src.append("    fprintf(stderr, \"DMCE struct output: " + struct_name + "\");\\\n")
+                struct_src.append("    fprintf(stderr, \"DMCE struct output: " + struct_name + "\\n\");\\\n")
                 for field in field_names:
-                    struct_src.append("    fprintf(stderr, \"    %x\\n\", p->" + field + ");\\\n")
+                    struct_src.append("    fprintf(stderr, \"    %lx\\n\", (uint64_t)p->" + field + ");\\\n")
                 struct_src.append("} while (0)\n\n")
                 struct_src.append("#endif\n")
 
