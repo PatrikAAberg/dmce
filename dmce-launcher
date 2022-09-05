@@ -81,6 +81,7 @@ OPTIONS
     --skip           Skip include file retrieval
     --stupid         DMCE include files awareness disabled
     --calltrace      Only probe entry and exit of calls
+    --structs        Produce struct-printing macros
     -v, --version    Get DMCE version
 
 DESCRIPTION
@@ -209,6 +210,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 calltrace)
                     export DMCE_PARSER_MODE=calltrace
+                    ;;
+                structs)
+                    export DMCE_STRUCTS=stderr
                     ;;
                 skip)
                     skip=true

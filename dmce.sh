@@ -511,6 +511,8 @@ for c_file in $FILE_LIST; do
 done
 _echo "preparing clang data: remove hexnumbers (new)"
 for c_file in $FILE_LIST; do
+    # uncomment to save a copy of the raw ast file
+    #cp $dmcepath/new/$c_file.clang $dmcepath/new/$c_file.ast
     sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' -e 's/`-/|-/' $dmcepath/new/$c_file.clang &
     jobcap
 done
@@ -733,7 +735,7 @@ else
     declare -a file_list=()
     declare -a str=()
     while IFS=':' read -r file line func; do
-        ((line = line + size_of_user + 1))
+        ((line = line + size_of_user + 1 + 1)) # compensate for prolog and extra #include line
 
         if [ "$nextfile" == "" ]; then
             # First time, create 'sed' expression

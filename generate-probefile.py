@@ -30,6 +30,13 @@ do_print=1
 
 parsed_file = sys.argv[1]
 
+# Generate struct printout macros?
+struct_printouts = os.getenv('DMCE_STRUCTS')
+if struct_printouts is not None:
+    gen_struct_macros = True
+else:
+    gen_struct_macros = False
+
 # Get parser mode
 parser_mode = os.getenv('DMCE_PARSER_MODE')
 if parser_mode == "calltrace":
@@ -150,6 +157,10 @@ secStackPos = []
 secStackVars = []
 reffedVars = []
 
+if gen_struct_macros:
+    struct_src= []
+    struct_src.append("\n#include <stdio.h>\n\n")
+
 def printSecStackVars():
     i=0
     if do_print:
@@ -236,6 +247,22 @@ for line in rawlinebuf:
     # Remove all "nice info" pointing to include files
     line = re.sub("\(.* at .*\)", "", line)
     linebuf.append(line)
+
+# ..and the same for the AST file
+#if gen_struct_macros:
+#    # Snoop the ast file from the location of the probe data file
+#    ast_file = open(sys.argv[3].replace(".probedata", "") + ".ast", "r")
+#    rawastbuf = ast_file.readlines()
+#    ast_file.close()
+#    astbuf = []
+#    for line in rawastbuf:
+#        # Make built-in functions look like lib functions
+#        line = re.sub("<built\-in>", "dmce_built_in.h", line)
+#        # Make scratch space look like include file ref
+#        line = re.sub("<scratch space>", "dmce_scratch_space.h", line)
+#        # Remove all "nice info" pointing to include files
+#        line = re.sub("\(.* at .*\)", "", line)
+#        astbuf.append(line)
 
 linestotal=rawlinestotal
 
@@ -424,7 +451,45 @@ re_skip_ast_entry = re.compile(r'.*(<<NULL>>|<<invalid sloc>>).*')
 # Attributes cant backtrail, so special case for them
 re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
 
-# Some helpers
+
+# Populate struct database
+re_recorddecl = re.compile('.*RecordDecl.*(struct) (\S*).*')
+re_typedefdecl = re.compile('.*-TypedefDecl.* referenced (.*) .*')
+re_fielddecl = re.compile('.*-FieldDecl .* (.*) \'(int|unsigned int|long|unsigned long|.* \*)\'.*')
+
+def find_data_structures():
+    if (in_parsed_file):
+        m = re_recorddecl.match(linebuf[lineindex])
+        if m:
+            print("FOUND RECORD!")
+            struct_name = m.group(2)
+            field_names = []
+            i = lineindex + 1
+            while i < len(linebuf):
+                m = re_fielddecl.match(linebuf[i])
+                if m:
+                    print("FOUND FIELD!")
+                    field_names.append(m.group(1))
+                    i += 1
+                else:
+                    i += 1
+                    # typedef struct { ... } A; ? => Look for definition of A
+                    if struct_name == "definition":
+                        m = re_typedefdecl.match(linebuf[i])
+                        if m:
+                            struct_name = m.group(1)
+                        else:
+                            field_names = []
+                    break
+            if len(field_names) > 0:
+                struct_src.append("\n#ifndef DMCE_STRUCT_API_" +  struct_name + "\n")
+                struct_src.append("\n#define DMCE_STRUCT_API_" +  struct_name + "\n")
+                struct_src.append("#define dmce_print_" + struct_name + "(p) {\\\n")
+                struct_src.append("    fprintf(stderr, \"DMCE struct output: " + struct_name + "\");\\\n")
+                for field in field_names:
+                    struct_src.append("    fprintf(stderr, \"    %x\\n\", p->" + field + ");\\\n")
+                struct_src.append("} while (0)\n\n")
+                struct_src.append("#endif\n")
 
 def clean_stackvars():
     i = 0
@@ -1279,6 +1344,10 @@ while (lineindex < linestotal):
         print("Reffed vars:")
         print(reffedVars)
 
+    # Any data structures starting here?
+    if gen_struct_macros:
+        find_data_structures()
+
     # Finally, update input file line index
     lineindex+=1
 
@@ -1684,9 +1753,20 @@ while (i < expdb_index):
 
 # write back c file
 pf = open(sys.argv[2],"w")
+
+if gen_struct_macros:
+    sf = open(sys.argv[2] + ".dmcestructs","w")
+    pf.write("#include \"" + sys.argv[2] + ".dmcestructs\"\n")
+    for line in struct_src:
+        sf.write(line)
+    sf.close()
+else:
+    pf.write("/* DMCE: No struct information requested for this source file */\n")
+
 for line in pbuf:
     pf.write(line)
 
+pf.close()
 pdf.close()
 exp_pdf.close()
 
