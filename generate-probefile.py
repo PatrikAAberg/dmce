@@ -455,7 +455,7 @@ re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
 # Populate struct database
 re_recorddecl = re.compile('.*RecordDecl.*(struct) (\S*).*')
 re_typedefdecl = re.compile('.*-TypedefDecl.* referenced (.*) .*')
-re_fielddecl = re.compile('.*-FieldDecl .* (.*) \'(int|unsigned int|long|unsigned long|.* \*)\'.*')
+re_fielddecl = re.compile('.*-FieldDecl .* (.*) \'(size_t|int|unsigned int|long|unsigned long|.* \*)\'.*')
 
 def find_data_structures():
     if (in_parsed_file):
@@ -466,10 +466,11 @@ def find_data_structures():
             field_names = []
             i = lineindex + 1
             while i < len(linebuf):
-                m = re_fielddecl.match(linebuf[i])
-                if m:
-                    print("FOUND FIELD!")
-                    field_names.append(m.group(1))
+                if "FieldDecl" in linebuf[i]:
+                    m = re_fielddecl.match(linebuf[i])
+                    if m:
+                        print("FOUND FIELD!")
+                        field_names.append(m.group(1))
                     i += 1
                 else:
                     i += 1
