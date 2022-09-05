@@ -635,6 +635,13 @@ find $dmcepath/new -name '*.probedata' ! -size 0 | sed "s|$dmcepath/new/||" | se
 find $dmcepath/new -name '*.probedata' -size 0   | sed "s|$dmcepath/new/||" | sed "s|.probedata$||" > $dmcepath/workarea/skip-list &
 wait
 
+# if struct parsing enabled, do not skip anything
+if [ "X${DMCE_STRUCTS}" != "X" ]; then
+    cat $dmcepath/workarea/skip-list >> $dmcepath/workarea/probe-list
+    rm -f $dmcepath/workarea/skip-list
+    touch $dmcepath/workarea/skip-list
+fi
+
 progress
 
 nbrofprobesinserted=$(find $dmcepath/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
