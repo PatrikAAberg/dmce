@@ -54,6 +54,7 @@ old_srcpath = ""
 
 relaunch = False
 blink = True
+show_probes = True
 ts_min = sys.maxsize
 
 editor = "vim"
@@ -111,6 +112,36 @@ def init_screen(stdscr):
     num_srclines = num_tracelines = int((h_screen / 2) - 3)
     wx_varsview = w_screen - int(w_screen / 4)
 
+def check_and_clean_probes(line):
+
+    if show_probes:
+        return line
+
+    cline = line
+
+    # num vars
+    m = re.match(r'.*DMCE_PROBE(\d*)', line)
+    if m:
+        numvars = m.group(1)
+        pos = line.index("DMCE_PROBE")
+        count = 1
+        while pos < len(line) and count > 0:
+            if line[pos] == "(":
+                count += 1
+            elif line[pos] == ")":
+                count -= 1
+            pos += 1
+
+        if pos < len(line) and line[pos - 1] == ")":
+            cline = line[:pos - 1] + line[pos:]
+
+        if numvars == "0":
+            cline = re.sub(r'\(DMCE_PROBE0\(\d*\)\, ', "", cline)
+        else:
+            cline = re.sub(r'\(DMCE_PROBE(\d*)\(\d*\,(\S*\,){' + numvars + '} ', "", cline)
+
+    return cline
+
 def draw(stdscr):
     global tracebuffer
     global varbuffer
@@ -129,7 +160,7 @@ def draw(stdscr):
     wtout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(tv_start, tv_end + 1):
         if i < len(tracebuffer) and i >= 0:
-            lout = tracebuffer[i].rstrip().split("@")
+            lout = check_and_clean_probes(tracebuffer[i].rstrip()).split("@")
             pre = " "
             if tracebuffer[i].split("@")[0] in jumplist:
                 pre = ">"
@@ -164,9 +195,9 @@ def draw(stdscr):
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
             if (src_start + i) == srcindex:
-                stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i], curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i]), curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_codeview + i, wx_codeview, codebuffer[src_start + i])
+                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i]))
         else:
             stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
 
@@ -582,26 +613,27 @@ def show_help(stdscr):
     stdscr.addstr(15, 0, "  j             - jump to next marker")
     stdscr.addstr(16, 0, "  J             - jump to previous marker")
     stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
-    stdscr.addstr(18, 0, "  ENTER         - open current source file in editor")
-    stdscr.addstr(19, 0, "  ESCAPE        - exit command mode")
-    stdscr.addstr(21, 0, "  Commands")
-    stdscr.addstr(22, 0, "  ---------------------------------------------------------")
-    stdscr.addstr(23, 0, "  filter core A,B,C-F             - filter on core number")
-    stdscr.addstr(24, 0, "  filter core clear               - clear core filter")
-    stdscr.addstr(25, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
-    stdscr.addstr(26, 0, "  filter file clear               - clear file filter")
-    stdscr.addstr(27, 0, "  filter func <regexp>            - filter on function name")
-    stdscr.addstr(28, 0, "  filter func clear               - clear func filter")
-    stdscr.addstr(29, 0, "  filter src <regexp>             - filter on src line")
-    stdscr.addstr(30, 0, "  filter src clear                - clear src filter")
-    stdscr.addstr(31, 0, "  filter clear                    - clear all filters")
-    stdscr.addstr(33, 0, "  Hints")
-    stdscr.addstr(34, 0, "  ---------------------------------------------------------------------")
-    stdscr.addstr(35, 0, "  - In command mode, any string prepended by '/' will be searched for)")
-    stdscr.addstr(36, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
-    stdscr.addstr(37, 0, "    Example: :/'.*foo.*bar")
-    stdscr.addstr(38, 0, "  - To search for a trace entry where a variable contains a certain value:")
-    stdscr.addstr(39, 0, "    Example: /foo:0x0042")
+    stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
+    stdscr.addstr(19, 0, "  ENTER         - open current source file in editor")
+    stdscr.addstr(20, 0, "  ESCAPE        - exit command mode")
+    stdscr.addstr(22, 0, "  Commands")
+    stdscr.addstr(23, 0, "  ---------------------------------------------------------")
+    stdscr.addstr(24, 0, "  filter core A,B,C-F             - filter on core number")
+    stdscr.addstr(25, 0, "  filter core clear               - clear core filter")
+    stdscr.addstr(26, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
+    stdscr.addstr(27, 0, "  filter file clear               - clear file filter")
+    stdscr.addstr(28, 0, "  filter func <regexp>            - filter on function name")
+    stdscr.addstr(29, 0, "  filter func clear               - clear func filter")
+    stdscr.addstr(30, 0, "  filter src <regexp>             - filter on src line")
+    stdscr.addstr(31, 0, "  filter src clear                - clear src filter")
+    stdscr.addstr(32, 0, "  filter clear                    - clear all filters")
+    stdscr.addstr(34, 0, "  Hints")
+    stdscr.addstr(35, 0, "  ---------------------------------------------------------------------")
+    stdscr.addstr(36, 0, "  - In command mode, any string prepended by '/' will be searched for)")
+    stdscr.addstr(37, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
+    stdscr.addstr(38, 0, "    Example: :/'.*foo.*bar")
+    stdscr.addstr(39, 0, "  - To search for a trace entry where a variable contains a certain value:")
+    stdscr.addstr(40, 0, "    Example: /foo:0x0042")
 
     c = stdscr.getch()
 
@@ -691,6 +723,7 @@ def main(stdscr, relaunched = False):
     global w_screen
     global h_screen
     global blink
+    global show_probes
 
     curses.curs_set(0)
 
@@ -827,6 +860,11 @@ def main(stdscr, relaunched = False):
                     blink = False
                 else:
                     blink = True
+            elif c == ord('p'):
+                if show_probes:
+                    show_probes = False
+                else:
+                    show_probes = True
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
