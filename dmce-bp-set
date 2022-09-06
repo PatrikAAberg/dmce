@@ -72,6 +72,11 @@ if bline < 0 or bline > len(src):
     print("Line number out of range: " + position)
     exit(1)
 
+if not "DMCE_PROBE" in src[bline]:
+    print(position + ":" + src[bline])
+    print("No DMCE probe found at " + position + ", abort")
+    exit(1)
+
 print("Breakpint set at " + bfile + ":" + str(bline + 1))
 print("     " + src[bline])
 print("             |")
