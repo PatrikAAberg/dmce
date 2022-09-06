@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ ! -f .dmce_state_probed ]; then
+    echo "Not within a DMCE probed tree, abort"
+    exit 1
+fi
+
+grep -rPn "DMCE_PROBE\d\(0xbbbbbbbb" | cut -d':' -f1-2
+
