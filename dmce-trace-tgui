@@ -63,8 +63,8 @@ editor = "vim"
 #print("dmce trace viewer log", file=log)
 
 # look for editor configuration
-user = os.environ.get("USER")
-cfile = "/home/" + user + "/.dmceconfig"
+home = os.environ.get("HOME")
+cfile = home + "/.dmceconfig"
 if os.path.exists(cfile):
     c = open (cfile)
     config = c.readlines()
