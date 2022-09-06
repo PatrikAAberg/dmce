@@ -192,12 +192,13 @@ def draw(stdscr):
     if srcindex > (src_start + num_srclines - 1):
         src_start = srcindex - int(num_srclines / 2) + 1
 
+    wcout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
             if (src_start + i) == srcindex:
-                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i]), curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i])[:wcout].ljust(wcout, " "), curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i]))
+                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i])[:wcout].ljust(wcout, " "))
         else:
             stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
 
