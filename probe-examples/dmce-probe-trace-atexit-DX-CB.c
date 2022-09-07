@@ -15,6 +15,7 @@
 #endif
 
 #define DMCE_TRACE_RINGBUFFER
+#define NBR_STATUS_BITS 1
 
 #ifndef DMCE_PROBE_LOCK_DIR_ENTRY
 #define DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/dmce-trace-buffer-lock-entry"
@@ -67,7 +68,7 @@ static void dmce_atexit(void) {
 
 #ifdef DMCE_TRACE_RINGBUFFER
 
-        buf_pos = *dmce_probe_hitcount_p % DMCE_MAX_HITS;
+        buf_pos = (*dmce_probe_hitcount_p >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
         int i;
 
         for (i = 0; i < DMCE_MAX_HITS; i++) {
@@ -84,6 +85,9 @@ static void dmce_atexit(void) {
 }
 
 static void dmce_signal_handler(int sig) {
+
+    /* Make other threads stop */
+    __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
 
     /* Just call atexit and invoke the standard sig handler */
     dmce_atexit();
@@ -310,6 +314,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
 
             char s[32 * 3];
+
             dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10, sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
@@ -373,10 +378,14 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     if (dmce_trace_is_enabled()) {
 #endif
         unsigned int cpu;
-        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
+        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 2, __ATOMIC_RELAXED);
+
+        /* lowest bit means trace is stopped */
+        if (index & 1)
+            return 0;
 
 #ifdef DMCE_TRACE_RINGBUFFER
-        index = index % DMCE_MAX_HITS;
+        index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
 #endif
         dmce_probe_entry_t* e_p = &dmce_buf_p[index];
         cpu = sched_getcpu();
