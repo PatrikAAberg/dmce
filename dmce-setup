@@ -81,6 +81,9 @@ DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -is
 # Number of data variables to probe
 DMCE_NUM_DATA_VARS:0
 
+# Allow trace probes to dereference pointers [YES|NO]
+DMCE_ALLOW_DEREFERENCES:YES
+
 # Probe definition c file
 DMCE_PROBE_SOURCE:$installpath/share/dmce/dmce-probe-user.c
 

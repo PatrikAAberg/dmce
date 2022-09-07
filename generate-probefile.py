@@ -51,6 +51,12 @@ if ndvs == None:
 else:
     numDataVars = int(ndvs)
 
+# Derefs allowed?
+dereffs_allowed = True
+dra = os.getenv('DMCE_ALLOW_DEREFERENCES')
+if dra is not None and dra == "NO":
+    dereffs_allowed = False
+
 # variable type specified?
 tvtype = os.getenv('DMCE_TRACE_VAR_TYPE')
 if tvtype is None:
@@ -1213,7 +1219,7 @@ while (lineindex < linestotal):
                     found = 1
                     break
 
-    if inside_expression and not in_member_expr and not found and in_parsed_file and numDataVars > 0:
+    if dereffs_allowed and inside_expression and not in_member_expr and not found and in_parsed_file and numDataVars > 0:
         foundmember = False
         member_offset = 0
 
@@ -1323,7 +1329,7 @@ while (lineindex < linestotal):
             secStackVars.append("")
             secStackPos.append((currentSectionLend, currentSectionCend))
 
-    if in_parsed_file:
+    if dereffs_allowed and in_parsed_file:
         # Check if any references to variables should be added to reffedVars
         for ref in re_reffedvars:
             m = ref.match(linebuf[lineindex])
