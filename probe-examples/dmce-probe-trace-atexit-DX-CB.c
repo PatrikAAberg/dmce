@@ -54,6 +54,8 @@ static __inline__ uint64_t dmce_tsc(void) {
 #endif
 }
 
+static int signal_core = 4242;
+
 static void dmce_atexit(void) {
 
     int fp;
@@ -90,6 +92,38 @@ static void dmce_atexit(void) {
         fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 #endif
         close(fp);
+
+        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN ".info", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
+
+            printf("DMCE trace: Error when opening info file: %s\n", strerror(errno));
+            return;
+        }
+
+        {
+            char info[80 * 10];
+            char exit_info[80];
+
+            if (signal_core == 4242) {
+
+                sprintf(exit_info, "Exit info:exit()\n");
+            }
+            else {
+
+                sprintf(exit_info, "Exit info:signal handler, core = %d\n", signal_core);
+            }
+
+            sprintf(info, "Probe: dmce-probe-trace-atexit-DX-CB.c\n");
+            strcat(info, exit_info);
+
+            if ( -1 == write(fp, info, strlen(info))) {
+
+                printf("DMCE trace: Error when writing info file to disk: %s\n", strerror(errno));
+                return;
+            }
+        }
+
+        close(fp);
+
         remove(DMCE_PROBE_LOCK_DIR_ENTRY);
     }
 }
@@ -104,6 +138,9 @@ static void dmce_signal_handler(int sig) {
 
     /* Make other threads stop */
     __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
+
+    /* Save current core */
+    signal_core = sched_getcpu();
 
     /* Just call atexit and invoke the standard sig handler */
     dmce_atexit();
