@@ -105,14 +105,14 @@ static void dmce_atexit(void) {
 
             if (signal_core == 4242) {
 
-                sprintf(exit_info, "Exit info:exit()\n");
+                sprintf(exit_info, "Exit cause: exit()\n");
             }
             else {
 
-                sprintf(exit_info, "Exit info:signal handler, core = %d\n", signal_core);
+                sprintf(exit_info, "Exit cause: signal handler, core = %d\n", signal_core);
             }
 
-            sprintf(info, "Probe: dmce-probe-trace-atexit-DX-CB.c\n");
+            sprintf(info, "\nProbe     : dmce-probe-trace-atexit-DX-CB.c\n");
             strcat(info, exit_info);
 
             if ( -1 == write(fp, info, strlen(info))) {

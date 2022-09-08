@@ -46,6 +46,15 @@ else:
     cores = None
 
 dfile = args.dfile
+ifilename = dfile + ".info"
+ifile = open(ifilename)
+info = ifile.readlines()
+ifile.close()
+for line in info:
+    print(line.rstrip())
+
+print("- - - - -")
+
 probefile = args.probefile
 codetree = args.codetree
 entrysize64 = 2 + args.numvars + 1

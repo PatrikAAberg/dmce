@@ -26,6 +26,7 @@ w_screen = 0
 
 tracebuffer = []
 full_tracebuffer = []
+trace_info = []
 codebuffer = []
 varbuffer = []
 numbuffer = []
@@ -59,7 +60,7 @@ ts_min = sys.maxsize
 
 editor = "vim"
 
-#log = open("/tmp/dmcetraceviewer.log", "w")
+log = open("/tmp/dmcetraceviewer.log", "w")
 #print("dmce trace viewer log", file=log)
 
 # look for editor configuration
@@ -81,10 +82,22 @@ def init():
     global full_tracebuffer
     global args
     global ts_min
+    global trace_info
 
     tf = open(args.tfile)
     full_tracebuffer = tf.readlines()
     tf.close()
+
+    info_end = 0
+    for line in full_tracebuffer:
+        if not "- - - - -" in line:
+            trace_info.append(line.rstrip())
+            info_end +=1
+        else:
+            info_end +=1
+            break
+
+    full_tracebuffer = full_tracebuffer[info_end:]
 
     i = 0
     while i < len(full_tracebuffer):
@@ -155,6 +168,7 @@ def draw(stdscr):
     global num_tracelines
     global old_srcpath
     global blink
+    global trace_info
 
     # trace view
     wtout = w_screen - (w_screen - wx_varsview) - 1
@@ -244,29 +258,33 @@ def draw(stdscr):
         compressed = compressed + core_filter[len(core_filter) - 1]
 
     # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(7, wx_varsview, (" Diff             : " + str(diff) + " (cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(9, wx_varsview, (" Markers: "))
-    stdscr.addstr(10, wx_varsview, (" ---------------------"))
-    stdscr.addstr(11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    ti_offset = len(trace_info)
+    for i in range(ti_offset):
+        stdscr.addstr(i, wx_varsview, " " + trace_info[i])
+
+    stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 7, wx_varsview, (" Diff             : " + str(diff) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 9, wx_varsview, (" Markers: "))
+    stdscr.addstr(ti_offset + 10, wx_varsview, (" ---------------------"))
+    stdscr.addstr(ti_offset + 11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     pos = wx_varsview + 1
     for m in jumplist:
         if str(entry_num) != m:
-            stdscr.addstr(11, pos, str(m) + " ")
+            stdscr.addstr(ti_offset + ti_offset + 11, pos, str(m) + " ")
         else:
-            stdscr.addstr(11, pos, str(m) + " ", curses.A_REVERSE)
+            stdscr.addstr(ti_offset + 11, pos, str(m) + " ", curses.A_REVERSE)
         pos += len(m) + 1
-    stdscr.addstr(13, wx_varsview, (" Filters"))
-    stdscr.addstr(14, wx_varsview, (" ---------------------"))
-    stdscr.addstr(15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(16, wx_varsview, (" Files: " + file_filter).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(17, wx_varsview, (" Funcs: " + func_filter).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(18, wx_varsview, (" Srcs : " + src_filter).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 13, wx_varsview, (" Filters"))
+    stdscr.addstr(ti_offset + 14, wx_varsview, (" ---------------------"))
+    stdscr.addstr(ti_offset + 15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 16, wx_varsview, (" Files: " + file_filter).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 17, wx_varsview, (" Funcs: " + func_filter).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 18, wx_varsview, (" Srcs : " + src_filter).ljust(w_screen - wx_varsview, " "))
 
     # info / error codes
     if blink:
