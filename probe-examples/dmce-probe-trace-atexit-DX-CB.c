@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <fcntl.h>
 
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
@@ -54,7 +55,7 @@ static __inline__ uint64_t dmce_tsc(void) {
 
 static void dmce_atexit(void) {
 
-    FILE *fp;
+    int fp;
 
 #ifdef DMCE_TRACE_RINGBUFFER
     unsigned int buf_pos;
@@ -64,7 +65,7 @@ static void dmce_atexit(void) {
 
     if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
 
-        fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
+        fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT, O_WRONLY);
 
 #ifdef DMCE_TRACE_RINGBUFFER
 
@@ -74,12 +75,13 @@ static void dmce_atexit(void) {
         for (i = 0; i < DMCE_MAX_HITS; i++) {
 
             unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-            fwrite(&dmce_buf_p[index], sizeof(dmce_probe_entry_t), 1, fp);
+            if ( -1 == write(fp, &dmce_buf_p[index], sizeof(dmce_probe_entry_t) * 1))
+                return;
         }
 #else
         fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
 #endif
-        fclose(fp);
+        close(fp);
         remove(DMCE_PROBE_LOCK_DIR_ENTRY);
     }
 }
