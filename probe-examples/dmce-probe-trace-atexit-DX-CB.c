@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
@@ -65,7 +66,11 @@ static void dmce_atexit(void) {
 
     if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
 
-        fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT, O_WRONLY);
+        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
+
+            printf("DMCE trace: Error when opening trace file: %s\n", strerror(errno));
+            return;
+        }
 
 #ifdef DMCE_TRACE_RINGBUFFER
 
@@ -75,8 +80,11 @@ static void dmce_atexit(void) {
         for (i = 0; i < DMCE_MAX_HITS; i++) {
 
             unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-            if ( -1 == write(fp, &dmce_buf_p[index], sizeof(dmce_probe_entry_t) * 1))
+            if ( -1 == write(fp, &dmce_buf_p[index], sizeof(dmce_probe_entry_t) * 1)) {
+
+                printf("DMCE trace: Error when writing trace buffer to disk: %s\n", strerror(errno));
                 return;
+            }
         }
 #else
         fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
@@ -85,6 +93,12 @@ static void dmce_atexit(void) {
         remove(DMCE_PROBE_LOCK_DIR_ENTRY);
     }
 }
+
+#ifdef _GNU_SOURCE
+#include <sched.h>
+#else
+int sched_getcpu(void);
+#endif
 
 static void dmce_signal_handler(int sig) {
 
@@ -96,12 +110,6 @@ static void dmce_signal_handler(int sig) {
     signal(sig, SIG_DFL);
     kill(getpid(), sig);
 }
-
-#ifdef _GNU_SOURCE
-#include <sched.h>
-#else
-int sched_getcpu(void);
-#endif
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr);
 
