@@ -54,27 +54,19 @@ static __inline__ uint64_t dmce_tsc(void) {
 #endif
 }
 
-static int signal_core = 4242;
+static int dmce_signal_core = 4242;
+static int dmce_signo = 4242;
 
-static void dmce_atexit(void) {
+static void dmce_dump_trace() {
 
-    int fp;
-
-#ifdef DMCE_TRACE_RINGBUFFER
-    unsigned int buf_pos;
-#endif
-
-    /* Only do this once (exit dir needs to be removed at startup) */
-
-    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
+        int fp;
+        unsigned int buf_pos;
 
         if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
 
             printf("DMCE trace: Error when opening trace file: %s\n", strerror(errno));
             return;
         }
-
-#ifdef DMCE_TRACE_RINGBUFFER
 
         buf_pos = (*dmce_probe_hitcount_p >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
         int i;
@@ -88,9 +80,7 @@ static void dmce_atexit(void) {
                 return;
             }
         }
-#else
-        fwrite(dmce_buf_p, sizeof(dmce_probe_entry_t), *dmce_probe_hitcount_p, fp);
-#endif
+
         close(fp);
 
         if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN ".info", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
@@ -101,15 +91,17 @@ static void dmce_atexit(void) {
 
         {
             char info[80 * 10];
-            char exit_info[80];
+            char exit_info[80 * 3];
 
-            if (signal_core == 4242) {
+            if (dmce_signal_core == 4242) {
 
                 sprintf(exit_info, "Exit cause: exit()\n");
             }
             else {
 
-                sprintf(exit_info, "Exit cause: signal handler, core = %d\n", signal_core);
+                sprintf(exit_info, "Exit cause: signal handler\n"
+                                   "Core      : %d\n"
+                                   "Signal    : %d (%s)\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo));
             }
 
             sprintf(info, "\nProbe     : dmce-probe-trace-atexit-DX-CB.c\n");
@@ -125,6 +117,15 @@ static void dmce_atexit(void) {
         close(fp);
 
         remove(DMCE_PROBE_LOCK_DIR_ENTRY);
+}
+
+static void dmce_atexit(void) {
+
+    /* Only do this once (exit dir needs to be removed at startup) */
+
+    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
+
+        dmce_dump_trace();
     }
 }
 
@@ -136,16 +137,22 @@ int sched_getcpu(void);
 
 static void dmce_signal_handler(int sig) {
 
-    /* Make other threads stop */
-    __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
+    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
 
-    /* Save current core */
-    signal_core = sched_getcpu();
+        /* Make other threads stop */
+        __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
 
-    /* Just call atexit and invoke the standard sig handler */
-    dmce_atexit();
-    signal(sig, SIG_DFL);
-    kill(getpid(), sig);
+        /* Save current core and sig */
+        dmce_signal_core = sched_getcpu();
+        dmce_signo = sig;
+
+        /* Dump trace and invoke the standard sig handler */
+
+        dmce_dump_trace();
+
+        signal(sig, SIG_DFL);
+        kill(getpid(), sig);
+    }
 }
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr);
