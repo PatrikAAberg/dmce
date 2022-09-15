@@ -26,7 +26,7 @@ import argparse
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
-do_print=1
+do_print=0
 
 parsed_file = sys.argv[1]
 
@@ -410,7 +410,11 @@ re_parmdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 
 # De-reffed member vars and pointers
 re_memberdeclarations = []
 re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue (->\w*).*'))
+re_memberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue (\.\w+).*'))
 re_memberdeclarations.append(re.compile(r'.*-UnaryOperator Hexnumber <.*>.*\'(.* \*|.* \*\*|int|long|unsigned int|unsigned long|short|unsigned short|char|unsigned char)\' lvalue prefix \'(\*)\' .*'))
+
+re_submemberdeclarations = re_memberdeclarations.copy()
+re_submemberdeclarations.append(re.compile(r'.*-MemberExpr Hexnumber <.*>.*\'(.*)\' lvalue (\.\w+).*'))
 
 re_memberdeclarations_ignore = []
 re_memberdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 10 sometimes confuses string.length() with de-reffed member variable type
@@ -420,7 +424,7 @@ re_csp_list = []
 re_csp_list.append(re.compile(r'.*BinaryOperator.*(\'\|\|\'|\'\&\&\').*'))
 
 # Declaration reference
-re_declref = re.compile(r'.*-DeclRefExpr Hexnumber.*Var Hexnumber \'(\S*)\' \'.*\*\'.*')
+re_declref = re.compile(r'.*-DeclRefExpr Hexnumber.*Var Hexnumber \'(\S*)\' \'.*\'.*')
 
 # function trace entry triggers
 re_ftrace_entry = []
@@ -501,10 +505,13 @@ def find_data_structures():
 def clean_stackvars():
     i = 0
     while (i < len(secStackVars)):
+        # remove the member de-refs
         if "$" in secStackVars[i]:
             secStackVars.pop(i)
             secStackPos.pop(i)
         else:
+            # activate struct member vars
+            secStackVars[i] = secStackVars[i].replace("¤","")
             i+=1
 
 # Populate c expression database
@@ -1222,11 +1229,18 @@ while (lineindex < linestotal):
     if dereffs_allowed and inside_expression and not in_member_expr and not found and in_parsed_file and numDataVars > 0:
         foundmember = False
         member_offset = 0
-
+        first_member_expr = True
+        # This one is used to check that the last decl ref is really part of the same subnode
+        tab_tail_check = 0
         # limit ourselves to 8 derefs
         while member_offset < 16 and (lineindex + member_offset + 2) < len(linebuf):
             matchmember = False
-            for section in re_memberdeclarations:
+            if first_member_expr:
+                re_membertmp = re_memberdeclarations
+                first_member_expr = False
+            else:
+                re_membertmp = re_submemberdeclarations
+            for section in re_membertmp:
                 m = section.match(linebuf[lineindex + member_offset])
                 if m:
                     ignore_member = False
@@ -1235,20 +1249,37 @@ while (lineindex < linestotal):
                             ignore_member = True
                             break
                     if not ignore_member:
-                        # Just handle the pattern with ImpCast directly after for now
+                        # The pattern with ImpCast directly after is valid for member pointer derefs
+
                         if "ImplicitCastExpr" in linebuf[lineindex + member_offset + 1]:
-                            if do_print:
-                                print("MATCHED MEMBER DECL: " + linebuf[lineindex])
                             varname = m.group(2) + varname
+                            matchmember = True
+                            member_offset += 2
+                            tab_tail_check = 2
+                            break
+                        # The pattern with member directly after is valid for .member notation
+                        elif "-MemberExpr" in linebuf[lineindex + member_offset + 1]:
+                            varname = m.group(2) + varname
+                            matchmember = True
+                            member_offset += 1
+                            tab_tail_check = 1
+                            break
+                        elif "-DeclRefExpr" in linebuf[lineindex + member_offset + 1]:
+                            varname = m.group(2) + varname
+                            member_offset += 1
+                            tab_tail_check = 1
                             matchmember = True
                             break
                         else:
                             # skip if not following this pattern
+                            member_offset += 1
+                            tab_tail_check = 1
                             in_member_expr = True
                             member_expr_tab = tab
 
             if matchmember:
-                member_offset += 2
+                if do_print:
+                    print("MATCHED MEMBER DECL: " + linebuf[lineindex])
                 foundmember = True
             else:
                 break
@@ -1264,11 +1295,11 @@ while (lineindex < linestotal):
             # Check for corresponding struct or class and make sure its a sub node
             if m:
                 if do_print:
-                    print("MATCHED REF DECL: " + linebuf[lineindex])
+                    print("MATCHED REF DECL: " + linebuf[lineindex + member_offset])
                 refname = m.group(1)
                 foundrefdecl = True
 
-        if foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + 2].find("|-") and not in_conditional_sequence_point:
+        if foundmember and foundrefdecl and (refname + varname) not in secStackVars and linebuf[lineindex].find("|-") < linebuf[lineindex + tab_tail_check].find("|-") and not in_conditional_sequence_point:
             # member or pointer deref?
             if varname == "*":
                 varname = "$*" + refname
@@ -1283,7 +1314,16 @@ while (lineindex < linestotal):
                     varname = "$*" + refname + varname
                 else:
                     varname = "$" + refname + varname
-            found = 1
+
+            # If struct member notation, mark with ¤
+            if "." in varname and "->" in varname:
+                found = 0
+            elif "." in varname:
+                varname = varname.replace("$", "")
+                varname = "¤" + varname
+                found = 1
+            else:
+                found = 1
 
         # TODO: Add lvalue vars
 
@@ -1415,7 +1455,7 @@ while (i < expdb_index):
             if s == "### VAR BARRIER ###":
                 break
             s = s.replace("$","")
-            if s != "":
+            if s != "" and not "¤" in s:
                 vlist.append(s)
 
         # Create a list ordered by last referenced
