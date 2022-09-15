@@ -31,7 +31,7 @@ static int registered_at_exit = 0;
 static void dmce_mkdir(char const* path) {
     char const* pos_path = path;
 
-    char* dir = calloc(strlen(path) + 1, sizeof(char));
+    char* dir = (char*)calloc(strlen(path) + 1, sizeof(char));
     char* pos_dir = dir;
 
     while (*pos_path != '\0') {
