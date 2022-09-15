@@ -33,6 +33,8 @@ static void dmce_probe_body10(unsigned int dmce_probenbr, uint64_t dmce_param_a,
 #define DMCE_PROBE9(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i) (dmce_probe_body9(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i))
 #define DMCE_PROBE10(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i, dmce_param_j) (dmce_probe_body10(dmce_probenbr, dmce_param_a, dmce_param_b, dmce_param_c, dmce_param_d, dmce_param_e, dmce_param_f, dmce_param_g, dmce_param_h, dmce_param_i, dmce_param_j))
 
+#define DMCE_PROBE DMCE_PROBE0
+
 /* Remove any GCC warnings caused by DMCE since some put warnings as errors */
 #pragma GCC diagnostic ignored "-Wsequence-point" /* Better to get either lvalue or rvalue of de-reffed pointer with post-incr than nothing at all */
 #endif
