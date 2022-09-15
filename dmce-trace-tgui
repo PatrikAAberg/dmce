@@ -130,6 +130,9 @@ def check_and_clean_probes(line):
     if show_probes:
         return line
 
+    # Convert from DMCE_PROBE to DMCE_PROBE0
+    line = line.replace("DMCE_PROBE(", "DMCE_PROBE0(")
+
     cline = line
 
     # num vars
