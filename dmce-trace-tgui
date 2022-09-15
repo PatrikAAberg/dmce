@@ -156,6 +156,10 @@ def check_and_clean_probes(line):
         else:
             cline = re.sub(r'\(DMCE_PROBE(\d*)\(\d*\,(\S*\,){' + numvars + '} ', "", cline)
 
+        # Special case for calltrace lines
+        cline = re.sub(r'{DMCE_PROBE\d\(.*\/\* Function entry.*\*\/', "{", cline)
+        cline = re.sub(r'DMCE_PROBE\d\(.*\/\* Function exit.*\*\/ }', "}", cline)
+
     return cline
 
 def draw(stdscr):
