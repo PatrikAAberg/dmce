@@ -82,6 +82,7 @@ OPTIONS
     --stupid         DMCE include files awareness disabled
     --calltrace      Only probe entry and exit of calls
     --structs        Produce struct-printing macros
+    --noprobes       Disable probing all together
     -v, --version    Get DMCE version
 
 DESCRIPTION
@@ -213,6 +214,9 @@ while getopts "$optspec" optchar; do
                     ;;
                 structs)
                     export DMCE_STRUCTS=stderr
+                    ;;
+                noprobes)
+                    export DMCE_NOPROBES=YES
                     ;;
                 skip)
                     skip=true

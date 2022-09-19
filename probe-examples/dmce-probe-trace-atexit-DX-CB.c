@@ -59,10 +59,32 @@ static __inline__ uint64_t dmce_tsc(void) {
 static int dmce_signal_core = 4242;
 static int dmce_signo = 4242;
 
+/* Recursive mkdir */
+static void dmce_mkdir(char const* path) {
+    char const* pos_path = path;
+
+    char* dir = (char*)calloc(strlen(path) + 1, sizeof(char));
+    char* pos_dir = dir;
+
+    while (*pos_path != '\0') {
+        if (*pos_path == '/') {
+            mkdir(dir, S_IRWXU);
+        }
+        *pos_dir = *pos_path;
+        pos_dir++;
+        pos_path++;
+    }
+
+    mkdir(dir, S_IRWXU);
+    free(dir);
+}
+
 static void dmce_dump_trace() {
 
         int fp;
         unsigned int buf_pos;
+
+        dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
 
         if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
 
@@ -157,25 +179,6 @@ static void dmce_signal_handler(int sig) {
     }
 }
 
-/* Recursive mkdir */
-static void dmce_mkdir(char const* path) {
-    char const* pos_path = path;
-
-    char* dir = (char*)calloc(strlen(path) + 1, sizeof(char));
-    char* pos_dir = dir;
-
-    while (*pos_path != '\0') {
-        if (*pos_path == '/') {
-            mkdir(dir, S_IRWXU);
-        }
-        *pos_dir = *pos_path;
-        pos_dir++;
-        pos_path++;
-    }
-
-    mkdir(dir, S_IRWXU);
-    free(dir);
-}
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr);
 
@@ -386,7 +389,6 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             remove(DMCE_PROBE_LOCK_DIR_EXIT);
 
-            dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
 
             /* If first time: allocate buffer, init env var and set up exit hook */
             /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/

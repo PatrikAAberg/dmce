@@ -30,6 +30,13 @@ do_print=0
 
 parsed_file = sys.argv[1]
 
+# Disable probing all together?
+no_probes = os.getenv('DMCE_NOPROBES')
+if no_probes is not None:
+    no_probes = True
+else:
+    no_probes = False
+
 # Generate struct printout macros?
 struct_printouts = os.getenv('DMCE_STRUCTS')
 if struct_printouts is not None:
@@ -273,7 +280,10 @@ for line in rawlinebuf:
 linestotal=rawlinestotal
 
 # Regexps for C/C++ expression recognition
-if configpath != None and os.path.isfile(configpath + '/recognizedexpressions.py'):
+if no_probes:
+    exppatternlist = []
+    exppatternmode = []
+elif configpath != None and os.path.isfile(configpath + '/recognizedexpressions.py'):
     sys.path.insert(1, configpath)
     import recognizedexpressions
     exppatternlist = recognizedexpressions.exppatternlist
@@ -1803,7 +1813,7 @@ pf = open(sys.argv[2],"w")
 
 if gen_struct_macros:
     sf = open(sys.argv[2] + ".dmcestructs","w")
-    pf.write("#include \"" + sys.argv[2] + ".dmcestructs\"\n")
+    pf.write("#include \"" + os.path.basename(sys.argv[2]) + ".dmcestructs\"\n")
     for line in struct_src:
         sf.write(line)
     sf.close()
