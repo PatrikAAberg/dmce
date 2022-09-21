@@ -312,6 +312,9 @@ TIMEFORMAT="done: real: %3lR user: %3lU sys: %3lS"
 if git_root=$(git rev-parse --show-toplevel 2> /dev/null); then
     git_name=$(basename "${git_root}")
     export DMCE_GIT_NAME=$git_name
+else
+    echo "Not in a git repository, abort"
+    exit 1
 fi
 
 # Double probing?
@@ -422,6 +425,9 @@ if [ "$dmce_double" != "" ]; then
     done
     wait
 fi
+
+_echo "removing any files containing dmce struct macros"
+find ${git_root} -name "*.probed.dmcestructs" -exec rm {} \;
 
 _echo "DMCE variables:"
 if [ "${quiet}" = "false" ]; then
