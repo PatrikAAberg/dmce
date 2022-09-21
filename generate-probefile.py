@@ -481,7 +481,8 @@ def find_data_structures():
     if (in_parsed_file):
         m = re_recorddecl.match(linebuf[lineindex])
         if m:
-            print("FOUND RECORD!")
+            if do_print:
+                print("FOUND RECORD!")
             struct_name = m.group(2)
             field_names = []
             i = lineindex + 1
@@ -489,7 +490,8 @@ def find_data_structures():
                 if "FieldDecl" in linebuf[i]:
                     m = re_fielddecl.match(linebuf[i])
                     if m:
-                        print("FOUND FIELD!")
+                        if do_print:
+                            print("FOUND FIELD!")
                         field_names.append(m.group(1))
                     i += 1
                 else:
@@ -1455,8 +1457,9 @@ while (i < expdb_index):
     ce = expdb_colend[i] #- 1
     ele = expdb_elineend[i] - 1
     frp = expdb_frp[i]
-    print("___________FRP " + str(i) + "___________:" + str(frp))
-    print(str(expdb_frp))
+    if do_print:
+        print("___________FRP " + str(i) + "___________:" + str(frp))
+        print(str(expdb_frp))
     probe_prolog = "(DMCE_PROBE(TBD"
 
     if numDataVars > 0:
