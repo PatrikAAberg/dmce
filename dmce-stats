@@ -1,6 +1,13 @@
 #!/bin/bash
 
+echo "Probes inserted per type"
+echo "---------------------------"
 for i in {0..9}
 do
    echo "DMCE_PROBE${i}: " $(git grep -P "DMCE_PROBE${i}\(\d" | wc -l)
 done
+
+echo
+echo "Available structure printout macros"
+echo "--------------------------------------"
+grep -r dmce_print | sed s/.probed.dmcestructs//g | sed s/#define//g | sed 's/{\\//g' | sort | uniq
