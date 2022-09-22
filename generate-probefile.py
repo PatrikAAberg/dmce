@@ -474,7 +474,7 @@ re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
 
 # Populate struct database
 re_recorddecl = re.compile('.*RecordDecl.*(struct) (\S*).*')
-re_typedefdecl = re.compile('.*-TypedefDecl.* referenced (.*) .*')
+re_typedefdecl = re.compile('.*-TypedefDecl.* referenced (\w*) \'.*')
 re_fielddecl = re.compile('.*-FieldDecl .* (.*) \'(size_t|int|unsigned int|long|unsigned long|.* \*)\'.*')
 
 def find_data_structures():
@@ -487,7 +487,13 @@ def find_data_structures():
             field_names = []
             i = lineindex + 1
             while i < len(linebuf):
-                if "FieldDecl" in linebuf[i]:
+                # Check for sections to skip within the record declaration
+                if "DefinitionData" in linebuf[i]:
+                    tabpos = linebuf[i].find("|-")
+                    i += 1
+                    while linebuf[i].find("|-") > tabpos:
+                        i += 1
+                elif "FieldDecl" in linebuf[i]:
                     m = re_fielddecl.match(linebuf[i])
                     if m:
                         if do_print:
@@ -495,14 +501,17 @@ def find_data_structures():
                         field_names.append(m.group(1))
                     i += 1
                 else:
-                    i += 1
                     # typedef struct { ... } A; ? => Look for definition of A
                     if struct_name == "definition":
                         m = re_typedefdecl.match(linebuf[i])
                         if m:
                             struct_name = m.group(1)
+                            if do_print:
+                                print("FOUND TYPEDEF")
                         else:
                             field_names = []
+                            if do_print:
+                                print("NO TYPEDEF FOUND, CLEANING FIELDS")
                     break
             if len(field_names) > 0:
                 struct_src.append("\n#ifndef DMCE_STRUCT_API_" +  struct_name + "\n")
