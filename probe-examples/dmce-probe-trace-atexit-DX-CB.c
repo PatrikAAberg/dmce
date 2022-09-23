@@ -86,7 +86,7 @@ static void dmce_dump_trace() {
 
         dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
 
-        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
+        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
 
             printf("DMCE trace: Error when opening trace file: %s\n", strerror(errno));
             return;
