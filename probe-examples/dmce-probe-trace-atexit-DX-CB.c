@@ -173,10 +173,14 @@ static void dmce_signal_handler(int sig) {
         /* Dump trace and invoke the standard sig handler */
 
         dmce_dump_trace();
-
         signal(sig, SIG_DFL);
         kill(getpid(), sig);
     }
+    else {
+        /* After 10 secs we have (hopefully) written the trace buffer, force an exit if we are still here */
+        sleep(10);
+        _Exit(1);
+     }
 }
 
 
