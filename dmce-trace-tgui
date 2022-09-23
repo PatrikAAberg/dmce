@@ -55,7 +55,7 @@ old_srcpath = ""
 
 relaunch = False
 blink = True
-show_probes = True
+show_probes = False
 ts_min = sys.maxsize
 
 editor = "vim"
