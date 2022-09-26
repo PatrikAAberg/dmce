@@ -104,7 +104,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-DX.c")
 
             if "DMCE_POST_HOOK" in clines[count]:
-                clines[count] = "DMCE_POST_HOOK:\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
         # coverage profile
         elif args.profile == "coverage":
@@ -118,7 +118,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
             if "DMCE_POST_HOOK" in clines[count]:
-                clines[count] = "DMCE_POST_HOOK:\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
         # syslog profile
         elif args.profile == "syslog":
@@ -132,7 +132,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
             if "DMCE_POST_HOOK" in clines[count]:
-                clines[count] = "DMCE_POST_HOOK:\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
         # printf profile
         elif args.profile == "printf":
@@ -146,7 +146,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
 
             if "DMCE_POST_HOOK" in clines[count]:
-                clines[count] = "DMCE_POST_HOOK:\n"
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
         # racecheck profile
         elif args.profile == "racecheck":

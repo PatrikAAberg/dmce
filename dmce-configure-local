@@ -81,7 +81,7 @@ DMCE_PROBE_SOURCE:$install_path/probe-examples/dmce-probe-user.c
 DMCE_PROBE_PROLOG:$install_path/probe-examples/dmce-prolog-default.c
 
 # Post hook for running script after probing
-DMCE_POST_HOOK:
+DMCE_POST_HOOK:$install_path/dmce-post-hook-null
 
 # Use system inlcude files (YES | NO)
 DMCE_SYS_INCLUDES:NO
