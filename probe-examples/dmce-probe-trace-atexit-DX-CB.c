@@ -84,7 +84,7 @@ static void dmce_mkdir(char const* path) {
     free(dir);
 }
 
-static void dmce_dump_trace() {
+static void dmce_dump_trace(int status) {
 
         int fp;
         unsigned int buf_pos;
@@ -129,7 +129,8 @@ static void dmce_dump_trace() {
 
             if (dmce_signal_core == 4242) {
 
-                sprintf(exit_info, "Exit cause: exit()\n");
+                sprintf(exit_info,  "Exit cause : exit()\n"
+                                    "Exit status: %d\n", status);
             }
             else {
 
@@ -156,7 +157,9 @@ static void dmce_dump_trace() {
         }
 }
 
-static void dmce_atexit(void) {
+static void dmce_on_exit(int status, void* opaque) {
+
+    (void)opaque;
 
     /* Only do this once (exit dir needs to be removed at startup) */
     char exitdirname[256];
@@ -164,7 +167,7 @@ static void dmce_atexit(void) {
 
     if (! (mkdir(exitdirname, 0))) {
 
-        dmce_dump_trace();
+        dmce_dump_trace(status);
     }
 }
 
@@ -190,7 +193,8 @@ static void dmce_signal_handler(int sig) {
 
         /* Dump trace and invoke the standard sig handler */
 
-        dmce_dump_trace();
+        dmce_dump_trace(0);
+
         signal(sig, SIG_DFL);
         kill(syscall(SYS_getpid), sig);
     }
@@ -459,7 +463,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             /* Handler for normal exit */
 
-            atexit(dmce_atexit);
+            on_exit(dmce_on_exit, NULL);
 
             /* Enable trace at program entry? */
 
