@@ -112,8 +112,8 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 10
 DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH "/tmp/${_user}/dmce"
 
 # Some probes need system wide lock dirs for entry and exit
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/${_user}/dmce-trace-buffer-lock-entry"
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT "/tmp/${_user}/dmce-trace-buffer-lock-exit"
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/${_user}/dmce/dmce-trace-buffer-lock-entry"
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT "/tmp/${_user}/dmce/dmce-trace-buffer-lock-exit"
 
 # Some probes need a deafult setting for trace enabled at program entry
 DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
