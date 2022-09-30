@@ -9,6 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/syscall.h>
 
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
@@ -20,6 +21,10 @@
 #define NBR_STATUS_BITS 1
 
 #ifndef DMCE_PROBE_LOCK_DIR_ENTRY
+#pragma GCC error "missing dmce configuration"
+#endif
+
+#ifndef DMCE_PROBE_LOCK_DIR_EXIT
 #pragma GCC error "missing dmce configuration"
 #endif
 
@@ -83,10 +88,15 @@ static void dmce_dump_trace() {
 
         int fp;
         unsigned int buf_pos;
+        char outfile[256];
+        char infofile[256];
+
+        sprintf(outfile, "%s-%s.%d", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
+        sprintf(infofile, "%s-%s.%d.info", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
 
         dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
 
-        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
+        if ( -1 == (fp = open(outfile, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
 
             printf("DMCE trace: Error when opening trace file: %s\n", strerror(errno));
             return;
@@ -107,7 +117,7 @@ static void dmce_dump_trace() {
 
         close(fp);
 
-        if ( -1 == (fp = open(DMCE_PROBE_OUTPUT_FILE_BIN ".info", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
+        if ( -1 == (fp = open(infofile, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
 
             printf("DMCE trace: Error when opening info file: %s\n", strerror(errno));
             return;
@@ -139,15 +149,20 @@ static void dmce_dump_trace() {
         }
 
         close(fp);
-
-        remove(DMCE_PROBE_LOCK_DIR_ENTRY);
+        {
+            char entrydirname[256];
+            sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
+            remove(entrydirname);
+        }
 }
 
 static void dmce_atexit(void) {
 
     /* Only do this once (exit dir needs to be removed at startup) */
+    char exitdirname[256];
+    sprintf(exitdirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_EXIT, program_invocation_short_name, getpid());
 
-    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
+    if (! (mkdir(exitdirname, 0))) {
 
         dmce_dump_trace();
     }
@@ -161,7 +176,10 @@ int sched_getcpu(void);
 
 static void dmce_signal_handler(int sig) {
 
-    if (! (mkdir(DMCE_PROBE_LOCK_DIR_EXIT, 0))) {
+    char exitdirname[256];
+    sprintf(exitdirname, "%s-%s.%ld", DMCE_PROBE_LOCK_DIR_EXIT, program_invocation_short_name, syscall(SYS_getpid));
+
+    if (! (mkdir(exitdirname, 0))) {
 
         /* Make other threads stop */
         __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
@@ -174,11 +192,14 @@ static void dmce_signal_handler(int sig) {
 
         dmce_dump_trace();
         signal(sig, SIG_DFL);
-        kill(getpid(), sig);
+        kill(syscall(SYS_getpid), sig);
     }
     else {
-        /* After 10 secs we have (hopefully) written the trace buffer, force an exit if we are still here */
-        sleep(10);
+
+        /* We should never get to this point, but if we do: */
+        /* After 30 secs we have (hopefully) written the trace buffer, force an exit if we are still here */
+
+        sleep(30);
         _Exit(1);
      }
 }
@@ -385,13 +406,13 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     /* The fast check followed by the thread safe check (this one can only go from 0 to 1 and never changes) */
 
     if ((!dmce_buffer_setup_done) || (!__atomic_load_n (&dmce_buffer_setup_done, __ATOMIC_SEQ_CST))) {
-        if (! (mkdir(DMCE_PROBE_LOCK_DIR_ENTRY, 0))) {
+
+        char entrydirname[256];
+        sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
+
+        if (! (mkdir(entrydirname, 0))) {
 
             /* This is the first thread executing a probe for ANY source file part of this process */
-
-            /* remove any previous exit lock */
-
-            remove(DMCE_PROBE_LOCK_DIR_EXIT);
 
 
             /* If first time: allocate buffer, init env var and set up exit hook */
@@ -407,6 +428,14 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
+
+            /* TODO: Inherited env ? */
+
+            /*
+            if (NULL != getenv("dmce_trace_control")) {
+
+            }
+            */
 
             sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
             setenv("dmce_trace_control", s, 0);
@@ -448,6 +477,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             /* Yield to make sure the mkdir can finish if ongoing, sched is non-favourable and cores are scarse */
 
             while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
+
             sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
