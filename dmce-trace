@@ -212,7 +212,7 @@ outbuf = []
 
 print("Generating trace output", file=sys.stderr)
 
-steps = int(length / 100)
+steps = int(length / 10)
 
 for n in range(length):
 

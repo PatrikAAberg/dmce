@@ -137,7 +137,7 @@ function main() {
         dmce_trace_args+=" --format raw"
         dmce_trace_args+=" --numvars 5"
     fi
-    dmce_trace_args+=" -t"
+    dmce_trace_args+=" -t --verbose"
     dmce_trace_args+=" $data"
     dmce_trace_args+=" $probes"
     dmce_trace_args+=" ${git_full}"
