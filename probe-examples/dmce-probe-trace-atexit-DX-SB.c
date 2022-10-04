@@ -10,10 +10,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/syscall.h>
-
-#ifndef DMCE_NUM_CORES
-#define DMCE_NUM_CORES 128
-#endif
+#include <sys/sysinfo.h>
 
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
@@ -88,6 +85,15 @@ static void dmce_mkdir(char const* path) {
     free(dir);
 }
 
+static inline int dmce_num_cores() {
+
+#ifdef DMCE_NUM_CORES
+            return DMCE_NUM_CORES;
+#else
+            return get_nprocs();
+#endif
+}
+
 static void dmce_dump_trace(int status) {
 
         int fp;
@@ -106,7 +112,7 @@ static void dmce_dump_trace(int status) {
             return;
         }
 
-        for (core = 0; core < DMCE_NUM_CORES; core++) {
+        for (core = 0; core < dmce_num_cores(); core++) {
 
             unsigned int buf_pos = (dmce_probe_hitcount_p[core] >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
             int i;
@@ -140,14 +146,16 @@ static void dmce_dump_trace(int status) {
 
             if (dmce_signal_core == 4242) {
 
-                sprintf(exit_info,  "Exit cause : exit()\n"
-                                    "Exit status: %d\n", status);
+                sprintf(exit_info,  "Exit cause   : exit()\n"
+                                    "Exit status  : %d\n"
+                                    "System cores : %d\n", status, dmce_num_cores());
             }
             else {
 
-                sprintf(exit_info, "Exit cause: signal handler\n"
-                                   "Core      : %d\n"
-                                   "Signal    : %d (%s)\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo));
+                sprintf(exit_info, "Exit cause  : signal handler\n"
+                                   "Core        : %d\n"
+                                   "Signal      : %d (%s)\n"
+                                   "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), dmce_num_cores());
             }
 
             sprintf(info, "\nProbe     : dmce-probe-trace-atexit-DX-CB.c\n");
@@ -198,7 +206,7 @@ static void dmce_signal_handler(int sig) {
         /* Make other threads stop */
         int i;
 
-        for (i = 0; i < DMCE_NUM_CORES; i++ )
+        for (i = 0; i < dmce_num_cores(); i++ )
             __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
 
         /* Save current core and sig */
@@ -432,16 +440,15 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             /* This is the first thread executing a probe for ANY source file part of this process */
 
-
-            /* If first time: allocate buffer, init env var and set up exit hook */
+            /* allocate buffer, init env var and set up exit hook */
             /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
 
             char s[32 * 3];
 
-            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_NUM_CORES * (DMCE_MAX_HITS + 10), sizeof(dmce_probe_entry_t));
+            dmce_buf_p = (dmce_probe_entry_t*)calloc( dmce_num_cores() * (DMCE_MAX_HITS + 10), sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
-            dmce_probe_hitcount_p = (unsigned int*)calloc(DMCE_NUM_CORES, sizeof(unsigned int));
+            dmce_probe_hitcount_p = (unsigned int*)calloc(dmce_num_cores(), sizeof(unsigned int));
 
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
