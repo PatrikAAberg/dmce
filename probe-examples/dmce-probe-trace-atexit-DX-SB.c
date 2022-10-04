@@ -11,6 +11,10 @@
 #include <errno.h>
 #include <sys/syscall.h>
 
+#ifndef DMCE_NUM_CORES
+#define DMCE_NUM_CORES 128
+#endif
+
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
 #else
@@ -87,9 +91,9 @@ static void dmce_mkdir(char const* path) {
 static void dmce_dump_trace(int status) {
 
         int fp;
-        unsigned int buf_pos;
         char outfile[256];
         char infofile[256];
+        int core;
 
         sprintf(outfile, "%s-%s.%d", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
         sprintf(infofile, "%s-%s.%d.info", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
@@ -102,19 +106,26 @@ static void dmce_dump_trace(int status) {
             return;
         }
 
-        buf_pos = (*dmce_probe_hitcount_p >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
-        int i;
+        for (core = 0; core < DMCE_NUM_CORES; core++) {
 
-        for (i = 0; i < DMCE_MAX_HITS; i++) {
+            unsigned int buf_pos = (dmce_probe_hitcount_p[core] >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
+            int i;
+            dmce_probe_entry_t* e_p = &dmce_buf_p[core * DMCE_MAX_HITS];
 
-            unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-            if ( -1 == write(fp, &dmce_buf_p[index], sizeof(dmce_probe_entry_t) * 1)) {
+            /* Only output to file if this core has been used at all */
+            if (e_p->timestamp) {
 
-                printf("DMCE trace: Error when writing trace buffer to disk: %s\n", strerror(errno));
-                return;
+                for (i = 0; i < DMCE_MAX_HITS; i++) {
+
+                    unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
+                    if ( -1 == write(fp, &dmce_buf_p[index + (DMCE_MAX_HITS * core)], sizeof(dmce_probe_entry_t) * 1)) {
+
+                        printf("DMCE trace: Error when writing trace buffer to disk: %s\n", strerror(errno));
+                        return;
+                    }
+                }
             }
         }
-
         close(fp);
 
         if ( -1 == (fp = open(infofile, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))) {
@@ -185,7 +196,10 @@ static void dmce_signal_handler(int sig) {
     if (! (mkdir(exitdirname, 0))) {
 
         /* Make other threads stop */
-        __atomic_fetch_add (dmce_probe_hitcount_p, 1, __ATOMIC_RELAXED);
+        int i;
+
+        for (i = 0; i < DMCE_NUM_CORES; i++ )
+            __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
 
         /* Save current core and sig */
         dmce_signal_core = sched_getcpu();
@@ -424,10 +438,10 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             char s[32 * 3];
 
-            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_MAX_HITS + 10, sizeof(dmce_probe_entry_t));
+            dmce_buf_p = (dmce_probe_entry_t*)calloc( DMCE_NUM_CORES * (DMCE_MAX_HITS + 10), sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
-            dmce_probe_hitcount_p = (unsigned int*)calloc(1, sizeof(int));
+            dmce_probe_hitcount_p = (unsigned int*)calloc(DMCE_NUM_CORES, sizeof(unsigned int));
 
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
@@ -495,8 +509,12 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 #else
     if (dmce_trace_is_enabled()) {
 #endif
-        unsigned int cpu;
-        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 2, __ATOMIC_RELAXED);
+        unsigned int cpu = sched_getcpu();
+
+//        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 2, __ATOMIC_RELAXED);
+//        unsigned int index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu], 2, __ATOMIC_RELAXED);
+        unsigned int index = dmce_probe_hitcount_p[cpu];
+        dmce_probe_hitcount_p[cpu] += 2;
 
         /* lowest bit means trace is stopped */
         if (index & 1)
@@ -505,8 +523,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 #ifdef DMCE_TRACE_RINGBUFFER
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
 #endif
-        dmce_probe_entry_t* e_p = &dmce_buf_p[index];
-        cpu = sched_getcpu();
+        dmce_probe_entry_t* e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
         e_p->cpu = cpu;
