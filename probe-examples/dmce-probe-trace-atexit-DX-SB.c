@@ -99,6 +99,8 @@ static void dmce_dump_trace(int status) {
         char outfile[256];
         char infofile[256];
         int core;
+        int num_cores = dmce_num_cores();
+        uint64_t newest_of_oldest = 0;
 
         sprintf(outfile, "%s-%s.%d", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
         sprintf(infofile, "%s-%s.%d.info", DMCE_PROBE_OUTPUT_FILE_BIN, program_invocation_short_name, getpid());
@@ -111,19 +113,31 @@ static void dmce_dump_trace(int status) {
             return;
         }
 
-        for (core = 0; core < dmce_num_cores(); core++) {
+        for (core = 0; core < num_cores; core++) {
 
-            unsigned int buf_pos = (dmce_probe_hitcount_p[core] >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
             int i;
-            dmce_probe_entry_t* e_p = &dmce_buf_p[core * DMCE_MAX_HITS];
+            uint64_t oldest = UINT64_MAX;
 
-            /* Only output to file if this core has been used at all */
-            if (e_p->timestamp) {
+            for (i = 0; i < DMCE_MAX_HITS; i++) {
+                if ( dmce_buf_p[core * DMCE_MAX_HITS + i].timestamp < oldest)
+                    oldest = dmce_buf_p[core * DMCE_MAX_HITS + i].timestamp;
+            }
 
-                for (i = 0; i < DMCE_MAX_HITS; i++) {
+            if (newest_of_oldest < oldest)
+                newest_of_oldest = oldest;
+        }
 
-                    unsigned int index = (buf_pos + i) % DMCE_MAX_HITS;
-                    if ( -1 == write(fp, &dmce_buf_p[index + (DMCE_MAX_HITS * core)], sizeof(dmce_probe_entry_t) * 1)) {
+        for (core = 0; core < num_cores; core++) {
+
+            int i;
+
+            for (i = 0; i < DMCE_MAX_HITS; i++) {
+
+                /* Only output to file if this entry is above the limit */
+
+                if (dmce_buf_p[i + (DMCE_MAX_HITS * core)].timestamp > newest_of_oldest) {
+
+                    if ( -1 == write(fp, &dmce_buf_p[i + (DMCE_MAX_HITS * core)], sizeof(dmce_probe_entry_t) * 1)) {
 
                         printf("DMCE trace: Error when writing trace buffer to disk: %s\n", strerror(errno));
                         return;
@@ -147,14 +161,14 @@ static void dmce_dump_trace(int status) {
 
                 sprintf(exit_info,  "Exit cause   : exit()\n"
                                     "Exit status  : %d\n"
-                                    "System cores : %d\n", status, dmce_num_cores());
+                                    "System cores : %d\n", status, num_cores);
             }
             else {
 
                 sprintf(exit_info, "Exit cause  : signal handler\n"
                                    "Core        : %d\n"
                                    "Signal      : %d (%s)\n"
-                                   "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), dmce_num_cores());
+                                   "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
             sprintf(info, "\nProbe     : dmce-probe-trace-atexit-DX-CB.c\n");
@@ -204,8 +218,9 @@ static void dmce_signal_handler(int sig) {
 
         /* Make other threads stop */
         int i;
+        int c = dmce_num_cores();
 
-        for (i = 0; i < dmce_num_cores(); i++ )
+        for (i = 0; i < c; i++ )
             __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
 
         /* Save current core and sig */
@@ -511,10 +526,8 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     }
 
     if (dmce_trace_is_enabled()) {
-        unsigned int cpu = sched_getcpu();
 
-//        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 2, __ATOMIC_RELAXED);
-//        unsigned int index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu], 2, __ATOMIC_RELAXED);
+        unsigned int cpu = sched_getcpu();
         unsigned int index = dmce_probe_hitcount_p[cpu];
         dmce_probe_hitcount_p[cpu] += 2;
 
