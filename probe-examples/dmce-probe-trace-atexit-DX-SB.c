@@ -18,7 +18,6 @@
 #define DMCE_MAX_HITS DMCE_PROBE_NBR_TRACE_ENTRIES
 #endif
 
-#define DMCE_TRACE_RINGBUFFER
 #define NBR_STATUS_BITS 1
 
 #ifndef DMCE_PROBE_LOCK_DIR_ENTRY
@@ -511,11 +510,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
     }
 
-#ifndef DMCE_TRACE_RINGBUFFER
-    if (dmce_trace_is_enabled() && *dmce_probe_hitcount_p < DMCE_MAX_HITS) {
-#else
     if (dmce_trace_is_enabled()) {
-#endif
         unsigned int cpu = sched_getcpu();
 
 //        unsigned int index = __atomic_fetch_add (dmce_probe_hitcount_p, 2, __ATOMIC_RELAXED);
@@ -527,25 +522,14 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         if (index & 1)
             return 0;
 
-#ifdef DMCE_TRACE_RINGBUFFER
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
-#endif
+
         dmce_probe_entry_t* e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = dmce_tsc();
         e_p->probenbr = dmce_probenbr;
         e_p->cpu = cpu;
         return e_p;
     }
-#ifndef DMCE_TRACE_RINGBUFFER
-    else {
-        dmce_trace_disable();
-
-        /* Mark this trace buffer as full */
-
-        dmce_buf_p[DMCE_MAX_HITS - 1].probenbr = 0xdeadbeef;
-        dmce_buf_p[DMCE_MAX_HITS - 1].timestamp = dmce_tsc();
-    }
-#endif
     return 0;
 }
 #endif
