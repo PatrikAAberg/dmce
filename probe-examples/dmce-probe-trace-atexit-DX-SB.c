@@ -42,6 +42,16 @@ typedef struct {
     uint64_t cpu;
 } dmce_probe_entry_t;
 
+#ifndef dmce_likely
+#ifdef __GNUC__
+#define dmce_likely(x)   __builtin_expect(!!(x), 1)
+#define dmce_unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define dmce_likely(x)   (x)
+#define dmce_unlikely(x) (x)
+#endif
+#endif
+
 #ifdef __cplusplus
 static dmce_probe_entry_t* dmce_buf_p = nullptr;
 static unsigned int* dmce_probe_hitcount_p = nullptr;
@@ -171,7 +181,7 @@ static void dmce_dump_trace(int status) {
                                    "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
-            sprintf(info, "\nProbe: dmce-probe-trace-atexit-DX-CB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
+            sprintf(info, "\nProbe: dmce-probe-trace-atexit-DX-SB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
 
             strcat(info, exit_info);
 
@@ -258,7 +268,7 @@ static inline void dmce_probe_body1(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
     }
 }
@@ -269,7 +279,7 @@ static inline void dmce_probe_body2(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
     }
@@ -282,7 +292,7 @@ static inline void dmce_probe_body3(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -297,7 +307,7 @@ static inline void dmce_probe_body4(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -314,7 +324,7 @@ static inline void dmce_probe_body5(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -333,7 +343,7 @@ static inline void dmce_probe_body6(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -354,7 +364,7 @@ static inline void dmce_probe_body7(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -377,7 +387,7 @@ static inline void dmce_probe_body8(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -401,7 +411,7 @@ static inline void dmce_probe_body9(unsigned int dmce_probenbr,
                             uint64_t dmce_param_i) {
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -428,7 +438,7 @@ static inline void dmce_probe_body10(unsigned int dmce_probenbr,
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
 
-    if (e_p) {
+    if (dmce_likely(e_p)) {
         e_p->vars[0] = dmce_param_a;
         e_p->vars[1] = dmce_param_b;
         e_p->vars[2] = dmce_param_c;
@@ -446,12 +456,12 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
     /* The fast check followed by the thread safe check (this one can only go from 0 to 1 and never changes) */
 
-    if ((!dmce_buffer_setup_done) || (!__atomic_load_n (&dmce_buffer_setup_done, __ATOMIC_SEQ_CST))) {
+    if (dmce_unlikely((!dmce_buffer_setup_done) || (!__atomic_load_n (&dmce_buffer_setup_done, __ATOMIC_SEQ_CST)))) {
 
         char entrydirname[256];
         sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
 
-        if (! (mkdir(entrydirname, 0))) {
+        if (dmce_unlikely(! (mkdir(entrydirname, 0)))) {
 
             /* This is the first thread executing a probe for ANY source file part of this process */
 
@@ -526,10 +536,16 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
     }
 
-    if (dmce_trace_is_enabled()) {
+    if (dmce_likely(dmce_trace_is_enabled())) {
 
-        unsigned int cpu = sched_getcpu();
-        unsigned int index = dmce_probe_hitcount_p[cpu];
+        unsigned int cpu;
+        unsigned int index;
+
+        /* What core are we on? Note: if this fails, fall back to sched_getcpu() */
+        __builtin_ia32_rdtscp(&cpu);
+        cpu = cpu & 0x0fff;
+
+        index = dmce_probe_hitcount_p[cpu];
         dmce_probe_hitcount_p[cpu] += 2;
 
         /* lowest bit means trace is stopped */
