@@ -107,7 +107,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
         # trace-mt profile
-        if args.profile == "trace-mt":
+        elif args.profile == "trace-mt":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
                 clines[count] = "DMCE_NUM_DATA_VARS:5\n"
 

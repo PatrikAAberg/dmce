@@ -171,7 +171,8 @@ static void dmce_dump_trace(int status) {
                                    "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
-            sprintf(info, "\nProbe     : dmce-probe-trace-atexit-DX-CB.c\n");
+            sprintf(info, "\nProbe: dmce-probe-trace-atexit-DX-CB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
+
             strcat(info, exit_info);
 
             if ( -1 == write(fp, info, strlen(info))) {

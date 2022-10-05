@@ -12,8 +12,8 @@ parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file
 parser.add_argument('dfile',            type=str,                   help='Raw ipnut file')
 parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='path to code tree')
-parser.add_argument('--numvars',        type=int, default=10,       help='Max number of variables, default: 10')
-parser.add_argument('--sourcewidth',    type=int, default=80,      help='Width of source code lines, default: 80')
+parser.add_argument('--numvars',        type=int,                   help='Max number of variables, default: 10')
+parser.add_argument('--sourcewidth',    type=int, default=80,       help='Width of source code lines, default: 80')
 parser.add_argument('-A',               type=int, default=0,        help='Number of trailing source code lines, default: 0')
 parser.add_argument('-B',               type=int, default=0,        help='Number of leading source code lines, default: 0')
 parser.add_argument('-c',               type=str, default="nocores",help='Comma-separated list of cores to display')
@@ -30,6 +30,9 @@ args = parser.parse_args()
 trailing=args.A
 leading=args.B
 showtimestamps = args.t
+
+# Adjust this according to trace entry struct in probe
+TRACE_ENTRY_HEADER = 3
 
 if showtimestamps and args.sort != "seq":
     print("dmce-trace: error: -t cannot be combined with --sort, abort")
@@ -57,7 +60,20 @@ print("- - - - -")
 
 probefile = args.probefile
 codetree = args.codetree
-entrysize64 = 2 + args.numvars + 1
+
+if args.numvars is not None:
+    entrysize64 = TRACE_ENTRY_HEADER + args.numvars
+else:
+    print("Checking trace entry size", file=sys.stderr)
+    entrysize64 = 42
+    for infoline in info:
+        if "te size:" in infoline:
+            entrysize64 = int(int(re.search("te size: (\d+)", infoline)[1]) / 8)
+            args.numvars = entrysize64 - TRACE_ENTRY_HEADER
+            break
+    if entrysize64 == 42:
+        print("dmce trace: Could not find trace entry size in " + ifilename + ", abort" + str(entrysize64), file=sys.stderr)
+        sys.exit(1)
 
 print("Raw input file: " + dfile, file=sys.stderr)
 print("Probe ref file: " + probefile, file=sys.stderr)
