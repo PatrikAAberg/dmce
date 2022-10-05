@@ -117,6 +117,9 @@ while count < len(clines):
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-DX.c")
 
+            if "DMCE_PROBE_NBR_OPTIONAL_ELEMENTS" in clines[count]:
+                clines[count] = "DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 5"
+
             if "DMCE_POST_HOOK" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
