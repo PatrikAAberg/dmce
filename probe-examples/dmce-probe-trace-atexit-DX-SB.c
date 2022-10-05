@@ -218,9 +218,9 @@ static void dmce_signal_handler(int sig) {
 
         /* Make other threads stop */
         int i;
-        int c = dmce_num_cores();
+        int dmce_n_cores = dmce_num_cores();
 
-        for (i = 0; i < c; i++ )
+        for (i = 0; i < dmce_n_cores; i++ )
             __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
 
         /* Save current core and sig */
