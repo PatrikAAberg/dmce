@@ -538,11 +538,12 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
     if (dmce_likely(dmce_trace_is_enabled())) {
 
-        unsigned int cpu;
+        uint32_t cpu;
+        uint64_t time;
         unsigned int index;
 
-        /* What core are we on? Note: if this fails, fall back to sched_getcpu() */
-        __builtin_ia32_rdtscp(&cpu);
+        /* What core are we on, and what is the time? */
+        time = __builtin_ia32_rdtscp(&cpu);
         cpu = cpu & 0x0fff;
 
         index = dmce_probe_hitcount_p[cpu];
@@ -555,7 +556,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
 
         dmce_probe_entry_t* e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
-        e_p->timestamp = dmce_tsc();
+        e_p->timestamp = time;
         e_p->probenbr = dmce_probenbr;
         e_p->cpu = cpu;
         return e_p;
