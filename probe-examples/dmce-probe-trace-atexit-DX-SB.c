@@ -470,7 +470,8 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             char s[32 * 3];
 
-            dmce_buf_p = (dmce_probe_entry_t*)calloc( dmce_num_cores() * (DMCE_MAX_HITS + 10), sizeof(dmce_probe_entry_t));
+            dmce_buf_p = (dmce_probe_entry_t*)aligned_alloc( 64, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
+            memset(dmce_buf_p, 0, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
             dmce_probe_hitcount_p = (unsigned int*)calloc(dmce_num_cores(), sizeof(unsigned int));
