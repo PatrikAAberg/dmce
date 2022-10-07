@@ -55,7 +55,7 @@ fi
 # Create config file in home directory
 cat > $cfgpath/.dmceconfig <<- NoWord
 # Memory limit (in %) where dmce will halt until launching additional jobs
-DMCE_MEMORY_LIMIT: 50
+DMCE_MEMORY_LIMIT:50
 
 # DMCE install path
 DMCE_EXEC_PATH:$installpath/share/dmce
