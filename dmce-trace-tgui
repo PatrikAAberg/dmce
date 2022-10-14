@@ -603,7 +603,7 @@ def cmd_search(sstr):
         cmd_error_code = "Empty search string!"
         return
 
-def execute_command(cmdstr):
+def execute_command(cmdstr, stdscr):
     global cmd_error_code
 
     if len(cmdstr) == 0:
@@ -617,6 +617,9 @@ def execute_command(cmdstr):
 
     if cmds[0] == "filter":
         cmd_filter(cmds)
+        return
+    elif cmds[0] == "help":
+        show_help(stdscr)
         return
 
     cmd_error_code = "Command not recognized: '" + cmdstr + "'"
@@ -784,7 +787,7 @@ def main(stdscr, relaunched = False):
                 if len(cmdbuffer) > 0:
                     cmdhistory.insert(1,cmdbuffer.copy())
                     cmdhistoryindex = 0
-                    execute_command("".join(cmdbuffer))
+                    execute_command("".join(cmdbuffer), stdscr)
                     cmdbuffer = []
                     cmdindex = 0
                 user_input_mode = False
@@ -854,12 +857,12 @@ def main(stdscr, relaunched = False):
                 index = len(tracebuffer) - 1
             elif c == ord('n'):
                 search_dir = "down"
-                execute_command(last_search_cmd)
+                execute_command(last_search_cmd, stdscr)
                 cmdbuffer = []
                 user_input_mode = False
             elif c == ord('N'):
                 search_dir = "up"
-                execute_command(last_search_cmd)
+                execute_command(last_search_cmd, stdscr)
                 cmdbuffer = []
                 user_input_mode = False
             elif c == curses.KEY_UP:
