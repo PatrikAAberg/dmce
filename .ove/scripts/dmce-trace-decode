@@ -106,7 +106,33 @@ function main() {
 
     trap cleanup EXIT
 
-    dmce-trace-viewer /tmp/$OVE_USER/dmce/dmcebuffer.bin /tmp/$OVE_USER/dmce/${git_base}/probe-references-original.log ${git_full}
+    if [ ! -d /tmp/$OVE_USER/dmce ]; then
+        echo "error: no '/tmp/$OVE_USER/dmce' directory"
+        exit 1
+    fi
+
+    find /tmp/$OVE_USER/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
+        grep [0-9]$ | \
+        LC_ALL=C sort > /tmp/$OVE_USER/dmce/dmce-trace-prepare.post
+    if [ ! -s /tmp/$OVE_USER/dmce/dmce-trace-prepare.post ]; then
+        echo "error: no dmcebuffer files found"
+        exit 1
+    fi
+
+    if [ ! -s /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre ]; then
+        # no old dmcebuffers found
+        b_list="$(cat /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"
+    else
+        # here we had some old dmcebuffers laying around, just take the new ones
+        if ! b_list="$(comm -1 -3 /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"; then
+            exit 1
+        fi
+    fi
+
+    for b in $b_list; do
+        echo "trace $b:"
+        dmce-trace-viewer $b /tmp/$OVE_USER/dmce/${git_base}/probe-references-original.log ${git_full}
+    done
 }
 
 main "$@"

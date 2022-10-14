@@ -138,14 +138,20 @@ function main() {
         exit 1
     fi
 
-    nbr_of_probes=$(git grep 'DMCE_PROBE([0-9]\+' | grep -o 'DMCE_PROBE([0-9]\+' | cut -d'(' -f2 | sort -V | tail -1)
-    echo "info: repo '${git_full}' was instrumented with ${nbr_of_probes} probe(s), built and restored to it's normal state. Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
+    echo "info: repo '${git_full}' has been instrumented and built. Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
     elfs=$(find "${git_full}" -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n)
     if [ "x$elfs" = "x" ]; then
         echo "warning: no executable ELF files found in '${git}'. Building artifacts outside the git repo? Or did you select the wrong OVE project '$ove_proj'?"
     else
         echo "ELF files within the '${git}' repo:"
         printf "%s\n" "$elfs"
+    fi
+
+    if [ -d /tmp/$OVE_USER/dmce ]; then
+        # remember dmcebuffer.bin files
+        find /tmp/$OVE_USER/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
+            grep '[0-9]$' | \
+            LC_ALL=C sort > /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre
     fi
 
     # remove any already existing trace lock file at dmce-configure-local default path
