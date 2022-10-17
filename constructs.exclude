@@ -3,3 +3,4 @@ constexpr
 \\\\
 CPU_
 ASSERT
+LOG

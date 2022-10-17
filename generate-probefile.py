@@ -145,15 +145,19 @@ if do_print:
 
 
 # Check what lines to exclude and include
-fposexcl=[]
-dmceposexclude = open(configpath + "/dmce.pos.exclude")
-posexcludelines = dmceposexclude.readlines()
-dmceposexclude.close()
+fposexcl = []
+posexcludelines = []
+if os.path.exists(configpath + "/dmce.pos.exclude"):
+    dmceposexclude = open(configpath + "/dmce.pos.exclude")
+    posexcludelines = dmceposexclude.readlines()
+    dmceposexclude.close()
 
-fposincl=[]
-dmceposinclude = open(configpath + "/dmce.pos.include")
-posincludelines = dmceposinclude.readlines()
-dmceposinclude.close()
+fposincl = []
+posincludelines = []
+if os.path.exists(configpath + "/dmce.pos.include"):
+    dmceposinclude = open(configpath + "/dmce.pos.include")
+    posincludelines = dmceposinclude.readlines()
+    dmceposinclude.close()
 
 posexcludestart = []
 posexcludeend = []
