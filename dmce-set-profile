@@ -180,7 +180,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racecheck")
 
         else:
-            print("Unkown profile (please use trace, coverage or syslog), abort")
+            print("Unknown profile (please use trace, trace-mc, coverage, racecheck, printf or syslog), abort")
             sys.exit(1)
 
 # Modify config folder

@@ -144,6 +144,45 @@ if do_print:
     print("Number of variables to trace: " + str(numDataVars))
 
 
+# Check what lines to exclude and include
+fposexcl=[]
+dmceposexclude = open(configpath + "/dmce.pos.exclude")
+posexcludelines = dmceposexclude.readlines()
+dmceposexclude.close()
+
+fposincl=[]
+dmceposinclude = open(configpath + "/dmce.pos.include")
+posincludelines = dmceposinclude.readlines()
+dmceposinclude.close()
+
+posexcludestart = []
+posexcludeend = []
+
+for line in posexcludelines:
+    line = line.rstrip()
+    if line != "" and not "#" in line:
+        if ":" in line and "-" in line:
+            if parsed_file == line.split(':')[0]:
+                posexcludestart.append(int(line.split(':')[1].split('-')[0]))
+                posexcludeend.append(int(line.split(':')[1].split('-')[1]))
+        else:
+            print("error: Format for dmce.pos.exclude and dmce.pos.include is 'file:line-line', abort", file=sys.stderr)
+            sys.exit(1)
+
+posincludestart = []
+posincludeend = []
+
+for line in posincludelines:
+    line = line.rstrip()
+    if line != "" and not "#" in line:
+        if ":" in line and "-" in line:
+            if parsed_file == line.split(':')[0]:
+                posincludestart.append(int(line.split(':')[1].split('-')[0]))
+                posincludeend.append(int(line.split(':')[1].split('-')[1]))
+        else:
+            print("error: Format for dmce.pos.exclude and dmce.pos.include is 'file:line-line', abort", file=sys.stderr)
+            sys.exit(1)
+
 parsed_file_exp = parsed_file
 probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
@@ -1459,6 +1498,7 @@ if do_print:
 
 i=0
 while (i < expdb_index):
+    out_of_position_scope = False
     bail_out=0
     ls = expdb_linestart[i] - 1
     cs = expdb_colstart[i] - 1
@@ -1529,294 +1569,295 @@ while (i < expdb_index):
     if ((ls == ele) and (ece <= cs)):
         bail_out=1
 
+    # Check position filter to exclude or include, based on ls and cs
+    for pindex in range(len(posincludestart)):
+        if ls < (posincludestart[pindex] - 1)  or ls >= posincludeend[pindex]:
+            out_of_position_scope = True
+
+    for pindex in range(len(posexcludestart)):
+        if ls >= (posexcludestart[pindex] - 1) and ls < posexcludeend[pindex]:
+            out_of_position_scope = True
+
     if do_print:
         print(str(expdb_in_c_file[i]) + "  EXP:" + expdb_exptext[i].rstrip() + "STARTPOS: (" + str(ls) + "," + str(cs) + ")" + "ENDPOS: (" + str(le) + "," + str(ce) + ")" + "ECE: " + str(ece) + "Tab: " + str(tab))
 
     #single line
     #    if (ls==le):
-    if (expdb_exppatternmode[i] < 0):
-       if (ls not in probed_lines):
-            line = pbuf[ls]
-            comment = "; /* Function entry: "
-            if expdb_exppatternmode[i] == -2:
-                comment = "; /* Function exit: "
-
-            # Due to a bug in clang-check sometimes adds 1 to the column position, we try
-            # to mitigate by using any spaces to the left when inserting probes at the end
-
-            if cs >= 2 and expdb_exppatternmode[i] == -2:
-                if line[cs-2] != ' ':
-                    iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
-                else:
-                    iline = line[:cs-1] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs-1:]
-            else:
-                iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
-
-            iline = afterburner(iline, frp)
-
-            if do_print:
-                print("Old single line: " + line.rstrip())
-            if do_print:
-                print("New single line: " + iline.rstrip())
-            pbuf.pop(ls)
-            pbuf.insert(ls,iline)
-            probed_lines.append(ls)
-            probes += 1
-            if do_print:
-                print("1 Added line :" + str(ls))
-            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
-            for var in lr_vlist:
-                pdf.write( ":" + var)
-            pdf.write("\n")
-
-    else:
-        # Multiple lines
-        # Insert on first line and last line
-        # mark all lines in between as probed
-        # Also, adjust le and ce if a ; or a ) is found before
-
-        if (ls not in probed_lines):
-            lp=ls
-            while (lp < ele):
-                probed_lines.append(lp)
-                if do_print:
-                    print("2 Added line :" + str(lp))
-                lp +=1
-
-            cp=ece
-
-            found=0
-            if do_print:
-                print("Searching from (" + str(lp+1) + "," + str(cp) + ")")
-            stack_curly=0
-            stack_parentesis=0
-            stack_bracket=0
-            while ((lp < len(pbuf)) and not found and not bail_out):
-                line = pbuf[lp].rstrip()
-
-                #Bail out candidates to MAYBE be fixed later
-                if ("#define" in line):
-                    bail_out=1
-
-                # Filter out escaped backslash
-                line = re.sub(r'\\\\', "xx", line)
-
-                # Filter out escaped quotation mark and escaped apostrophe
-                line = re.sub(r'\\"', "xx", line)
-                line = re.sub(r"\\'", "xx", line)
-
-                # Replace everything within '...' with xxx
-                line_no_strings = list(line)
-                p = re.compile("'.*?'")
-                for m in p.finditer(line):
-                    j=0
-                    while (j < len(m.group())):
-                        line_no_strings[m.start() + j] = 'x'
-                        j = j + 1
-
-                line = "".join(line_no_strings)
-
-                # Replace everything within "..." with xxx
-                line_no_strings = list(line)
-                p = re.compile("\".*?\"")
-                for m in p.finditer(line):
-                    j=0
-                    while (j < len(m.group())):
-                        line_no_strings[m.start() + j] = 'x'
-                        j = j + 1
-
-                line = "".join(line_no_strings)
-
-                # Replace everything within /*...*/ with xxx
-                line_no_strings = list(line)
-                p = re.compile("\/\*.*?\*\/")
-                for m in p.finditer(line):
-                    j=0
-                    while (j < len(m.group())):
-                        line_no_strings[m.start() + j] = 'x'
-                        j = j + 1
-
-                line = "".join(line_no_strings)
-
-                tail = line[cp:]
-                if do_print:
-                    print("LINE: " + line)
-                if do_print:
-                    print("TAIL: " + tail)
-
-                # Find first ) } ] or comma that is not inside brackets of any kind
-                pos_index = 0
-                while (pos_index < len(tail)):
-                    # Curly brackets
-                    if (tail[pos_index] == "}"):
-                        stack_curly-=1
-                    if (tail[pos_index] == "{"):
-                        stack_curly+=1
-                    if (stack_curly == -1):
-                        break
-
-
-                    # Brackets
-                    if (tail[pos_index] == "]"):
-                        stack_bracket-=1
-                    if (tail[pos_index] == "["):
-                        stack_bracket+=1
-                    if (stack_bracket == -1):
-                        break
-
-
-                    # Parentesis
-                    if (tail[pos_index] == ")"):
-                        stack_parentesis-=1
-                    if (tail[pos_index] == "("):
-                        stack_parentesis+=1
-                    if (stack_parentesis == -1):
-                        break
-
-                    # Comma, colon, questionmark (only valid if not inside brackets)
-                    if (stack_parentesis == stack_bracket == stack_curly == 0 ):
-                        if (tail[pos_index] == ","):
-                            break
-                        # Question mark
-                        if (tail[pos_index] == "?"):
-                            break
-                        # Colon
-                        if (tail[pos_index] == ":"):
-                            break
-
-                    # Semicolon (always valid)
-                    if (tail[pos_index] == ";"):
-                        break
-
-                    pos_index+=1
-
-                if do_print:
-                    print("index: " + str(pos_index))
-
-                if (pos_index < len(tail) and not bail_out):
-                    found=1
-                    cp += pos_index
-
-                    # NOTE! Lines commented out prevents us to go further lines down than the actual expression was.
-                    # Not sure if we need them, leave commented out for now.
-
-#                    if (lp < le):
-                    le = lp
-                    ce = cp
-#                    elif (lp == le):
-##                        if (cp < ce):
-#                        ce = cp
-
-                    if do_print:
-                        print("FOUND EARLY: (" + str(le+1) + "," + str(ce) + ") in:" + pbuf[lp].rstrip())
-
-
-                cp=0 # All following lines need to be searched from beginnning of line
-                probed_lines.append(lp)
-                if do_print:
-                    print("3 Added line :" + str(lp+1))
-                lp+=1
-
-            # pre insertion
-            if (not bail_out):
+    if not out_of_position_scope:
+        if (expdb_exppatternmode[i] < 0):
+           if (ls not in probed_lines):
                 line = pbuf[ls]
+                comment = "; /* Function entry: "
+                if expdb_exppatternmode[i] == -2:
+                    comment = "; /* Function exit: "
 
-                match_exclude = 0
-                for re_exp in re_cxl_list:
-                    j=0
-                    while (ls + j) <= le:
-                        if do_print == 2:
-                            print("searching for '{}' in '{}'".format(re_exp.pattern, pbuf[ls + j]))
-                        if (re_exp.match(pbuf[ls + j])):
-                            match_exclude = 1
-                            if do_print == 1:
-                                print("match_exclude=1")
+                # Due to a bug in clang-check sometimes adds 1 to the column position, we try
+                # to mitigate by using any spaces to the left when inserting probes at the end
+
+                if cs >= 2 and expdb_exppatternmode[i] == -2:
+                    if line[cs-2] != ' ':
+                        iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+                    else:
+                        iline = line[:cs-1] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs-1:]
+                else:
+                    iline = line[:cs] + probe_prolog[1:len(probe_prolog) - 2] + comment + expdb_func[i] + " */ " + line[cs:]
+
+                iline = afterburner(iline, frp)
+
+                if do_print:
+                    print("Old single line: " + line.rstrip())
+                if do_print:
+                    print("New single line: " + iline.rstrip())
+                pbuf.pop(ls)
+                pbuf.insert(ls,iline)
+                probed_lines.append(ls)
+                probes += 1
+                if do_print:
+                    print("1 Added line :" + str(ls))
+                pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
+                for var in lr_vlist:
+                    pdf.write( ":" + var)
+                pdf.write("\n")
+
+        else:
+            # Multiple lines
+            # Insert on first line and last line
+            # mark all lines in between as probed
+            # Also, adjust le and ce if a ; or a ) is found before
+
+            if (ls not in probed_lines):
+                lp=ls
+                while (lp < ele):
+                    probed_lines.append(lp)
+                    if do_print:
+                        print("2 Added line :" + str(lp))
+                    lp +=1
+
+                cp=ece
+
+                found=0
+                if do_print:
+                    print("Searching from (" + str(lp+1) + "," + str(cp) + ")")
+                stack_curly=0
+                stack_parentesis=0
+                stack_bracket=0
+                while ((lp < len(pbuf)) and not found and not bail_out):
+                    line = pbuf[lp].rstrip()
+
+                    #Bail out candidates to MAYBE be fixed later
+                    if ("#define" in line):
+                        bail_out=1
+
+                    # Filter out escaped backslash
+                    line = re.sub(r'\\\\', "xx", line)
+
+                    # Filter out escaped quotation mark and escaped apostrophe
+                    line = re.sub(r'\\"', "xx", line)
+                    line = re.sub(r"\\'", "xx", line)
+
+                    # Replace everything within '...' with xxx
+                    line_no_strings = list(line)
+                    p = re.compile("'.*?'")
+                    for m in p.finditer(line):
+                        j=0
+                        while (j < len(m.group())):
+                            line_no_strings[m.start() + j] = 'x'
+                            j = j + 1
+
+                    line = "".join(line_no_strings)
+
+                    # Replace everything within "..." with xxx
+                    line_no_strings = list(line)
+                    p = re.compile("\".*?\"")
+                    for m in p.finditer(line):
+                        j=0
+                        while (j < len(m.group())):
+                            line_no_strings[m.start() + j] = 'x'
+                            j = j + 1
+
+                    line = "".join(line_no_strings)
+
+                    # Replace everything within /*...*/ with xxx
+                    line_no_strings = list(line)
+                    p = re.compile("\/\*.*?\*\/")
+                    for m in p.finditer(line):
+                        j=0
+                        while (j < len(m.group())):
+                            line_no_strings[m.start() + j] = 'x'
+                            j = j + 1
+
+                    line = "".join(line_no_strings)
+
+                    tail = line[cp:]
+                    if do_print:
+                        print("LINE: " + line)
+                    if do_print:
+                        print("TAIL: " + tail)
+
+                    # Find first ) } ] or comma that is not inside brackets of any kind
+                    pos_index = 0
+                    while (pos_index < len(tail)):
+                        # Curly brackets
+                        if (tail[pos_index] == "}"):
+                            stack_curly-=1
+                        if (tail[pos_index] == "{"):
+                            stack_curly+=1
+                        if (stack_curly == -1):
                             break
-                        j = j + 1
-
-                    if match_exclude:
-                        break
-
-                if (not match_exclude):
-                    # Pick line to insert prolog
-                    iline_start = line[:cs] + probe_prolog + line[cs:]
-                    if do_print:
-                        print("Old starting line: " + line.rstrip())
-                    if do_print:
-                        print("New starting line: " + iline_start.rstrip())
-
-                    # if start and end on same line, compensate column for inserted data
-                    if (ls == le):
-                        ce+= len(probe_prolog)
 
 
-                    # Last time to regret ourselves! Check for obvious errors on line containing prolog. If more is needed create a list instead like for sections to skip!
-                    regret = re_regret_insertion.match(iline_start)
+                        # Brackets
+                        if (tail[pos_index] == "]"):
+                            stack_bracket-=1
+                        if (tail[pos_index] == "["):
+                            stack_bracket+=1
+                        if (stack_bracket == -1):
+                            break
 
-                    if (not regret):
-                        # Insert prolog
-                        pbuf.pop(ls)
-                        pbuf.insert(ls,iline_start)
 
-                        # Pick line to insert epilog
-                        if do_print:
-                            print("Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip())
-                        line = pbuf[le]
-                        iline_end = line[:ce] + probe_epilog + line[ce:]
+                        # Parentesis
+                        if (tail[pos_index] == ")"):
+                            stack_parentesis-=1
+                        if (tail[pos_index] == "("):
+                            stack_parentesis+=1
+                        if (stack_parentesis == -1):
+                            break
 
-                        # Print summary
-                        if do_print:
-                            print("Old ending line: " + line.rstrip())
-                        if do_print:
-                            print("New ending line: " + iline_end.rstrip())
-
-                        # Insert epilog
-                        pbuf.pop(le)
-                        iline_end = afterburner(iline_end, frp)
-                        pbuf.insert(le,iline_end)
-                        probes+=1
-
-                        # Update probe file
-                        if numDataVars == 0:
-                            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
-                        else:
-                            pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
-                            for var in lr_vlist:
-                                pdf.write( ":" + var)
-                            pdf.write("\n")
-
-                        tmp_exp = expdb_exptext[i].rstrip()
-                        pat_i = 0
-                        while (pat_i < len(exppatternlist)):
-                            re_exp = re_exppatternlist[pat_i]
-                            if (re.match(re_exp, tmp_exp)):
-                                if do_print:
-                                    print("-"*20)
-                                    print("Assigning a Probe expression index")
-                                    print("-"*20)
-                                    print("Local Probe number: " + str(probes))
-                                    print("EXP_index: " + str(pat_i))
-                                    print("Matched with: " + re_exp.pattern)
-                                    print("EXP string: " + tmp_exp)
-                                    print("#"*5 + " TO NEW EXPRESSION FILE " + "#"*5)
-                                exp_data = re.match(exp_pat, tmp_exp)
-                                exp_type = exp_data.group(1).strip()
-                                exp_operator = exp_data.group(2).strip()
-                                if do_print:
-                                    print("File: " + parsed_file)
-                                    print("Local probe number: " + str(probes))
-                                    print("EXPR index: " + str(pat_i))
-                                    print("EXP: " + exp_type)
-                                    print("Value: " + exp_operator)
-                                    print("-"*100)
-                                # Write output to the <exprdata>-file
-                                # <c_file>:<line number>:<expression pattern index>:<full Clang expression>
-                                exp_pdf.write(parsed_file + ":" + str(ls) + ":" + str(pat_i) + ":" + exp_data.group().rstrip() + "\n")
-
+                        # Comma, colon, questionmark (only valid if not inside brackets)
+                        if (stack_parentesis == stack_bracket == stack_curly == 0 ):
+                            if (tail[pos_index] == ","):
                                 break
-                            pat_i += 1
+                            # Question mark
+                            if (tail[pos_index] == "?"):
+                                break
+                            # Colon
+                            if (tail[pos_index] == ":"):
+                                break
+
+                        # Semicolon (always valid)
+                        if (tail[pos_index] == ";"):
+                            break
+
+                        pos_index+=1
+
+                    if do_print:
+                        print("index: " + str(pos_index))
+
+                    if (pos_index < len(tail) and not bail_out):
+                        found=1
+                        cp += pos_index
+
+                        le = lp
+                        ce = cp
+
+                        if do_print:
+                            print("FOUND EARLY: (" + str(le+1) + "," + str(ce) + ") in:" + pbuf[lp].rstrip())
 
 
+                    cp=0 # All following lines need to be searched from beginnning of line
+                    probed_lines.append(lp)
+                    if do_print:
+                        print("3 Added line :" + str(lp+1))
+                    lp+=1
+
+                # pre insertion
+                if (not bail_out):
+                    line = pbuf[ls]
+
+                    match_exclude = 0
+                    for re_exp in re_cxl_list:
+                        j=0
+                        while (ls + j) <= le:
+                            if do_print == 2:
+                                print("searching for '{}' in '{}'".format(re_exp.pattern, pbuf[ls + j]))
+                            if (re_exp.match(pbuf[ls + j])):
+                                match_exclude = 1
+                                if do_print == 1:
+                                    print("match_exclude=1")
+                                break
+                            j = j + 1
+
+                        if match_exclude:
+                            break
+
+                    if (not match_exclude):
+                        # Pick line to insert prolog
+                        iline_start = line[:cs] + probe_prolog + line[cs:]
+                        if do_print:
+                            print("Old starting line: " + line.rstrip())
+                        if do_print:
+                            print("New starting line: " + iline_start.rstrip())
+
+                        # if start and end on same line, compensate column for inserted data
+                        if (ls == le):
+                            ce+= len(probe_prolog)
+
+
+                        # Last time to regret ourselves! Check for obvious errors on line containing prolog. If more is needed create a list instead like for sections to skip!
+                        regret = re_regret_insertion.match(iline_start)
+
+                        if (not regret):
+                            # Insert prolog
+                            pbuf.pop(ls)
+                            pbuf.insert(ls,iline_start)
+
+                            # Pick line to insert epilog
+                            if do_print:
+                                print("Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip())
+                            line = pbuf[le]
+                            iline_end = line[:ce] + probe_epilog + line[ce:]
+
+                            # Print summary
+                            if do_print:
+                                print("Old ending line: " + line.rstrip())
+                            if do_print:
+                                print("New ending line: " + iline_end.rstrip())
+
+                            # Insert epilog
+                            pbuf.pop(le)
+                            iline_end = afterburner(iline_end, frp)
+                            pbuf.insert(le,iline_end)
+                            probes+=1
+
+                            # Update probe file
+                            if numDataVars == 0:
+                                pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
+                            else:
+                                pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i])
+                                for var in lr_vlist:
+                                    pdf.write( ":" + var)
+                                pdf.write("\n")
+
+                            tmp_exp = expdb_exptext[i].rstrip()
+                            pat_i = 0
+                            while (pat_i < len(exppatternlist)):
+                                re_exp = re_exppatternlist[pat_i]
+                                if (re.match(re_exp, tmp_exp)):
+                                    if do_print:
+                                        print("-"*20)
+                                        print("Assigning a Probe expression index")
+                                        print("-"*20)
+                                        print("Local Probe number: " + str(probes))
+                                        print("EXP_index: " + str(pat_i))
+                                        print("Matched with: " + re_exp.pattern)
+                                        print("EXP string: " + tmp_exp)
+                                        print("#"*5 + " TO NEW EXPRESSION FILE " + "#"*5)
+                                    exp_data = re.match(exp_pat, tmp_exp)
+                                    exp_type = exp_data.group(1).strip()
+                                    exp_operator = exp_data.group(2).strip()
+                                    if do_print:
+                                        print("File: " + parsed_file)
+                                        print("Local probe number: " + str(probes))
+                                        print("EXPR index: " + str(pat_i))
+                                        print("EXP: " + exp_type)
+                                        print("Value: " + exp_operator)
+                                        print("-"*100)
+                                    # Write output to the <exprdata>-file
+                                    # <c_file>:<line number>:<expression pattern index>:<full Clang expression>
+                                    exp_pdf.write(parsed_file + ":" + str(ls) + ":" + str(pat_i) + ":" + exp_data.group().rstrip() + "\n")
+
+                                    break
+                                pat_i += 1
 
     i += 1
 
