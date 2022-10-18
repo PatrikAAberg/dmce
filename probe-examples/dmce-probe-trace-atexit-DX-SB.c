@@ -60,16 +60,10 @@ static dmce_probe_entry_t* dmce_buf_p = 0;
 static unsigned int* dmce_probe_hitcount_p = 0;
 #endif
 static int dmce_buffer_setup_done = 0;
-static __inline__ uint64_t dmce_tsc(void) {
 
-#if defined(__x86_64__)
-    unsigned msw, lsw;
-    __asm__ __volatile__ ("rdtsc": "=a"(lsw), "=d"(msw): : "memory");
-    return ( (((uint64_t) msw) << 32) | ((uint64_t) lsw));
-#else
+#ifndef __x86_64__
 #error Time stamp for this dmce probe only available on __x86_64__ arch!
 #endif
-}
 
 static int dmce_signal_core = 4242;
 static int dmce_signo = 4242;
@@ -258,12 +252,13 @@ static void dmce_signal_handler(int sig) {
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr);
 
-static inline void dmce_probe_body0(unsigned int dmce_probenbr) {
+static inline __attribute__((unused)) void dmce_probe_body0(unsigned int dmce_probenbr) {
 
     dmce_probe_body(dmce_probenbr);
 }
 
-static inline void dmce_probe_body1(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 0) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body1(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a) {
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
@@ -272,8 +267,10 @@ static inline void dmce_probe_body1(unsigned int dmce_probenbr,
         e_p->vars[0] = dmce_param_a;
     }
 }
+#endif
 
-static inline void dmce_probe_body2(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 1) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body2(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b) {
 
@@ -284,8 +281,10 @@ static inline void dmce_probe_body2(unsigned int dmce_probenbr,
         e_p->vars[1] = dmce_param_b;
     }
 }
+#endif
 
-static inline void dmce_probe_body3(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 2) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body3(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c) {
@@ -298,8 +297,10 @@ static inline void dmce_probe_body3(unsigned int dmce_probenbr,
         e_p->vars[2] = dmce_param_c;
     }
 }
+#endif
 
-static inline void dmce_probe_body4(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 3) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body4(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -314,8 +315,10 @@ static inline void dmce_probe_body4(unsigned int dmce_probenbr,
         e_p->vars[3] = dmce_param_d;
     }
 }
+#endif
 
-static inline void dmce_probe_body5(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 4) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body5(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -332,8 +335,10 @@ static inline void dmce_probe_body5(unsigned int dmce_probenbr,
         e_p->vars[4] = dmce_param_e;
     }
 }
+#endif
 
-static inline void dmce_probe_body6(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 5) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body6(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -352,8 +357,10 @@ static inline void dmce_probe_body6(unsigned int dmce_probenbr,
         e_p->vars[5] = dmce_param_f;
     }
 }
+#endif
 
-static inline void dmce_probe_body7(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 6) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body7(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -374,8 +381,10 @@ static inline void dmce_probe_body7(unsigned int dmce_probenbr,
         e_p->vars[6] = dmce_param_g;
     }
 }
+#endif
 
-static inline void dmce_probe_body8(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 7) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body8(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -398,8 +407,10 @@ static inline void dmce_probe_body8(unsigned int dmce_probenbr,
         e_p->vars[7] = dmce_param_h;
     }
 }
+#endif
 
-static inline void dmce_probe_body9(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 8) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body9(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -423,8 +434,10 @@ static inline void dmce_probe_body9(unsigned int dmce_probenbr,
         e_p->vars[8] = dmce_param_i;
     }
 }
+#endif
 
-static inline void dmce_probe_body10(unsigned int dmce_probenbr,
+#if (DMCE_PROBE_NBR_OPTIONAL_ELEMENTS > 9) && (defined(__clang__)) || (!defined(__clang__))
+static inline __attribute__((unused)) void dmce_probe_body10(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -451,6 +464,7 @@ static inline void dmce_probe_body10(unsigned int dmce_probenbr,
         e_p->vars[9] = dmce_param_j;
     }
 }
+#endif
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
@@ -488,7 +502,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             }
             */
 
-            sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
+            sprintf(s, "%p %p %p", (void*)dmce_trace_enabled_p, (void*)dmce_buf_p, (void*)dmce_probe_hitcount_p);
             setenv("dmce_trace_control", s, 0);
 
             /* Handler for smth-went-wrong signals */
@@ -529,7 +543,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
 
-            sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
+            sscanf(s_control_p, "%p %p %p", (void**)&dmce_trace_enabled_p, (void**)&dmce_buf_p, (void**)&dmce_probe_hitcount_p);
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
