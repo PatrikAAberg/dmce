@@ -520,7 +520,6 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
                 sigaction(SIGFPE,   &sa, NULL);
                 sigaction(SIGILL,   &sa, NULL);
                 sigaction(SIGINT,   &sa, NULL);
-                sigaction(SIGKILL,  &sa, NULL);
                 sigaction(SIGSEGV,  &sa, NULL);
                 sigaction(SIGSYS,   &sa, NULL);
                 sigaction(SIGTRAP,  &sa, NULL);
