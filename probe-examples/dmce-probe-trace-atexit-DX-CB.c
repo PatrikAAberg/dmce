@@ -212,12 +212,12 @@ static void dmce_signal_handler(int sig) {
 
 static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr);
 
-static inline void dmce_probe_body0(unsigned int dmce_probenbr) {
+static inline __attribute__((unused)) void dmce_probe_body0(unsigned int dmce_probenbr) {
 
     dmce_probe_body(dmce_probenbr);
 }
 
-static inline void dmce_probe_body1(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body1(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a) {
 
     dmce_probe_entry_t* e_p = dmce_probe_body(dmce_probenbr);
@@ -227,7 +227,7 @@ static inline void dmce_probe_body1(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body2(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body2(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b) {
 
@@ -239,7 +239,7 @@ static inline void dmce_probe_body2(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body3(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body3(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c) {
@@ -253,7 +253,7 @@ static inline void dmce_probe_body3(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body4(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body4(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -269,7 +269,7 @@ static inline void dmce_probe_body4(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body5(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body5(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -287,7 +287,7 @@ static inline void dmce_probe_body5(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body6(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body6(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -307,7 +307,7 @@ static inline void dmce_probe_body6(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body7(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body7(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -329,7 +329,7 @@ static inline void dmce_probe_body7(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body8(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body8(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -353,7 +353,7 @@ static inline void dmce_probe_body8(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body9(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body9(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -378,7 +378,7 @@ static inline void dmce_probe_body9(unsigned int dmce_probenbr,
     }
 }
 
-static inline void dmce_probe_body10(unsigned int dmce_probenbr,
+static inline __attribute__((unused)) void dmce_probe_body10(unsigned int dmce_probenbr,
                             uint64_t dmce_param_a,
                             uint64_t dmce_param_b,
                             uint64_t dmce_param_c,
@@ -442,7 +442,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             }
             */
 
-            sprintf(s, "%p %p %p", dmce_trace_enabled_p, dmce_buf_p, dmce_probe_hitcount_p);
+            sprintf(s, "%p %p %p", (void*)dmce_trace_enabled_p, (void*)dmce_buf_p, (void*)dmce_probe_hitcount_p);
             setenv("dmce_trace_control", s, 0);
 
             /* Handler for smth-went-wrong signals */
@@ -483,7 +483,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
 
-            sscanf(s_control_p, "%p %p %p", &dmce_trace_enabled_p, &dmce_buf_p, &dmce_probe_hitcount_p);
+            sscanf(s_control_p, "%p %p %p", (void**)&dmce_trace_enabled_p, (void**)&dmce_buf_p, (void**)&dmce_probe_hitcount_p);
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);

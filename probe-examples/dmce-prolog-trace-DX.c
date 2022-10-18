@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 static int* dmce_trace_enabled_p = nullptr;
 #else
-static volatile int* volatile dmce_trace_enabled_p = 0;
+static int* dmce_trace_enabled_p = 0;
 #endif
 static inline int dmce_trace_is_enabled(void) { return *dmce_trace_enabled_p; }
 static inline void dmce_trace_enable(void) { __atomic_store_n (dmce_trace_enabled_p, 1, __ATOMIC_SEQ_CST); }
