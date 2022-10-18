@@ -1166,8 +1166,9 @@ while (lineindex < linestotal):
 
                    # Sanity check
                    if (int(lstart) > int(cf_len)):
-                     raise ValueError('{} sanity check failed! lstart: {} cf_len {}'.format(parsed_file, lstart, cf_len))
-
+                        if do_print:
+                            print("ERROR: Got line position passed eof, file: " + parsed_file, file=sys.stderr)
+                        sys.exit(1)
                    # save current function to use when expression is finally saved
                    current_function_sticky = current_function
 
