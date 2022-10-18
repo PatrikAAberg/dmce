@@ -540,11 +540,11 @@ if [ "$skip" = false ]; then
         git -C "${old_git_dir}" checkout "${old}" &>/dev/null || true
 
         _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/new"
-        find "${git_root}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/new/ {} + &>/dev/null || :
+        find "${git_root}" \( -iname "*.h" -o -iname "*.hpp" -o -iname "*.hh" \) -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/new/ {} + &>/dev/null || :
         _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/new -type f | wc -l) file(s)"
 
         _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/old"
-        find "${old_git_dir}" -name "*.h" -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/old/ {} + &>/dev/null || :
+        find "${old_git_dir}" \( -iname "*.h" -o -iname "*.hpp" -o -iname "*.hh" \) -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/old/ {} + &>/dev/null || :
         _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/old -type f | wc -l) file(s)"
 
         _echo "removing relative paths in include files"
