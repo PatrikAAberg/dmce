@@ -192,6 +192,11 @@ static void dmce_dump_trace(int status) {
             sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
             remove(entrydirname);
         }
+
+        free(dmce_buf_p);
+        free(dmce_trace_enabled_p);
+        free(dmce_probe_hitcount_p);
+
 }
 
 static void dmce_on_exit(int status, void* opaque) {
