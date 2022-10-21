@@ -273,7 +273,7 @@ def draw(stdscr):
         stdscr.addstr(i, wx_varsview, " " + trace_info[i])
 
     stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename + " +" + str(srcindex + 1)).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
