@@ -1,10 +1,9 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
+set -e
 
 version=$(grep ^Version debian/control | cut -d' ' -f2)
 gitdir=$(pwd)
-
-echo "Building deb package version $version"
 
 _user=
 if [ "x${USER}" != "x" ]; then
@@ -21,7 +20,7 @@ fi
 rm -rf /tmp/${_user}/dmce/debian-build
 mkdir -p /tmp/${_user}/dmce/debian-build
 
-pushd /tmp/${_user}/dmce/debian-build
+cd /tmp/${_user}/dmce/debian-build
 mkdir -p dmce-$version/DEBIAN
 mkdir -p dmce-$version/usr
 mkdir -p dmce-$version/usr/bin
@@ -64,5 +63,3 @@ echo "$version" > dmce-$version/usr/share/dmce/version
 
 fakeroot dpkg-deb --build dmce-${version}
 cp -a /tmp/${_user}/dmce/debian-build/dmce-${version}.deb $gitdir/
-popd
-exit 0

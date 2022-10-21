@@ -32,10 +32,6 @@ if [ "$cfgpath" == "" ]; then
     cfgpath=$HOME
 fi
 
-echo "DMCE setup"
-echo "------------------------"
-echo "Creating .dmceconfig file in $cfgpath"
-
 # Remove old config
 [ -e $cfgpath/.dmceconfig ] && rm $cfgpath/.dmceconfig
 [ -e $cfgpath/.config/dmce ] && rm -r $cfgpath/.config/dmce
@@ -122,8 +118,6 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
 DMCE_EDITOR:vim
 NoWord
 
-echo "Creating dmce config directory as $cfgpath/.config/dmce"
-echo "Fetching default config from $installpath/share/dmce"
 cp $installpath/share/dmce/constructs.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.include  /$cfgpath/.config/dmce/
@@ -131,5 +125,3 @@ cp $installpath/share/dmce/dmce.pos.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.pos.include  /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
-
-echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."
