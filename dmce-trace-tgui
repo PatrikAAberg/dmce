@@ -621,6 +621,8 @@ def execute_command(cmdstr, stdscr):
     elif cmds[0] == "help":
         show_help(stdscr)
         return
+    elif cmds[0] == "q" or cmds[0] == "qa":
+        sys.exit(0)
 
     cmd_error_code = "Command not recognized: '" + cmdstr + "'"
     return
