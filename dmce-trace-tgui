@@ -119,8 +119,12 @@ def init_screen(stdscr):
     global num_tracelines
     global w_screen
     global h_screen
+    global screen_large_enough
 
     h_screen, w_screen = stdscr.getmaxyx()
+    screen_large_enough = True
+    if (h_screen < 40) or (w_screen < 120):
+        screen_large_enough = False
     wy_codeview = wy_varsview = int(h_screen / 2)
     num_srclines = num_tracelines = int((h_screen / 2) - 3)
     wx_varsview = w_screen - int(w_screen / 4)
@@ -179,6 +183,10 @@ def draw(stdscr):
     global old_srcpath
     global blink
     global trace_info
+
+    if not screen_large_enough:
+        stdscr.addstr(0,0, "Terminal too small! Please increase window size.", curses.A_REVERSE)
+        return
 
     # trace view
     wtout = w_screen - (w_screen - wx_varsview) - 1
