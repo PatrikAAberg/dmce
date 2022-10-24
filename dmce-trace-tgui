@@ -238,8 +238,12 @@ def draw(stdscr):
     varstr = tracebuffer[index].split("@")[7:]
     vout = varstr[0].split(" ")
     i = 0
-    for v in vout:
-        stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview, " "))
+    for v in sorted(vout):
+        if v.strip() != "":
+            try:
+                stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview, " "))
+            except curses.error:
+                pass
         i += 1
     for j in range(5-i):
         stdscr.addstr(wy_varsview + i, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
