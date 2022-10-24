@@ -34,6 +34,13 @@
 
 #define DMCE_PROBE_OUTPUT_FILE_BIN DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.bin"
 
+#ifdef _GNU_SOURCE
+#include <sched.h>
+#else
+int sched_getcpu(void);
+extern char *program_invocation_short_name;
+#endif
+
 typedef struct {
 
     uint64_t timestamp;
@@ -174,12 +181,6 @@ static void dmce_on_exit(int status, void* opaque) {
         dmce_dump_trace(status);
     }
 }
-
-#ifdef _GNU_SOURCE
-#include <sched.h>
-#else
-int sched_getcpu(void);
-#endif
 
 static void dmce_signal_handler(int sig) {
 

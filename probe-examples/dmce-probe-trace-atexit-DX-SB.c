@@ -42,6 +42,13 @@ typedef struct {
     uint64_t cpu;
 } dmce_probe_entry_t;
 
+#ifdef _GNU_SOURCE
+#include <sched.h>
+#else
+int sched_getcpu(void);
+extern char *program_invocation_short_name;
+#endif
+
 #ifndef dmce_likely
 #ifdef __GNUC__
 #define dmce_likely(x)   __builtin_expect(!!(x), 1)
@@ -212,12 +219,6 @@ static void dmce_on_exit(int status, void* opaque) {
         dmce_dump_trace(status);
     }
 }
-
-#ifdef _GNU_SOURCE
-#include <sched.h>
-#else
-int sched_getcpu(void);
-#endif
 
 static void dmce_signal_handler(int sig) {
 
