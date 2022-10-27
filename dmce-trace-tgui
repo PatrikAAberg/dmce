@@ -610,6 +610,7 @@ def cmd_search(sstr):
                     i -= 1
 
         cmd_error_code = "Not found: " + sstr[1:]
+        last_search_cmd = sstr
         return
     else:
         cmd_error_code = "Empty search string!"
