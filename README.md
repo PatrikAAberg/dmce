@@ -169,7 +169,7 @@ You might want something fancier than less to view your trace. An interactive tr
     
     $ dmce-launcher -c    # Here we use a non-probed tree for increased visibility (and therefore we use the 'original' probe file below)
         
-    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
+    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
 
 There are multiple output formats and GUIs to choose from, for more information please see the help text:
 
