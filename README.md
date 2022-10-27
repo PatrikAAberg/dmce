@@ -171,6 +171,10 @@ You might want something fancier than less to view your trace. An interactive tr
         
     $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
 
+The profile 'trace' uses a single trace buffer for all cores in a multi-threaded program running on multiple cores. This minimizes slack, reducing the size of the trace buffer file but at the same time have a penalty on performance. The profile 'trace-mc' uses separate RAM buffers and thereby increases performance at the cost of additional RAM usage. To use the 'trace-mc' buffer:  
+
+    $ dmce-set-profile trace-mc
+
 There are multiple output formats and GUIs to choose from, for more information please see the help text:
 
     $ dmce-trace-viewer
