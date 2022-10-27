@@ -334,6 +334,8 @@ elif configpath != None and os.path.isfile(configpath + '/recognizedexpressions.
 else:
     exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                       '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
+                      '.*-CXXNewExpr\sHexnumber\s<.*\,.*>.*',
+                      '.*-CXXDeleteExpr\sHexnumber\s<.*\,.*>.*',
                       '.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
                       '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
@@ -355,13 +357,21 @@ else:
                       '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
                       '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
                       '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\*\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\/\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\%\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\&\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\|\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\^\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\<<\=\'.*',
+                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\>>\=\'.*',
                       '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
     # Modes:
     #  1    Contained space, use as is
     #  2    Free, need to look for next
     #  x    Free, look for next at colpos + x
-    exppatternmode = [1,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+    exppatternmode = [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
 
 re_exppatternlist = []
 

@@ -23,10 +23,18 @@ exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
                   '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
                   '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
                   '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\*\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\/\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\%\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\&\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\|\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\^\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\<<\=\'.*',
+                  '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\>>\=\'.*',
                   '.*ReturnStmt Hexnumber <.*\,.*>.*']
 
 # Modes:
 #  1    Contained space, use as is
 #  2    Free, need to look for next
 #  x    Free, look for next at colpos + x
-exppatternmode = [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+exppatternmode = [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
