@@ -136,13 +136,13 @@ Go into the simplecrash example folder, build the executable and run it.
 It crashes! Let's find out why. Step up to the git root again and run dmce-trace. Note: If you have not already done so, you need to install the python3 modules colorama and numpy:
 
     $ pip3 install colorama numpy
-    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+    $ dmce-trace --numvars 10 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
-This line deserves a bit of explanation. The standard trace probe uses maximum of 5 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe, the probe references file produced in the probing stage and last but not least the path to the root of the git repo. Please note that the path where the raw trace file end up is decided by the probe through a DMCE_PROBE_DEFINE in the ".dmceconfig" file.
+This line deserves a bit of explanation. The standard trace probe uses maximum of 10 variables. We want to use 80 characters for the source view, view 2 lines before each executed line and 3 after as well as enable timestamps and highlight each trace entry. The last three parameters are: The raw buffer file produced by the dmce trace probe (note that program name and pid needs to be picked up looking at /tmp/$USER/dmce/dmcebuffer.bin...), the probe references file produced in the probing stage and last but not least the path to the root of the git repo. Please note that the path where the raw trace file end up is decided by the probe through a DMCE_PROBE_DEFINE in the ".dmceconfig" file.
 
 For larger traces than this one, something to try out is to pipe the results to less for easy view and search, like this:
 
-    $ dmce-trace --numvars 5 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
+    $ dmce-trace --numvars 10 --sourcewidth 80 -A 3 -B 2 -t --hl /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd) | less -r
 
 That's it! You should now be able to see the null-pointer bug at the end of execution.
 
