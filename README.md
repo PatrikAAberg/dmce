@@ -262,7 +262,7 @@ the same amount of cpu timestamps.
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
-    $ dmce-set-profile racecheck
+    $ dmce-set-profile racectrack
     $ dmce-launcher -aq
     $ cd simple && ./build && ./simple
 

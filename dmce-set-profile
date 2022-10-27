@@ -7,7 +7,7 @@ import os
 descr = 'Set dmce profile. Modifies .dmceconfig and filter files in the dmce config directory.'
 
 parser = argparse.ArgumentParser(description=descr)
-parser.add_argument('profile',    type=str,    help='Available profiles: printf trace trace-mc coverage syslog racecheck')
+parser.add_argument('profile',    type=str,    help='Available profiles: printf trace trace-mc coverage syslog racetrack')
 parser.add_argument('-f', '--file',   type=str, default = None, help='What config file to update, default: $HOME/.dmceconfig')
 parser.add_argument('-d', '--configdir',   type=str, default = None, help='What config folder to update, default: $HOME/.config/dmce')
 parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-anything', help='Comma separated list of files and functions to exclude: <file,:function,file:function >')
@@ -165,22 +165,22 @@ while count < len(clines):
             if "DMCE_POST_HOOK" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
-        # racecheck profile
-        elif args.profile == "racecheck":
+        # racetrack profile
+        elif args.profile == "racetrack":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
                 clines[count] = "DMCE_NUM_DATA_VARS:0\n"
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
-                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-racecheck.c")
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-racetrack.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
-                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-racecheck.c")
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-racetrack.c")
 
             if "DMCE_POST_HOOK" in clines[count]:
-                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racecheck")
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racetrack")
 
         else:
-            print("Unknown profile (please use trace, trace-mc, coverage, racecheck, printf or syslog), abort")
+            print("Unknown profile (please use trace, trace-mc, coverage, racetrack, printf or syslog), abort")
             sys.exit(1)
 
 # Modify config folder
