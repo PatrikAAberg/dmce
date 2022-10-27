@@ -258,9 +258,9 @@ You should now be able to see the most visited parts of our program. Replace "he
 
 Please note! For larger execution runs, the DMCE trace buffer size need to be increased to get the full view and not just the last part of the ring buffer. How to adjust the size of the DMCE trace buffer is further descibred in the config section.
 
-## Example 6: Test race conditions
+## Example 6: Test for race conditions
 
-DMCE can also be used to look for race conditions and robustness by intentionally insert randomized delays
+DMCE can also be used to provoke potential race conditions by intentionally insert randomized delays
 through out the code. Each probe gets an individual randomized number between 0..32767 upon which it will spin
 the same amount of cpu timestamps.
 
