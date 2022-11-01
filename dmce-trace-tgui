@@ -303,6 +303,9 @@ def draw(stdscr):
     stdscr.addstr(ti_offset + 11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     pos = wx_varsview + 1
     for m in jumplist:
+        if pos + len(m) > w_screen:
+            break
+
         if str(entry_num) != m:
             stdscr.addstr(ti_offset + 11, pos, str(m) + " ")
         else:
