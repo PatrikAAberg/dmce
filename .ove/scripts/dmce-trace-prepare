@@ -52,19 +52,19 @@ DESCRIPTION
 
 EXAMPLES
         # install fzf
-        $ <package manager> install fzf
+        <package manager> install fzf
 
         # prepare the git and build it
-        $ ove dmce trace-prepare ag ag
+        ove dmce trace-prepare ag ag
 
         # run some test, here we're searching for the word 'foobar'
-        $ ag foobar
+        ag foobar
 
         # decode the trace buffer and launch an interactive fzf viewer
-        $ ove dmce trace-decode ag
+        ove dmce trace-decode ag
 
         # oneliner (all of the above in one go)
-        $ ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
+        ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
 EOF
 }
 

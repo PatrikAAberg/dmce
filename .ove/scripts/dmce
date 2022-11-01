@@ -44,23 +44,23 @@ DESCRIPTION
 LOW-LEVEL COMMANDS
         set-profile:
           # select DMCE profile
-          $ ove dmce set-profile [options]
+          ove dmce set-profile [options]
 
         launch:
           # run 'dmce-launcher' in sequence on all/specified repos
-          $ ove dmce launch [options] [-- git...]
+          ove dmce launch [options] [-- git...]
 
         summary-bin:
           # run 'dmce-summary-bin'
-          $ ove dmce summary-bin [options]
+          ove dmce summary-bin [options]
 
         summary-txt:
           # run 'dmce-summary-txt'
-          $ ove dmce summary-txt [options]
+          ove dmce summary-txt [options]
 
         trace:
           # run 'dmce-trace'
-          $ ove dmce trace [options]
+          ove dmce trace [options]
 
 HIGH-LEVEL COMMANDS
 EOF
@@ -86,13 +86,13 @@ EOF
     cat << EOF
 EXAMPLES
         # set 'trace' profile
-        $ ove dmce set-profile trace
+        ove dmce set-profile trace
 
         # launch DMCE on two repos
-        $ ove dmce launch -a -q -- ag dmce-examples
+        ove dmce launch -a -q -- ag dmce-examples
 
         # trace, build, run, view in one go
-        $ ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
+        ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
 EOF
 }
 

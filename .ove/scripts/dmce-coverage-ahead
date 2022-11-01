@@ -52,7 +52,7 @@ DESCRIPTION
 
 EXAMPLES
         # delta code coverage results for commits not yet published
-        $ ove dmce coverage-ahead ag ag 1
+        ove dmce coverage-ahead ag ag 1
         ...
         dmce-coverage-history summary:
         3 iterations in 66 seconds

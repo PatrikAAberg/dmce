@@ -209,7 +209,7 @@ DESCRIPTION
 
 EXAMPLES
         # delta, series and full code coverage results for four tags (=3 iterations)
-        $ ove dmce coverage-history ag ag 7 2.2.0 2.0.0 1.0.3 1.0.2
+        ove dmce coverage-history ag ag 7 2.2.0 2.0.0 1.0.3 1.0.2
         ...
         dmce-coverage-history summary:
         3 iterations in 209 seconds
@@ -220,17 +220,17 @@ EXAMPLES
         3  1.0.3  2017-05-02  Bump version ..  1.0.2  2016-12-03  Tag new relea..  1.0.2  2016-12-03  Tag new relea..  0121e6b  2011-11-19  init     7          10           70.0 %    7          10           70.0 %    697        940          74.1 %
 
         # delta code coverage for two tags
-        $ ove dmce coverage-history ag ag 1 2.2.0 2.0.0
+        ove dmce coverage-history ag ag 1 2.2.0 2.0.0
 
         # specifying 'mode' using words
-        $ ove dmce coverage-history ag ag delta series 2.2.0 2.0.0
+        ove dmce coverage-history ag ag delta series 2.2.0 2.0.0
 
         # delta and full code coverage
-        $ ove dmce coverage-history ag ag 3
+        ove dmce coverage-history ag ag 3
 
         # delta code coverage the last month
-        $ revs=\$(git -C \$OVE_BASE_DIR/ag log --since='1 month' --oneline --format=%h | xargs)
-        $ ove dmce coverage-history ag ag 1 \$revs
+        revs=\$(git -C \$OVE_BASE_DIR/ag log --since='1 month' --oneline --format=%h | xargs)
+        ove dmce coverage-history ag ag 1 \$revs
 EOF
 }
 

@@ -55,19 +55,19 @@ CONFIGURATION
 
 EXAMPLES
         # decode the trace buffer and launch the interactive viewer tgui
-        $ ove dmce trace-decode ag
+        ove dmce trace-decode ag
 
         # install fzf
-        $ <package manager> install fzf
+        <package manager> install fzf
 
         # decode the trace buffer and launch an interactive fzf viewer
-        $ DMCE_TRACE_VIEWER=fzf ove dmce trace-decode ag
+        DMCE_TRACE_VIEWER=fzf ove dmce trace-decode ag
 
         # decode the trace buffer and display the trace on stdout
-        $ DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
+        DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
 
         # decode the trace buffer and save the trace to a file '/tmp/a.trace'
-        $ DMCE_TRACE_VIEWER=/tmp/a.trace ove dmce trace-decode ag
+        DMCE_TRACE_VIEWER=/tmp/a.trace ove dmce trace-decode ag
 EOF
     exit 1
 }
