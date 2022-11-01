@@ -183,6 +183,7 @@ def draw(stdscr):
     global old_srcpath
     global blink
     global trace_info
+    global wx_varsview
 
     if not screen_large_enough:
         stdscr.addstr(0,0, "Terminal too small! Please increase window size.", curses.A_REVERSE)
@@ -192,7 +193,7 @@ def draw(stdscr):
     wtout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(tv_start, tv_end + 1):
         if i < len(tracebuffer) and i >= 0:
-            lout = check_and_clean_probes(tracebuffer[i].rstrip()).split("@")
+            lout = check_and_clean_probes(tracebuffer[i].rstrip()).replace('\t', '        ').split("@")
             pre = " "
             if tracebuffer[i].split("@")[0] in jumplist:
                 pre = ">"
@@ -227,10 +228,16 @@ def draw(stdscr):
     wcout = w_screen - (w_screen - wx_varsview) - 1
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
+            # get source line
+            s=check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
+            # cap at cout
+            t=s[:wcout]
+            # left adjust
+            u=t.ljust(wcout, " ")
             if (src_start + i) == srcindex:
-                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i])[:wcout].ljust(wcout, " "), curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, wx_codeview, u, curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_codeview + i, wx_codeview, check_and_clean_probes(codebuffer[src_start + i])[:wcout].ljust(wcout, " "))
+                stdscr.addstr(wy_codeview + i, wx_codeview, u)
         else:
             stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
 
@@ -245,8 +252,8 @@ def draw(stdscr):
             except curses.error:
                 pass
         i += 1
-    for j in range(5-i):
-        stdscr.addstr(wy_varsview + i, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    for j in range(wy_varsview - i - 1):
+        stdscr.addstr(wy_varsview + i + j, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
 
     # trace info view
     entry_num = tracebuffer[index].split("@")[0]
