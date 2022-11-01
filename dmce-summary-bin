@@ -23,6 +23,7 @@ import numpy as np
 import sys
 import argparse
 import os
+from operator import itemgetter
 
 descr = 'Print DMCE coverage, hit and total number of instrumentation probes.'
 
@@ -30,11 +31,17 @@ parser = argparse.ArgumentParser(description=descr)
 parser.add_argument('dfile',            type=str,                   help='Binary input file')
 parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
+parser.add_argument('-f', '--filter',
+                    required=False,
+                    type=float,
+                    metavar="[0-100]",
+                    help='percentage of hits to filter. Most frequent probes selected first.')
 args = parser.parse_args()
 
 dfile = args.dfile
 probefile = args.probefile
 printverbose = args.verbose
+filterlimit = args.filter
 
 # parse the probe reference
 with open(probefile, 'r') as pf:
@@ -57,6 +64,32 @@ for probe in range(nprobes):
      rec.append(data[probe])
      res.append(rec)
 
+# sort list in order of hits
+res.sort(key=itemgetter(4), reverse=True)
+
+# calculate total hits
+ntothits = 0
+for probe in res:
+     ntothits+=probe[4]
+
+# filter
+if filterlimit != None:
+     if filterlimit < 0 or filterlimit > 100:
+          print("Error: Filter value out of range.")
+          sys.exit(1)
+     nlimit = (int)(ntothits * filterlimit / 100)
+     if printverbose:
+          print('total hits, wanted hits',ntothits, nlimit)
+
+     nselected = 0
+     filterfmt="{}:{}-{}"
+     for probe in res:
+          nselected += probe[4]
+          if nselected >= nlimit:
+               break
+          print(filterfmt.format(probe[1],probe[2],probe[2]))
+     sys.exit(0)
+
 # find the probes not executed
 skipped = [item for item in res if item[4] == 0]
 nskipped = len(skipped)
@@ -71,10 +104,13 @@ if printverbose:
      print('Coverage:{:2.2f}%'.format(100*nhit/nprobes))
      print('Probes executed:{}/{}'.format(nhit, nprobes))
      print("\n--- Details ---")
-     fullfmt = "{:<10}{:<8}{:<10}{}:{}"
-     print(fullfmt.format('id', 'status', 'count', 'file', 'line'))
+     headfmt = "{:<10}{:<8}{:<12}{:<12}{:<12}{}:{}"
+     print(headfmt.format('id', 'status', 'count', 'hist probe', 'hist acc', 'file', 'line'))
+     linefmt = "{:<10}{:<8}{:<12}{:<12.2%}{:<12.2%}{}:{}"
+     nacchits = 0
      for entry in res:
+          nacchits += entry[4]
           if entry[4] == 0:
-               print(fullfmt.format(entry[0], 'MISS', entry[4], entry[1], entry[2]))
+               print(linefmt.format(entry[0], 'MISS', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], entry[2]))
           else:
-               print(fullfmt.format(entry[0], 'HIT', entry[4], entry[1], entry[2]))
+               print(linefmt.format(entry[0], 'HIT', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], entry[2]))
