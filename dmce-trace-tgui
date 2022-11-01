@@ -186,7 +186,11 @@ def draw(stdscr):
     global wx_varsview
 
     if not screen_large_enough:
-        stdscr.addstr(0,0, "terminal size {}x{} is too small".format(w_screen, h_screen), curses.A_REVERSE)
+        try:
+            stdscr.addstr(0,0, "terminal size {}x{} is too small".format(w_screen, h_screen), curses.A_REVERSE)
+        except curses.error:
+            pass
+
         return
 
     # trace view
