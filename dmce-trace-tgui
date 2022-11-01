@@ -123,7 +123,7 @@ def init_screen(stdscr):
 
     h_screen, w_screen = stdscr.getmaxyx()
     screen_large_enough = True
-    if (h_screen < 40) or (w_screen < 120):
+    if (h_screen < 50) or (w_screen < 120):
         screen_large_enough = False
     wy_codeview = wy_varsview = int(h_screen / 2)
     num_srclines = num_tracelines = int((h_screen / 2) - 3)
@@ -186,7 +186,7 @@ def draw(stdscr):
     global wx_varsview
 
     if not screen_large_enough:
-        stdscr.addstr(0,0, "Terminal too small! Please increase window size.", curses.A_REVERSE)
+        stdscr.addstr(0,0, "terminal size {}x{} is too small".format(w_screen, h_screen), curses.A_REVERSE)
         return
 
     # trace view
