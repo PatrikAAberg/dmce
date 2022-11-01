@@ -304,7 +304,7 @@ def draw(stdscr):
     pos = wx_varsview + 1
     for m in jumplist:
         if str(entry_num) != m:
-            stdscr.addstr(ti_offset + ti_offset + 11, pos, str(m) + " ")
+            stdscr.addstr(ti_offset + 11, pos, str(m) + " ")
         else:
             stdscr.addstr(ti_offset + 11, pos, str(m) + " ", curses.A_REVERSE)
         pos += len(m) + 1
