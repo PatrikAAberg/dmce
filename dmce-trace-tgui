@@ -292,16 +292,17 @@ def draw(stdscr):
 
     # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
     ti_offset = len(trace_info)
+    wcout = w_screen - wx_varsview - 1
     for i in range(ti_offset):
-        stdscr.addstr(i, wx_varsview, " " + trace_info[i])
+        stdscr.addstr(i, wx_varsview, " " + trace_info[i][:wcout])
 
-    stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer))).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename + " +" + str(srcindex + 1)).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)").ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 7, wx_varsview, (" Diff             : " + str(diff) + " (cc)").ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer)))[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename + " +" + str(srcindex + 1))[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function)[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core)[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 7, wx_varsview, (" Diff             : " + str(diff) + " (cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
     stdscr.addstr(ti_offset + 9, wx_varsview, (" Markers: "))
     stdscr.addstr(ti_offset + 10, wx_varsview, (" ---------------------"))
     stdscr.addstr(ti_offset + 11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
