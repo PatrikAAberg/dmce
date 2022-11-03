@@ -58,6 +58,14 @@ blink = True
 show_probes = False
 hide_components = 0
 ts_min = sys.maxsize
+entry_max = 0
+core_max = 0
+filename_max = 0
+filename_longest = ""
+lineno_max = 0
+func_max = 0
+components_max = 0
+common_components =  ""
 
 editor = "vim"
 
@@ -84,6 +92,15 @@ def init():
     global args
     global ts_min
     global trace_info
+    global filename_max
+    global filename_longest
+    global lineno_max
+    global func_max
+    global core_max
+    global entry_max
+    global hide_components
+    global common_components
+    global components_max
 
     tf = open(args.tfile)
     full_tracebuffer = tf.readlines()
@@ -101,15 +118,49 @@ def init():
     full_tracebuffer = full_tracebuffer[info_end:]
 
     i = 0
+    common_components = full_tracebuffer[0].split("@")[2]
     while i < len(full_tracebuffer):
+        # core
+        f = int(full_tracebuffer[i].split("@")[0])
+        if f > core_max:
+            core_max = f
+        core_max = len(str(core_max))
+
         # find smallest ts to normalize the rest
         ts = int(full_tracebuffer[i].split("@")[1])
         if ts < ts_min:
             ts_min = ts
+
+        # longest filename
+        f = full_tracebuffer[i].split("@")[2]
+        if len(f) > filename_max:
+            filename_max = len(f)
+            filename_longest = f
+
+        # max components
+        f = full_tracebuffer[i].split("@")[2]
+        if f.count('/') > components_max:
+            components_max = f.count('/')
+
+        # common components
+        common_components = os.path.commonprefix([common_components, f])
+
+        # longest line no
+        f = full_tracebuffer[i].split("@")[3]
+        if len(f) > lineno_max:
+            lineno_max = len(f)
+
+        # longest func
+        f = full_tracebuffer[i].split("@")[4]
+        if len(f) > func_max:
+            func_max = len(f)
+
         # prepend with trace entry nbr
         full_tracebuffer[i] = str(i) + "@" + full_tracebuffer[i]
         i += 1
-
+    entry_max = len(str(len(full_tracebuffer)))
+    hide_components = common_components.count('/')
+    filename_max -= len(common_components)
     tracebuffer = full_tracebuffer.copy()
 
 def init_screen(stdscr):
@@ -186,6 +237,8 @@ def draw(stdscr):
     global trace_info
     global wx_varsview
     global hide_components
+    global filename_max
+    global common_components
 
     if not screen_large_enough:
         try:
@@ -210,12 +263,40 @@ def draw(stdscr):
                 else:
                     idx=num_slashes
                 lout[3] = "/".join(lout[3].split("/", idx)[idx:])
-            tout = pre + '@'.join(lout[0:7]).replace("@", " ")
-            tout = tout[:wtout].ljust(wtout, " ")
+            tout = pre
+            j = 0
+
+            # trace entry
+            tout += lout[0].rjust(entry_max) + " "
+
+            # core
+            tout += lout[1].rjust(core_max) + " "
+
+            # ts
+            tout += lout[2] + " "
+
+            # filename - compensate for common components
+            cc = "/".join(common_components.split("/", hide_components)[hide_components:])
+
+            # compensate for longest filename
+            cd=""
+            if hide_components > common_components.count('/'):
+                cd = "/".join(filename_longest.split('/', hide_components)[common_components.count('/'):hide_components:])
+            tout += lout[3].ljust(filename_max + len(cc) - len(cd)) + " "
+
+            # lineno
+            tout += lout[4].rjust(lineno_max) + " "
+
+            # func
+            tout += lout[5].ljust(func_max) + " "
+
+            # code
+            tout += lout[6].lstrip()
+
             if i == index:
-                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout, curses.A_REVERSE)
+                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout), curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout)
+                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout))
         else:
             stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', wtout)
 
@@ -241,7 +322,7 @@ def draw(stdscr):
     wcout = w_screen - (w_screen - wx_varsview) - 1
 
     # an empty line just below the divider
-    stdscr.addstr(wy_codeview - 1, wx_codeview, "".ljust(wcout, " "))
+    stdscr.addstr(wy_codeview - 1, wx_codeview, "".ljust(wcout))
 
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
@@ -250,7 +331,7 @@ def draw(stdscr):
             # cap at cout
             t=s[:wcout]
             # left adjust
-            u=t.ljust(wcout, " ")
+            u=t.ljust(wcout)
             if (src_start + i) == srcindex:
                 stdscr.addstr(wy_codeview + i, wx_codeview, u, curses.A_REVERSE)
             else:
@@ -265,12 +346,12 @@ def draw(stdscr):
     for v in sorted(vout):
         if v.strip() != "":
             try:
-                stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview, " "))
+                stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview))
             except curses.error:
                 pass
         i += 1
     for j in range(wy_varsview - i - 1):
-        stdscr.addstr(wy_varsview + i + j, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+        stdscr.addstr(wy_varsview + i + j, wx_varsview, "".ljust(w_screen - wx_varsview))
 
     # trace info view
     entry_num = tracebuffer[index].split("@")[0]
@@ -309,22 +390,22 @@ def draw(stdscr):
 
         compressed = compressed + core_filter[len(core_filter) - 1]
 
-    # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    # stdscr.addstr(0, wx_varsview, "".ljust(w_screen - wx_varsview))
     ti_offset = len(trace_info)
     wcout = w_screen - wx_varsview - 1
     for i in range(ti_offset):
         stdscr.addstr(i, wx_varsview, " " + trace_info[i][:wcout])
 
-    stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer)))[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename + " +" + str(srcindex + 1))[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function)[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core)[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 7, wx_varsview, (" Diff             : " + str(diff) + " (cc)")[:wcout].ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 1, wx_varsview, (" Trace entry      : " + entry_num + " / " + str(len(tracebuffer)))[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 2, wx_varsview, (" File             : " + filename + " +" + str(srcindex + 1))[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 3, wx_varsview, (" Function         : " + function)[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 4, wx_varsview, (" Core             : " + core)[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 5, wx_varsview, (" Timestamp        : " + str(timestamp - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 6, wx_varsview, (" Timestamp prev   : " + str(timestamp_prev - ts_min) + " (rel. cc)")[:wcout].ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 7, wx_varsview, (" Diff             : " + str(diff) + " (cc)")[:wcout].ljust(w_screen - wx_varsview))
     stdscr.addstr(ti_offset + 9, wx_varsview, (" Markers: "))
     stdscr.addstr(ti_offset + 10, wx_varsview, (" ---------------------"))
-    stdscr.addstr(ti_offset + 11, wx_varsview, "".ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 11, wx_varsview, "".ljust(w_screen - wx_varsview))
     pos = wx_varsview + 1
     for m in jumplist:
         if pos + len(m) > w_screen:
@@ -341,16 +422,16 @@ def draw(stdscr):
 
     stdscr.addstr(ti_offset + 13, wx_varsview, (" Filters"))
     stdscr.addstr(ti_offset + 14, wx_varsview, (" ---------------------"))
-    stdscr.addstr(ti_offset + 15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 16, wx_varsview, (" Files: " + file_filter).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 17, wx_varsview, (" Funcs: " + func_filter).ljust(w_screen - wx_varsview, " "))
-    stdscr.addstr(ti_offset + 18, wx_varsview, (" Srcs : " + src_filter).ljust(w_screen - wx_varsview, " "))
+    stdscr.addstr(ti_offset + 15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 16, wx_varsview, (" Files: " + file_filter).ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 17, wx_varsview, (" Funcs: " + func_filter).ljust(w_screen - wx_varsview))
+    stdscr.addstr(ti_offset + 18, wx_varsview, (" Srcs : " + src_filter).ljust(w_screen - wx_varsview))
 
     # info / error codes
     if blink:
-        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "), curses.A_BLINK)
+        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview), curses.A_BLINK)
     else:
-        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview, " "))
+        stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview))
 
     # bars
     stdscr.hline(wy_codeview - 2, wx_codeview, '_', w_screen)
@@ -956,7 +1037,7 @@ def main(stdscr, relaunched = False):
             elif c == ord('o'):
                 if hide_components == 0:
                     hide_components=2
-                elif hide_components < 16:
+                elif hide_components < components_max:
                     hide_components+=1
             elif c == ord('O'):
                 if hide_components == 2:
