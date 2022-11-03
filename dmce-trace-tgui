@@ -56,6 +56,7 @@ old_srcpath = ""
 relaunch = False
 blink = True
 show_probes = False
+hide_components = 0
 ts_min = sys.maxsize
 
 editor = "vim"
@@ -184,6 +185,7 @@ def draw(stdscr):
     global blink
     global trace_info
     global wx_varsview
+    global hide_components
 
     if not screen_large_enough:
         try:
@@ -201,6 +203,13 @@ def draw(stdscr):
             pre = " "
             if tracebuffer[i].split("@")[0] in jumplist:
                 pre = ">"
+            if hide_components > 0:
+                num_slashes = lout[3].count('/')
+                if num_slashes > hide_components:
+                    idx=hide_components
+                else:
+                    idx=num_slashes
+                lout[3] = "/".join(lout[3].split("/", idx)[idx:])
             tout = pre + '@'.join(lout[0:7]).replace("@", " ")
             tout = tout[:wtout].ljust(wtout, " ")
             if i == index:
@@ -230,6 +239,10 @@ def draw(stdscr):
         src_start = srcindex - int(num_srclines / 2) + 1
 
     wcout = w_screen - (w_screen - wx_varsview) - 1
+
+    # an empty line just below the divider
+    stdscr.addstr(wy_codeview - 1, wx_codeview, "".ljust(wcout, " "))
+
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
             # get source line
@@ -686,26 +699,28 @@ def show_help(stdscr):
     stdscr.addstr(16, 0, "  J             - jump to previous marker")
     stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
     stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
-    stdscr.addstr(19, 0, "  ENTER         - open current source file in editor")
-    stdscr.addstr(20, 0, "  ESCAPE        - exit command mode")
-    stdscr.addstr(22, 0, "  Commands")
-    stdscr.addstr(23, 0, "  ---------------------------------------------------------")
-    stdscr.addstr(24, 0, "  filter core A,B,C-F             - filter on core number")
-    stdscr.addstr(25, 0, "  filter core clear               - clear core filter")
-    stdscr.addstr(26, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
-    stdscr.addstr(27, 0, "  filter file clear               - clear file filter")
-    stdscr.addstr(28, 0, "  filter func <regexp>            - filter on function name")
-    stdscr.addstr(29, 0, "  filter func clear               - clear func filter")
-    stdscr.addstr(30, 0, "  filter src <regexp>             - filter on src line")
-    stdscr.addstr(31, 0, "  filter src clear                - clear src filter")
-    stdscr.addstr(32, 0, "  filter clear                    - clear all filters")
-    stdscr.addstr(34, 0, "  Hints")
-    stdscr.addstr(35, 0, "  ---------------------------------------------------------------------")
-    stdscr.addstr(36, 0, "  - In command mode, any string prepended by '/' will be searched for)")
-    stdscr.addstr(37, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
-    stdscr.addstr(38, 0, "    Example: :/'.*foo.*bar")
-    stdscr.addstr(39, 0, "  - To search for a trace entry where a variable contains a certain value:")
-    stdscr.addstr(40, 0, "    Example: /foo:0x0042")
+    stdscr.addstr(19, 0, "  o             - hide one path component (trace view)")
+    stdscr.addstr(20, 0, "  O             - unhide one path component (trace view)")
+    stdscr.addstr(21, 0, "  ENTER         - open current source file in editor")
+    stdscr.addstr(22, 0, "  ESCAPE        - exit command mode")
+    stdscr.addstr(24, 0, "  Commands")
+    stdscr.addstr(25, 0, "  ---------------------------------------------------------")
+    stdscr.addstr(26, 0, "  filter core A,B,C-F             - filter on core number")
+    stdscr.addstr(27, 0, "  filter core clear               - clear core filter")
+    stdscr.addstr(28, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
+    stdscr.addstr(29, 0, "  filter file clear               - clear file filter")
+    stdscr.addstr(30, 0, "  filter func <regexp>            - filter on function name")
+    stdscr.addstr(31, 0, "  filter func clear               - clear func filter")
+    stdscr.addstr(32, 0, "  filter src <regexp>             - filter on src line")
+    stdscr.addstr(33, 0, "  filter src clear                - clear src filter")
+    stdscr.addstr(34, 0, "  filter clear                    - clear all filters")
+    stdscr.addstr(36, 0, "  Hints")
+    stdscr.addstr(37, 0, "  ---------------------------------------------------------------------")
+    stdscr.addstr(38, 0, "  - In command mode, any string prepended by '/' will be searched for)")
+    stdscr.addstr(39, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
+    stdscr.addstr(40, 0, "    Example: :/'.*foo.*bar")
+    stdscr.addstr(41, 0, "  - To search for a trace entry where a variable contains a certain value:")
+    stdscr.addstr(42, 0, "    Example: /foo:0x0042")
 
     c = stdscr.getch()
 
@@ -796,6 +811,7 @@ def main(stdscr, relaunched = False):
     global h_screen
     global blink
     global show_probes
+    global hide_components
 
     curses.curs_set(0)
 
@@ -937,6 +953,16 @@ def main(stdscr, relaunched = False):
                     show_probes = False
                 else:
                     show_probes = True
+            elif c == ord('o'):
+                if hide_components == 0:
+                    hide_components=2
+                elif hide_components < 16:
+                    hide_components+=1
+            elif c == ord('O'):
+                if hide_components == 2:
+                    hide_components=0
+                elif hide_components > 0:
+                    hide_components-=1
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
