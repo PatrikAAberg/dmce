@@ -270,6 +270,12 @@ def draw(stdscr):
         timestamp_prev = 0
 
     diff = timestamp - timestamp_prev
+    if len(jumplist) == 2:
+        m1 = int(tracebuffer[int(jumplist[0])].split("@")[2])
+        m2 = int(tracebuffer[int(jumplist[1])].split("@")[2])
+        mdiff = abs(m1 - m2)
+    else:
+        mdiff = 0
 
     function = tracebuffer[index].split("@")[5]
 
@@ -316,6 +322,10 @@ def draw(stdscr):
         else:
             stdscr.addstr(ti_offset + 11, pos, str(m) + " ", curses.A_REVERSE)
         pos += len(m) + 1
+    # marker diff
+    if mdiff != 0:
+        stdscr.addstr(ti_offset + 11, pos + 2, "    diff: " + str(mdiff) + " (cc)")
+
     stdscr.addstr(ti_offset + 13, wx_varsview, (" Filters"))
     stdscr.addstr(ti_offset + 14, wx_varsview, (" ---------------------"))
     stdscr.addstr(ti_offset + 15, wx_varsview, (" Cores: " + compressed).ljust(w_screen - wx_varsview, " "))
