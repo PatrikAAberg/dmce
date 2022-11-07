@@ -4,7 +4,7 @@ Source code level instrumentation tool that enables dynamic code execution track
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
-Latest stable tag: v1.7.0
+Latest stable tag: v1.7.1
 
 ## Probed code example
 
