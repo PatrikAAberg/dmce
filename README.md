@@ -270,6 +270,20 @@ the same amount of cpu timestamps.
     $ dmce-launcher -aq
     $ cd simple && ./build && ./simple
 
+## DMCE command summary
+
+The following commands are listed in typical workflow order:
+
+| Command           | Description                                                                                                   |
+|-------------------|---------------------------------------------------------------------------------------------------------------|
+| dmce-setup        | Create a .dmceconfig file and a config directory in /home/$USER and /home/$USER/.config                       |
+| dmce-set-profile  | Config file helper utility: Choose one of pre-defined configurations, add filters and change some behaviours  |
+| dmce-launcher     | Insert probes in current git directory                                                                        |
+| dmce-stats        | Get some stats (how many inserted probes etc.) from a probed git                                              |
+| dmce-summary-bin  | Get a coverage / heatmap report (using the "coverage" profile)                                                |
+| dmce-trace        | Generate a textual trace output (using the "trace" or "trace-mc" profile)                                     |
+| dmce-trace-viewer | Launch an interactive trace viewer (using the "trace" or "trace-mc" profile)                                  |
+
 ## Mandatory entries in .dmceconfig
 
 Valid for both alternatives above:
