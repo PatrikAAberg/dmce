@@ -764,8 +764,8 @@ def show_help(stdscr):
     stdscr.addstr(0, 0,  "  Keys")
     stdscr.addstr(1, 0,  "  ---------------------------------------------------------")
     stdscr.addstr(2, 0,  "  q             - quit")
-    stdscr.addstr(3, 0,  "  arrow up      - move upwards")
-    stdscr.addstr(4, 0,  "  arrow down    - move downwards")
+    stdscr.addstr(3, 0,  "  k|arrow up    - move upwards")
+    stdscr.addstr(4, 0,  "  j|arrow down  - move downwards")
     stdscr.addstr(5, 0,  "  page up       - move one page up")
     stdscr.addstr(6, 0,  "  page up       - move one page up")
     stdscr.addstr(7, 0,  "  :             - Enter command mode")
@@ -775,9 +775,9 @@ def show_help(stdscr):
     stdscr.addstr(11, 0, "  g             - move to the top")
     stdscr.addstr(12, 0, "  G             - move to the bottom")
     stdscr.addstr(13, 0, "  [digits]g     - move to trace entry with index [digits]")
-    stdscr.addstr(14, 0, "  s             - add trace entry to jump list (markers)")
-    stdscr.addstr(15, 0, "  j             - jump to next marker")
-    stdscr.addstr(16, 0, "  J             - jump to previous marker")
+    stdscr.addstr(14, 0, "  m             - add trace entry to jump list (markers)")
+    stdscr.addstr(15, 0, "  '             - jump to next marker")
+    stdscr.addstr(16, 0, "  *             - jump to previous marker")
     stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
     stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
     stdscr.addstr(19, 0, "  o             - hide one path component (trace view)")
@@ -1002,10 +1002,10 @@ def main(stdscr, relaunched = False):
                 execute_command(last_search_cmd, stdscr)
                 cmdbuffer = []
                 user_input_mode = False
-            elif c == curses.KEY_UP:
+            elif c == ord('k') or c == curses.KEY_UP:
                 if index > 0:
                     index -= 1
-            elif c == curses.KEY_DOWN:
+            elif c == ord('j') or c == curses.KEY_DOWN:
                 if index < len(tracebuffer) - 1:
                     index += 1
             elif c == curses.KEY_PPAGE:
@@ -1016,13 +1016,13 @@ def main(stdscr, relaunched = False):
                 index += num_tracelines
                 if index > (len(tracebuffer) - 1):
                     index = len(tracebuffer) - 1
-            elif c == ord('s'):
+            elif c == ord('m'):
                 set_marker()
             elif c == ord('c'):
                 clear_jumplist()
-            elif c == ord('j'):
+            elif c == ord("'"):
                 jump("forward")
-            elif c == ord('J'):
+            elif c == ord('*'):
                 jump("back")
             elif c == ord('b'):
                 if blink:
