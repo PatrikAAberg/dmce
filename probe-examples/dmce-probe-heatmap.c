@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
@@ -48,11 +49,13 @@ static void dmce_mkdir(char const* path) {
     free(dir);
 }
 
-static void dmce_atexit(void) {
+static void dmce_on_exit(int status, void* opaque) {
 
     FILE *fp;
     size_t n;
     int i;
+
+    (void)opaque;
 
     if (!(fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "r"))) {
 
@@ -66,7 +69,7 @@ static void dmce_atexit(void) {
 
     n = fread(dmce_tmp_buffer, sizeof(uint64_t), DMCE_NUM_PROBES, fp);
     if (n != DMCE_NUM_PROBES)
-        printf("DMCE: Something went terribly wrong...\n");
+        fprintf(stderr, "DMCE: Something went terribly wrong...\n");
 
     for (i = 0; i < DMCE_NUM_PROBES; i++)
         dmce_tmp_buffer[i] += dmce_buffer[i];
@@ -75,13 +78,15 @@ static void dmce_atexit(void) {
     fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
     fwrite(dmce_tmp_buffer, sizeof(uint64_t), DMCE_NUM_PROBES, fp);
     fclose(fp);
+    if (status > 150) {
+        fprintf(stderr, "DMCE: terminated with signal %d (%s)\n", status - 150, strsignal(status - 150));
+
+    }
 }
 
 static void dmce_signal_handler(int sig) {
 
-    dmce_atexit();
-    signal(sig, SIG_DFL);
-    kill(syscall(SYS_getpid), sig);
+    exit(150 + sig);
 }
 
 static void dmce_probe_body(unsigned int probenbr) {
@@ -103,7 +108,7 @@ static void dmce_probe_body(unsigned int probenbr) {
             sigaction(SIGTRAP,  &sa, NULL);
             sigaction(SIGABRT,  &sa, NULL);
         }
-        atexit(dmce_atexit);
+        on_exit(dmce_on_exit, NULL);
         registered_at_exit = 1;
     }
 
