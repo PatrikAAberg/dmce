@@ -49,13 +49,25 @@ with open(probefile, 'r') as pf:
 
 nprobes = len(prefs)
 
-# read probe data from run
-data = np.fromfile(dfile, dtype=np.int32)
+# Check if uint32 or uint64 counters
+fsize = os.path.getsize(dfile)
+
+# read probe data as uint32, uint64 or report error
+
+if fsize == nprobes * 4:
+    data = np.fromfile(dfile, dtype=np.uint32)
+elif fsize == nprobes * 8:
+    data = np.fromfile(dfile, dtype=np.uint64)
+else:
+    print("Data file size does not match number of probes, abort")
+    sys.exit(1)
+
 for i in range(nprobes, data.size):
      if data[i] != 0:
           print("Data file contains non-zero values outside of valid range.")
           print("File likely corrupted. Aborting.")
           sys.exit(1)
+
 
 # combine into one list
 res = []
