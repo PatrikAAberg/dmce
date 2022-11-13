@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/syscall.h>
+#include <sys/sysinfo.h>
 
 #ifdef DMCE_NBR_OF_PROBES
 #define DMCE_NUM_PROBES DMCE_NBR_OF_PROBES
@@ -46,7 +48,7 @@ static void dmce_mkdir(char const* path) {
     free(dir);
 }
 
-static void dmce_atexit(void){
+static void dmce_atexit(void) {
 
     FILE *fp;
     size_t n;
@@ -75,12 +77,32 @@ static void dmce_atexit(void){
     fclose(fp);
 }
 
+static void dmce_signal_handler(int sig) {
+
+    dmce_atexit();
+    signal(sig, SIG_DFL);
+    kill(syscall(SYS_getpid), sig);
+}
+
 static void dmce_probe_body(unsigned int probenbr) {
 
     if (!registered_at_exit) {
         dmce_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
         dmce_tmp_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
         dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
+        {
+            struct sigaction sa;
+            memset(&sa, 0, sizeof(sa));
+            sa.sa_handler = dmce_signal_handler;
+            sigaction(SIGBUS,   &sa, NULL);
+            sigaction(SIGFPE,   &sa, NULL);
+            sigaction(SIGILL,   &sa, NULL);
+            sigaction(SIGINT,   &sa, NULL);
+            sigaction(SIGSEGV,  &sa, NULL);
+            sigaction(SIGSYS,   &sa, NULL);
+            sigaction(SIGTRAP,  &sa, NULL);
+            sigaction(SIGABRT,  &sa, NULL);
+        }
         atexit(dmce_atexit);
         registered_at_exit = 1;
     }

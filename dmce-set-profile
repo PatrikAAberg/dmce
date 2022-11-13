@@ -137,6 +137,20 @@ while count < len(clines):
             if "DMCE_POST_HOOK" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
+        # heatmap profile
+        elif args.profile == "heatmap":
+            if "DMCE_NUM_DATA_VARS" in clines[count]:
+                clines[count] = "DMCE_NUM_DATA_VARS:0\n"
+
+            if "DMCE_PROBE_SOURCE" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-heatmap.c")
+
+            if "DMCE_PROBE_PROLOG" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
+
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
+
         # syslog profile
         elif args.profile == "syslog":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
