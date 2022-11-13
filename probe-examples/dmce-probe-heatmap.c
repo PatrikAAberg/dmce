@@ -24,8 +24,8 @@
 #define DMCE_PROBE_OUTPUT_FILE_BIN DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.bin"
 
 
-static uint32_t* dmce_buffer;
-static uint32_t* dmce_tmp_buffer;
+static uint64_t* dmce_buffer;
+static uint64_t* dmce_tmp_buffer;
 static int registered_at_exit = 0;
 
 /* Recursive mkdir */
@@ -58,13 +58,13 @@ static void dmce_atexit(void) {
 
         fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
 
-        fwrite(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
+        fwrite(dmce_tmp_buffer, sizeof(uint64_t), DMCE_NUM_PROBES, fp);
         fclose(fp);
 
         fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "r");
     }
 
-    n = fread(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
+    n = fread(dmce_tmp_buffer, sizeof(uint64_t), DMCE_NUM_PROBES, fp);
     if (n != DMCE_NUM_PROBES)
         printf("DMCE: Something went terribly wrong...\n");
 
@@ -73,7 +73,7 @@ static void dmce_atexit(void) {
     fclose(fp);
 
     fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
-    fwrite(dmce_tmp_buffer, sizeof(uint32_t), DMCE_NUM_PROBES, fp);
+    fwrite(dmce_tmp_buffer, sizeof(uint64_t), DMCE_NUM_PROBES, fp);
     fclose(fp);
 }
 
@@ -87,8 +87,8 @@ static void dmce_signal_handler(int sig) {
 static void dmce_probe_body(unsigned int probenbr) {
 
     if (!registered_at_exit) {
-        dmce_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
-        dmce_tmp_buffer = (uint32_t*)calloc(DMCE_NUM_PROBES, sizeof(uint32_t));
+        dmce_buffer = (uint64_t*)calloc(DMCE_NUM_PROBES, sizeof(uint64_t));
+        dmce_tmp_buffer = (uint64_t*)calloc(DMCE_NUM_PROBES, sizeof(uint64_t));
         dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
         {
             struct sigaction sa;
