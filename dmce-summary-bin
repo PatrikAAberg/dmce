@@ -35,7 +35,7 @@ parser.add_argument('-f', '--filter',
                     required=False,
                     type=float,
                     metavar="[0-100]",
-                    help='percentage of hits to filter. Most frequent probes selected first.')
+                    help='percentage of hits to filter. Most frequent probes selected first. To be put in dmce.pos.exclude and/or dmce.pos.include')
 args = parser.parse_args()
 
 dfile = args.dfile
