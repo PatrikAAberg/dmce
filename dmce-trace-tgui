@@ -182,7 +182,7 @@ def init_screen(stdscr):
     wx_varsview = w_screen - int(w_screen / 4)
 
     curses.use_default_colors()
-
+    curses.init_pair(4, 3, -1)
 
 def check_and_clean_probes(line):
 
@@ -220,6 +220,37 @@ def check_and_clean_probes(line):
         cline = re.sub(r'DMCE_PROBE\d\(.*\/\* Function exit.*\*\/ }', "}", cline)
 
     return cline
+
+def highlight_search_out(stdscr, ypos, xpos, string):
+    global last_search_cmd
+
+    s1 = string
+    s2 = ""
+    s3 = ""
+
+    if last_search_cmd != "":
+        if last_search_cmd[:2] == "/'":
+            m = re.search(last_search_cmd[2:], string)
+            if m:
+                s1 = string[0:m.start()]
+                s2 = string[m.start():m.end()]
+                s3 = string[m.end():]
+        else:
+            try:
+                i = string.index(last_search_cmd[1:])
+                ie = i + len(last_search_cmd[1:])
+                s1 = string[0:i]
+                s2 = string[i:ie]
+                s3 = string[ie:]
+            except:
+                pass
+
+    try:
+        stdscr.addstr(ypos, xpos + 0,       s1)
+        stdscr.addstr(ypos, xpos + len(s1), s2, curses.color_pair(4))
+        stdscr.addstr(ypos, xpos + len(s2) + len(s1), s3)
+    except curses.error:
+        pass
 
 def draw(stdscr):
     global tracebuffer
@@ -296,7 +327,7 @@ def draw(stdscr):
             if i == index:
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout), curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout))
+                highlight_search_out(stdscr, wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout))
         else:
             stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', wtout)
 
@@ -345,10 +376,7 @@ def draw(stdscr):
     i = 0
     for v in sorted(vout):
         if v.strip() != "":
-            try:
-                stdscr.addstr(wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview))
-            except curses.error:
-                pass
+            highlight_search_out(stdscr, wy_varsview + i, wx_varsview, v.strip().ljust(w_screen - wx_varsview))
         i += 1
     for j in range(wy_varsview - i - 1):
         stdscr.addstr(wy_varsview + i + j, wx_varsview, "".ljust(w_screen - wx_varsview))
