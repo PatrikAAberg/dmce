@@ -3,6 +3,7 @@
 import sys
 import argparse
 import os
+import shutil
 import re
 
 descr = 'Copies header files in #include statements from src/... to a path relative to dest'
@@ -37,8 +38,7 @@ def parse_file(f, index):
     for line in code:
         m = re_includes.match(line)
         if m:
-            if not m.group(2) in includes:
-                includes.append(m.group(2))
+            includes.append(m.group(2)) # duplicates handled below
 
     includes_array[index] = includes.copy()
 
@@ -51,9 +51,27 @@ for path, curdir_dummy, files in os.walk(args.dirsource):
 for index in range(len(files_to_parse)):
     parse_file(files_to_parse[index], index)
 
+# TODO: Join threads after which includes_array is ready
+
+copied = []
+
 for includes in includes_array:
     if includes is not None:
-        print (includes)
+        for include in includes:
+            # To be found in tree?
+            for fsource in files_to_parse:
+                if re.match(".*" + include.strip() + "$", fsource):
+                    # Found subpath/file in tree
+                    # Already copied?
+                    if include not in copied:
+                        copied.append(include)
 
-sys.exit(1)
+                        # path exist? If not, create it
+                        path = os.path.dirname(args.dirdest + "/" + include.strip())
+                        f = os.path.basename(args.dirdest + "/" + include.strip())
+                        if not os.path.exists(path):
+                            os.makedirs(path)
 
+                        # copy file to path
+                        shutil.copy(fsource, path)
+                        break
