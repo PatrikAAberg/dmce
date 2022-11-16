@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+
+import sys
+import argparse
+import os
+import re
+
+descr = 'Copies header files in #include statements from src/... to a path relative to dest'
+
+parser = argparse.ArgumentParser(description=descr)
+parser.add_argument('dirsource',    type=str,    help='Source dir')
+parser.add_argument('dirdest',    type=str,    help='Destination dir')
+args = parser.parse_args()
+
+# Sanity
+
+if not os.path.exists(args.dirsource):
+    print("dmce-copy-headers: Error, source directory does not exist: " + args.dirsource)
+    sys.exit(1)
+
+if not os.path.exists(args.dirdest):
+    print("dmce-copy-headers: Error, destination directory does not exist: " + args.dirdest)
+    sys.exit(1)
+
+files_to_parse = []
+re_files_to_parse   = re.compile(".*(\.h|\.hh|\.hpp|\.c|\.cc|\.cpp)$")
+re_includes         = re.compile(".*#include\s*(<|\")((\w|\.|\/|\s)*)((>|\")*)")
+
+includes_array = []
+for i in range(100000):
+    includes_array.append(None)
+
+def parse_file(f, index):
+    includes = []
+    fp = open(f)
+    code = fp.readlines()
+    for line in code:
+        m = re_includes.match(line)
+        if m:
+            if not m.group(2) in includes:
+                includes.append(m.group(2))
+
+    includes_array[index] = includes.copy()
+
+for path, curdir_dummy, files in os.walk(args.dirsource):
+    for f in files:
+        if re_files_to_parse.match(f):
+            files_to_parse.append(os.path.join(path, f))
+
+# TODO: spawn thread for each index
+for index in range(len(files_to_parse)):
+    parse_file(files_to_parse[index], index)
+
+for includes in includes_array:
+    if includes is not None:
+        print (includes)
+
+sys.exit(1)
+
