@@ -399,10 +399,10 @@ if [ "x${touch_files}" != "x" ]; then
     printf "%s\n" "$touch_files" | xargs touch
 fi
 
-_echo "dmce-remove-relpaths.sh"
-$binpath/dmce-remove-relpaths.sh $dmcepath/new &
-$binpath/dmce-remove-relpaths.sh $dmcepath/old &
-wait
+#_echo "dmce-remove-relpaths.sh"
+#$binpath/dmce-remove-relpaths.sh $dmcepath/new &
+#$binpath/dmce-remove-relpaths.sh $dmcepath/old &
+#wait
 
 FILE_LIST_NEW="${FILE_LIST}"
 if [ -s $dmcepath/workarea/clang-list.old ]; then

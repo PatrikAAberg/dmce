@@ -488,6 +488,7 @@ if [ "$skip" = false ]; then
         old_git_dir="$DMCE_WORK_PATH/baseline/$git_name"
         mkdir -p $DMCE_WORK_PATH/baseline
         # check if we have 'git worktree' (git >=2.5) on this machine
+#        if git help -a | grep -w -q worktree; then
         if git help -a | grep -w -q worktree; then
             _echo "set up old SHA-1: ${old_git_dir} using 'git worktree'"
             setup_worktree=1
@@ -540,16 +541,11 @@ if [ "$skip" = false ]; then
         git -C "${old_git_dir}" checkout "${old}" &>/dev/null || true
 
         _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/new"
-        find "${git_root}" \( -iname "*.h" -o -iname "*.hpp" -o -iname "*.hh" \) -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/new/ {} + &>/dev/null || :
-        _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/new -type f | wc -l) file(s)"
 
-        _echo "copy header files to $DMCE_WORK_PATH/$git_name/inc/old"
-        find "${old_git_dir}" \( -iname "*.h" -o -iname "*.hpp" -o -iname "*.hh" \) -exec cp -t "${DMCE_WORK_PATH}"/$git_name/inc/old/ {} + &>/dev/null || :
-        _echo "found $(find "$DMCE_WORK_PATH"/$git_name/inc/old -type f | wc -l) file(s)"
-
-        _echo "removing relative paths in include files"
-        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/$git_name/inc/new
-        "${DMCE_EXEC_PATH}"/dmce-remove-relpaths.sh "${DMCE_WORK_PATH}"/$git_name/inc/old
+        "${DMCE_EXEC_PATH}"/dmce-copy-headers "${git_root}" "${DMCE_WORK_PATH}"/$git_name/inc/new
+        [ "$?" != "0" ] && exit 1
+        "${DMCE_EXEC_PATH}"/dmce-copy-headers "${old_git_dir}" "${DMCE_WORK_PATH}"/$git_name/inc/old
+        [ "$?" != "0" ] && exit 1
     fi
     _echo "clean out probe database"
     true > "${DMCE_WORK_PATH}"/global_probedata.dmce
