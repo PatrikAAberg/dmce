@@ -5,6 +5,7 @@ import argparse
 import os
 import shutil
 import re
+from threading import Thread
 
 descr = 'Copies header files in #include statements from src/... to a path relative to dest'
 
@@ -47,11 +48,18 @@ for path, curdir_dummy, files in os.walk(args.dirsource):
         if re_files_to_parse.match(f):
             files_to_parse.append(os.path.join(path, f))
 
+threads = []
+
 # TODO: spawn thread for each index
 for index in range(len(files_to_parse)):
-    parse_file(files_to_parse[index], index)
+#    parse_file(files_to_parse[index], index)
+    t = Thread(target=parse_file, args=(files_to_parse[index],index,))
+    threads.append(t)
+    t.start()
 
 # TODO: Join threads after which includes_array is ready
+for index in range(len(files_to_parse)):
+    threads[index].join()
 
 copied = []
 
