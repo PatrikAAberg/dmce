@@ -29,6 +29,7 @@ re_files_to_parse   = re.compile(".*(\.h|\.hh|\.hpp|\.c|\.cc|\.cpp)$")
 re_includes         = re.compile(".*#include\s*(<|\")((\w|\.|\/|\s)*)((>|\")*)")
 
 includes_array = []
+
 for i in range(100000):
     includes_array.append(None)
 
@@ -39,7 +40,8 @@ def parse_file(f, index):
     for line in code:
         m = re_includes.match(line)
         if m:
-            includes.append(m.group(2)) # duplicates handled below
+            if m.group(2) not in includes:
+                includes.append(m.group(2))
 
     includes_array[index] = includes.copy()
 
@@ -58,28 +60,40 @@ for index in range(len(files_to_parse)):
     t.start()
 
 # TODO: Join threads after which includes_array is ready
-for index in range(len(files_to_parse)):
-    threads[index].join()
+for t in threads:
+    t.join()
 
-copied = []
+threads = []
 
-for includes in includes_array:
-    if includes is not None:
-        for include in includes:
-            # To be found in tree?
-            for fsource in files_to_parse:
-                if re.match(".*" + include.strip() + "$", fsource):
-                    # Found subpath/file in tree
-                    # Already copied?
-                    if include not in copied:
-                        copied.append(include)
+uniq_includes_array = []
 
-                        # path exist? If not, create it
-                        path = os.path.dirname(args.dirdest + "/" + include.strip())
-                        f = os.path.basename(args.dirdest + "/" + include.strip())
-                        if not os.path.exists(path):
-                            os.makedirs(path)
+for i in range(len(includes_array)):
+    if includes_array[i] == None:
+        break
+    for include in includes_array[i]:
+        if include not in uniq_includes_array:
+            uniq_includes_array.append(include)
 
-                        # copy file to path
-                        shutil.copy(fsource, path)
-                        break
+def tcopy(src, dst):
+    shutil.copy(src, dst)
+
+for include in uniq_includes_array:
+    # To be found in tree?
+    for fsource in files_to_parse:
+        if re.match(".*" + include.strip() + "$", fsource):
+            # Found subpath/file in tree
+
+            # path exist? If not, create it
+            path = os.path.dirname(args.dirdest + "/" + include.strip())
+            f = os.path.basename(args.dirdest + "/" + include.strip())
+            if not os.path.exists(path):
+                os.makedirs(path)
+
+            # copy file to path
+            t = Thread(target = tcopy, args = (fsource, path, ))
+            threads.append(t)
+            t.start()
+            break
+
+for t in threads:
+    t.join()
