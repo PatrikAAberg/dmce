@@ -466,6 +466,10 @@ re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\'.*'))
 re_parmdeclarations.append(re.compile(r'.*-ParmVarDecl Hexnumber.*(used)\s(\S*)\s\'.* \*\*\'.*'))
 
+# Match any vardecl
+
+re_vardecl = re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s.*')
+
 # Variable and param var declarations to ignore
 re_parmdeclarations_ignore = []
 re_parmdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 10 sometimes confuses string.length() with de-reffed member variable type
@@ -1073,11 +1077,19 @@ while (lineindex < linestotal):
                 function_returns_pointer = True
 
     # pop section stack?
+    # any vardecl overriding a previously declared var (in the greater scope) needs to be removed from the var stack
+
+    m  = re_vardecl.match(linebuf[lineindex])
+    if m:
+        vardecl = m.group(2)
+    else:
+        vardecl = "´"
+
     if ((in_parsed_file or at_func_entry) and numDataVars > 0):
         i = 0
         while (i < len(secStackPos)):
             l, c = secStackPos[i]
-            if (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
+            if (secStackVars[i] == vardecl) or (int(scopelstart) > l) or ((int(scopelstart) == l) and (int(scopecstart) > c)):
                 secStackVars.pop(i)
                 secStackPos.pop(i)
             else:
@@ -1284,6 +1296,7 @@ while (lineindex < linestotal):
     if lookforvars and not inside_expression:
         currentSectionLend = int(skiplend)
         currentSectionCend = int(skipcend)
+
 
         # var declarations in parameter declarations
         for section in re_parmdeclarations:
