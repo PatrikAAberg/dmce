@@ -1724,6 +1724,7 @@ while (i < expdb_index):
 
                     # Find first ) } ] or comma that is not inside brackets of any kind
                     pos_index = 0
+
                     while (pos_index < len(tail)):
                         # Curly brackets
                         if (tail[pos_index] == "}"):
@@ -1761,6 +1762,19 @@ while (i < expdb_index):
                             # Colon
                             if (tail[pos_index] == ":"):
                                 break
+                            # Stream operator
+                            if (tail[pos_index] == "<"):
+                                tmp_index = 0
+                                found_stream_operator = False
+                                while (tmp_index < len(tail)):
+                                    tmp_index += 1
+                                    if (tail[pos_index + tmp_index] == "<"):
+                                        found_stream_operator = True
+                                        break
+                                    elif (tail[pos_index + tmp_index] != " "):
+                                        break
+                                if found_stream_operator:
+                                    break
 
                         # Semicolon (always valid)
                         if (tail[pos_index] == ";"):
