@@ -217,6 +217,8 @@ rm_file_list+=" pr45572-1.cpp"                        # file not yet examined
 rm_file_list+=" pr68388.cpp"                          # file not yet examined
 rm_file_list+=" pr67989.cpp"                          # file not yet examined
 rm_file_list+=" pr43655.cpp"                          # file not yet examined
+rm_file_list+=" condexpr1.cpp"                          # file not yet examined
+rm_file_list+=" default4.cpp"                          # file not yet examined
 
 if [[ "$numVars" -ne "0" ]]; then
 rm_file_list+=" Wunused-var-10.cpp"                   # re-declaration of struct members shows up as ordinary declarations in AST
