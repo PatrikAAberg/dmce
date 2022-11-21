@@ -27,7 +27,6 @@ import time
 
 # Log prints from this program are expensive and therefore normally disabled
 do_print=0
-
 parsed_file = sys.argv[1]
 
 # Disable probing all together?
@@ -205,6 +204,7 @@ expdb_tab = []
 expdb_exppatternmode = []
 expdb_secstackvars = []
 expdb_reffedvars = []
+expdb_secstackpos = []
 expdb_func = []
 expdb_frp = []
 expdb_index = 0
@@ -1051,9 +1051,11 @@ while (lineindex < linestotal):
             expdb_func.append(current_function_sticky)
             if not in_parmdecl_sticky:
                 expdb_secstackvars.append(secStackVars.copy())
+                expdb_secstackpos.append(secStackPos.copy())
                 expdb_reffedvars.append(reffedVars.copy())
             else:
                 expdb_secstackvars.append([])
+                expdb_secstackpos.append(secStackPos.copy())
                 expdb_reffedvars.append([])
             # Clean any member refs
             clean_stackvars()
@@ -1154,6 +1156,7 @@ while (lineindex < linestotal):
                         expdb_exppatternmode.append(-1)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
+                        expdb_secstackpos.append(secStackPos.copy())
                         expdb_reffedvars.append(reffedVars.copy())
                         clean_stackvars()
                         expdb_index +=1
@@ -1174,6 +1177,7 @@ while (lineindex < linestotal):
                         expdb_exppatternmode.append(-2)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
+                        expdb_secstackpos.append(secStackPos.copy())
                         expdb_reffedvars.append(reffedVars.copy())
                         clean_stackvars()
                         expdb_index +=1
@@ -1212,9 +1216,11 @@ while (lineindex < linestotal):
                        expdb_func.append(current_function)
                        if not in_parmdecl:
                            expdb_secstackvars.append(secStackVars.copy())
+                           expdb_secstackpos.append(secStackPos.copy())
                            expdb_reffedvars.append(reffedVars.copy())
                        else:
                            expdb_secstackvars.append([])
+                           expdb_secstackpos.append(secStackPos.copy())
                            expdb_reffedvars.append([])
                        clean_stackvars()
                        expdb_index +=1
@@ -1494,9 +1500,11 @@ if inside_expression:
     expdb_func.append(current_function_sticky)
     if not in_parmdecl_sticky:
         expdb_secstackvars.append(secStackVars.copy())
+        expdb_secstackpos.append(secStackPos.copy())
         expdb_reffedvars.append(reffedVars.copy())
     else:
         expdb_secstackvars.append([])
+        expdb_secstackpos.append(secStackPos.copy())
         expdb_reffedvars.append([])
 
     clean_stackvars()
@@ -1541,12 +1549,16 @@ while (i < expdb_index):
 
     if numDataVars > 0:
         vlist = []
+        stack_index = len(expdb_secstackvars[i])
         for s in reversed(expdb_secstackvars[i]):
+            stack_index -= 1
             if s == "### VAR BARRIER ###":
                 break
             s = s.replace("$","")
             if s != "" and not "¤" in s:
-                vlist.append(s)
+                l, c = expdb_secstackpos[i][stack_index]
+                if (ls < l):           # Just to be sure this variable is within scope
+                    vlist.append(s)
 
         # Create a list ordered by last referenced
         lr_vlist = []
