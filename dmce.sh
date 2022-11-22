@@ -74,11 +74,7 @@ function memcap {
 
     let memlimit=$DMCE_MEMORY_LIMIT
     while true; do
-        mem=$(free | grep "Mem")
-        tot=$(echo $mem | cut -d' ' -f2)
-        used=$(echo $mem | cut -d' ' -f3)
-        let ntot=$tot
-        let nused=$used
+        eval $(free | { read foo; read bar total used foo; echo ntot=$total nused=$used; })
         set +e
         let percentused=nused*100/ntot
         set -e
@@ -484,7 +480,7 @@ for c_file in $FILE_LIST_OLD; do
         [ "$FILE_SIZE" -lt 1048576 ] && exit
         NUM_SPACES=$(tr -cd ' ' < $dmcepath/old/$c_file.clang | wc -c)
         let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
-        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && touch $dmcepath/old/$c_file.clang
+        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/old/$c_file.clang && > $dmcepath/old/$c_file.clang
     } &
     jobcap
 done
@@ -495,7 +491,7 @@ for c_file in $FILE_LIST_NEW; do
         [ "$FILE_SIZE" -lt 1048576 ] && exit
         NUM_SPACES=$(tr -cd ' ' < $dmcepath/new/$c_file.clang | wc -c)
         let PERCENTAGE_SPACES=100*$NUM_SPACES/$FILE_SIZE
-        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && touch $dmcepath/new/$c_file.clang
+        [ "${PERCENTAGE_SPACES}" -gt 95 ] && rm -v $dmcepath/new/$c_file.clang && > $dmcepath/new/$c_file.clang
     } &
     jobcap
 done
@@ -601,7 +597,7 @@ for c_file in $FILE_LIST; do
     if [ ! -e $dmcepath/new/$c_file.clangdiff ]; then
         continue
     fi
-    touch $dmcepath/new/$c_file.probedata
+    > $dmcepath/new/$c_file.probedata
     cmd="$binpath/generate-probefile.py $c_file $c_file.probed $dmcepath/new/$c_file.probedata $dmcepath/new/$c_file.exprdata <$dmcepath/new/$c_file.clangdiff"
     if [ "$DMCE_DEBUG" = true ]; then
         eval $cmd > $dmcepath/new/$c_file.probegen.log &
@@ -639,7 +635,7 @@ wait
 if [ "X${DMCE_STRUCTS}" != "X" ]; then
     cat $dmcepath/workarea/skip-list >> $dmcepath/workarea/probe-list
     rm -f $dmcepath/workarea/skip-list
-    touch $dmcepath/workarea/skip-list
+    > $dmcepath/workarea/skip-list
     size_of_user=1
 else
     size_of_user=0
