@@ -57,31 +57,33 @@ function summary {
 }
 
 function jobcap {
-        if [ ${DMCE_JOBS:?} -eq 0 ]; then
-                return
-        fi
+    if [ ${DMCE_JOBS:?} -eq 0 ]; then
+        return
+    fi
 
-	while true; do
-		mapfile -t job_list < <(jobs -p -r)
-		if [ "${#job_list[@]}" -lt "${DMCE_JOBS}" ]; then
-			return
-		fi
-		wait -n || true
-	done
+    while true; do
+        mapfile -t job_list < <(jobs -p -r)
+        if [ "${#job_list[@]}" -lt "${DMCE_JOBS}" ]; then
+            return
+        fi
+        wait -n || true
+    done
 }
 
 function memcap {
+    if [ "x$DMCE_MEMORY_LIMIT" = "x0" ] || [ "x$DMCE_MEMORY_LIMIT" = "x100" ]; then
+        return
+    fi
 
-    let memlimit=$DMCE_MEMORY_LIMIT
     while true; do
         eval $(free | { read foo; read bar total used foo; echo ntot=$total nused=$used; })
         set +e
         let percentused=nused*100/ntot
         set -e
-        if [ $percentused -lt $memlimit ]; then
+        if [ $percentused -lt $DMCE_MEMORY_LIMIT ]; then
             break
         else
-            echo "Memory limit of ${memlimit}% reached (used: ${percentused}%), wait 10s..."
+            echo "Memory limit of ${DMCE_MEMORY_LIMIT}% reached (used: ${percentused}%), wait 10s..."
             sleep 10
         fi
     done
@@ -119,8 +121,8 @@ fi
 progress
 
 if [ "$(type -t _echo)" != "function" ]; then
-	echo "error: could not find _echo function"
-	exit 1
+    echo "error: could not find _echo function"
+    exit 1
 fi
 
 _echo "init"
