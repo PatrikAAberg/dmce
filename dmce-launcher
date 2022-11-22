@@ -301,7 +301,7 @@ export DMCE_JOBS="${_jobs}"
 export DMCE_PROBE_ALL=${probe_all}
 export DMCE_AST_CACHE=${ast_cache}
 if [ "x$DMCE_AST_CACHE_COMPRESS" = "x" ]; then
-    export DMCE_AST_CACHE_COMPRESS=true
+    export DMCE_AST_CACHE_COMPRESS=false
 fi
 
 # change the output format for the built in bash command 'time'
