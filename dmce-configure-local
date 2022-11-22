@@ -74,6 +74,9 @@ DMCE_NUM_DATA_VARS:0
 # Allow trace probes to dereference pointers [YES|NO]
 DMCE_ALLOW_DEREFERENCES:YES
 
+# Probe templates (YES | NO)
+DMCE_PROBE_TEMPLATES:YES
+
 # Probe definition c file
 DMCE_PROBE_SOURCE:$install_path/probe-examples/dmce-probe-user.c
 

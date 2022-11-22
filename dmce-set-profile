@@ -17,6 +17,7 @@ parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Co
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If set, dmce will use the system include files when parsing code')
+parser.add_argument('-t', '--notemplates',  action='store_true',        help='If set, dmce will not probe templates')
 parser.add_argument('-r', '--noderefs',  action='store_true',        help='If set, dmce will not try to de-reference pointers or struct members in trace probes (useful when looking for bad dereferences')
 args = parser.parse_args()
 
@@ -80,6 +81,13 @@ while count < len(clines):
                 clines[count] = "DMCE_ALLOW_DEREFERENCES:NO\n"
             else:
                 clines[count] = "DMCE_ALLOW_DEREFERENCES:YES\n"
+
+        # Probe templates?
+        if "DMCE_PROBE_TEMPLATES" in clines[count]:
+            if args.notemplates:
+                clines[count] = "DMCE_PROBE_TEMPLATES:NO\n"
+            else:
+                clines[count] = "DMCE_PROBE_TEMPLATES:YES\n"
 
         # Modify memory limit?
         if "DMCE_MEMORY_LIMIT" in clines[count]:

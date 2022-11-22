@@ -63,6 +63,12 @@ dra = os.getenv('DMCE_ALLOW_DEREFERENCES')
 if dra is not None and dra == "NO":
     dereffs_allowed = False
 
+# Skip probing templates?
+probe_templates_no = False
+ptn = os.getenv('DMCE_PROBE_TEMPLATES')
+if ptn is not None and ptn == "NO":
+    probe_templates_no = True
+
 # variable type specified?
 tvtype = os.getenv('DMCE_TRACE_VAR_TYPE')
 if tvtype is None:
@@ -437,6 +443,8 @@ re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix \'*\'.*'))
 re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
+if (probe_templates_no):
+    re_sections_to_skip.append(re.compile(r'.*FunctionTemplateDecl.*'))
 
 # Parameter and variable declarations
 re_sections_parmdecl = []

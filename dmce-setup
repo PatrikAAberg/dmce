@@ -92,6 +92,9 @@ DMCE_POST_HOOK:$installpath/share/dmce/dmce-post-hook-null
 # Use system inlcude files (YES | NO)
 DMCE_SYS_INCLUDES:NO
 
+# Probe templates (YES | NO)
+DMCE_PROBE_TEMPLATES:YES
+
 # Log files
 DMCE_LOG_FILES:/tmp/${_user}/dmce
 
