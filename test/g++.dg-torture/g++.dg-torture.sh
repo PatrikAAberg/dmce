@@ -66,7 +66,7 @@ else
 fi
 
 _echo "unpack GCC"
-tar -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
+tar --no-same-owner -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
 mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
 
 cd gcc-${gcc_version}/gcc/testsuite/g++.dg
