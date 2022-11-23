@@ -442,6 +442,7 @@ re_sections_to_skip.append(re.compile(r'.*<.*>.*\sconstexpr\s.*'))
 re_sections_to_skip.append(re.compile(r'.*-TemplateArgument expr.*'))
 re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix \'*\'.*'))
+re_sections_to_skip.append(re.compile(r'.*-ConditionalOperator.*')) # TODO: a < b ? a : b invoked by macro in the same file needs more logic
 re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
 if (probe_templates_no):
     re_sections_to_skip.append(re.compile(r'.*FunctionTemplateDecl.*'))
