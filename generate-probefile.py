@@ -514,6 +514,9 @@ re_function_returns_pointer = []
 re_function_returns_pointer.append(re.compile(r'.*-FunctionDecl.*\'\w* \*\(.*'))
 re_function_returns_pointer.append(re.compile(r'.*-CXXMethodDecl.*\'.* \*\(.*'))
 
+# Functions that return int
+re_function_returns_int = re.compile('.*-(FunctionDecl|CXXMethodDecl).* \'int .*')
+
 re_return_zero = re.compile(r'.*return\(DMCE_PROBE.*\)\,\s*0\s*\).*')
 resub_return_zero = re.compile(r'\,\s*0\s*\)')
 re_integer_literal = re.compile(r'.*-IntegerLiteral.*\'int\' 0.*')
@@ -1089,18 +1092,24 @@ while (lineindex < linestotal):
             if frp.match(linebuf[lineindex]):
                 function_returns_pointer = True
 
+        # Does function return int?
+        function_returns_int = False
+        if re_function_returns_int.match(linebuf[lineindex]):
+            function_returns_int = True
+
     # Check if return stmnt returns a 0 as a pointer
-    if "-ReturnStmt" in linebuf[lineindex]:
+    if "-ReturnStmt" in linebuf[lineindex] and not function_returns_int:
         rettabpos = linebuf[lineindex].find("|-")
         i = lineindex + 1
-        if re_integer_literal.match(linebuf[i]):
-                function_returns_pointer = True
-        else:
-            while (i < len(linebuf) -1) and linebuf[i].find("|-") > rettabpos:
-                i += 1
-                if "<NullToPointer>" in linebuf[i]:
+        if (i < len(linebuf) - 1):
+            if re_integer_literal.match(linebuf[i]):
                     function_returns_pointer = True
-                    break
+            else:
+                while (i < len(linebuf) - 1) and linebuf[i].find("|-") > rettabpos:
+                    i += 1
+                    if "<NullToPointer>" in linebuf[i]:
+                        function_returns_pointer = True
+                        break
 
     # pop section stack?
     # any vardecl overriding a previously declared var (in the greater scope) needs to be removed from the var stack
