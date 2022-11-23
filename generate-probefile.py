@@ -514,8 +514,9 @@ re_function_returns_pointer = []
 re_function_returns_pointer.append(re.compile(r'.*-FunctionDecl.*\'\w* \*\(.*'))
 re_function_returns_pointer.append(re.compile(r'.*-CXXMethodDecl.*\'.* \*\(.*'))
 
-re_return_zero = re.compile(r'.*return\(DMCE_PROBE.*\)\,\s*0\s*\)')
+re_return_zero = re.compile(r'.*return\(DMCE_PROBE.*\)\,\s*0\s*\).*')
 resub_return_zero = re.compile(r'\,\s*0\s*\)')
+re_integer_literal = re.compile(r'.*-IntegerLiteral.*\'int\' 0.*')
 
 # Accepted function trace compound
 re_ftrace_compound = re.compile(r'.*CompoundStmt Hexnumber.*, line:(\d*):(\d*)>.*')
@@ -1077,6 +1078,7 @@ while (lineindex < linestotal):
 #            cur_cend = 0
 
     # Special case: We can always pop the stack as far as possible at function entries
+    # while at it, check for hints that it returns a pointer
     at_func_entry = False
     if "-FunctionDecl" in linebuf[lineindex] or "-CXXMethodDecl" in linebuf[lineindex]:
         at_func_entry = True
@@ -1086,6 +1088,19 @@ while (lineindex < linestotal):
         for frp in re_function_returns_pointer:
             if frp.match(linebuf[lineindex]):
                 function_returns_pointer = True
+
+    # Check if return stmnt returns a 0 as a pointer
+    if "-ReturnStmt" in linebuf[lineindex]:
+        rettabpos = linebuf[lineindex].find("|-")
+        i = lineindex + 1
+        if re_integer_literal.match(linebuf[i]):
+                function_returns_pointer = True
+        else:
+            while (i < len(linebuf) -1) and linebuf[i].find("|-") > rettabpos:
+                i += 1
+                if "<NullToPointer>" in linebuf[i]:
+                    function_returns_pointer = True
+                    break
 
     # pop section stack?
     # any vardecl overriding a previously declared var (in the greater scope) needs to be removed from the var stack
@@ -1529,12 +1544,18 @@ printSecStackVars()
 
 def afterburner(line, frp):
     if c_plusplus:
-         print("IS CPLUSPLUS! Line: " + line)
-         if frp and re_return_zero.match(line):
-            print("RETURN ZERO MATCH!")
-            print("Line before: " + line)
+        if do_print:
+            print("afterburner: IS CPLUSPLUS! Line: " + line)
+        if frp:
+            if do_print:
+                print("afterburner: Function return pointer")
+        if frp and re_return_zero.match(line):
+            if do_print:
+                print("afterburner: RETURN ZERO MATCH!")
+                print("afterburner: Line before: " + line)
             line = re.sub(resub_return_zero, ", nullptr)", line)
-            print("Line after: " + line)
+            if do_print:
+                print("afterburner: Line after: " + line)
     return line
 
 # Insert probes
