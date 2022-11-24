@@ -252,6 +252,7 @@ skip_lvalue_tab = 0
 function_scope_tab = 0
 
 function_returns_pointer = False
+function_returns_int = False
 
 in_conditional_sequence_point = False
 conditional_sequence_point_tab = 0
@@ -514,6 +515,7 @@ re_ftrace_entry.append(re.compile(r'.*-CXXDestructorDecl.*'))
 re_function_returns_pointer = []
 re_function_returns_pointer.append(re.compile(r'.*-FunctionDecl.*\'\w* \*\(.*'))
 re_function_returns_pointer.append(re.compile(r'.*-CXXMethodDecl.*\'.* \*\(.*'))
+re_function_returns_pointer.append(re.compile(r'.*-CXXMethodDecl.*\'Ptr<T> .*'))
 
 # Functions that return int
 re_function_returns_int = re.compile('.*-(FunctionDecl|CXXMethodDecl).* \'int .*')
