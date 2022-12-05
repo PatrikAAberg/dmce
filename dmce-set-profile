@@ -18,6 +18,7 @@ parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If s
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If set, dmce will use the system include files when parsing code')
 parser.add_argument('-t', '--notemplates',  action='store_true',        help='If set, dmce will not probe templates')
+parser.add_argument('-n', '--fixnullptr',  action='store_true',        help='If set, dmce will will try to return nullptr instead of \'0\' for C++ when appropriate')
 parser.add_argument('-r', '--noderefs',  action='store_true',        help='If set, dmce will not try to de-reference pointers or struct members in trace probes (useful when looking for bad dereferences')
 args = parser.parse_args()
 
@@ -88,6 +89,13 @@ while count < len(clines):
                 clines[count] = "DMCE_PROBE_TEMPLATES:NO\n"
             else:
                 clines[count] = "DMCE_PROBE_TEMPLATES:YES\n"
+
+        # Fix nullptr?
+        if "DMCE_FIX_NULLPTR" in clines[count]:
+            if args.fixnullptr:
+                clines[count] = "DMCE_FIX_NULLPTR:YES\n"
+            else:
+                clines[count] = "DMCE_FIX_NULLPTR:NO\n"
 
         # Modify memory limit?
         if "DMCE_MEMORY_LIMIT" in clines[count]:

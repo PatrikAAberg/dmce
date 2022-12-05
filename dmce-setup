@@ -95,6 +95,9 @@ DMCE_SYS_INCLUDES:NO
 # Probe templates (YES | NO)
 DMCE_PROBE_TEMPLATES:YES
 
+# Fix return of nullpointer instead of 0 for C++ when appropriate (YES | NO)
+DMCE_FIX_NULL_PTR:NO
+
 # Log files
 DMCE_LOG_FILES:/tmp/${_user}/dmce
 

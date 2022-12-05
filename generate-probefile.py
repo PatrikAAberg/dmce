@@ -69,6 +69,12 @@ ptn = os.getenv('DMCE_PROBE_TEMPLATES')
 if ptn is not None and ptn == "NO":
     probe_templates_no = True
 
+# Try to fix return nullptr?
+fix_nullptr = False
+fnptr = os.getenv('DMCE_FIX_NULLPTR')
+if fnptr is not None and fnptr == "YES":
+    fix_nullptr = True
+
 # variable type specified?
 tvtype = os.getenv('DMCE_TRACE_VAR_TYPE')
 if tvtype is None:
@@ -1561,7 +1567,7 @@ def afterburner(line, frp):
         if frp:
             if do_print:
                 print("afterburner: Function return pointer")
-        if frp and re_return_zero.match(line):
+        if frp and re_return_zero.match(line) and fix_nullptr:
             if do_print:
                 print("afterburner: RETURN ZERO MATCH!")
                 print("afterburner: Line before: " + line)
