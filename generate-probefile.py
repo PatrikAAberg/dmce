@@ -412,9 +412,9 @@ if do_print:
 
 re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
 
-re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp):\d*:\d*.*')
-re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp):.*>.*')
-re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp):.*')
+re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
+re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
+re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
 re_compound                 = re.compile(r'.*CompoundStmt.*')
 re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
 re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
