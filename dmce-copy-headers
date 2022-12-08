@@ -80,7 +80,7 @@ def tcopy(src, dst):
 for include in uniq_includes_array:
     # To be found in tree?
     for fsource in files_to_parse:
-        if re.match(".*" + include.strip() + "$", fsource):
+        if re.match(".*" + "/" + include.strip() + "$", fsource):
             # Found subpath/file in tree
 
             # path exist? If not, create it
