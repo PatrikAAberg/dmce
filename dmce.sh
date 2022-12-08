@@ -436,7 +436,7 @@ function run_clang {
         fi
         cp -a $ast_cache/$md5_s/$md5_e $_file.clang${ext}
     else
-        eval clang-check $_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> /dev/null > $_file.clang || true
+        eval clang-check $_file -ast-dump --extra-arg="-fno-color-diagnostics" 2> $_file.clangcheck.log > $_file.clang || true
         if [ "$DMCE_AST_CACHE" = true ]; then
             mkdir -p $ast_cache/$md5_s
             if [ "$DMCE_AST_CACHE_COMPRESS" = true ]; then
