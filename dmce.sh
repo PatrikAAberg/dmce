@@ -502,14 +502,9 @@ wait
 progress
 
 # Remove top ast parts not pointing at the file being probed
-_echo "preparing clang data: cut ast top (old)"
+_echo "preparing clang data: cut ast top"
 for c_file in $FILE_LIST; do
-    sed -i -n -e "/$(basename ${c_file})/,\$p" $dmcepath/old/$c_file.clang &
-    jobcap
-done
-_echo "preparing clang data: cut ast top (new)"
-for c_file in $FILE_LIST; do
-    sed -i -n -e "/$(basename ${c_file})/,\$p" $dmcepath/new/$c_file.clang &
+    sed -i -n -e "/${c_file##*/}/,\$p" $dmcepath/{old,new}/$c_file.clang &
     jobcap
 done
 wait
