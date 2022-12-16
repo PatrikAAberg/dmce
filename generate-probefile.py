@@ -410,8 +410,6 @@ if do_print:
 
 # Regexps for file refs, trailing and states
 
-re_compile_skip_pos         = re.compile(r'.*<.*\.h:(\d*):(\d*)\,\s.*\.c:(\d*):(\d*)>.*')
-
 re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
 re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
 re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
@@ -428,7 +426,6 @@ re_update_pos_J             = re.compile(r'.*, line:(\d*):(\d*)>\sline:(\d*):(\d
 re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_pos_I             = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
 re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
-re_parsed_file            = re.compile(".*\,\s" + parsed_file_exp + ".*")
 re_lvalue                   = re.compile(".*lvalue.*")
 
 # Used in probe insertion pass for regrets
@@ -701,18 +698,6 @@ while (lineindex < linestotal):
     if (found_lvalue and not c_plusplus):
         skip_lvalue = 1
         skip_lvalue_tab = tab
-
-    # If we start in a .h file and end in a c-file, skip!
-    get_skip_pos = re_compile_skip_pos.match(linebuf[lineindex])
-    if (get_skip_pos):
-        lskip_temp = int(get_skip_pos.group(3))
-        cskip_temp = int(get_skip_pos.group(4))
-        if (lskip_temp > lskip):
-            lskip=lskip_temp
-            cskip=cskip_temp
-        if ((lskip_temp == lskip) and (cskip_temp > cskip)):
-            cskip=cskip_temp
-
 
     # Replace filename with 'line' for further parsing
     linebuf[lineindex] = re.sub(parsed_file_exp, "line", linebuf[lineindex])
