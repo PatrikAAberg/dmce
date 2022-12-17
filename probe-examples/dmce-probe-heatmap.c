@@ -12,6 +12,12 @@
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
 
+
+long syscall(long number, ...);
+int on_exit(void (*function)(int , void *), void *arg);
+char *strsignal(int sig);
+
+
 #ifdef DMCE_NBR_OF_PROBES
 #define DMCE_NUM_PROBES DMCE_NBR_OF_PROBES
 #else

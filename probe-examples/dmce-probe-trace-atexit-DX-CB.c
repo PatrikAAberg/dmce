@@ -17,6 +17,10 @@
 #define DMCE_MAX_HITS DMCE_PROBE_NBR_TRACE_ENTRIES
 #endif
 
+long syscall(long number, ...);
+int on_exit(void (*function)(int , void *), void *arg);
+char *strsignal(int sig);
+
 #define DMCE_TRACE_RINGBUFFER
 #define NBR_STATUS_BITS 1
 

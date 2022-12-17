@@ -18,6 +18,10 @@
 #define DMCE_MAX_HITS DMCE_PROBE_NBR_TRACE_ENTRIES
 #endif
 
+long syscall(long number, ...);
+int on_exit(void (*function)(int , void *), void *arg);
+char *strsignal(int sig);
+
 #define NBR_STATUS_BITS 1
 
 #ifndef DMCE_PROBE_LOCK_DIR_ENTRY
@@ -58,6 +62,7 @@ extern char *program_invocation_short_name;
 #define dmce_unlikely(x) (x)
 #endif
 #endif
+
 
 #ifdef __cplusplus
 static dmce_probe_entry_t* dmce_buf_p = nullptr;
