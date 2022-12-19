@@ -759,15 +759,14 @@ while (lineindex < linestotal):
         skiplend = exp_pos_update.group(2)
         skipcend = exp_pos_update.group(3)
 
-        if int(lstart) > int(lend):
-            scopelstart = lstart
-            scopecstart = cstart
-        else:
-            scopelstart = lend
-            scopecstart = cend
-
         if (in_parsed_file):
             trailing=1
+            if int(lstart) > int(lend):
+                scopelstart = lstart
+                scopecstart = cstart
+            else:
+                scopelstart = lend
+                scopecstart = cend
 
         if do_print == 2:
             print("MATCH I: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
@@ -790,15 +789,14 @@ while (lineindex < linestotal):
         skiplend = exp_pos_update.group(3)
         skipcend = exp_pos_update.group(4)
 
-        if int(lstart) > int(lend):
-            scopelstart = lstart
-            scopecstart = cstart
-        else:
-            scopelstart = lend
-            scopecstart = cend
-
         if (in_parsed_file):
             trailing=1
+            if int(lstart) > int(lend):
+                scopelstart = lstart
+                scopecstart = cstart
+            else:
+                scopelstart = lend
+                scopecstart = cend
 
         if do_print == 2:
             print("MATCH G: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
@@ -809,7 +807,8 @@ while (lineindex < linestotal):
     if exp_pos_update:
         col_position_updated=1
         cstart = exp_pos_update.group(1)
-        scopecstart = cstart
+        if in_parsed_file:
+            scopecstart = cstart
         cend = cstart
         skipcend = cend
         if do_print == 2:
@@ -822,7 +821,8 @@ while (lineindex < linestotal):
             col_position_updated=1
             exp_extra = 1
             cstart = exp_pos_update.group(1)
-            scopecstart = cstart
+            if in_parsed_file:
+                scopecstart = cstart
             cend = exp_pos_update.group(2)
             skipcend = cend
             if do_print == 2:
@@ -837,13 +837,13 @@ while (lineindex < linestotal):
         lstart = exp_pos_update.group(1)
         lend = lstart
         cstart = exp_pos_update.group(2)
-        scopelstart = lstart
-        scopecstart = cstart
         cend = exp_pos_update.group(3)
         skipcend = cend
         skiplend = lend
         if (in_parsed_file):
             trailing=1
+            scopelstart = lstart
+            scopecstart = cstart
 
         if do_print == 2:
             print("MATCH B: Start: ("+ lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
@@ -856,14 +856,14 @@ while (lineindex < linestotal):
             col_position_updated = 1
             lstart = exp_pos_update.group(1)
             cstart = exp_pos_update.group(2)
-            scopelstart = lstart
-            scopecstart = cstart
             lend=lstart
             cend=cstart
             skiplend = lend
             skipcend = cend
             if (in_parsed_file):
                 trailing=1
+                scopelstart = lstart
+                scopecstart = cstart
 
             if do_print == 2:
                 print("MATCH F: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
@@ -897,7 +897,8 @@ while (lineindex < linestotal):
             exp_extra = 1
             lend = exp_pos_update.group(2)
             cstart = exp_pos_update.group(1)
-            scopecstart = cstart
+            if in_parsed_file:
+                scopecstart = cstart
             cend = exp_pos_update.group(3)
             skiplend = lend
             skipcend = cend
@@ -916,10 +917,10 @@ while (lineindex < linestotal):
             skipcend = cend
             lstart = exp_pos_update.group(3)
             lend = exp_pos_update.group(4)
-            scopelstart = lstart
-            scopelend = lend
             if (in_parsed_file):
                 trailing=1
+                scopelstart = lstart
+                scopelend = lend
 
             if do_print == 2:
                 print("MATCH J: Start: (" + lstart + ", " + cstart + ") End: (" + lend + ", " + cend + ") ->" + linebuf[lineindex].rstrip())
@@ -1445,8 +1446,6 @@ while (lineindex < linestotal):
                 found = 1
             else:
                 found = 1
-
-        # TODO: Add lvalue vars
 
     if found and not backtrailing:
         # top level ?
