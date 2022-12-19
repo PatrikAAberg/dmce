@@ -504,8 +504,10 @@ progress
 # Remove top ast parts not pointing at the file being probed
 _echo "preparing clang data: cut ast top"
 for c_file in $FILE_LIST; do
-    esc_c_file="${c_file/\./\\\.}"
-    sed -i -n -e "/${esc_c_file##*/}/,\$p" $dmcepath/{old,new}/$c_file.clang &
+    esc_c_file="<${c_file//\./\\\.}"
+    esc_c_file="${esc_c_file//\//\\\/}"
+#    echo "$esc_c_file"
+    sed -i -n -e "/${esc_c_file}/,\$p" $dmcepath/{old,new}/$c_file.clang &
     jobcap
 done
 wait
