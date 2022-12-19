@@ -134,7 +134,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-trace-DX.c")
 
             if "DMCE_PROBE_NBR_OPTIONAL_ELEMENTS" in clines[count]:
-                clines[count] = "DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 5"
+                clines[count] = "DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 5\n"
 
             if "DMCE_POST_HOOK" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
@@ -210,7 +210,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racetrack")
 
         else:
-            print("Unknown profile (please use trace, trace-mc, coverage, racetrack, printf or syslog), abort")
+            print("Unknown profile (please use trace, trace-mc, coverage, heatmap, racetrack, printf or syslog), abort")
             sys.exit(1)
 
 # Modify config folder
