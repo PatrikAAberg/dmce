@@ -1417,7 +1417,7 @@ while (lineindex < linestotal):
             foundrefdecl = False
             m = re_declref.match(linebuf[lineindex + member_offset])
             # Check for corresponding struct or class and make sure its a sub node
-            if m:
+            if m and not "non_odr_use_unevaluated" in linebuf[lineindex + member_offset]:
                 if do_print:
                     print("MATCHED REF DECL: " + linebuf[lineindex + member_offset])
                 refname = m.group(1)
