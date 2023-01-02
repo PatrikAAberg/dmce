@@ -8,3 +8,4 @@ CPU_
 ASSERT
 LOG
 return 0
+return \(0\)
