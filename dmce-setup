@@ -129,5 +129,7 @@ cp $installpath/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.include  /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.pos.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.pos.include  /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/dmce.var.exclude /$cfgpath/.config/dmce/
+cp $installpath/share/dmce/dmce.var.include  /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/

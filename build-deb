@@ -58,6 +58,8 @@ cp -a $gitdir/dmce.exclude dmce-$version/usr/share/dmce/
 cp -a $gitdir/dmce.include dmce-$version/usr/share/dmce/
 cp -a $gitdir/dmce.pos.exclude dmce-$version/usr/share/dmce/
 cp -a $gitdir/dmce.pos.include dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce.var.exclude dmce-$version/usr/share/dmce/
+cp -a $gitdir/dmce.var.include dmce-$version/usr/share/dmce/
 cp -a $gitdir/recognizedexpressions.py dmce-$version/usr/share/dmce/
 
 echo "$version" > dmce-$version/usr/share/dmce/version

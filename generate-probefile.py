@@ -198,6 +198,28 @@ for line in posincludelines:
             print("error: Format for dmce.pos.exclude and dmce.pos.include is 'file:line-line', abort", file=sys.stderr)
             sys.exit(1)
 
+# Check what variables to include and exclude
+re_varexcl = []
+varexcludelines = []
+if os.path.exists(configpath + "/dmce.var.exclude"):
+    dmcevarexclude = open(configpath + "/dmce.var.exclude")
+    varexcludelines = dmcevarexclude.readlines()
+    dmcevarexclude.close()
+
+re_varincl = []
+varincludelines = []
+if os.path.exists(configpath + "/dmce.var.include"):
+    dmcevarinclude = open(configpath + "/dmce.var.include")
+    varincludelines = dmcevarinclude.readlines()
+    dmcevarinclude.close()
+
+for var in varexcludelines:
+    if not "#" in var:
+        re_varexcl.append(re.compile(var.strip() + "$"))
+for var in varincludelines:
+    if not "#" in var:
+        re_varincl.append(re.compile(var.strip() + "$"))
+
 parsed_file_exp = parsed_file
 probe_prolog = "(DMCE_PROBE(TBD),"
 probe_epilog = ")"
@@ -1566,6 +1588,18 @@ def afterburner(line, frp):
 if do_print:
     print("Probing starting at {}".format(parsed_file))
 
+def match_var_exclude(var):
+    for re_var in re_varexcl:
+        if re_var.match(var):
+            return True
+    return False
+
+def match_var_include(var):
+    for re_var in re_varincl:
+        if re_var.match(var):
+            return True
+    return False
+
 i=0
 while (i < expdb_index):
     out_of_position_scope = False
@@ -1607,6 +1641,10 @@ while (i < expdb_index):
                     lr_vlist.append(s)
                 if len(lr_vlist) == numDataVars:
                     break
+
+        # Remove any variables not matching filters
+        lr_vlist[:] = [x for x in lr_vlist if not match_var_exclude(x)]
+        lr_vlist[:] = [x for x in lr_vlist if match_var_include(x)]
 
         count = 0
         if len(lr_vlist) > 0:
