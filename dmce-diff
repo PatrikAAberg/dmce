@@ -1,0 +1,795 @@
+#!/usr/bin/python3
+
+# Copyright (c) 2016 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+import curses
+import argparse
+import os
+import sys
+import re
+import numpy as np
+from curses import wrapper
+
+parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
+parser.add_argument('file1',            type=str,                   help='dmcebuffer.bin 1)')
+parser.add_argument('file2',            type=str,                   help='dmcebuffer.bin 2)')
+parser.add_argument('probefile',        type=str,                   help='probe-references.log')
+parser.add_argument('codetree',         type=str,                   help='Code tree path')
+args = parser.parse_args()
+
+print("Reading probe references  : " + args.probefile)
+with open(args.probefile, 'r') as pf:
+     prefs = pf.readlines()
+nprobes = len(prefs)
+
+longestpath = 0
+for i in range(nprobes):
+    prefs[i] = prefs[i].strip()
+    if len(prefs[i].split(":")[1]) > longestpath:
+        longestpath = len(prefs[i].split(":")[1])
+
+# Sanity check if original files  - probed state combo
+original = False
+if "original" in args.probefile:
+    original = True
+
+state_probed = False
+if os.path.exists(args.codetree + "/.dmce_state_probed"):
+    state_probed  = True
+
+if state_probed and original:
+    print("error: Detected a probed code tree combined with " + probefile  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
+    exit (1)
+
+if not state_probed and not original:
+    print("error: Detected a non-probed code tree combined with probe-references.log. Please probe the tree or use probe-references-original.log instead, abort", file=sys.stderr)
+    exit (1)
+
+# Sanity check if files in probe ref file exist in code tree
+for ref in prefs:
+    # Check if referenced files exist
+    if not os.path.exists(args.codetree + "/" + ref.rstrip().split(':')[1]):
+        print("error: Probe reference file refers to the file " + args.codetree + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
+        exit (1)
+
+print("Reading data files: " + args.file1 + " <---> " + args.file2)
+
+# Chack if equal size
+fsize = os.path.getsize(args.file1)
+if fsize != os.path.getsize(args.file2):
+    print("error: Buffer sizes for file1 and file2 does not match, abort")
+    sys.exit(1)
+
+# read probe data as uint32, uint64 or report error
+if fsize == nprobes * 4:
+    data1 = np.fromfile(args.file1, dtype=np.uint32)
+    data2 = np.fromfile(args.file2, dtype=np.uint32)
+elif fsize == nprobes * 8:
+    data1 = np.fromfile(args.file1, dtype=np.uint64)
+    data2 = np.fromfile(args.file2, dtype=np.uint64)
+else:
+    print("error: Buffer file sizes does not match number of probes, abort")
+    sys.exit(1)
+
+diffview_xoffset = 0
+
+# Build hitlist
+hitlist_start = 0
+hitlist = []
+index2hitlist = []
+hitlist2probeoff = []
+cur_file = prefs[0].split(":")[1]
+hit_entry = ""
+offsave = 0
+hitlist_flat = []
+hitlist_labels = []
+for i in range(len(prefs)):
+    # new file?
+    if prefs[i].split(":")[1] != cur_file:
+        hitlist_labels.append(cur_file.ljust(longestpath))
+        hitlist.append(hit_entry)
+        hitlist2probeoff.append(offsave)
+        offsave = i
+        hit_entry = ""
+        print(cur_file)
+        cur_file = prefs[i].split(":")[1]
+
+    # build diff map
+    hit1 = (data1[i] > 0)
+    hit2 = (data2[i] > 0)
+
+    if hit1 and hit2:
+        hit_entry += "*"
+        hitlist_flat += "*"
+    elif hit1:
+        hit_entry += "1"
+        hitlist_flat += "1"
+    elif hit2:
+        hit_entry += "2"
+        hitlist_flat += "2"
+    else:
+        hit_entry += " "
+        hitlist_flat += " "
+
+    # translate from probe index to hitlist index
+    index2hitlist.append(len(hitlist))
+
+# save the last entry and offset
+print(cur_file)
+hitlist_labels.append(cur_file.ljust(longestpath))
+hitlist.append(hit_entry)
+hitlist2probeoff.append(offsave)
+
+wx_traceview = 0
+wy_traceview = 0
+wx_codeview = 0
+wy_codeview = 40
+wx_varsview = 100
+wy_varsview = 40
+
+num_srclines = 30
+num_difflines = 30
+
+h_screen = 0
+w_screen = 0
+
+tracebuffer = []
+full_tracebuffer = []
+codebuffer = []
+varbuffer = []
+numbuffer = []
+cmdbuffer = []
+cmdindex = 0
+cmdhistory = [[]]
+cmdhistoryindex = 0
+jumplist = []
+jumpindex = 0
+cmd_error_code = "Press 'h' for help screen!"
+
+core_filter = []
+file_filter = ""
+func_filter = ""
+src_filter = ""
+
+last_search_cmd = ""
+search_dir = "down"
+tv_start = 0
+tv_end = 0
+src_start = 0
+src_end = 0
+index = 0
+srcindex = 0
+old_srcpath = ""
+
+relaunch = False
+blink = True
+show_probes = False
+hide_components = 0
+ts_min = sys.maxsize
+entry_max = 0
+core_max = 0
+filename_max = 0
+filename_longest = ""
+lineno_max = 0
+func_max = 0
+components_max = 0
+common_components =  ""
+
+editor = "vim"
+
+log = open("/tmp/dmcediff.log", "w")
+print("dmce diff log", file=log)
+
+# look for editor configuration
+home = os.environ.get("HOME")
+cfile = home + "/.dmceconfig"
+if os.path.exists(cfile):
+    c = open (cfile)
+    config = c.readlines()
+    c.close()
+    for c in config:
+        if "DMCE_EDITOR" in c:
+            editor = c.split(":")[1].strip()
+            break
+
+user_input_mode = False
+
+def init_screen(stdscr):
+    global wy_codeview
+    global wy_varsview
+    global wx_varsview
+    global num_srclines
+    global num_difflines
+    global w_screen
+    global h_screen
+    global screen_large_enough
+
+    h_screen, w_screen = stdscr.getmaxyx()
+    screen_large_enough = True
+    if (h_screen < 10) or (w_screen < 120):
+        screen_large_enough = False
+    wy_codeview = wy_varsview = int(h_screen / 2)
+    num_srclines = num_difflines = int((h_screen / 2) - 3)
+    wx_varsview = w_screen - int(w_screen / 4)
+
+    curses.use_default_colors()
+    curses.init_pair(4, 3, -1)
+
+def check_and_clean_probes(line):
+
+    if show_probes:
+        return line
+
+    # Convert from DMCE_PROBE to DMCE_PROBE0
+    line = line.replace("DMCE_PROBE(", "DMCE_PROBE0(")
+
+    cline = line
+
+    # num vars
+    m = re.match(r'.*DMCE_PROBE(\d*)', line)
+    if m:
+        numvars = m.group(1)
+        pos = line.index("DMCE_PROBE")
+        count = 1
+        while pos < len(line) and count > 0:
+            if line[pos] == "(":
+                count += 1
+            elif line[pos] == ")":
+                count -= 1
+            pos += 1
+
+        if pos < len(line) and line[pos - 1] == ")":
+            cline = line[:pos - 1] + line[pos:]
+
+        if numvars == "0":
+            cline = re.sub(r'\(DMCE_PROBE0\(\d*\)\, ', "", cline)
+        else:
+            cline = re.sub(r'\(DMCE_PROBE(\d*)\(\d*\,(\S*\,){' + numvars + '} ', "", cline)
+
+        # Special case for calltrace lines
+        cline = re.sub(r'{DMCE_PROBE\d\(.*\/\* Function entry.*\*\/', "{", cline)
+        cline = re.sub(r'DMCE_PROBE\d\(.*\/\* Function exit.*\*\/ }', "}", cline)
+
+    return cline
+
+def m_print(stdscr, y, x, s):
+    wsub = w_screen - x
+    num_lines = int((len(s) / wsub)) + 1
+    print("wsub: " + str(wsub) + "  num_lines: " + str(num_lines) + "  y: " + str(y) + "  x: " + str(x), file=log, flush=True)
+
+    for n in range(num_lines):
+        if len(s) < wsub:
+            stdscr.addstr(y + n, x, s)
+        else:
+            stdscr.addstr(y + n, x, s[:wsub])
+            s = s[wsub:]
+
+    return num_lines
+
+def draw(stdscr):
+    global tracebuffer
+    global varbuffer
+    global codebuffer
+    global index
+    global tv_start
+    global tv_end
+    global src_start
+    global src_end
+    global num_srclines
+    global num_difflines
+    global hitlist_start
+    global old_srcpath
+    global wx_varsview
+    global hide_components
+    global filename_max
+    global common_components
+    global diffview_xoffset
+
+    if not screen_large_enough:
+        try:
+            stdscr.addstr(0,0, "terminal size {}x{} is too small".format(w_screen, h_screen), curses.A_REVERSE)
+        except curses.error:
+            pass
+
+        return
+
+    # Pattern diff view
+    # Check if we need to change the x offset
+    hitlist_index = index2hitlist[index]
+    poff = index - hitlist2probeoff[hitlist_index]
+    print("poff: " + str(poff), file=log, flush=True)
+
+    if poff < diffview_xoffset:
+        diffview_xoffset = poff
+
+    subw = w_screen - len(hitlist_labels[0] + " ")
+
+    if poff >= subw:
+        diffview_xoffset = poff - subw + int((subw / 5))
+
+    if hitlist_index < hitlist_start:
+        hitlist_start = hitlist_index
+    elif hitlist_index >= (hitlist_start + num_difflines):
+        hitlist_start = hitlist_index - num_difflines
+    j = 0
+    for i in range(hitlist_start, hitlist_start + num_difflines):
+        if i < len(hitlist):
+            stdscr.addstr(wy_traceview + j, 0, (hitlist_labels[i] + " " + hitlist[i][diffview_xoffset:]).ljust(w_screen))
+            j += 1
+
+    ycursor = hitlist_index - hitlist_start
+    xcursor = len(hitlist_labels[0] + " ") + index - hitlist2probeoff[hitlist_index] - diffview_xoffset
+    stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
+
+    # bars
+    stdscr.hline(wy_codeview - 3, wx_codeview, '_', w_screen)
+    stdscr.hline(wy_codeview - 1, wx_codeview, '_', w_screen)
+    stdscr.hline(wy_codeview + num_srclines, wx_codeview, '_', w_screen)
+#    stdscr.vline(0, wx_varsview - 1, '|', h_screen)
+
+    # code view
+    srcpath = args.codetree + "/" + prefs[index].split(":")[1]
+
+    sf = open(srcpath)
+    codebuffer = sf.readlines()
+    sf.close()
+    srcindex = int(prefs[index].split(":")[2]) - 1
+
+    if old_srcpath != srcpath:
+        src_start = srcindex - int(num_srclines / 2)
+        old_srcpath = srcpath
+
+    if src_start > srcindex:
+        src_start = srcindex - int(num_srclines / 2)
+
+    if srcindex > (src_start + num_srclines - 1):
+        src_start = srcindex - int(num_srclines / 2) + 1
+
+    wcout = int(w_screen / 2) - 2
+
+    # Current probe file and line
+    stdscr.addstr(wy_codeview - 2, wx_codeview, prefs[index] + "  index: " + str(index) + "  hitlist_index: " + str(hitlist_index) + "  len hitlst: " + str(len(hitlist)) + "            ")
+
+    for i in range(num_srclines):
+        if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
+            # get source line
+            s = check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
+
+            # cap at cout
+            t = s[:wcout]
+
+            # left adjust
+            u = t.ljust(wcout)
+            if (src_start + i) == srcindex:
+                stdscr.addstr(wy_codeview + i, 0, u, curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u, curses.A_REVERSE)
+            else:
+                stdscr.addstr(wy_codeview + i, 0, u)
+                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u)
+        else:
+            stdscr.addstr(wy_codeview + i, 0, " " * w_screen)
+
+    # info / error msgs
+    stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview))
+
+    # cmd view
+    stdscr.hline(wy_codeview + num_srclines + 1, wx_codeview, ' ', w_screen - wx_varsview - 1)
+
+    if user_input_mode:
+        cmdstr1 = "".join(cmdbuffer[:cmdindex])
+        cmdstr2 = "".join(cmdbuffer[cmdindex:])
+        stdscr.addstr(wy_codeview + num_srclines + 1, cmdindex + 1, cmdstr2)
+        stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr1)
+
+def cleanup_exit():
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
+
+def execute_command(cmdstr, stdscr):
+    global cmd_error_code
+
+    if len(cmdstr) == 0:
+        return
+
+    if cmdstr[0] == "/":
+        cmd_search(cmdstr)
+        return
+
+    cmds  = cmdstr.split(" ")
+
+    if cmds[0] == "filter":
+        cmd_filter(cmds)
+        return
+    elif cmds[0] == "help":
+        show_help(stdscr)
+        return
+    elif cmds[0] == "q" or cmds[0] == "qa":
+        sys.exit(0)
+
+    cmd_error_code = "Command not recognized: '" + cmdstr + "'"
+    return
+
+def show_help(stdscr):
+    stdscr.clear()
+    stdscr.addstr(0, 0,  "  Keys")
+    stdscr.addstr(1, 0,  "  ---------------------------------------------------------")
+    stdscr.addstr(2, 0,  "  q             - quit")
+    stdscr.addstr(3, 0,  "  k|arrow up    - move upwards")
+    stdscr.addstr(4, 0,  "  j|arrow down  - move downwards")
+    stdscr.addstr(5, 0,  "  page up       - move one page up")
+    stdscr.addstr(6, 0,  "  page up       - move one page up")
+    stdscr.addstr(7, 0,  "  :             - Enter command mode")
+    stdscr.addstr(8, 0,  "  /             - Enter command mode and search")
+    stdscr.addstr(9, 0,  "  n             - search downwards")
+    stdscr.addstr(10, 0, "  N             - search upwards")
+    stdscr.addstr(11, 0, "  g             - move to the top")
+    stdscr.addstr(12, 0, "  G             - move to the bottom")
+    stdscr.addstr(13, 0, "  [digits]g     - move to trace entry with index [digits]")
+    stdscr.addstr(14, 0, "  m             - add trace entry to jump list (markers)")
+    stdscr.addstr(15, 0, "  '             - jump to next marker")
+    stdscr.addstr(16, 0, "  *             - jump to previous marker")
+    stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
+    stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
+    stdscr.addstr(19, 0, "  o             - hide one path component (trace view)")
+    stdscr.addstr(20, 0, "  O             - unhide one path component (trace view)")
+    stdscr.addstr(21, 0, "  ENTER         - open current source file in editor")
+    stdscr.addstr(22, 0, "  ESCAPE        - exit command mode")
+    stdscr.addstr(24, 0, "  Commands")
+    stdscr.addstr(25, 0, "  ---------------------------------------------------------")
+    stdscr.addstr(26, 0, "  filter core A,B,C-F             - filter on core number")
+    stdscr.addstr(27, 0, "  filter core clear               - clear core filter")
+    stdscr.addstr(28, 0, "  filter file <regexp>@line       - filter on file@line (@line is optional)")
+    stdscr.addstr(29, 0, "  filter file clear               - clear file filter")
+    stdscr.addstr(30, 0, "  filter func <regexp>            - filter on function name")
+    stdscr.addstr(31, 0, "  filter func clear               - clear func filter")
+    stdscr.addstr(32, 0, "  filter src <regexp>             - filter on src line")
+    stdscr.addstr(33, 0, "  filter src clear                - clear src filter")
+    stdscr.addstr(34, 0, "  filter clear                    - clear all filters")
+    stdscr.addstr(36, 0, "  Hints")
+    stdscr.addstr(37, 0, "  ---------------------------------------------------------------------")
+    stdscr.addstr(38, 0, "  - In command mode, any string prepended by '/' will be searched for)")
+    stdscr.addstr(39, 0, "  - When searching, regular expressions can be used by prepending a ' sign")
+    stdscr.addstr(40, 0, "    Example: :/'.*foo.*bar")
+    stdscr.addstr(41, 0, "  - To search for a trace entry where a variable contains a certain value:")
+    stdscr.addstr(42, 0, "    Example: /foo:0x0042")
+
+    c = stdscr.getch()
+
+def launch_editor(stdscr):
+    global tracebuffer
+    global index
+    global relaunch
+    global editor
+
+    filename = args.codetree + "/" + prefs[index].split(":")[1]
+    linenbr = prefs[index].split(":")[2]
+    if "vi" in editor or "emacs" in editor or "nano" in editor:
+        os.system(editor + " " + "+" + linenbr + " " + filename)
+    else:
+        os.system(editor + " " + filename)
+    relaunch = True
+
+def jump(direction):
+    global jumplist
+    global jumpindex
+    global tracebuffer
+    global cmd_error_code
+    global index
+
+    if len(jumplist) > 0:
+        if direction == "forward":
+            jumpindex += 1
+            if jumpindex >= len(jumplist):
+                jumpindex = 0
+        else:
+            jumpindex -= 1
+            if jumpindex < 0:
+                jumpindex = len(jumplist) - 1
+
+        # Replace linear search with interval halving later if needed...
+
+        i = 0
+        ejump = jumplist[jumpindex]
+        found = False
+        while i < len(tracebuffer):
+            if tracebuffer[i].split("@")[0] == ejump:
+                index = i
+                found  = True
+                break
+            i += 1
+        if not found:
+            cmd_error_code = "Trace entry '" + ejump + "' not available in this filter view"
+        else:
+            cmd_error_code = "Jumped to marker " + str(jumpindex)
+    else:
+        cmd_error_code = "No markers set!"
+
+def set_marker():
+    global jumpindex
+    global jumplist
+
+    curindex = tracebuffer[index].split("@")[0]
+    # unset?
+    if curindex in jumplist:
+        jumplist.remove(curindex)
+        return
+
+    jumpindex = len(jumplist)
+    jumplist.append(curindex)
+
+def clear_jumplist():
+    global jumpindex
+    global jumplist
+
+    jumpindex = 0
+    jumplist = []
+
+def main(stdscr, relaunched = False):
+    global cmd_error_code
+    global tracebuffer
+    global numbuffer
+    global cmdbuffer
+    global cmdindex
+    global cmdhistory
+    global cmdhistoryindex
+    global index
+    global tv_start
+    global tv_end
+    global user_input_mode
+    global search_dir
+    global relaunch
+    global w_screen
+    global h_screen
+    global blink
+    global show_probes
+    global hide_components
+
+    curses.curs_set(0)
+
+    relaunch = False
+
+    if not relaunched:
+        init_screen(stdscr)
+        index = 0
+
+    c = ord('z')
+
+    # key sequences
+    seq_SLEFT = [27, 91, 49, 59, 50, 68]
+    seq_SRIGHT = [27, 91, 49, 59, 50, 67]
+    hit_SLEFT = False
+    hit_SRIGHT = False
+    seq_index = 0
+    seq_max = len(seq_SLEFT) - 1
+
+    while 1:
+        # resize stuff
+        if curses.is_term_resized(h_screen, w_screen):
+            init_screen(stdscr)
+            stdscr.clear()
+#            curses.resizeterm(y, x)
+
+        # cmd being written
+        if user_input_mode:
+            curses.curs_set(1)
+            search_dir = "down"
+            if c == 27:
+                cmdbuffer = []
+                cmdindex = 0
+                user_input_mode = False
+            elif c == curses.KEY_ENTER or c == 10 or c == 13:
+                if len(cmdbuffer) > 0:
+                    cmdhistory.insert(1,cmdbuffer.copy())
+                    cmdhistoryindex = 0
+                    execute_command("".join(cmdbuffer), stdscr)
+                    cmdbuffer = []
+                    cmdindex = 0
+                user_input_mode = False
+            elif len(cmdbuffer) > 0 and c == curses.KEY_BACKSPACE:
+                cmdindex -= 1
+                if cmdindex < 0:
+                    cmdindex = 0
+                    cmdbuffer = []
+                else:
+                    cmdbuffer.pop(cmdindex)
+            elif len(cmdbuffer) > cmdindex and c == curses.KEY_DC:
+                cmdbuffer.pop(cmdindex)
+            elif c == curses.KEY_HOME:
+                cmdindex = 0
+            elif c == curses.KEY_END:
+                cmdindex = len(cmdbuffer)
+            elif c >= 32 and c <= 126:
+                cmdbuffer.insert(cmdindex, chr(c))
+                cmdindex += 1
+            elif c == curses.KEY_RIGHT:
+                cmdindex += 1
+                if cmdindex > len(cmdbuffer):
+                    cmdindex = len(cmdbuffer)
+            elif c == curses.KEY_LEFT:
+                cmdindex -= 1
+                if cmdindex < 0:
+                    cmdindex = 0
+            elif c == curses.KEY_DOWN:
+                cmdhistoryindex -= 1
+                if cmdhistoryindex < 0:
+                    cmdhistoryindex = len(cmdhistory) - 1
+                cmdbuffer = cmdhistory[cmdhistoryindex].copy()
+            elif c == curses.KEY_UP:
+                cmdhistoryindex += 1
+                if cmdhistoryindex > len(cmdhistory) - 1:
+                    cmdhistoryindex = 0
+                cmdbuffer = cmdhistory[cmdhistoryindex].copy()
+        else:
+            curses.curs_set(0)
+            if c == ord('h'):
+                show_help(stdscr)
+            elif c == ord(':'):
+                cmd_error_code = ""
+                user_input_mode = True
+            elif c == ord('/'):
+                user_input_mode = True
+                cmdbuffer = ['/']
+                cmdindex = 1
+            elif c == ord('g'):
+                if len(numbuffer) > 0:
+                    ijump = 0
+                    dec = 1
+                    for n in reversed(numbuffer):
+                        ijump += dec * n
+                        dec = dec * 10
+                    index = ijump
+                    if index < 0:
+                        index = 0
+                    if index > (len(prefs) - 1):
+                        index = len(prefs) - 1
+                    numbuffer = []
+                else:
+                    index = 0
+
+                old_srcpath = ""
+            elif c == ord('G'):
+                index = len(prefs) - 1
+            elif c == ord('n'):
+                search_dir = "down"
+                execute_command(last_search_cmd, stdscr)
+                cmdbuffer = []
+                user_input_mode = False
+            elif c == ord('N'):
+                search_dir = "up"
+                execute_command(last_search_cmd, stdscr)
+                cmdbuffer = []
+                user_input_mode = False
+#            elif c == ord('k') or c == curses.KEY_UP:
+#                if index > 0:
+#                    index -= 1
+#            elif c == ord('j') or c == curses.KEY_DOWN:
+#                if index < len(prefs) - 1:
+#                    index += 1
+            elif c == curses.KEY_UP:
+                cur_hli = index2hitlist[index]
+                if cur_hli > 0:
+                    cur_poff = index - hitlist2probeoff[cur_hli]
+                    if cur_poff > (len(hitlist[cur_hli - 1]) - 1):
+                        poff = (len(hitlist[cur_hli - 1]) - 1)
+                    else:
+                        poff = cur_poff
+                    index = hitlist2probeoff[cur_hli - 1] + poff
+
+            elif c == curses.KEY_DOWN:
+                cur_hli = index2hitlist[index]
+                if cur_hli < (len(hitlist) - 1):
+                    cur_poff = index - hitlist2probeoff[cur_hli]
+                    if cur_poff > (len(hitlist[cur_hli + 1]) - 1):
+                        poff = (len(hitlist[cur_hli + 1]) - 1)
+                    else:
+                        poff = cur_poff
+                    index = hitlist2probeoff[cur_hli + 1] + poff
+
+            elif c == curses.KEY_RIGHT:
+                if index < (nprobes - 1):
+                    index += 1
+            elif c == curses.KEY_LEFT:
+                if index > 0:
+                    index -= 1
+
+#            elif hit_SRIGHT:
+            elif c == curses.KEY_NPAGE:
+                while index < (nprobes - 1) and hitlist_flat[index] != " ":
+                    index += 1
+                while index < (nprobes - 1) and hitlist_flat[index] == " ":
+                    index += 1
+
+#            elif hit_SLEFT:
+            elif c == curses.KEY_PPAGE:
+                while index > 0 and hitlist_flat[index] != " ":
+                    index -= 1
+                while index > 0 and hitlist_flat[index] == " ":
+                    index -= 1
+
+            elif c == ord('m'):
+                set_marker()
+            elif c == ord('c'):
+                clear_jumplist()
+            elif c == ord("'"):
+                jump("forward")
+            elif c == ord('*'):
+                jump("back")
+            elif c == ord('b'):
+                if blink:
+                    blink = False
+                else:
+                    blink = True
+            elif c == ord('p'):
+                if show_probes:
+                    show_probes = False
+                else:
+                    show_probes = True
+            elif c == ord('o'):
+                if hide_components == 0:
+                    hide_components=2
+                elif hide_components < components_max:
+                    hide_components+=1
+            elif c == ord('O'):
+                if hide_components == 2:
+                    hide_components=0
+                elif hide_components > 0:
+                    hide_components-=1
+            elif c >= ord('0') and c <= ord('9'):
+                numbuffer.append(int(c - ord('0')))
+            elif c == curses.KEY_ENTER or c == 10 or c == 13:
+                launch_editor(stdscr)
+            if c == ord('q') or relaunch:
+                break
+        if index < tv_start:
+            tv_start = index
+        if index >= tv_end:
+            tv_start = index - num_difflines
+
+        tv_end = tv_start + num_difflines
+
+        draw(stdscr)
+        c = stdscr.getch()
+        print("KEY: " + str(c), file=log, flush=True)
+
+        hit_SLEFT = False
+        hit_SRIGHT = False
+        if seq_index == seq_max and c == seq_SLEFT[seq_index]:
+            hit_SLEFT = True
+            seq_index = 0
+        if seq_index == seq_max and c == seq_SRIGHT[seq_index]:
+            hit_SRIGHT = True
+            seq_index = 0
+
+        # seqs for sleft and sright only differ at the last number, handle other cases as they come
+        if c == seq_SLEFT[seq_index]:
+            seq_index += 1
+        else:
+            seq_index = 0
+
+os.environ.setdefault('ESCDELAY', '25')
+wrapper(main)
+while relaunch:
+    os.environ.setdefault('ESCDELAY', '25')
+    wrapper(main, relaunched = True)
+
+
+# EOF
