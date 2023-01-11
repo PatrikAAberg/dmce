@@ -28,8 +28,7 @@ import numpy as np
 from curses import wrapper
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
-parser.add_argument('file1',            type=str,                   help='dmcebuffer.bin 1)')
-parser.add_argument('file2',            type=str,                   help='dmcebuffer.bin 2)')
+parser.add_argument('files',            type=str,                   help='Comma separated dmcebuffer.bin files)')
 parser.add_argument('probefile',        type=str,                   help='probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='Code tree path')
 args = parser.parse_args()
@@ -69,26 +68,35 @@ for ref in prefs:
         print("error: Probe reference file refers to the file " + args.codetree + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
         exit (1)
 
-print("Reading data files: " + args.file1 + " <---> " + args.file2)
+print("Reading data files...")
+lfiles = args.files.split(",")
+for file in lfiles:
+    if os.path.exists(file):
+        print( file)
+    else:
+        print("error: File does not exist (" + file + ")")
 
 # Chack if equal size
-fsize = os.path.getsize(args.file1)
-if fsize != os.path.getsize(args.file2):
-    print("error: Buffer sizes for file1 and file2 does not match, abort")
-    sys.exit(1)
+fsize = os.path.getsize(lfiles[0])
+for file in lfiles:
+    if fsize != os.path.getsize(file):
+        print("error: Buffer size for " + file + " does not match previous file, abort")
+        sys.exit(1)
 
 # read probe data as uint32, uint64 or report error
-if fsize == nprobes * 4:
-    data1 = np.fromfile(args.file1, dtype=np.uint32)
-    data2 = np.fromfile(args.file2, dtype=np.uint32)
-elif fsize == nprobes * 8:
-    data1 = np.fromfile(args.file1, dtype=np.uint64)
-    data2 = np.fromfile(args.file2, dtype=np.uint64)
-else:
-    print("error: Buffer file sizes does not match number of probes, abort")
-    sys.exit(1)
+data = []
+for file in lfiles:
+    if fsize == nprobes * 4:
+        data.append(np.fromfile(file, dtype=np.uint32))
+    elif fsize == nprobes * 8:
+        data.append(np.fromfile(file, dtype=np.uint64))
+    else:
+        print("error: Buffer file sizes does not match number of probes, abort")
+        sys.exit(1)
 
 diffview_xoffset = 0
+left_pane_index = 0
+right_pane_index = 1
 
 # Build hitlist
 hitlist_start = 0
@@ -117,28 +125,27 @@ for i in range(len(prefs)):
 
     # remember line numbers
     hit_linenumbers.append(int(prefs[i].split(":")[2]))
-    # build diff map
-    hit1 = (data1[i] > 0)
-    hit2 = (data2[i] > 0)
 
-    if hit1 and hit2:
+    # build diff map
+    hit = []
+    for d in data:
+        hit.append(d[i] > 0)
+
+    if hit.count(True) > 1:
         hit_entry += "*"
         hitlist_flat += "*"
-    elif hit1:
-        hit_entry += "1"
-        hitlist_flat += "1"
-    elif hit2:
-        hit_entry += "2"
-        hitlist_flat += "2"
-    else:
+    elif hit.count(False) == len(hit):
         hit_entry += " "
         hitlist_flat += " "
+    else:
+        ihit = str(hit.index(True))
+        hit_entry += ihit
+        hitlist_flat += ihit
 
     # translate from probe index to hitlist index
     index2hitlist.append(len(hitlist))
 
 # save the last entry and offset
-print(cur_file)
 hitlist_labels.append(cur_file.ljust(longestpath))
 hitlist.append(hit_entry)
 hitlist_linenumbers.append(hit_linenumbers)
@@ -380,14 +387,17 @@ def draw(stdscr):
                 diffstatus = hitlist[hitlist_index][hindex]
 
             # increase for more diffs, static for now
+            prepend = ["   ", "   "]
+
             if diffstatus == " ":
                 prepend = ["   ", "   "]
             elif diffstatus == "*":
                 prepend = ["-> ", "-> "]
-            elif diffstatus == "1":
-                prepend = ["-> ", "   "]
-            elif diffstatus == "2":
-                prepend = ["   ", "-> "]
+            else:
+                if int(diffstatus) == left_pane_index:
+                    prepend[0] = "-> "
+                if int(diffstatus) == right_pane_index:
+                    prepend[1] = "-> "
 
             # get source line
             s = check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
