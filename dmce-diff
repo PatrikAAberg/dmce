@@ -97,6 +97,8 @@ index2hitlist = []
 hitlist2probeoff = []
 cur_file = prefs[0].split(":")[1]
 hit_entry = ""
+hitlist_linenumbers = []
+hit_linenumbers = []
 offsave = 0
 hitlist_flat = []
 hitlist_labels = []
@@ -105,12 +107,16 @@ for i in range(len(prefs)):
     if prefs[i].split(":")[1] != cur_file:
         hitlist_labels.append(cur_file.ljust(longestpath))
         hitlist.append(hit_entry)
+        hitlist_linenumbers.append(hit_linenumbers)
         hitlist2probeoff.append(offsave)
         offsave = i
         hit_entry = ""
+        hit_linenumbers = []
         print(cur_file)
         cur_file = prefs[i].split(":")[1]
 
+    # remember line numbers
+    hit_linenumbers.append(int(prefs[i].split(":")[2]))
     # build diff map
     hit1 = (data1[i] > 0)
     hit2 = (data2[i] > 0)
@@ -135,6 +141,7 @@ for i in range(len(prefs)):
 print(cur_file)
 hitlist_labels.append(cur_file.ljust(longestpath))
 hitlist.append(hit_entry)
+hitlist_linenumbers.append(hit_linenumbers)
 hitlist2probeoff.append(offsave)
 
 wx_traceview = 0
@@ -363,12 +370,25 @@ def draw(stdscr):
         src_start = srcindex - int(num_srclines / 2) + 1
 
     wcout = int(w_screen / 2) - 2
-
-    # Current probe file and line
-    stdscr.addstr(wy_codeview - 2, wx_codeview, prefs[index] + "  index: " + str(index) + "  hitlist_index: " + str(hitlist_index) + "  len hitlst: " + str(len(hitlist)) + "            ")
-
     for i in range(num_srclines):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
+
+            # check diff status
+            diffstatus = " "
+            hindex = hitlist_linenumbers[hitlist_index].index(src_start + i + 1) if (src_start + i + 1) in hitlist_linenumbers[hitlist_index] else None
+            if hindex is not None:
+                diffstatus = hitlist[hitlist_index][hindex]
+
+            # increase for more diffs, static for now
+            if diffstatus == " ":
+                prepend = ["   ", "   "]
+            elif diffstatus == "*":
+                prepend = ["-> ", "-> "]
+            elif diffstatus == "1":
+                prepend = ["-> ", "   "]
+            elif diffstatus == "2":
+                prepend = ["   ", "-> "]
+
             # get source line
             s = check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
 
@@ -376,15 +396,20 @@ def draw(stdscr):
             t = s[:wcout]
 
             # left adjust
-            u = t.ljust(wcout)
+            u1 = prepend[0] + t.ljust(wcout)
+            u2 = prepend[1] + t.ljust(wcout)
+
             if (src_start + i) == srcindex:
-                stdscr.addstr(wy_codeview + i, 0, u, curses.A_REVERSE)
-                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u, curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, 0, u1, curses.A_REVERSE)
+                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u2, curses.A_REVERSE)
             else:
-                stdscr.addstr(wy_codeview + i, 0, u)
-                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u)
+                stdscr.addstr(wy_codeview + i, 0, u1)
+                stdscr.addstr(wy_codeview + i, int(w_screen / 2), u2)
         else:
             stdscr.addstr(wy_codeview + i, 0, " " * w_screen)
+
+    # Current probe file and line
+    stdscr.addstr(wy_codeview - 2, wx_codeview, prefs[index] + "  index: " + str(index) + "  hitlist_index: " + str(hitlist_index) + "  len hitlst: " + str(len(hitlist)) + "            ")
 
     # info / error msgs
     stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview))
