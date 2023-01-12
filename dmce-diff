@@ -72,9 +72,10 @@ print("Reading data files...")
 lfiles = args.files.split(",")
 for file in lfiles:
     if os.path.exists(file):
-        print( file)
+        print(file)
     else:
-        print("error: File does not exist (" + file + ")")
+        print("error: File does not exist:'" + file + "'")
+        sys.exit(1)
 
 # Chack if equal size
 fsize = os.path.getsize(lfiles[0])
@@ -97,10 +98,13 @@ for file in lfiles:
 diffview_xoffset = 0
 left_pane_index = 0
 right_pane_index = 1
+view = 0
 
 # Build hitlist
 hitlist_start = 0
 hitlist = []
+hitlist_full = []
+hit_list = []
 index2hitlist = []
 hitlist2probeoff = []
 cur_file = prefs[0].split(":")[1]
@@ -110,16 +114,19 @@ hit_linenumbers = []
 offsave = 0
 hitlist_flat = []
 hitlist_labels = []
+
 for i in range(len(prefs)):
     # new file?
     if prefs[i].split(":")[1] != cur_file:
         hitlist_labels.append(cur_file.ljust(longestpath))
         hitlist.append(hit_entry)
         hitlist_linenumbers.append(hit_linenumbers)
+        hitlist_full.append(hit_list)
         hitlist2probeoff.append(offsave)
         offsave = i
         hit_entry = ""
         hit_linenumbers = []
+        hit_list = []
         print(cur_file)
         cur_file = prefs[i].split(":")[1]
 
@@ -128,8 +135,16 @@ for i in range(len(prefs)):
 
     # build diff map
     hit = []
+    hitchar = []
     for d in data:
-        hit.append(d[i] > 0)
+        if d[i] > 0:
+            hit.append(True)
+            hitchar.append("*")
+        else:
+            hit.append(False)
+            hitchar.append(" ")
+
+    hit_list.append(hitchar)
 
     if hit.count(True) > 1:
         hit_entry += "*"
@@ -150,9 +165,14 @@ hitlist_labels.append(cur_file.ljust(longestpath))
 hitlist.append(hit_entry)
 hitlist_linenumbers.append(hit_linenumbers)
 hitlist2probeoff.append(offsave)
+hitlist_full.append(hit_list)
 
 # common prefix for all src files
-common_prefix = os.path.commonprefix(hitlist_labels)
+common_prefix_src = os.path.commonprefix(hitlist_labels)
+
+# common prefix for all data files
+common_prefix_data = os.path.commonprefix(lfiles)
+
 
 wx_traceview = 0
 wy_traceview = 0
@@ -318,6 +338,7 @@ def draw(stdscr):
     global filename_max
     global common_components
     global diffview_xoffset
+    global view
 
     if not screen_large_enough:
         try:
@@ -327,37 +348,57 @@ def draw(stdscr):
 
         return
 
-    # Pattern diff view
-    # Check if we need to change the x offset
     hitlist_index = index2hitlist[index]
     poff = index - hitlist2probeoff[hitlist_index]
-    print("poff: " + str(poff), file=log, flush=True)
 
-    if poff < diffview_xoffset:
-        diffview_xoffset = poff
+    if view == 0:
+        # Pattern 1 diff view
+        # Check if we need to change the x offset
+        if poff < diffview_xoffset:
+            diffview_xoffset = poff
 
-    subw = w_screen - len(hitlist_labels[0] + " ")
+        subw = w_screen - len(hitlist_labels[0] + " ")
 
-    if poff >= subw:
-        diffview_xoffset = poff - subw + int((subw / 5))
+        if poff >= subw:
+            diffview_xoffset = poff - subw + int((subw / 5))
 
-    if hitlist_index < hitlist_start:
-        hitlist_start = hitlist_index
-    elif hitlist_index >= (hitlist_start + num_difflines):
-        hitlist_start = hitlist_index - num_difflines
+        if hitlist_index < hitlist_start:
+            hitlist_start = hitlist_index
+        elif hitlist_index >= (hitlist_start + num_difflines):
+            hitlist_start = hitlist_index - num_difflines
 
-    j = 0
-    for i in range(hitlist_start, hitlist_start + num_difflines):
-        if i < len(hitlist):
-            prefix = hitlist_labels[i] + " "
+        j = 0
+        for i in range(hitlist_start, hitlist_start + num_difflines):
+            if i < len(hitlist):
+                prefix = hitlist_labels[i] + " "
+                if hide_prefix:
+                    prefix = prefix.replace(common_prefix_src,"")
+                stdscr.addstr(wy_traceview + j, 0, prefix + (hitlist[i][diffview_xoffset:]).ljust(w_screen))
+                j += 1
+
+        ycursor = hitlist_index - hitlist_start
+        xcursor = len(hitlist_labels[0] + " ") + index - hitlist2probeoff[hitlist_index] - diffview_xoffset
+        stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
+
+        # Current probe file and line
+        stdscr.addstr(wy_codeview - 2, wx_codeview, (prefs[index]).ljust(w_screen))
+
+
+    elif view == 1:
+        # Pattern 2 diff view
+
+        for i in range(len(hitlist_full[0][0])):
+            out = ""
+            for hl in hitlist_full[hitlist_index]:
+                out = out + hl[i]
+
+            prefix = lfiles[i] + " "
             if hide_prefix:
-                prefix = prefix.replace(common_prefix,"")
-            stdscr.addstr(wy_traceview + j, 0, prefix + (hitlist[i][diffview_xoffset:]).ljust(w_screen))
-            j += 1
+                prefix = prefix.replace(common_prefix_data,"")
 
-    ycursor = hitlist_index - hitlist_start
-    xcursor = len(hitlist_labels[0] + " ") + index - hitlist2probeoff[hitlist_index] - diffview_xoffset
-    stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
+            stdscr.addstr(wy_traceview + i, 0, (prefix + out).ljust(w_screen))
+
+        stdscr.addstr(wy_codeview - 2, wx_codeview, hitlist_labels[hitlist_index].ljust(w_screen))
 
     # bars
     stdscr.hline(wy_codeview - 3, wx_codeview, '_', w_screen)
@@ -424,9 +465,6 @@ def draw(stdscr):
                 stdscr.addstr(wy_codeview + i, int(w_screen / 2), u2)
         else:
             stdscr.addstr(wy_codeview + i, 0, " " * w_screen)
-
-    # Current probe file and line
-    stdscr.addstr(wy_codeview - 2, wx_codeview, prefs[index] + "  index: " + str(index) + "  hitlist_index: " + str(hitlist_index) + "  len hitlst: " + str(len(hitlist)) + "            ")
 
     # info / error msgs
     stdscr.addstr(wy_codeview + num_srclines + 1, wx_varsview, cmd_error_code.ljust(w_screen - wx_varsview))
@@ -601,9 +639,9 @@ def main(stdscr, relaunched = False):
     global relaunch
     global w_screen
     global h_screen
-    global blink
     global show_probes
     global hide_prefix
+    global view
 
     curses.curs_set(0)
 
@@ -613,7 +651,8 @@ def main(stdscr, relaunched = False):
         init_screen(stdscr)
         index = 0
 
-    c = ord('z')
+    # Lets not use this character
+    c = ord('^')
 
     # key sequences
     seq_SLEFT = [27, 91, 49, 59, 50, 68]
@@ -785,6 +824,11 @@ def main(stdscr, relaunched = False):
                     hide_prefix = False
                 else:
                     hide_prefix = True
+            elif c == ord('z'):
+                stdscr.clear()
+                view += 1
+                if view > 1:
+                    view = 0
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
