@@ -334,6 +334,8 @@ def draw(stdscr):
     global varbuffer
     global codebuffer
     global index
+    global left_pane_index
+    global right_pane_index
     global dataindex
     global tv_start
     global tv_end
@@ -467,22 +469,13 @@ def draw(stdscr):
         if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
 
             # check diff status
-            diffstatus = " "
+            prepend = ["   ", "   "]
             hindex = hitlist_linenumbers[hitlist_index].index(src_start + i + 1) if (src_start + i + 1) in hitlist_linenumbers[hitlist_index] else None
             if hindex is not None:
-                diffstatus = hitlist[hitlist_index][hindex]
-
-            # increase for more diffs, static for now
-            prepend = ["   ", "   "]
-
-            if diffstatus == " ":
-                prepend = ["   ", "   "]
-            elif diffstatus == "*":
-                prepend = ["-> ", "-> "]
-            else:
-                if int(diffstatus) == left_pane_index:
+                diffstatus = hitlist_full[hitlist_index][hindex]
+                if diffstatus[left_pane_index] == '*':
                     prepend[0] = "-> "
-                if int(diffstatus) == right_pane_index:
+                if diffstatus[right_pane_index] == '*':
                     prepend[1] = "-> "
 
             # get source line
