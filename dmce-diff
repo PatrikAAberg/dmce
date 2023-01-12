@@ -90,6 +90,7 @@ for file in lfiles:
 
 # read probe data as uint32, uint64 or report error
 data = []
+datafiles = []
 for file in lfiles:
     if fsize == nprobes * 4:
         data.append(np.fromfile(file, dtype=np.uint32))
@@ -99,7 +100,10 @@ for file in lfiles:
         print("error: Buffer file sizes does not match number of probes, abort")
         sys.exit(1)
 
+    datafiles.append(file.ljust(longest_data_path))
+
 diffview_xoffset = 0
+zoomview_xoffset = 0
 left_pane_index = 0
 right_pane_index = 1
 view = 0
@@ -122,7 +126,7 @@ hitlist_labels = []
 for i in range(len(prefs)):
     # new file?
     if prefs[i].split(":")[1] != cur_file:
-        hitlist_labels.append(cur_file.ljust(longestpath))
+        hitlist_labels.append(cur_file.ljust(longest_src_path))
         hitlist.append(hit_entry)
         hitlist_linenumbers.append(hit_linenumbers)
         hitlist_full.append(hit_list)
@@ -165,7 +169,7 @@ for i in range(len(prefs)):
     index2hitlist.append(len(hitlist))
 
 # save the last entry and offset
-hitlist_labels.append(cur_file.ljust(longestpath))
+hitlist_labels.append(cur_file.ljust(longest_src_path))
 hitlist.append(hit_entry)
 hitlist_linenumbers.append(hit_linenumbers)
 hitlist2probeoff.append(offsave)
@@ -175,7 +179,7 @@ hitlist_full.append(hit_list)
 common_prefix_src = os.path.commonprefix(hitlist_labels)
 
 # common prefix for all data files
-common_prefix_data = os.path.commonprefix(lfiles)
+common_prefix_data = os.path.commonprefix(datafiles)
 
 
 wx_traceview = 0
@@ -342,6 +346,7 @@ def draw(stdscr):
     global filename_max
     global common_components
     global diffview_xoffset
+    global zoomview_xoffset
     global view
 
     if not screen_large_enough:
@@ -361,7 +366,9 @@ def draw(stdscr):
         if poff < diffview_xoffset:
             diffview_xoffset = poff
 
-        subw = w_screen - len(hitlist_labels[0] + " ")
+        subw = w_screen - (longest_src_path + 1)
+        if hide_prefix:
+            subw += len(common_prefix_src)
 
         if poff >= subw:
             diffview_xoffset = poff - subw + int((subw / 5))
@@ -380,23 +387,36 @@ def draw(stdscr):
                 stdscr.addstr(wy_traceview + j, 0, prefix + (hitlist[i][diffview_xoffset:]).ljust(w_screen))
                 j += 1
 
+        # cursor
         ycursor = hitlist_index - hitlist_start
-        xcursor = len(hitlist_labels[0] + " ") + index - hitlist2probeoff[hitlist_index] - diffview_xoffset
+        xcursor = len(prefix) + poff - diffview_xoffset
         stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
 
-        # Current probe file and line
+        # info
         stdscr.addstr(wy_codeview - 2, wx_codeview, (prefs[index]).ljust(w_screen))
 
 
     elif view == 1:
-        # Pattern 2 diff view
+        # Zoomed diff view
 
+        # Check if we need to change the x offset
+        if poff < zoomview_xoffset:
+            zoomview_xoffset = poff
+
+        subw = w_screen - (longest_data_path + 1)
+        if hide_prefix:
+            subw += len(common_prefix_data)
+
+        if poff >= subw:
+            zoomview_xoffset = poff - subw + int((subw / 5))
+
+        # Current src file
         for i in range(len(hitlist_full[0][0])):
             out = ""
             for hl in hitlist_full[hitlist_index]:
                 out = out + hl[i]
 
-            prefix = lfiles[i] + " "
+            prefix = datafiles[i] + " "
             if hide_prefix:
                 prefix = prefix.replace(common_prefix_data,"")
 
