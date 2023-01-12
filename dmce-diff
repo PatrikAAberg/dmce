@@ -392,9 +392,6 @@ def draw(stdscr):
         xcursor = len(prefix) + poff - diffview_xoffset
         stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
 
-        # info
-        stdscr.addstr(wy_codeview - 2, wx_codeview, (prefs[index]).ljust(w_screen))
-
 
     elif view == 1:
         # Zoomed diff view
@@ -428,8 +425,8 @@ def draw(stdscr):
         for ycursor in range (0, len(hitlist_full[0][0])):
             stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
 
-        # info
-        stdscr.addstr(wy_codeview - 2, wx_codeview, hitlist_labels[hitlist_index].ljust(w_screen))
+    # info
+    stdscr.addstr(wy_codeview - 2, wx_codeview, (prefs[index]).ljust(w_screen), curses.A_BOLD)
 
     # bars
     stdscr.hline(wy_codeview - 3, wx_codeview, '_', w_screen)
@@ -584,6 +581,7 @@ def show_help(stdscr):
     stdscr.addstr(42, 0, "    Example: /foo:0x0042")
 
     c = stdscr.getch()
+    stdscr.clear()
 
 def launch_editor(stdscr):
     global tracebuffer
