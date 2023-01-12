@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (c) 2016 Ericsson AB
+# Copyright (c) 2022 Ericsson AB
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -768,26 +768,16 @@ def main(stdscr, relaunched = False):
                 jump("forward")
             elif c == ord('*'):
                 jump("back")
-            elif c == ord('b'):
-                if blink:
-                    blink = False
-                else:
-                    blink = True
             elif c == ord('p'):
                 if show_probes:
                     show_probes = False
                 else:
                     show_probes = True
             elif c == ord('o'):
-                if hide_components == 0:
-                    hide_components=2
-                elif hide_components < components_max:
-                    hide_components+=1
-            elif c == ord('O'):
-                if hide_components == 2:
-                    hide_components=0
-                elif hide_components > 0:
-                    hide_components-=1
+                if hide_prefix:
+                    hide_prefix = False
+                else:
+                    hide_prefix = True
             elif c >= ord('0') and c <= ord('9'):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
