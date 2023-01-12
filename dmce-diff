@@ -38,11 +38,11 @@ with open(args.probefile, 'r') as pf:
      prefs = pf.readlines()
 nprobes = len(prefs)
 
-longestpath = 0
+longest_src_path = 0
 for i in range(nprobes):
     prefs[i] = prefs[i].strip()
-    if len(prefs[i].split(":")[1]) > longestpath:
-        longestpath = len(prefs[i].split(":")[1])
+    if len(prefs[i].split(":")[1]) > longest_src_path:
+        longest_src_path = len(prefs[i].split(":")[1])
 
 # Sanity check if original files  - probed state combo
 original = False
@@ -70,12 +70,16 @@ for ref in prefs:
 
 print("Reading data files...")
 lfiles = args.files.split(",")
+longest_data_path = 0
 for file in lfiles:
     if os.path.exists(file):
         print(file)
     else:
         print("error: File does not exist:'" + file + "'")
         sys.exit(1)
+
+    if len(file) > longest_data_path:
+        longest_data_path = len(file)
 
 # Chack if equal size
 fsize = os.path.getsize(lfiles[0])
