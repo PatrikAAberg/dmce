@@ -91,6 +91,7 @@ for file in lfiles:
 # read probe data as uint32, uint64 or report error
 data = []
 datafiles = []
+dataindex = 0
 for file in lfiles:
     if fsize == nprobes * 4:
         data.append(np.fromfile(file, dtype=np.uint32))
@@ -333,6 +334,7 @@ def draw(stdscr):
     global varbuffer
     global codebuffer
     global index
+    global dataindex
     global tv_start
     global tv_end
     global src_start
@@ -418,6 +420,8 @@ def draw(stdscr):
                 prefix = prefix.replace(common_prefix_data,"")
 
             stdscr.addstr(2 + wy_traceview + i, 0, (prefix + out[zoomview_xoffset:]).ljust(w_screen))
+            if dataindex == i:
+                stdscr.chgat(2 + wy_traceview + i, 0, len(prefix) - 1, curses.A_REVERSE)
 
         # summary line at the top
         stdscr.addstr(0, 0, ((" ").ljust(len(prefix)) + hitlist[hitlist_index][zoomview_xoffset:]).ljust(w_screen), curses.A_BOLD)
@@ -430,6 +434,9 @@ def draw(stdscr):
 
     # info
     stdscr.addstr(wy_codeview - 2, wx_codeview, (prefs[index]).ljust(w_screen), curses.A_BOLD)
+    quad = int(w_screen / 4)
+    stdscr.addstr(wy_codeview - 2, wx_codeview + quad, datafiles[left_pane_index].rjust(quad), curses.A_BOLD)
+    stdscr.addstr(wy_codeview - 2, wx_codeview + quad * 3, datafiles[right_pane_index].rjust(quad), curses.A_BOLD)
 
     # bars
     stdscr.hline(wy_codeview - 3, wx_codeview, '_', w_screen)
@@ -664,6 +671,9 @@ def main(stdscr, relaunched = False):
     global cmdhistory
     global cmdhistoryindex
     global index
+    global dataindex
+    global left_pane_index
+    global right_pane_index
     global tv_start
     global tv_end
     global user_input_mode
@@ -798,25 +808,33 @@ def main(stdscr, relaunched = False):
 #                if index < len(prefs) - 1:
 #                    index += 1
             elif c == curses.KEY_UP:
-                cur_hli = index2hitlist[index]
-                if cur_hli > 0:
-                    cur_poff = index - hitlist2probeoff[cur_hli]
-                    if cur_poff > (len(hitlist[cur_hli - 1]) - 1):
-                        poff = (len(hitlist[cur_hli - 1]) - 1)
-                    else:
-                        poff = cur_poff
-                    index = hitlist2probeoff[cur_hli - 1] + poff
-
+                if view == 0:
+                    cur_hli = index2hitlist[index]
+                    if cur_hli > 0:
+                        cur_poff = index - hitlist2probeoff[cur_hli]
+                        if cur_poff > (len(hitlist[cur_hli - 1]) - 1):
+                            poff = (len(hitlist[cur_hli - 1]) - 1)
+                        else:
+                            poff = cur_poff
+                        index = hitlist2probeoff[cur_hli - 1] + poff
+                elif view == 1:
+                    dataindex -= 1
+                    if dataindex < 0:
+                        dataindex = len(datafiles) -1
             elif c == curses.KEY_DOWN:
-                cur_hli = index2hitlist[index]
-                if cur_hli < (len(hitlist) - 1):
-                    cur_poff = index - hitlist2probeoff[cur_hli]
-                    if cur_poff > (len(hitlist[cur_hli + 1]) - 1):
-                        poff = (len(hitlist[cur_hli + 1]) - 1)
-                    else:
-                        poff = cur_poff
-                    index = hitlist2probeoff[cur_hli + 1] + poff
-
+                if view == 0:
+                    cur_hli = index2hitlist[index]
+                    if cur_hli < (len(hitlist) - 1):
+                        cur_poff = index - hitlist2probeoff[cur_hli]
+                        if cur_poff > (len(hitlist[cur_hli + 1]) - 1):
+                            poff = (len(hitlist[cur_hli + 1]) - 1)
+                        else:
+                            poff = cur_poff
+                        index = hitlist2probeoff[cur_hli + 1] + poff
+                elif view == 1:
+                    dataindex += 1
+                    if dataindex >= len(datafiles):
+                        dataindex = 0
             elif c == curses.KEY_RIGHT:
                 if index < (nprobes - 1):
                     index += 1
@@ -840,6 +858,10 @@ def main(stdscr, relaunched = False):
 
             elif c == ord('m'):
                 set_marker()
+            elif c == ord('l'):
+                left_pane_index = dataindex
+            elif c == ord('r'):
+                right_pane_index = dataindex
             elif c == ord('c'):
                 clear_jumplist()
             elif c == ord("'"):
@@ -865,8 +887,11 @@ def main(stdscr, relaunched = False):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
                 launch_editor(stdscr)
-            if c == ord('q') or relaunch:
+            if (c == ord('q') and view == 0) or relaunch:
                 break
+            if (c == ord('q') and view == 1):
+                view = 0
+
         if index < tv_start:
             tv_start = index
         if index >= tv_end:
