@@ -417,12 +417,15 @@ def draw(stdscr):
             if hide_prefix:
                 prefix = prefix.replace(common_prefix_data,"")
 
-            stdscr.addstr(wy_traceview + i, 0, (prefix + out[zoomview_xoffset:]).ljust(w_screen))
+            stdscr.addstr(2 + wy_traceview + i, 0, (prefix + out[zoomview_xoffset:]).ljust(w_screen))
+
+        # summary line at the top
+        stdscr.addstr(0, 0, ((" ").ljust(len(prefix)) + hitlist[hitlist_index][zoomview_xoffset:]).ljust(w_screen), curses.A_BOLD)
+        stdscr.addstr(1, 0, " " * w_screen)
 
         # cursor
-#        stdscr.hline(0, 0, ' ', w_screen)
         xcursor = len(prefix) + poff - zoomview_xoffset
-        for ycursor in range (0, len(hitlist_full[0][0])):
+        for ycursor in range (0, 2 + len(hitlist_full[0][0])):
             stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
 
     # info
