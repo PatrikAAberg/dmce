@@ -420,8 +420,15 @@ def draw(stdscr):
             if hide_prefix:
                 prefix = prefix.replace(common_prefix_data,"")
 
-            stdscr.addstr(wy_traceview + i, 0, (prefix + out).ljust(w_screen))
+            stdscr.addstr(wy_traceview + i, 0, (prefix + out[zoomview_xoffset:]).ljust(w_screen))
 
+        # cursor
+#        stdscr.hline(0, 0, ' ', w_screen)
+        xcursor = len(prefix) + poff - zoomview_xoffset
+        for ycursor in range (0, len(hitlist_full[0][0])):
+            stdscr.chgat(ycursor, xcursor, 1, curses.A_REVERSE)
+
+        # info
         stdscr.addstr(wy_codeview - 2, wx_codeview, hitlist_labels[hitlist_index].ljust(w_screen))
 
     # bars
