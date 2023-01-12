@@ -151,6 +151,9 @@ hitlist.append(hit_entry)
 hitlist_linenumbers.append(hit_linenumbers)
 hitlist2probeoff.append(offsave)
 
+# common prefix for all src files
+common_prefix = os.path.commonprefix(hitlist_labels)
+
 wx_traceview = 0
 wy_traceview = 0
 wx_codeview = 0
@@ -195,7 +198,7 @@ old_srcpath = ""
 relaunch = False
 blink = True
 show_probes = False
-hide_components = 0
+hide_prefix = False
 ts_min = sys.maxsize
 entry_max = 0
 core_max = 0
@@ -311,7 +314,7 @@ def draw(stdscr):
     global hitlist_start
     global old_srcpath
     global wx_varsview
-    global hide_components
+    global hide_prefix
     global filename_max
     global common_components
     global diffview_xoffset
@@ -342,10 +345,14 @@ def draw(stdscr):
         hitlist_start = hitlist_index
     elif hitlist_index >= (hitlist_start + num_difflines):
         hitlist_start = hitlist_index - num_difflines
+
     j = 0
     for i in range(hitlist_start, hitlist_start + num_difflines):
         if i < len(hitlist):
-            stdscr.addstr(wy_traceview + j, 0, (hitlist_labels[i] + " " + hitlist[i][diffview_xoffset:]).ljust(w_screen))
+            prefix = hitlist_labels[i] + " "
+            if hide_prefix:
+                prefix = prefix.replace(common_prefix,"")
+            stdscr.addstr(wy_traceview + j, 0, prefix + (hitlist[i][diffview_xoffset:]).ljust(w_screen))
             j += 1
 
     ycursor = hitlist_index - hitlist_start
@@ -596,7 +603,7 @@ def main(stdscr, relaunched = False):
     global h_screen
     global blink
     global show_probes
-    global hide_components
+    global hide_prefix
 
     curses.curs_set(0)
 
