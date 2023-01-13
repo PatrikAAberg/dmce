@@ -379,8 +379,8 @@ def draw(stdscr):
 
         if hitlist_index < hitlist_start:
             hitlist_start = hitlist_index
-        elif hitlist_index >= (hitlist_start + num_difflines):
-            hitlist_start = hitlist_index - num_difflines
+        elif hitlist_index > (hitlist_start + (num_difflines - 1)):
+            hitlist_start = hitlist_index - (num_difflines - 1)
 
         j = 0
         for i in range(hitlist_start, hitlist_start + num_difflines):
@@ -858,10 +858,16 @@ def main(stdscr, relaunched = False):
                 if index > 0:
                     index -= 1
             elif c == curses.KEY_PPAGE:
-                if view == 1:
+                if view == 0:
+                    for i in range(num_difflines - 1):
+                        prev_src_file()
+                elif view == 1:
                     prev_src_file()
             elif c == curses.KEY_NPAGE:
-                if view == 1:
+                if view == 0:
+                    for i in range(num_difflines - 1 ):
+                        next_src_file()
+                elif view == 1:
                     next_src_file()
 #            elif hit_SRIGHT:
             elif c == ord("+"):
