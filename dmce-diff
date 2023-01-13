@@ -655,6 +655,43 @@ def clear_jumplist():
     jumpindex = 0
     jumplist = []
 
+def next_src_file():
+    global dataindex
+    global index
+
+    cur_hli = index2hitlist[index]
+    if cur_hli < (len(hitlist) - 1):
+        cur_poff = index - hitlist2probeoff[cur_hli]
+        if cur_poff > (len(hitlist[cur_hli + 1]) - 1):
+            poff = (len(hitlist[cur_hli + 1]) - 1)
+        else:
+            poff = cur_poff
+        index = hitlist2probeoff[cur_hli + 1] + poff
+
+def prev_src_file():
+    global dataindex
+    global index
+
+    cur_hli = index2hitlist[index]
+    if cur_hli > 0:
+        cur_poff = index - hitlist2probeoff[cur_hli]
+        if cur_poff > (len(hitlist[cur_hli - 1]) - 1):
+            poff = (len(hitlist[cur_hli - 1]) - 1)
+        else:
+            poff = cur_poff
+        index = hitlist2probeoff[cur_hli - 1] + poff
+
+def reallyquit(stdscr):
+    global w_screen
+    global h_screen
+
+    stdscr.clear()
+    stdscr.addstr(int(h_screen / 2) - 2, int(w_screen / 2) - 2, "Really quit (y/n)?")
+    c = stdscr.getch()
+    if c == ord("y"):
+        sys.exit(0)
+    stdscr.clear()
+
 def main(stdscr, relaunched = False):
     global cmd_error_code
     global tracebuffer
@@ -801,29 +838,15 @@ def main(stdscr, relaunched = False):
 #                if index < len(prefs) - 1:
 #                    index += 1
             elif c == curses.KEY_UP:
-                if view == 0:
-                    cur_hli = index2hitlist[index]
-                    if cur_hli > 0:
-                        cur_poff = index - hitlist2probeoff[cur_hli]
-                        if cur_poff > (len(hitlist[cur_hli - 1]) - 1):
-                            poff = (len(hitlist[cur_hli - 1]) - 1)
-                        else:
-                            poff = cur_poff
-                        index = hitlist2probeoff[cur_hli - 1] + poff
-                elif view == 1:
+               if view == 0:
+                    prev_src_file()
+               elif view == 1:
                     dataindex -= 1
                     if dataindex < 0:
                         dataindex = len(datafiles) -1
             elif c == curses.KEY_DOWN:
                 if view == 0:
-                    cur_hli = index2hitlist[index]
-                    if cur_hli < (len(hitlist) - 1):
-                        cur_poff = index - hitlist2probeoff[cur_hli]
-                        if cur_poff > (len(hitlist[cur_hli + 1]) - 1):
-                            poff = (len(hitlist[cur_hli + 1]) - 1)
-                        else:
-                            poff = cur_poff
-                        index = hitlist2probeoff[cur_hli + 1] + poff
+                    next_src_file()
                 elif view == 1:
                     dataindex += 1
                     if dataindex >= len(datafiles):
@@ -834,16 +857,21 @@ def main(stdscr, relaunched = False):
             elif c == curses.KEY_LEFT:
                 if index > 0:
                     index -= 1
-
-#            elif hit_SRIGHT:
+            elif c == curses.KEY_PPAGE:
+                if view == 1:
+                    prev_src_file()
             elif c == curses.KEY_NPAGE:
+                if view == 1:
+                    next_src_file()
+#            elif hit_SRIGHT:
+            elif c == ord("+"):
                 while index < (nprobes - 1) and hitlist_flat[index] != " ":
                     index += 1
                 while index < (nprobes - 1) and hitlist_flat[index] == " ":
                     index += 1
 
 #            elif hit_SLEFT:
-            elif c == curses.KEY_PPAGE:
+            elif c == ord("-"):
                 while index > 0 and hitlist_flat[index] != " ":
                     index -= 1
                 while index > 0 and hitlist_flat[index] == " ":
@@ -881,7 +909,7 @@ def main(stdscr, relaunched = False):
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
                 launch_editor(stdscr)
             if (c == ord('q') and view == 0) or relaunch:
-                break
+                reallyquit(stdscr)
             if (c == ord('q') and view == 1):
                 view = 0
 
