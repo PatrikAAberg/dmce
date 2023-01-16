@@ -108,6 +108,7 @@ zoomview_xoffset = 0
 left_pane_index = 0
 right_pane_index = 1
 view = 0
+show_line_ends = ""
 
 # Build hitlist
 hitlist_start = 0
@@ -352,6 +353,7 @@ def draw(stdscr):
     global diffview_xoffset
     global zoomview_xoffset
     global view
+    global show_line_ends
 
     if not screen_large_enough:
         try:
@@ -388,7 +390,7 @@ def draw(stdscr):
                 prefix = hitlist_labels[i] + " "
                 if hide_prefix:
                     prefix = prefix.replace(common_prefix_src,"")
-                stdscr.addstr(wy_traceview + j, 0, prefix + (hitlist[i][diffview_xoffset:]).ljust(w_screen))
+                stdscr.addstr(wy_traceview + j, 0, (prefix + hitlist[i][diffview_xoffset:] + show_line_ends).ljust(w_screen))
                 j += 1
 
         # cursor
@@ -722,6 +724,7 @@ def main(stdscr, relaunched = False):
     global show_probes
     global hide_prefix
     global view
+    global show_line_ends
 
     curses.curs_set(0)
 
@@ -907,6 +910,11 @@ def main(stdscr, relaunched = False):
                     hide_prefix = False
                 else:
                     hide_prefix = True
+            elif c == ord('e'):
+                if show_line_ends == "":
+                    show_line_ends = "$"
+                else:
+                    show_line_ends = ""
             elif c == ord('z'):
                 stdscr.clear()
                 view += 1
