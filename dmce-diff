@@ -661,6 +661,7 @@ def clear_jumplist():
 
     jumpindex = 0
     jumplist = []
+    cmd_error_code = "Cleared all markers!"
 
 def next_src_file():
     global dataindex
@@ -838,30 +839,24 @@ def main(stdscr, relaunched = False):
                 execute_command(last_search_cmd, stdscr)
                 cmdbuffer = []
                 user_input_mode = False
-#            elif c == ord('k') or c == curses.KEY_UP:
-#                if index > 0:
-#                    index -= 1
-#            elif c == ord('j') or c == curses.KEY_DOWN:
-#                if index < len(prefs) - 1:
-#                    index += 1
-            elif c == curses.KEY_UP:
+            elif c == curses.KEY_UP or c == ord('k'):
                if view == 0:
                     prev_src_file()
                elif view == 1:
                     dataindex -= 1
                     if dataindex < 0:
                         dataindex = len(datafiles) -1
-            elif c == curses.KEY_DOWN:
+            elif c == curses.KEY_DOWN or c == ord('j'):
                 if view == 0:
                     next_src_file()
                 elif view == 1:
                     dataindex += 1
                     if dataindex >= len(datafiles):
                         dataindex = 0
-            elif c == curses.KEY_RIGHT:
+            elif c == curses.KEY_RIGHT or c == ord('l'):
                 if index < (nprobes - 1):
                     index += 1
-            elif c == curses.KEY_LEFT:
+            elif c == curses.KEY_LEFT or c == ord('h'):
                 if index > 0:
                     index -= 1
             elif c == curses.KEY_PPAGE:
@@ -921,10 +916,12 @@ def main(stdscr, relaunched = False):
                 numbuffer.append(int(c - ord('0')))
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
                 launch_editor(stdscr)
-            if (c == ord('q') and view == 0) or relaunch:
+            if (c == ord('q') and view == 0):
                 reallyquit(stdscr)
             if (c == ord('q') and view == 1):
                 view = 0
+            if relaunch:
+                break
 
         if index < tv_start:
             tv_start = index
