@@ -509,6 +509,10 @@ def draw(stdscr):
         stdscr.addstr(wy_codeview + num_srclines + 1, cmdindex + 1, cmdstr2)
         stdscr.addstr(wy_codeview + num_srclines + 1, 0, ":" + cmdstr1)
 
+    # debug
+#    stdscr.addstr(0, int(w_screen / 2), str(jumplist))
+
+
 def cleanup_exit():
     curses.nocbreak()
     stdscr.keypad(0)
@@ -558,7 +562,7 @@ def show_help(stdscr):
     stdscr.addstr(14, 0, "  m             - add trace entry to jump list (markers)")
     stdscr.addstr(15, 0, "  '             - jump to next marker")
     stdscr.addstr(16, 0, "  *             - jump to previous marker")
-    stdscr.addstr(17, 0, "  b             - toggle blink / no blink info pane")
+    stdscr.addstr(17, 0, "  c             - clear all markers")
     stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
     stdscr.addstr(19, 0, "  o             - hide one path component (trace view)")
     stdscr.addstr(20, 0, "  O             - unhide one path component (trace view)")
@@ -622,14 +626,14 @@ def jump(direction):
         i = 0
         ejump = jumplist[jumpindex]
         found = False
-        while i < len(tracebuffer):
-            if tracebuffer[i].split("@")[0] == ejump:
+        while i < len(prefs):
+            if prefs[i].split(":")[0] == str(ejump):
                 index = i
                 found  = True
                 break
             i += 1
         if not found:
-            cmd_error_code = "Trace entry '" + ejump + "' not available in this filter view"
+            cmd_error_code = "diff entry '" + str(ejump) + "' not available in this filter view"
         else:
             cmd_error_code = "Jumped to marker " + str(jumpindex)
     else:
@@ -638,8 +642,9 @@ def jump(direction):
 def set_marker():
     global jumpindex
     global jumplist
+    global index
 
-    curindex = tracebuffer[index].split("@")[0]
+    curindex = index
     # unset?
     if curindex in jumplist:
         jumplist.remove(curindex)
