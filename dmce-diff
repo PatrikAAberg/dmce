@@ -33,12 +33,15 @@ parser.add_argument('probefile',        type=str,                   help='probe-
 parser.add_argument('codetree',         type=str,                   help='Code tree path')
 args = parser.parse_args()
 
+log = open("/tmp/dmcediff.log", "w")
+print("dmce diff log", file=log)
+
 # Some constants
 filter_init = 0
 filter_clear = 1
 filter_hits = 2
 
-def read_and_filter(filter_type):
+def read_and_filter(filter_mask):
     global hitlist_start
     global hitlist
     global hitlist_full
@@ -60,7 +63,7 @@ def read_and_filter(filter_type):
     global common_prefix_src
     global common_prefix_data
 
-    if filter_type == filter_init:
+    if filter_mask == filter_init:
         print("Reading probe references  : " + args.probefile)
     with open(args.probefile, 'r') as pf:
         prefs = pf.readlines()
@@ -72,7 +75,7 @@ def read_and_filter(filter_type):
         if len(prefs[i].split(":")[1]) > longest_src_path:
             longest_src_path = len(prefs[i].split(":")[1])
 
-    if filter_type == filter_init:
+    if filter_mask == filter_init:
         # Sanity check if original files  - probed state combo
         original = False
         if "original" in args.probefile:
@@ -97,17 +100,17 @@ def read_and_filter(filter_type):
                 print("error: Probe reference file refers to the file " + args.codetree + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
                 exit (1)
 
-    if filter_type == filter_init:
+    if filter_mask == filter_init:
         print("Reading data files...")
 
     lfiles = args.files.split(",")
     longest_data_path = 0
     for file in lfiles:
         if os.path.exists(file):
-            if filter_type == filter_init:
+            if filter_mask == filter_init:
                 print(file)
         else:
-            if filter_type == filter_init:
+            if filter_mask == filter_init:
                 print("error: File does not exist:'" + file + "'")
                 sys.exit(1)
 
@@ -118,7 +121,7 @@ def read_and_filter(filter_type):
     fsize = os.path.getsize(lfiles[0])
     for file in lfiles:
         if fsize != os.path.getsize(file):
-            if filter_type == filter_init:
+            if filter_mask == filter_init:
                 print("error: Buffer size for " + file + " does not match previous file, abort")
                 sys.exit(1)
 
@@ -132,7 +135,7 @@ def read_and_filter(filter_type):
         elif fsize == nprobes * 8:
             data.append(np.fromfile(file, dtype=np.uint64))
         else:
-            if filter_type == filter_init:
+            if filter_mask == filter_init:
                 print("error: Buffer file sizes does not match number of probes, abort")
                 sys.exit(1)
 
@@ -156,18 +159,27 @@ def read_and_filter(filter_type):
     for i in range(len(prefs)):
         # new file?
         if prefs[i].split(":")[1] != cur_file:
-            hitlist_labels.append(cur_file.ljust(longest_src_path))
-            hitlist.append(hit_entry)
-            hitlist_linenumbers.append(hit_linenumbers)
-            hitlist_full.append(hit_list)
-            hitlist2probeoff.append(offsave)
+            # Apply any filters
+            store = True
+
+            if filter_mask & filter_hits:
+               if not "*" in hit_entry:
+                    store = False
+
+            if store:
+                hitlist_labels.append(cur_file.ljust(longest_src_path))
+                hitlist.append(hit_entry)
+                hitlist_linenumbers.append(hit_linenumbers)
+                hitlist_full.append(hit_list)
+                hitlist2probeoff.append(offsave)
+                hit_linenumbers = []
+                hit_list = []
+                if filter_mask == filter_init:
+                    print(cur_file)
+
+            cur_file = prefs[i].split(":")[1]
             offsave = i
             hit_entry = ""
-            hit_linenumbers = []
-            hit_list = []
-            if filter_type == filter_init:
-                print(cur_file)
-            cur_file = prefs[i].split(":")[1]
 
         # remember line numbers
         hit_linenumbers.append(int(prefs[i].split(":")[2]))
@@ -200,11 +212,19 @@ def read_and_filter(filter_type):
         index2hitlist.append(len(hitlist))
 
     # save the last entry and offset
-    hitlist_labels.append(cur_file.ljust(longest_src_path))
-    hitlist.append(hit_entry)
-    hitlist_linenumbers.append(hit_linenumbers)
-    hitlist2probeoff.append(offsave)
-    hitlist_full.append(hit_list)
+
+    # Apply any filters
+    store = True
+    if filter_mask & filter_hits:
+       if not "*" in hit_entry:
+            store = False
+
+    if store:
+        hitlist_labels.append(cur_file.ljust(longest_src_path))
+        hitlist.append(hit_entry)
+        hitlist_linenumbers.append(hit_linenumbers)
+        hitlist2probeoff.append(offsave)
+        hitlist_full.append(hit_list)
 
     # common prefix for all src files
     common_prefix_src = os.path.commonprefix(hitlist_labels)
@@ -277,9 +297,6 @@ components_max = 0
 common_components =  ""
 
 editor = "vim"
-
-log = open("/tmp/dmcediff.log", "w")
-print("dmce diff log", file=log)
 
 # look for editor configuration
 home = os.environ.get("HOME")
@@ -428,7 +445,9 @@ def draw(stdscr):
                 if hide_prefix:
                     prefix = prefix.replace(common_prefix_src,"")
                 stdscr.addstr(wy_traceview + j, 0, (prefix + hitlist[i][diffview_xoffset:] + show_line_ends).ljust(w_screen))
-                j += 1
+            else:
+                stdscr.addstr(wy_traceview + j, 0, "".ljust(w_screen))
+            j += 1
 
         # cursor
         ycursor = hitlist_index - hitlist_start
@@ -558,19 +577,19 @@ def cleanup_exit():
     curses.echo()
     curses.endwin()
 
-
-def clear_all_filters():
-    global cmd_error_code
-    read_and_filter(filter_clear)
-    cmd_error_code = "Filters cleared!"
-
 def cmd_filter(cmds):
     global cmd_error_code
 
     if len(cmds) >= 2:
         if cmds[1] == "clear":
-            clear_all_filters()
+            read_and_filter(filter_clear)
+            cmd_error_code = "Filters cleared!"
             return
+        elif cmds[1] == "hits":
+            read_and_filter(filter_hits)
+            cmd_error_code = "Only showing files with probe hits"
+            return
+
     cmd_error_code = "Bad filter: '" + " ".join(cmds[1:]) + "'"
     return
 
