@@ -450,9 +450,6 @@ re_update_pos_I             = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\slin
 re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
 re_lvalue                   = re.compile(".*lvalue.*")
 
-# Used in probe insertion pass for regrets
-re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*")
-
 # Regexps below skips (not_to_skip overrides skip) entire blocks
 re_sections_to_not_skip = []
 re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*(referenced|implicit) class.*'))
@@ -1584,6 +1581,15 @@ def afterburner(line, frp):
                 print("afterburner: Line after: " + line)
     return line
 
+# Used in probe insertion pass for regrets
+re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*|.*::\(DMCE_PROBE.*")
+
+def check_regrets(line):
+
+    m = re_regret_insertion.match(line)
+    if m:
+        return True
+
 # Insert probes
 if do_print:
     print("Probing starting at {}".format(parsed_file))
@@ -1920,7 +1926,7 @@ while (i < expdb_index):
 
 
                         # Last time to regret ourselves! Check for obvious errors on line containing prolog. If more is needed create a list instead like for sections to skip!
-                        regret = re_regret_insertion.match(iline_start)
+                        regret = check_regrets(iline_start)
 
                         if (not regret):
                             # Insert prolog
