@@ -32,6 +32,7 @@ cp -a $gitdir/debian/* dmce-$version/DEBIAN
 # Program files
 cp -a $gitdir/dmce-launcher dmce-$version/usr/bin/
 cp -a $gitdir/dmce-trace dmce-$version/usr/bin/
+cp -a $gitdir/dmce-diff dmce-$version/usr/bin/
 cp -a $gitdir/dmce-trace-viewer dmce-$version/usr/bin/
 cp -a $gitdir/dmce-trace-tgui dmce-$version/usr/bin/
 cp -a $gitdir/dmce-bp-set dmce-$version/usr/bin/
