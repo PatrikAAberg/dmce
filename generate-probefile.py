@@ -523,7 +523,7 @@ re_memberdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clan
 
 # Conditional sequence points
 re_csp_list = []
-re_csp_list.append(re.compile(r'.*BinaryOperator.*(\'\|\|\'|\'\&\&\').*'))
+re_csp_list.append(re.compile(r'(.*BinaryOperator.*(\'\|\|\'|\'\&\&\').*|.*-ConditionalOperator.*)'))
 
 # Declaration reference
 re_declref = re.compile(r'.*-DeclRefExpr Hexnumber.*Var Hexnumber \'(\S*)\' \'.*\'.*')
@@ -1047,7 +1047,7 @@ while (lineindex < linestotal):
                 in_function_scope = True
                 function_scope_tab = tab
 
-    # Check for conditional sequence points && and || TODO: add ?
+    # Check for conditional sequence points &&, || and ternaries
     for re_csp in re_csp_list:
         if not in_conditional_sequence_point and re_csp.match(linebuf[lineindex]):
             in_conditional_sequence_point = True
