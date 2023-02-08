@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 import re
+import time
 from threading import Thread
 
 descr = 'Copies header files in #include statements from src/... to a path relative to dest'
@@ -49,12 +50,20 @@ re_includes         = re.compile(".*#include\s*(<|\")((\w|\.|\-|\/|\s)*)((>|\")*
 
 includes_array = []
 
-for i in range(100000):
+for i in range(200000):
     includes_array.append(None)
 
 def parse_file(f, index):
     includes = []
-    fp = open(f)
+
+    open_succeeded = False
+    while not open_succeeded:
+        try:
+            fp = open(f)
+            open_succeeded = True
+        except:
+            time.sleep(1)
+
     code = fp.readlines()
     for line in code:
         m = re_includes.match(line)
@@ -94,7 +103,13 @@ for i in range(len(includes_array)):
             uniq_includes_array.append(include)
 
 def tcopy(src, dst):
-    shutil.copy(src, dst)
+    copy_succeded = False
+    while not copy_succeded:
+        try:
+            shutil.copy(src, dst)
+            copy_succeded = True
+        except:
+            time.sleep(1)
 
 for include in uniq_includes_array:
     # To be found in tree?
