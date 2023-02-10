@@ -10,8 +10,10 @@ static void dmce_probe_body(unsigned int probenbr);
 /* Remove any GCC warnings caused by DMCE since some put warnings as errors */
 #pragma GCC diagnostic ignored "-Wsequence-point" /* Better to get either lvalue or rvalue of de-reffed pointer with post-incr than nothing at all */
 
+#ifdef __cplusplus
 #if __GNUC__ >= 11
 #pragma GCC diagnostic ignored "-Wmismatched-new-delete" /* GCC sometimes is more forgiving w/o comma notation */
+#endif
 #endif
 
 #endif
