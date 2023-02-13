@@ -1582,7 +1582,7 @@ def afterburner(line, frp):
     return line
 
 # Used in probe insertion pass for regrets
-re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*|.*::\(DMCE_PROBE.*")
+re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*|.*::\(DMCE_PROBE.*|.*\)::.*")
 
 def check_regrets(line):
 
@@ -1925,12 +1925,12 @@ while (i < expdb_index):
                             ce+= len(probe_prolog)
 
 
-                        # Last time to regret ourselves! Check for obvious errors on line containing prolog. If more is needed create a list instead like for sections to skip!
+                        # Check for regrets on starting line
                         regret = check_regrets(iline_start)
 
-                        if (not regret):
+                        while (not regret):
                             # Insert prolog
-                            pbuf.pop(ls)
+                            saved_linestart = pbuf.pop(ls)
                             pbuf.insert(ls,iline_start)
 
                             # Pick line to insert epilog
@@ -1938,6 +1938,13 @@ while (i < expdb_index):
                                 print("Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip())
                             line = pbuf[le]
                             iline_end = line[:ce] + probe_epilog + line[ce:]
+
+                            # check for regrets on ending line
+                            if check_regrets(iline_end):
+                                # restore start line and bail out
+                                pbuf.pop(ls)
+                                pbuf.insert(ls, saved_linestart)
+                                break
 
                             # Print summary
                             if do_print:
@@ -1990,6 +1997,7 @@ while (i < expdb_index):
 
                                     break
                                 pat_i += 1
+                            break
 
     i += 1
 
