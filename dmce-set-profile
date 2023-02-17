@@ -21,6 +21,7 @@ parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If
 parser.add_argument('-t', '--notemplates',  action='store_true',        help='If set, dmce will not probe templates')
 parser.add_argument('-n', '--fixnullptr',  action='store_true',        help='If set, dmce will will try to return nullptr instead of \'0\' for C++ when appropriate')
 parser.add_argument('-r', '--noderefs',  action='store_true',        help='If set, dmce will not try to de-reference pointers or struct members in trace probes (useful when looking for bad dereferences')
+parser.add_argument('-M', '--excludecapitals',  action='store_true',        help='Add permutations of captial letters to constructs.exclude, useful to avoid probing captial letter macros')
 args = parser.parse_args()
 
 if "do-not-exclude-anything" not in args.exclude:
@@ -258,11 +259,30 @@ for line in includes:
    fincl.write(line + "\n")
 fincl.close()# write dmce.include file
 
+# Read up constructs so we do not get doublets
+fcon = open(configdir + "/constructs.exclude", "r")
+constexcl_lines = fcon.readlines()
+fcon.close()
+
 if args.constructs is not None:
-    fcon = open(configdir + "/constructs.exclude", "w")
     for line in constructs:
-        fcon.write(line + "\n")
-    for a in range(ord('A'), ord('Z') + 1):
-        for b in range(ord('A'), ord('Z') + 1):
-            fcon.write(chr(a) + chr(b) + "\n")
-    fcon.close()
+        if line + "\n" not in constexcl_lines:
+            constexcl_lines.append(line + "\n")
+
+if args.excludecapitals:
+    capitals_present = False
+    if len(constexcl_lines) > 20:
+        for i in range(len(constexcl_lines) - 3):
+            if constexcl_lines[i].rstrip() == "AA" and constexcl_lines[i].rstrip() == "AB" and constexcl_lines[i].rstrip() == "AC":
+                capitals_present = True
+                break
+
+    if not capitals_present:
+        for a in range(ord('A'), ord('Z') + 1):
+            for b in range(ord('A'), ord('Z') + 1):
+                constexcl_lines.append(chr(a) + chr(b) + "\n")
+
+fcon = open(configdir + "/constructs.exclude", "w")
+for line in constexcl_lines:
+    fcon.write(line)
+fcon.close()
