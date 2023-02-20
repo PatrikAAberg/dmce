@@ -468,9 +468,10 @@ re_sections_to_skip.append(re.compile(r'.*-StaticAssertDecl.*'))
 re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix \'*\'.*'))
 re_sections_to_skip.append(re.compile(r'.*-ConditionalOperator.*')) # TODO: a < b ? a : b invoked by macro in the same file needs more logic
 re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
-re_sections_to_skip.append(re.compile(r'.*-CXXOperatorCallExpr*'))
+re_sections_to_skip.append(re.compile(r'.*-CXXOperatorCallExpr.*'))
 
-re_macro_guard = re.compile(r'.*-DoStmt.*')
+re_macro_guard = re.compile(r'.*-RecoveryExpr.*')
+re_macro_guard_outside = re.compile(r'.*-DoStmt.*')
 
 if (probe_templates_no):
     re_sections_to_skip.append(re.compile(r'.*FunctionTemplateDecl.*'))
@@ -747,7 +748,7 @@ while (lineindex < linestotal):
 
 
     # Try to find hints that wer are in a macro
-    if not in_parsed_file and re_macro_guard.match(linebuf[lineindex]):
+    if re_macro_guard.match(linebuf[lineindex]) or (not in_parsed_file and re_macro_guard_outside.match(linebuf[lineindex])):
         if not in_macro_guard:
             in_macro_guard = True
             macro_guard_tab = tab
