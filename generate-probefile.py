@@ -1959,6 +1959,8 @@ while (i < expdb_index):
                             probes+=1
 
                             # Update probe file
+                            if expdb_func[i] == "":
+                                expdb_func[i] = "<unknown>"
                             if numDataVars == 0:
                                 pdf.write(parsed_file + ":" + str(ls) + ":" + expdb_func[i] + "\n")
                             else:
