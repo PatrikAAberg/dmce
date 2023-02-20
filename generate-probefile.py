@@ -1080,7 +1080,7 @@ while (lineindex < linestotal):
     if do_print:
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
-        print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
+        print("Position => " + "start: " + lstart + ", " + cstart + " last_lstart: " + last_lstart + " last_cstart: " + last_cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
         print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) + " in_macro_guard: " + str(in_macro_guard))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
@@ -1340,13 +1340,13 @@ while (lineindex < linestotal):
                 just_landed = 1
 
     # If lstart or curstart moved forward in parsed c file, update
-    if ( not is_attribute and not just_landed and line_position_updated and in_parsed_file and (int(lstart) > int(last_lstart))):
+    if ( not is_attribute and not just_landed and in_parsed_file and (int(lstart) > int(last_lstart))):
         last_lstart=lstart
         last_cstart=cstart
         if do_print:
             print("Line moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
 
-    if ( not just_landed and col_position_updated and in_parsed_file and (int(lstart) == int(last_lstart)) and ( int(cstart) > int(last_cstart) ) ):
+    if ( not just_landed and in_parsed_file and (int(lstart) == int(last_lstart)) and ( int(cstart) > int(last_cstart) ) ):
         last_cstart=cstart
         if do_print:
             print("Column moving forward! last_lstart:" + last_lstart + " last_cstart:" + last_cstart)
