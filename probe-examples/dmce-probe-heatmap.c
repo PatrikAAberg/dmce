@@ -26,6 +26,8 @@
 #define DMCE_PROBE_HANDLE_SIGNALS (1)
 #endif
 
+#define DMCE_PROBE_OUTPUT_FILE_BIN DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.bin"
+#define DMCE_BUFFER_LOCK DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.lock"
 
 static uint64_t* dmce_buffer;
 static uint64_t* dmce_tmp_buffer;
@@ -59,6 +61,8 @@ static void dmce_on_exit(int status, void* opaque) {
 
     (void)opaque;
 
+    while (mkdir(DMCE_BUFFER_LOCK, 0)) usleep(1000);
+
     if (!(fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "r"))) {
 
         fp = fopen(DMCE_PROBE_OUTPUT_FILE_BIN, "w");
@@ -84,6 +88,7 @@ static void dmce_on_exit(int status, void* opaque) {
         fprintf(stderr, "DMCE: terminated with signal %d (%s)\n", status - 150, strsignal(status - 150));
 
     }
+    remove(DMCE_BUFFER_LOCK);
 }
 
 static void dmce_signal_handler(int sig) {
