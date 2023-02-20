@@ -114,6 +114,9 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR "/tmp/${_user}/dmce-trace-buffer-lock"
 # Some probes need a deafult setting for trace enabled at program entry
 DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
 
+# Some probes check if they should handle signals
+DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS (1)
+
 # Some utilties need an editor
 DMCE_EDITOR:vim
 
