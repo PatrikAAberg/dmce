@@ -18,6 +18,7 @@ parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Co
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If set, dmce will use the system include files when parsing code')
+parser.add_argument('-S', '--nosignals',  action='store_true',        help='If set and selected probe supports checking if it should register a signal handler, it will NOT register a signal handler')
 parser.add_argument('-t', '--notemplates',  action='store_true',        help='If set, dmce will not probe templates')
 parser.add_argument('-n', '--fixnullptr',  action='store_true',        help='If set, dmce will will try to return nullptr instead of \'0\' for C++ when appropriate')
 parser.add_argument('-r', '--noderefs',  action='store_true',        help='If set, dmce will not try to de-reference pointers or struct members in trace probes (useful when looking for bad dereferences')
@@ -83,6 +84,11 @@ while count < len(clines):
             if args.includepaths != '':
                 for path in args.includepaths.split(","):
                     clines[count] = clines[count].rstrip() + " -I" + path
+
+        # Check if register signal handler
+        if "DMCE_PROBE_HANDLE_SIGNALS" in clines[count]:
+            if args.nosignals:
+                clines[count] = "DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS (0)\n"
 
         # Allow dereferences?
         if "DMCE_ALLOW_DEREFERENCES" in clines[count]:
