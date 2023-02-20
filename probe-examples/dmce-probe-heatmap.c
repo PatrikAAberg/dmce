@@ -22,7 +22,9 @@
 #pragma GCC error "missing dmce configuration"
 #endif
 
-#define DMCE_PROBE_OUTPUT_FILE_BIN DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.bin"
+#ifndef DMCE_PROBE_HANDLE_SIGNALS
+#define DMCE_PROBE_HANDLE_SIGNALS (1)
+#endif
 
 
 static uint64_t* dmce_buffer;
@@ -95,6 +97,8 @@ static void dmce_probe_body(unsigned int probenbr) {
         dmce_buffer = (uint64_t*)calloc(DMCE_NUM_PROBES, sizeof(uint64_t));
         dmce_tmp_buffer = (uint64_t*)calloc(DMCE_NUM_PROBES, sizeof(uint64_t));
         dmce_mkdir(DMCE_PROBE_OUTPUT_PATH);
+
+        if (DMCE_PROBE_HANDLE_SIGNALS)
         {
             struct sigaction sa;
             memset(&sa, 0, sizeof(sa));
