@@ -286,7 +286,8 @@ in_conditional_sequence_point = False
 conditional_sequence_point_tab = 0
 in_member_expr = False
 member_expr_tab = 0
-
+in_macro_guard = False
+macro_guard_tab = 0
 
 lineindex = 0
 
@@ -468,6 +469,8 @@ re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix
 re_sections_to_skip.append(re.compile(r'.*-ConditionalOperator.*')) # TODO: a < b ? a : b invoked by macro in the same file needs more logic
 re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
 re_sections_to_skip.append(re.compile(r'.*-CXXOperatorCallExpr*'))
+
+re_macro_guard = re.compile(r'.*-DoStmt.*')
 
 if (probe_templates_no):
     re_sections_to_skip.append(re.compile(r'.*FunctionTemplateDecl.*'))
@@ -675,6 +678,8 @@ while (lineindex < linestotal):
         in_conditional_sequence_point = False
     if (in_member_expr) and (tab <= member_expr_tab):
         in_member_expr = False
+    if (in_macro_guard) and (tab <= macro_guard_tab):
+        in_macro_guard = False
 
     # file refs
     anypos = re_file_ref_anypos.match(linebuf[lineindex])
@@ -739,6 +744,15 @@ while (lineindex < linestotal):
     # A compound expression always gives us a new scope
     if compound and skip_scope and in_parsed_file:
         skip_scope = 0
+
+
+    # Try to find hints that wer are in a macro
+    if not in_parsed_file and re_macro_guard.match(linebuf[lineindex]):
+        if not in_macro_guard:
+            in_macro_guard = True
+            macro_guard_tab = tab
+
+
 
     # The different ways of updating position:
     #
@@ -1066,7 +1080,7 @@ while (lineindex < linestotal):
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
         print("Position => " + "start: " + lstart + ", " + cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) )
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) + " in_macro_guard: " + str(in_macro_guard))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
@@ -1162,7 +1176,7 @@ while (lineindex < linestotal):
         print(secStackPos)
         print(secStackVars)
 
-    if ((trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope)):
+    if ((trailing) and (is_addition) and (not backtrailing) and (not inside_expression) and (not skip) and (not skip_backtrail) and (not skip_lvalue) and (in_function_scope) and not in_macro_guard):
         if function_trace and not re_ftrace_return_statement.match(linebuf[lineindex]):
 
             i = 0
