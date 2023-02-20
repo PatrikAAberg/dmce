@@ -1,4 +1,8 @@
 #define
+# define
+#  define
+#   define
+#    define
 #include
 constexpr
 \\
@@ -9,3 +13,6 @@ ASSERT
 LOG
 return 0
 return \(0\)
+return \(NULL\)
+return\(NULL\)
+return NULL
