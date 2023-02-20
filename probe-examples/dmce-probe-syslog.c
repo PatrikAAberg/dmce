@@ -4,7 +4,7 @@
 
 #include <syslog.h>
 
-#define MAX_NUMBER_OF_PROBES 100000
+#define MAX_NUMBER_OF_PROBES 500000
 
 static int dmce_probes[MAX_NUMBER_OF_PROBES] = {0};
 
