@@ -471,7 +471,7 @@ re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
 re_sections_to_skip.append(re.compile(r'.*-CXXOperatorCallExpr.*'))
 
 re_macro_guard = re.compile(r'.*-RecoveryExpr.*')
-re_macro_guard_outside = re.compile(r'.*-DoStmt.*')
+re_macro_guard_outside = re.compile(r'.*(-DoStmt|-IfStmt|-CompoundStmt).*')
 
 if (probe_templates_no):
     re_sections_to_skip.append(re.compile(r'.*FunctionTemplateDecl.*'))
