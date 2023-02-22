@@ -433,23 +433,23 @@ if do_print:
 
 # Regexps for file refs, trailing and states
 
-re_file_ref_anypos            = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
-re_file_ref_middle          = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
-re_file_ref_right           = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
-re_compound                 = re.compile(r'.*CompoundStmt.*')
-re_parsed_file_statement    = re.compile(r'.*<line:\d*:\d*,\sline:\d*:\d*>.*')
-re_update_pos_A             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
-re_update_pos_B             = re.compile(r'.*<line:(\d*):(\d*)\,\scol:(\d*)>.*')
-re_update_pos_C             = re.compile(r'.*<col:(\d*)>.*')
-re_update_pos_D             = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
-re_update_pos_E             = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
-re_update_pos_F             = re.compile(r'.*<line:(\d*):(\d*)>.*')
-re_update_pos_H             = re.compile(r'.*, line:(\d*):(\d*)>.*')
-re_update_pos_J             = re.compile(r'.*, line:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
-re_update_pos_G             = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
-re_update_pos_I             = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
-re_update_scope_end         = re.compile(r'.*\, line:(\d*):(\d*)>.*')
-re_lvalue                   = re.compile(".*lvalue.*")
+re_file_ref_anypos              = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
+re_file_ref_middle              = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
+re_file_ref_right               = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
+re_compound                     = re.compile(r'.*CompoundStmt.*')
+re_from_backtrailed_statement   = re.compile(r'.*(<line:\d*:\d*,\sline:\d*:\d*>|-IfStmt|-DoStmt|-CompoundStmt).*')
+re_update_pos_A                 = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
+re_update_pos_B                 = re.compile(r'.*<line:(\d*):(\d*)\,\scol:(\d*)>.*')
+re_update_pos_C                 = re.compile(r'.*<col:(\d*)>.*')
+re_update_pos_D                 = re.compile(r'.*<col:(\d*)\,\sline:(\d*):(\d*)>.*')
+re_update_pos_E                 = re.compile(r'.*<col:(\d*)\,\scol:(\d*)>.*')
+re_update_pos_F                 = re.compile(r'.*<line:(\d*):(\d*)>.*')
+re_update_pos_H                 = re.compile(r'.*, line:(\d*):(\d*)>.*')
+re_update_pos_J                 = re.compile(r'.*, line:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
+re_update_pos_G                 = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
+re_update_pos_I                 = re.compile(r'.*<col:(\d*),\sline:(\d*):(\d*)>\sline:(\d*):(\d*)\s.*')
+re_update_scope_end             = re.compile(r'.*\, line:(\d*):(\d*)>.*')
+re_lvalue                       = re.compile(".*lvalue.*")
 
 # Regexps below skips (not_to_skip overrides skip) entire blocks
 re_sections_to_not_skip = []
@@ -997,8 +997,8 @@ while (lineindex < linestotal):
 
         # Check if this backtrailing is a compound or similar, in that case skip the whole thing
         # CompoundStmt Hexnumber <line:104:44, line:107:15>
-        found_parsed_file_statement = re_parsed_file_statement.match(linebuf[lineindex])
-        if (found_parsed_file_statement):
+        from_backtrailed_statement = re_from_backtrailed_statement.match(linebuf[lineindex])
+        if (from_backtrailed_statement):
             skip_backtrail = 1
             skip_backtrail_tab = tab
 
