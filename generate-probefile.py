@@ -992,7 +992,7 @@ while (lineindex < linestotal):
         backtrailing = 1
 
     # Check if global backtrailing. Note! Within the parsed c file!
-    if ( in_parsed_file and (( int(last_lstart) > int(lstart))  or ( ( int(last_lstart) == int(lstart) ) and (int(last_cstart) > int(cstart)))) ):
+    if backtrailing or ( in_parsed_file and (( int(last_lstart) > int(lstart))  or ( ( int(last_lstart) == int(lstart) ) and (int(last_cstart) > int(cstart)))) ):
         backtrailing = 1
 
         # Check if this backtrailing is a compound or similar, in that case skip the whole thing
