@@ -42,7 +42,7 @@ After dmce probing:
 
 ## Dependencies
 
-clang-check 10.0.0+ (12.0.0+ increase probe density performance)
+clang-check 10.0.0+
 
 git 2.10+
 
