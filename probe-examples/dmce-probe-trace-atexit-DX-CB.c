@@ -146,7 +146,7 @@ static void dmce_dump_trace(int status) {
                                    "Signal    : %d (%s)\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo));
             }
 
-            sprintf(info, "\nProbe: dmce-probe-trace-atexit-DX-CB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
+            sprintf(info, "Timestamp unit: CPU timestamps (TSC)\nProbe: dmce-probe-trace-atexit-DX-CB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
 
             strcat(info, exit_info);
 

@@ -197,7 +197,8 @@ static void dmce_dump_trace(int status) {
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->end_monotonic));
             dmce_time_info_p->end_tsc = __builtin_ia32_rdtscp(&cpu);
 
-            sprintf(info,   "\nProbe: dmce-probe-trace-atexit-DX-SB.c, te size: %ld\n"
+            sprintf(info,   "Timestamp unit: Nanoseconds\n"
+                            "Probe: dmce-probe-trace-atexit-DX-SB.c, te size: %ld\n"
                             "# trace-start-tsc: %lu\n"
                             "# trace-end-tsc: %lu\n"
                             "# trace-start-secs: %ld\n"
