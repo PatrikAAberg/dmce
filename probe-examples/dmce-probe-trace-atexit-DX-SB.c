@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
+#include <time.h>
 
 #ifndef DMCE_PROBE_NBR_TRACE_ENTRIES
 #define DMCE_MAX_HITS 10000
@@ -42,6 +43,14 @@ typedef struct {
     uint64_t cpu;
 } dmce_probe_entry_t;
 
+typedef struct {
+
+    uint64_t start_tsc;
+    uint64_t end_tsc;
+    struct timespec start_monotonic;
+    struct timespec end_monotonic;
+} dmce_time_info_t;
+
 #ifdef _GNU_SOURCE
 #include <sched.h>
 #else
@@ -62,9 +71,11 @@ extern char *program_invocation_short_name;
 #ifdef __cplusplus
 static dmce_probe_entry_t* dmce_buf_p = nullptr;
 static unsigned int* dmce_probe_hitcount_p = nullptr;
+static dmce_time_info_t* dmce_time_info_p = nullptr;
 #else
 static dmce_probe_entry_t* dmce_buf_p = 0;
 static unsigned int* dmce_probe_hitcount_p = 0;
+static dmce_time_info_t* dmce_time_info_p = 0;
 #endif
 static int dmce_buffer_setup_done = 0;
 
@@ -166,7 +177,8 @@ static void dmce_dump_trace(int status) {
 
         {
             char info[80 * 10];
-            char exit_info[80 * 3];
+            char exit_info[80 * 4];
+            uint32_t cpu;
 
             if (dmce_signal_core == 4242) {
 
@@ -182,7 +194,23 @@ static void dmce_dump_trace(int status) {
                                    "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
-            sprintf(info, "\nProbe: dmce-probe-trace-atexit-DX-SB.c, te size: %ld\n", sizeof(dmce_probe_entry_t));
+            clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->end_monotonic));
+            dmce_time_info_p->end_tsc = __builtin_ia32_rdtscp(&cpu);
+
+            sprintf(info,   "\nProbe: dmce-probe-trace-atexit-DX-SB.c, te size: %ld\n"
+                            "# trace-start-tsc: %lu\n"
+                            "# trace-end-tsc: %lu\n"
+                            "# trace-start-secs: %ld\n"
+                            "# trace-end-secs: %ld\n"
+                            "# trace-start-nsecs: %ld\n"
+                            "# trace-end-nsecs: %ld\n",
+                            sizeof(dmce_probe_entry_t),
+                            dmce_time_info_p->start_tsc,
+                            dmce_time_info_p->end_tsc,
+                            dmce_time_info_p->start_monotonic.tv_sec,
+                            dmce_time_info_p->end_monotonic.tv_sec,
+                            dmce_time_info_p->start_monotonic.tv_nsec,
+                            dmce_time_info_p->end_monotonic.tv_nsec);
 
             strcat(info, exit_info);
 
@@ -486,19 +514,25 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             /* This is the first thread executing a probe for ANY source file part of this process */
 
             /* allocate buffer, init env var and set up exit hook */
-            /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p*/
+            /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p dmce_time_info_p */
 
             char s[32 * 3];
+            uint32_t cpu;
 
             dmce_buf_p = (dmce_probe_entry_t*)aligned_alloc( 64, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
             memset(dmce_buf_p, 0, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
             dmce_probe_hitcount_p = (unsigned int*)calloc(dmce_num_cores(), sizeof(unsigned int));
+            dmce_time_info_p = (dmce_time_info_t*)malloc(sizeof(dmce_time_info_t));
+
+            clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->start_monotonic));
+            dmce_time_info_p->start_tsc = __builtin_ia32_rdtscp(&cpu);
 
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_time_info_p, dmce_time_info_p, __ATOMIC_SEQ_CST);
 
             /* TODO: Inherited env ? */
 
@@ -508,7 +542,13 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             }
             */
 
-            sprintf(s, "%p %p %p", (void*)dmce_trace_enabled_p, (void*)dmce_buf_p, (void*)dmce_probe_hitcount_p);
+            sprintf(s,
+                    "%p %p %p %p",
+                    (void*)dmce_trace_enabled_p,
+                    (void*)dmce_buf_p,
+                    (void*)dmce_probe_hitcount_p,
+                    (void*)dmce_time_info_p);
+
             setenv("dmce_trace_control", s, 0);
 
             /* Handler for smth-went-wrong signals */
@@ -548,10 +588,17 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
             while (NULL == (s_control_p  = getenv("dmce_trace_control"))) usleep(10);
 
-            sscanf(s_control_p, "%p %p %p", (void**)&dmce_trace_enabled_p, (void**)&dmce_buf_p, (void**)&dmce_probe_hitcount_p);
+            sscanf( s_control_p,
+                    "%p %p %p %p",
+                    (void**)&dmce_trace_enabled_p,
+                    (void**)&dmce_buf_p,
+                    (void**)&dmce_probe_hitcount_p,
+                    (void**)&dmce_time_info_p);
+
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_probe_hitcount_p, dmce_probe_hitcount_p, __ATOMIC_SEQ_CST);
+            __atomic_store_n (&dmce_time_info_p, dmce_time_info_p, __ATOMIC_SEQ_CST);
         }
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
     }
