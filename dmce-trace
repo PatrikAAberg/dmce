@@ -73,12 +73,38 @@ ifile = open(ifilename)
 info_tmp = ifile.readlines()
 ifile.close()
 info = []
+timestamps2nsecs = 0;
+timestamp_start = 0;
+
+count = 0
 for line in info_tmp:
     if not "#" in line:
         print(line.rstrip())
         info.append(line)
     else:
         fields = line.split(" ")
+        if "trace-start-tsc" in line:
+            start_tsc = int(fields[2])
+            count += 1
+        elif "trace-end-tsc" in line:
+            end_tsc = int(fields[2])
+            count += 1
+        elif "trace-start-secs" in line:
+            start_secs = int(fields[2])
+            count += 1
+        elif "trace-end-secs" in line:
+            end_secs = int(fields[2])
+            count += 1
+        elif "trace-start-nsecs" in line:
+            start_nsecs = int(fields[2])
+            count += 1
+        elif "trace-end-nsecs" in line:
+            end_nsecs = int(fields[2])
+            count += 1
+
+if count >= 6:
+    timestamps2nsecs = (end_tsc - start_tsc) / ( 1000000000 * (end_secs - start_secs) + (end_nsecs - start_nsecs))
+    print("CPU timestamps to nanoseconds divider (Nominal cpu clock freq): " + str(timestamps2nsecs), file=sys.stderr)
 
 print("- - - - -")
 
@@ -267,6 +293,10 @@ for n in range(length):
         continue
 
     if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
+        # Convert to nsecs?
+        if timestamps2nsecs:
+            data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
+
         vs = []
         for v in range(0, args.numvars):
             vs.append(format(data[n,v + 2],"04x"))
