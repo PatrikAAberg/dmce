@@ -70,10 +70,15 @@ else:
 dfile = args.dfile
 ifilename = dfile + ".info"
 ifile = open(ifilename)
-info = ifile.readlines()
+info_tmp = ifile.readlines()
 ifile.close()
-for line in info:
-    print(line.rstrip())
+info = []
+for line in info_tmp:
+    if not "#" in line:
+        print(line.rstrip())
+        info.append(line)
+    else:
+        fields = line.split(" ")
 
 print("- - - - -")
 
