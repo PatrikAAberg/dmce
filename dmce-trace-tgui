@@ -89,19 +89,30 @@ common_components =  ""
 editor = "vim"
 
 log = open("/tmp/dmcetraceviewer.log", "w")
-#print("dmce trace viewer log", file=log)
+print("dmce trace viewer log", file=log)
 
 # look for editor configuration
 home = os.environ.get("HOME")
-cfile = home + "/.dmceconfig"
-if os.path.exists(cfile):
-    c = open (cfile)
+cfilename = home + "/.dmceconfig"
+if os.path.exists(cfilename):
+    c = open (cfilename)
     config = c.readlines()
     c.close()
     for c in config:
         if "DMCE_EDITOR" in c:
             editor = c.split(":")[1].strip()
             break
+
+# Import info file
+infofilename = home + "/.dmcetracetguiinfo"
+if os.path.exists(infofilename):
+    i = open(infofilename)
+    infolines = i.readlines()
+    i.close()
+
+    for line in infolines:
+        if line[0] == ":":
+            cmdhistory.append(line[1:].split())
 
 user_input_mode = False
 
@@ -921,6 +932,22 @@ def clear_jumplist():
     jumpindex = 0
     jumplist = []
 
+
+def pack_up():
+    global cmdhistory
+    global home
+    infofilename = home + "/.dmcetracetguiinfo"
+    written_lines = []
+    i = open(infofilename, "w")
+    for cmd in cmdhistory:
+        l = ""
+        for c in cmd:
+            l = l + c
+        if re.match(".*\S.*", l) and l not in written_lines:
+            i.write(":" + l + "\n")
+            written_lines.append(l)
+    i.close()
+
 def main(stdscr, relaunched = False):
     global cmd_error_code
     global tracebuffer
@@ -1096,6 +1123,7 @@ def main(stdscr, relaunched = False):
             elif c == curses.KEY_ENTER or c == 10 or c == 13:
                 launch_editor(stdscr)
             if c == ord('q') or relaunch:
+                pack_up()
                 break
         if index < tv_start:
             tv_start = index
