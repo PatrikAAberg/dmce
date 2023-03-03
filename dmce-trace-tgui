@@ -112,7 +112,9 @@ if os.path.exists(infofilename):
 
     for line in infolines:
         if line[0] == ":":
-            cmdhistory.append(line[1:].split())
+            tmp = []
+            tmp[:0] = line[1:].rstrip()
+            cmdhistory.append(tmp)
 
 user_input_mode = False
 
