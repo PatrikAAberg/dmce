@@ -1,5 +1,5 @@
 if [ "${size}" -eq 2 ]; then
-	a=$(find $(ove-proj2path dmce)/.ove/scripts/ -name 'dmce-*' -type f -perm -u=x -exec basename {} \;)
+	a=$(find $(ove-proj2val dmce path)/.ove/scripts/ -name 'dmce-*' -type f -perm -u=x -exec basename {} \;)
 	a=${a//dmce-}
 	COMPREPLY=( $(compgen -W "launch set-profile summary-bin summary-txt trace ${a}" -- "${cur}") )
 elif [ "${size}" -gt 2 ]; then
@@ -7,7 +7,7 @@ elif [ "${size}" -gt 2 ]; then
 		COMPREPLY=( $(compgen -W "printf trace coverage syslog" -- "${cur}") )
 	else
 		# find subcommand complete file (if any)
-		a=$(find $(ove-proj2path dmce)/.ove/scripts/ -name dmce-${COMP_WORDS[2]}.complete -type f)
+		a=$(find $(ove-proj2val dmce path)/.ove/scripts/ -name dmce-${COMP_WORDS[2]}.complete -type f)
 		if [ "x$a" != "x" ]; then
 			size=$((size-1)) . $a
 		fi
