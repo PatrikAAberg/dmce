@@ -25,6 +25,7 @@ import os
 import sys
 import re
 from curses import wrapper
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
 parser.add_argument('tfile',            type=str,                   help='Trace file (output from dmce-trace)')
@@ -45,6 +46,7 @@ w_screen = 0
 
 tracebuffer = []
 full_tracebuffer = []
+imported_traces = []
 trace_info = []
 codebuffer = []
 varbuffer = []
@@ -795,6 +797,23 @@ def cmd_search(sstr):
         cmd_error_code = "Empty search string!"
         return
 
+def trace_import(cmds):
+    global cmd_error_code
+
+    ifilename = cmds[1]
+    if Path(ifilename).is_file():
+        i = open (ifilename)
+        imported = i.readlines()
+        i.close()
+
+        imported_traces.append(imported)
+
+        cmd_error_code = "Imported " + ifilename
+        return
+    else:
+        cmd_error_code = "Failed to open " + ifilename
+        return
+
 def execute_command(cmdstr, stdscr):
     global cmd_error_code
 
@@ -812,6 +831,9 @@ def execute_command(cmdstr, stdscr):
         return
     elif cmds[0] == "help":
         show_help(stdscr)
+        return
+    elif cmds[0] == "import":
+        trace_import(cmds)
         return
     elif cmds[0] == "q" or cmds[0] == "qa":
         sys.exit(0)
@@ -842,6 +864,7 @@ def show_help(stdscr):
     stdscr.addstr(18, 0, "  p             - toggle show probes (only valid for probed src tree)")
     stdscr.addstr(19, 0, "  o             - hide one path component (trace view)")
     stdscr.addstr(20, 0, "  O             - unhide one path component (trace view)")
+    stdscr.addstr(21, 0, "  i             - Show extra info for this time interval (imported traces)")
     stdscr.addstr(21, 0, "  ENTER         - open current source file in editor")
     stdscr.addstr(22, 0, "  ESCAPE        - exit command mode")
     stdscr.addstr(24, 0, "  Commands")
@@ -862,6 +885,28 @@ def show_help(stdscr):
     stdscr.addstr(40, 0, "    Example: :/'.*foo.*bar")
     stdscr.addstr(41, 0, "  - To search for a trace entry where a variable contains a certain value:")
     stdscr.addstr(42, 0, "    Example: /foo:0x0042")
+
+    c = stdscr.getch()
+
+def get_extra_trace_info(starttime, endtime):
+    info = []
+
+    for trace in imported_traces:
+        for line in trace:
+            info.append(line)
+
+    return info
+
+def show_extra_info(stdscr, starttime, endtime):
+    stdscr.clear()
+    stdscr.addstr(0, 0,  "  Imported trace entries in range " + str(starttime) + " (ns) - " + str(endtime) + " (ns)")
+    stdscr.addstr(1, 0, "--------------------------------------------------------------------------")
+    info = get_extra_trace_info(starttime, endtime)
+    if len(info) == 0:
+        stdscr.addstr(2, 0, "No imported trace entries found")
+    else:
+        for i in range(len(info)):
+            stdscr.addstr(2 + i, 0, info[i])
 
     c = stdscr.getch()
 
@@ -1042,6 +1087,11 @@ def main(stdscr, relaunched = False):
             curses.curs_set(0)
             if c == ord('h'):
                 show_help(stdscr)
+            elif c == ord('i'):
+                if index < (len(tracebuffer) - 1):
+                    interval_start = tracebuffer[index].split("@")[2]
+                    interval_end = tracebuffer[index + 1].split("@")[2]
+                    show_extra_info(stdscr, interval_start, interval_end)
             elif c == ord(':'):
                 cmd_error_code = ""
                 user_input_mode = True
