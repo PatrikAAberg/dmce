@@ -362,6 +362,13 @@ def draw(stdscr):
                 stdscr.addstr(wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout), curses.A_REVERSE)
             else:
                 highlight_search_out(stdscr, wy_traceview + i - tv_start, wx_traceview, tout[:wtout].ljust(wtout))
+
+            if i < (len(tracebuffer) - 1):
+                interval_start = int(tracebuffer[i].split("@")[2])
+                interval_end = int(tracebuffer[i + 1].split("@")[2])
+                if get_extra_trace_info(interval_start, interval_end) is not None:
+                    out = "<extra info available>"
+                    stdscr.addstr(wy_traceview + i - tv_start, wx_varsview - len(out) - 1, out)
         else:
             stdscr.hline(wy_traceview + i - tv_start, wx_traceview, ' ', wtout)
 
@@ -893,16 +900,23 @@ def get_extra_trace_info(starttime, endtime):
 
     for trace in imported_traces:
         for line in trace:
-            info.append(line)
+            if "dmce-ti@" in line:
+                fields = line.split("@")
+                if len(fields) > 3:
+                    if ((int(fields[2]) >= starttime) and (int(fields[2]) <= endtime )):
+                        info.append(line)
 
-    return info
+    if len(info) == 0:
+        return None
+    else:
+        return info
 
 def show_extra_info(stdscr, starttime, endtime):
     stdscr.clear()
     stdscr.addstr(0, 0,  "  Imported trace entries in range " + str(starttime) + " (ns) - " + str(endtime) + " (ns)")
     stdscr.addstr(1, 0, "--------------------------------------------------------------------------")
     info = get_extra_trace_info(starttime, endtime)
-    if len(info) == 0:
+    if info is None:
         stdscr.addstr(2, 0, "No imported trace entries found")
     else:
         for i in range(len(info)):
@@ -1089,8 +1103,8 @@ def main(stdscr, relaunched = False):
                 show_help(stdscr)
             elif c == ord('i'):
                 if index < (len(tracebuffer) - 1):
-                    interval_start = tracebuffer[index].split("@")[2]
-                    interval_end = tracebuffer[index + 1].split("@")[2]
+                    interval_start = int(tracebuffer[index].split("@")[2])
+                    interval_end = int(tracebuffer[index + 1].split("@")[2])
                     show_extra_info(stdscr, interval_start, interval_end)
             elif c == ord(':'):
                 cmd_error_code = ""
