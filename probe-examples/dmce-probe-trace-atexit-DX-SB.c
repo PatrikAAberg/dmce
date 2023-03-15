@@ -177,21 +177,27 @@ static void dmce_dump_trace(int status) {
 
         {
             char info[80 * 10];
-            char exit_info[80 * 4];
             uint32_t cpu;
+            char exit_info[80 * 4 + 256];
+            char host[256];
+
+            host[255] = '\0';
+            gethostname(host, 255);
 
             if (dmce_signal_core == 4242) {
 
-                sprintf(exit_info,  "Exit cause   : exit()\n"
+                sprintf(exit_info,  "Host         : %s\n"
+                                    "Exit cause   : exit()\n"
                                     "Exit status  : %d\n"
-                                    "System cores : %d\n", status, num_cores);
+                                    "System cores : %d\n", host, status, num_cores);
             }
             else {
 
-                sprintf(exit_info, "Exit cause  : signal handler\n"
-                                   "Core        : %d\n"
-                                   "Signal      : %d (%s)\n"
-                                   "System cores: %d\n", dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
+                sprintf(exit_info,  "Host        : %s\n"
+                                    "Exit cause  : signal handler\n"
+                                    "Core        : %d\n"
+                                    "Signal      : %d (%s)\n"
+                                    "System cores: %d\n", host, dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->end_monotonic));
