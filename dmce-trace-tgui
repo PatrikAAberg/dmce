@@ -90,8 +90,8 @@ common_components =  ""
 
 editor = "vim"
 
-log = open("/tmp/dmcetraceviewer.log", "w")
-print("dmce trace viewer log", file=log)
+#log = open("/tmp/dmcetraceviewer.log", "w")
+#print("dmce trace viewer log", file=log)
 
 # look for editor configuration
 home = os.environ.get("HOME")
