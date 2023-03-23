@@ -172,6 +172,7 @@ function main() {
         elif [ "x$DMCE_TRACE_VIEWER" = "xstderr" ]; then
             column -t -s'@' ${dmce_trace_log} 1>&2
         elif [ "x$DMCE_TRACE_VIEWER" = "xtgui" ]; then
+            cp ${dmce_trace_log} /tmp/patrik.trace
             dmce-trace-tgui ${dmce_trace_log}
         else
             echo "saving trace as '$(readlink -f $DMCE_TRACE_VIEWER)'"

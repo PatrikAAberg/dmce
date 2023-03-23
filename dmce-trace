@@ -133,7 +133,7 @@ probefile = probefiles.split(",")
 codetree = codetrees.split(",")
 numfrefs = len(probefile)
 if numfrefs != len(codetree):
-    print("Number of probe reference files does not match number of code trees, abort")
+    print("Number of probe reference files does not match number of code trees, abort", file = sys.stderr)
     exit(1)
 
 # Read probe refs files
@@ -302,9 +302,6 @@ for i in range(numfrefs):
     treedict.append(treedict_tmp)
     probedtree.append(probedtree_tmp)
 
-print("--------- UNDER CONSTRUCTION, CONTROLLED EXIT ----------", file=sys.stderr)
-sys.exit(1)
-
 outbuf = []
 
 print("Generating trace output", file=sys.stderr)
@@ -324,88 +321,102 @@ for n in range(length):
         continue
 
     if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
-        # Convert to nsecs?
-        if timestamps2nsecs:
-            data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
 
-        vs = []
-        for v in range(0, args.numvars):
-            vs.append(format(data[n,v + 2],"04x"))
+        # Which ref file index?
+        refindex = sys.maxsize
+        for i in range(numfrefs):
+            if (pnum >= pinterval[i][0]) and (pnum <= pinterval[i][1]):
+                refindex = i
+                # adjust pnum with offset
+                pnum = int(pnum - pinterval[i][0])
+                break
 
-        refs = prefs[pnum].rstrip().split(':')
-        fname = refs[1]
-        line = int(refs[2])
-        func = refs[3]
-        varnames = refs[4:]
-        # Editor line numbers start with 1
-        line = line - 1
-
-        # Retrieve source code from cache
-        lsource = treedict[codetree + "/" + fname]
-
-        # reset fname
-        if args.sort == "heat" or args.sort == "collapse" or args.sort == "uniq":
-            fname = ""
+        if refindex == sys.maxsize:
+            print("Could not find matching reference information for probe " + str(pnum) + ", abort", file = sys.stderr)
+            sys.exit(1)
         else:
-            fname = str(cpu)
+            # Convert to nsecs?
+            if timestamps2nsecs:
+                data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
 
-        if showtimestamps:
-            fname += args.delimiter + str(data[n, 0])
+            vs = []
+            for v in range(0, args.numvars):
+                vs.append(format(data[n,v + 2],"04x"))
 
-        fname += args.delimiter + codetree + "/" + refs[1]
+            refs = prefs[refindex][pnum].rstrip().split(':')
+            fname = refs[1]
+            line = int(refs[2])
+            func = refs[3]
+            varnames = refs[4:]
+            # Editor line numbers start with 1
+            line = line - 1
 
-        if notComplete(data[n, 0]):
-            fname += "<Trace incomplete>"
+            # Retrieve source code from cache
+            lsource = treedict[refindex][codetree[refindex] + "/" + fname]
 
-        if leading or trailing:
-            print("                                             ---")
-        for lcount in range (line - leading, line + 1 + trailing):
-            if lcount > 0:
-                if 0 <= lcount < len(lsource):
-                    if keep_src_indent:
-                        sl = lsource[lcount].rstrip()
-                    else:
-                        sl = lsource[lcount].strip()
-                else:
-                    continue
+            # reset fname
+            if args.sort == "heat" or args.sort == "collapse" or args.sort == "uniq":
+                fname = ""
+            else:
+                fname = str(cpu)
 
-                if lcount == line:
-                    if not args.showprobes:
-                        sl, vs = getSourceAndVars(sl, vs, varnames)
-                    else:
-                        if not probedtree:
-                            print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
-                            sys.exit(1)
-                        sldummy, vs = stripProbeExtractVars(sl, vs)
-                    if args.sort == "heat":
-                        out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, ""]
-                    else:
-                        if not args.hl:
-                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+            if showtimestamps:
+                fname += args.delimiter + str(data[n, 0])
+
+            fname += args.delimiter + codetree[refindex] + "/" + refs[1]
+
+            if notComplete(data[n, 0]):
+                fname += "<Trace incomplete>"
+
+            if leading or trailing:
+                print("                                             ---")
+            for lcount in range (line - leading, line + 1 + trailing):
+                if lcount > 0:
+                    if 0 <= lcount < len(lsource):
+                        if keep_src_indent:
+                            sl = lsource[lcount].rstrip()
                         else:
-                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
-                else:
-                    if probedtree and not args.showprobes:
-                        sl = stripProbe(sl)
-                    out = ["", sl, ""]
+                            sl = lsource[lcount].strip()
+                    else:
+                        continue
 
-                if (args.format == "column"):
-                    fwidth = longestpath
-                    if showtimestamps:
-                        fwidth += 22
-                    fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
-                elif (args.format == "raw"):
-                    fmt = "{} {} {}"
-                else:
-                    print("error: unknown format", file=sys.stderr)
-                    sys.exit(1)
+                    if lcount == line:
+                        if not args.showprobes:
+                            sl, vs = getSourceAndVars(sl, vs, varnames)
+                        else:
+                            if not probedtree:
+                                print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
+                                sys.exit(1)
+                            sldummy, vs = stripProbeExtractVars(sl, vs)
+                        if args.sort == "heat":
+                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, ""]
+                        else:
+                            if not args.hl:
+                                out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+                            else:
+                                out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
+                    else:
+                        if probedtree and not args.showprobes:
+                            sl = stripProbe(sl)
+                        out = ["", sl, ""]
 
-                outstr = fmt.format(*out)
+                    if (args.format == "column"):
+                        fwidth = longestpath
+                        if showtimestamps:
+                            fwidth += 22
+                        fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                    elif (args.format == "raw"):
+                        fmt = "{} {} {}"
+                    else:
+                        print("error: unknown format", file=sys.stderr)
+                        sys.exit(1)
 
-                if args.sort != "seq":
-                    outbuf.append(outstr)
-                else:
-                    print(outstr)
+                    outstr = fmt.format(*out)
+
+                    if args.sort != "seq":
+                        outbuf.append(outstr)
+                    else:
+                        print(outstr)
 
 
 def lstr(slist):
