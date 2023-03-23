@@ -108,8 +108,8 @@ if count >= 6:
 
 print("- - - - -")
 
-probefile = args.probefile
-codetree = args.codetree
+probefiles = args.probefile
+codetrees = args.codetree
 
 if args.numvars is not None:
     entrysize64 = TRACE_ENTRY_HEADER + args.numvars
@@ -125,48 +125,67 @@ else:
         print("dmce trace: Could not find trace entry size in " + ifilename + ", abort" + str(entrysize64), file=sys.stderr)
         sys.exit(1)
 
-print("Raw input file: " + dfile, file=sys.stderr)
-print("Probe ref file: " + probefile, file=sys.stderr)
-print("Code tree     : " + codetree, file=sys.stderr)
+print("Raw input file   : " + dfile, file=sys.stderr)
+print("Probe ref file(s): " + probefiles, file=sys.stderr)
+print("Code tree(s)     : " + codetrees, file=sys.stderr)
 
-# Read probe refs file
-pf = open(probefile)
-prefs = pf.readlines()
-pf.close()
+probefile = probefiles.split(",")
+codetree = codetrees.split(",")
+numfrefs = len(probefile)
+if numfrefs != len(codetree):
+    print("Number of probe reference files does not match number of code trees, abort")
+    exit(1)
+
+# Read probe refs files
+prefs = []
+for i in range(numfrefs):
+    pf = open(probefile[i])
+    prefs.append(pf.readlines())
+    pf.close()
+
+# Retrieve probe number intervals
+pinterval = []
+for i in range(numfrefs):
+    tmp = []
+    tmp.append(int(prefs[i][0].rstrip().split(':')[0]))
+    tmp.append(int(prefs[i][len(prefs[i]) - 1].rstrip().split(':')[0]))
+    pinterval.append(tmp)
 
 # Sanity check if original files  - probed state combo
-original = False
-if "original" in probefile:
-    original = True
+for i in range(numfrefs):
+    original = False
+    if "original" in probefile[i]:
+        original = True
 
-state_probed = False
-if os.path.exists(codetree + "/.dmce_state_probed"):
-    state_probed  = True
+    state_probed = False
+    if os.path.exists(codetree[i] + "/.dmce_state_probed"):
+        state_probed  = True
 
-if state_probed and original:
-    print("dmce trace: Detected a probed code tree combined with " + probefile  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
-    exit (1)
+    if state_probed and original:
+        print("dmce trace: Detected a probed code tree " + codetree[i] + " combined with " + probefile[i]  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
+        exit (1)
 
-if not state_probed and not original:
-    print("dmce trace: Detected a non-probed code tree combined with probe-references.log. Please probe the tree or use probe-references-original.log instead, abort", file=sys.stderr)
-    exit (1)
-
+    if not state_probed and not original:
+        print("dmce trace: Detected a non-probed code tree " + codetree[i] + "combined with " + probefile[i]  + "   Please probe the tree or use probe-references-original.log instead, abort", file=sys.stderr)
+        exit (1)
 
 # Sanity check if files in probe ref file exist in code tree
-for ref in prefs:
-    # Check if referenced files exist
-    if not os.path.exists(codetree + "/" + ref.rstrip().split(':')[1]):
-        print("dmce trace: Probe reference file refers to the file " + codetree + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
-        exit (1)
+for i in range(numfrefs):
+    for ref in prefs[i]:
+        # Check if referenced files exist
+        if not os.path.exists(codetree[i] + "/" + ref.rstrip().split(':')[1]):
+            print("dmce trace: Probe reference file refers to the file " + codetree[i] + "/" + ref.rstrip().split(':')[1] + " but is does not exist, abort", file=sys.stderr)
+            exit (1)
 
 # Find longest path-func combo
 longestpath=0
 
-for s in prefs:
-    s = ":".join(s.split(":")[1:4])
-    l = len(s)
-    if l > longestpath:
-        longestpath = l
+for i in range(numfrefs):
+    for s in prefs[i]:
+        s = ":".join(s.split(":")[1:4])
+        l = len(s)
+        if l > longestpath:
+            longestpath = l
 
 print("Reading trace buffer", file=sys.stderr)
 
@@ -259,20 +278,32 @@ def notComplete(timestamp):
         return True
 
 # Cache dir tree and source code
-tree = glob.glob(codetree + "/**", recursive = True)
-treedict = {}
-re_source = re.compile('\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
-probedtree = False
+tree = []
+treedict = []
+probedtree = []
 
-for filename in tree:
-    if os.path.isfile(filename) and re_source.search(filename):
-        f = open(filename)
-        treedict[filename] = f.readlines()
-        f.close()
-        if probedtree == False:
-            for s in treedict[filename]:
-                if "DMCE_PROBE" in s:
-                    probedtree = True
+for i in range(numfrefs):
+    tree_tmp = glob.glob(codetree[i] + "/**", recursive = True)
+    treedict_tmp = {}
+    probedtree_tmp = False
+    re_source = re.compile('\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
+
+    for filename in tree_tmp:
+        if os.path.isfile(filename) and re_source.search(filename):
+            f = open(filename)
+            treedict_tmp[filename] = f.readlines()
+            f.close()
+            if probedtree_tmp == False:
+                for s in treedict_tmp[filename]:
+                    if "DMCE_PROBE" in s:
+                        probedtree_tmp = True
+
+    tree.append(tree_tmp)
+    treedict.append(treedict_tmp)
+    probedtree.append(probedtree_tmp)
+
+print("--------- UNDER CONSTRUCTION, CONTROLLED EXIT ----------", file=sys.stderr)
+sys.exit(1)
 
 outbuf = []
 

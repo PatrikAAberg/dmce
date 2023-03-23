@@ -90,10 +90,11 @@ function init() {
     WORKAREA="/tmp/$USER"
     mkdir -p $WORKAREA
 
-    if [ ! -d "${git_full}" ]; then
-        echo "error: ${git_full} is not a directory"
-        usage
-    fi
+# TODO: remove or check comma-separated list
+#    if [ ! -d "${git_full}" ]; then
+#        echo "error: ${git_full} is not a directory"
+#        usage
+#    fi
 }
 
 function cleanup() {
@@ -155,11 +156,12 @@ function main() {
     fi
     files+=" ${dmce_trace_log}"
 
-    echo "$ cd ${git_full}"
-    if ! cd "${git_full}"; then
-        echo "error: 'cd ${git_full}' failed, weird!"
-        exit 1
-    fi
+    # TODO: Remove or make work with comma-separated list
+#    echo "$ cd ${git_full}"
+#    if ! cd "${git_full}"; then
+#        echo "error: 'cd ${git_full}' failed, weird!"
+#        exit 1
+#    fi
 
     # none-fzf: simply display the log
     if [ $fzf -eq 0 ]; then
@@ -181,6 +183,7 @@ function main() {
         exit 0
     fi
 
+    exit 0
     # fzf only below...
     column -t -s@ <${dmce_trace_log} > ${dmce_trace_log}_view
     files+=" ${dmce_trace_log}_view"
