@@ -124,7 +124,7 @@ function main() {
         b_list="$(cat /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"
     else
         # here we had some old dmcebuffers laying around, just take the new ones
-        if ! b_list="$(comm -1 -3 /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"; then
+        if ! b_list="$(LC_ALL=C comm -1 -3 /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"; then
             exit 1
         fi
     fi
