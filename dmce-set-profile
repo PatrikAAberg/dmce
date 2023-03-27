@@ -21,6 +21,7 @@ parser.add_argument('-e', '--exclude',   type=str, default = 'do-not-exclude-any
 parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma separated list of files and functions to include: <file,:function,file:function >')
 parser.add_argument('-m', '--memlimit',   type=str, default = '50',   help='If used memory on the system exceeds this limit, DMCE will halt and not spawn new jobs until used memory goes below the limit again (default: 50)')
 parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
+parser.add_argument('-C', '--cache', type=int, default = 0, help='DMCE cache - experimental')
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
 parser.add_argument('-l', '--listprofiles',  action='store_true',        help='List available profiles')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
@@ -142,6 +143,10 @@ while count < len(clines):
                 clines[count] = "DMCE_SYS_INCLUDES:YES\n"
             else:
                 clines[count] = "DMCE_SYS_INCLUDES:NO\n"
+
+        # DMCE cache
+        if "DMCE_CACHE" in clines[count]:
+            clines[count] = "DMCE_CACHE:" + str(args.cache) + "\n"
 
         # trace profile
         if args.profile == "trace":

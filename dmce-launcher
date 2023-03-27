@@ -67,6 +67,7 @@ OPTIONS
     -a, --all        Probe entire history
     --ast-cache      Save AST output from clang-check in a local file cache
     -c               Restore source code state
+    -C               Clear both DMCE cache and AST cache
     --doublecheck    Exit with error if any file is already probed
     -d val           Number of weeks from HEAD
     --head[=]<val>   <val> is the HEAD to which comparison is done
@@ -149,6 +150,7 @@ fi
 
 optspec+="a"
 optspec+="c"
+optspec+="C"
 optspec+="d:"
 optspec+="h"
 optspec+="j:"
@@ -277,6 +279,9 @@ while getopts "$optspec" optchar; do
         c)
             restore=true
             ;;
+        C)
+            clear_cache=true
+            ;;
         *)
             if [ "$OPTERR" == 1 ]; then
                 usage
@@ -285,13 +290,16 @@ while getopts "$optspec" optchar; do
     esac
 done
 
-if [ "${quiet}" = "false" ]; then
-    while true; do
+function dmce_externals() {
+    {
         clang-check --version | grep -o 'LLVM version.*'
         git --version
         python3 --version
-        break
-    done | sed 's,version,,g'
+    } | sed 's,version,,g'
+}
+
+if [ "${quiet}" = "false" ]; then
+    dmce_externals
 fi
 
 export DMCE_QUIET_MODE="${quiet}"
@@ -437,6 +445,11 @@ fi
 if [ "$restore" = true ]; then
     rm -f ${git_root}/.dmce_state_probed
     exit 0
+elif [ "$clear_cache" = true ]; then
+    if [ -d "${DMCE_WORK_PATH:?}/$git_name/cache" ]; then
+        rm -rf "${DMCE_WORK_PATH}/$git_name/cache"
+    fi
+    exit 0
 fi
 
 touch ${git_root}/.dmce_state_probed
@@ -549,6 +562,68 @@ if [ "$skip" = false ]; then
     fi
     _echo "clean out probe database"
     true > "${DMCE_WORK_PATH}"/global_probedata.dmce
+fi
+
+function dmce_get_dir_md5() {
+    local d
+    local md5
+
+    if [ $# -ne 1 ]; then
+        echo "error: dmce_get_dir_md5: no args"
+        exit 1
+    elif [ ! -d "$1" ]; then
+        echo "error: dmce_get_dir_md5: $1 is not a dir"
+        exit 1
+    fi
+    d="$1"
+
+    if command -v md5deep > /dev/null; then
+        # o f = regular files only
+        # r   = recursive
+        # s   = silent mode
+        md5=$(md5deep \
+            -o f \
+            -r "${d}" \
+            -s | \
+            awk '{print $1}' | \
+            sort | \
+            md5sum)
+    else
+        md5=$(find \
+            "${d}" \
+            -type f \
+            -print0 | \
+            xargs -0 md5sum | \
+            awk '{print $1}' | \
+            sort | \
+            md5sum)
+    fi
+
+    if [ "x${md5}" = "x" ]; then
+        exit 1
+    fi
+
+    echo "${md5%  -}"
+}
+
+if [ "$DMCE_CACHE" = "1" ]; then
+    {
+        dmce_externals
+        echo "DMCE $DMCE_VERSION"
+        grep -E -v '^$|^#|^DMCE_CACHE:' $USE_DMCE_CONFIG_FILE
+        grep -h -E -v '^$|^#' $DMCE_CONFIG_PATH/dmce.{pos,var}.{include,exclude} || :
+        cat $DMCE_CONFIG_PATH/constructs.exclude $DMCE_CONFIG_PATH/recognizedexpressions.py
+    echo inc:$(dmce_get_dir_md5 "${DMCE_WORK_PATH}/${git_name}/inc")
+    } > ${DMCE_WORK_PATH}/dmce.info
+    md5=$(cat ${DMCE_WORK_PATH}/dmce.info | md5sum)
+    md5=${md5%  -}
+    export DMCE_MD5=$md5
+    mv ${DMCE_WORK_PATH}/dmce.info ${DMCE_WORK_PATH}/${DMCE_MD5}.info
+    _echo "md5: $DMCE_MD5"
+    if [ "$DMCE_DEBUG" = true ]; then
+        echo "${DMCE_WORK_PATH}/${DMCE_MD5}.info"
+        cat -n ${DMCE_WORK_PATH}/${DMCE_MD5}.info
+    fi
 fi
 
 time {

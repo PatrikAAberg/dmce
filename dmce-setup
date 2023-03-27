@@ -125,6 +125,9 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS (1)
 
 # Some utilties need an editor
 DMCE_EDITOR:vim
+
+# DMCE cache
+DMCE_CACHE:0
 NoWord
 
 cp $installpath/share/dmce/constructs.exclude /$cfgpath/.config/dmce/

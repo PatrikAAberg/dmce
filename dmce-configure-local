@@ -120,5 +120,7 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS (1)
 # Some utilties need an editor
 DMCE_EDITOR:vim
 
+# DMCE cache
+DMCE_CACHE:0
 NoWord
 echo "...done. Please notice that a .dmceconfig file in the git where dmce is launched will override this file."

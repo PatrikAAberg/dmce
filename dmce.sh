@@ -24,6 +24,7 @@ set -e
 nbr_of_files=0
 files_probed=0
 files_skipped=0
+files_from_cache=0
 nbrofprobesinserted=0
 
 function summary {
@@ -33,18 +34,19 @@ function summary {
     echo "==============================================="
     echo "git repository                    $PWD"
     if [ "$oldsha" != "$oldsha_rev" ]; then
-            echo "Old SHA-1                         $(printf %-${padding}s $oldsha) ($oldsha_rev)"
+        echo "Old SHA-1                         $(printf %-${padding}s $oldsha) ($oldsha_rev)"
     else
-            echo "Old SHA-1                         $oldsha"
-            padding=0
+        echo "Old SHA-1                         $oldsha"
+        padding=0
     fi
     if [ "$newsha" != "$newsha_rev" ]; then
-            echo "New SHA-1                         $(printf %-${padding}s $newsha) ($newsha_rev)"
+        echo "New SHA-1                         $(printf %-${padding}s $newsha) ($newsha_rev)"
     else
-            echo "New SHA-1                         $newsha"
+        echo "New SHA-1                         $newsha"
     fi
     echo "Files examined                    $nbr_of_files"
-    echo "Files probed                      $files_probed"
+    echo "Files probed                      $((files_probed - files_from_cache))"
+    echo "Files from cache                  $files_from_cache"
     echo "Files skipped                     $files_skipped"
     echo "Probes inserted                   $nbrofprobesinserted"
     if [ $nbrofprobesinserted -ne 0 ]; then
@@ -112,6 +114,10 @@ progress() {
     fi
     echo -en ". "
 }
+
+if [ "$DMCE_DEBUG" = true ]; then
+    coreutils_args="-v"
+fi
 
 if progress_bar; then
     echo "|. . . . . . . . . . . . . . . >|"
@@ -198,23 +204,26 @@ cd $git_top
 rm -rf $dmcepath/{old,new,workarea}
 mkdir -p $dmcepath/{old,new,workarea,cache}
 
-c="${dmcepath}/cache/${oldsha_rev}-${newsha_rev}"
+c="${dmcepath}/cache/${oldsha_rev}-${newsha_rev}.files"
 # check if we have this interval in our cache
 if [ -e "$c" ] && [ "x$(tail -1 "${c}" | cut -d':' -f1)" = "xDMCE" ]; then
     _echo "using file cache '$c'"
-    cp -a "${c}" "$dmcepath/latest.cache"
+    cp -a ${coreutils_args} "${c}" "$dmcepath/latest.cache"
     # remove watermark
     sed -i '$ d' $dmcepath/latest.cache
 else
     _echo "ask git to list modified and added files. Saving files here: $dmcepath/latest.cache"
     git diff -l99999 --diff-filter=MA --name-status $oldsha $newsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 > "$dmcepath/latest.cache"
-    cp -a "$dmcepath/latest.cache" "${c}"
+    cp -a ${coreutils_args} "$dmcepath/latest.cache" "${c}"
     # add watermark
     echo "DMCE: $(date '+%Y-%m-%d %H:%M:%S')" >> "${c}"
 fi
 
 # add modified/untracked files
-git status -u --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >> $dmcepath/latest.cache || :
+git status -u --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' > $dmcepath/modified-and-untracked.cache || :
+if [ -s $dmcepath/modified-and-untracked.cache ]; then
+    cat $dmcepath/modified-and-untracked.cache >> $dmcepath/latest.cache
+fi
 
 if [ "${DMCE_PROBE_ALL}" -eq 1 ]; then
     git show -l99999 --diff-filter=MA --name-status $oldsha | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 >> $dmcepath/latest.cache
@@ -267,8 +276,21 @@ if [ $nbr_of_files -eq 0 ]; then
     summary
     exit 1
 fi
+_echo "$nbr_of_files will be examined"
 
 progress
+
+if [ $DMCE_CACHE = "1" ]; then
+    _echo "DMCE cache: init"
+    true > $dmcepath/cache.hit
+    true > $dmcepath/cache.hit.ma
+    cache_root="${DMCE_WORK_PATH}/${git_project}/cache/${oldsha_rev}-${newsha_rev}"
+    # remove old file cache
+    if [ -f "${cache_root}" ]; then
+        rm ${coreutils_args} ${cache_root}
+    fi
+    cache_root+="/${DMCE_MD5:?}"
+fi
 
 # Populate FILE_LIST
 FILE_LIST=""
@@ -277,10 +299,96 @@ while read -r c_file; do
     if [[ "$c_file" == *" "* ]]; then
         _echo "ignore '$c_file' as it contains one or more spaces"
         continue
+    elif [ ! -e $c_file ]; then
+        continue
     fi
-    [ -e $c_file ] || continue
+
+    if [ $DMCE_CACHE = "1" ]; then
+        if [ -s $dmcepath/modified-and-untracked.cache ] && \
+            grep -q "^$c_file$" $dmcepath/modified-and-untracked.cache; then
+            # either an untracked or a modified file
+            md5=$(md5sum < $c_file)
+            md5=${md5%  -}
+            md5_root="${cache_root}-dirty/${md5:0:2}/${md5:2}"
+            if [ -d "${md5_root}" ]; then
+                if [[ "$(git status -u --porcelain -- $c_file)" == \?\?* ]]; then
+                    _echo "MD5 for $c_file exist and it is an untracked file. Rename the file to '$c_file.dmceoriginal'"
+                    untracked=1
+                    mv ${coreutils_args} $c_file $c_file.dmceoriginal
+                else
+                    _echo "MD5 for $c_file exist and it is a modified file - git checkout and apply the cache diff"
+                    cp ${coreutils_args} ${c_file} ${c_file}.dmceoriginal
+                    git checkout -q ${c_file}
+                fi
+
+                # sanity check and apply the diff
+                if ! git apply --check --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
+                    echo "fatal: '"${md5_root}/${c_file}.diff"' does not apply"
+                    exit 1
+                elif ! git apply --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
+                    echo "fatal: '"${md5_root}/${c_file}.diff"' does not apply"
+                    exit 1
+                fi
+
+                # setup directory structure
+                dst="${dmcepath}/new/"
+                if [[ "${c_file}" == */* ]]; then
+                    _dir=${c_file%/*}
+                    dst+="${_dir}/"
+                    mkdir ${coreutils_args} -p ${dmcepath}/new/${_dir}
+                fi
+
+                # copy probedata and exprdata
+                cp -a ${coreutils_args} "${md5_root}/${c_file}".{probedata,exprdata} ${dst}
+
+                # remember all modified/untracked files
+                echo "$c_file" >> $dmcepath/cache.hit.ma
+                continue
+            fi
+        elif [ -s $cache_root/$c_file.probedata ]; then
+            if [ ! -s ${cache_root}/${c_file}.diff ]; then
+                echo "fatal: '${cache_root}/${c_file}.diff' missing"
+                exit 1
+            fi
+
+            # create a dmceoriginal file
+            cp ${coreutils_args} $c_file $c_file.dmceoriginal
+
+            # apply the diff
+            git apply --whitespace=nowarn -- ${cache_root}/${c_file}.diff
+
+            # remember this
+            echo "$c_file" >> $dmcepath/cache.hit
+
+            continue
+        elif [ -s ${cache_root}/skip-list ] && grep -q "^$c_file$" ${cache_root}/skip-list; then
+            # ignore if in skip list
+            continue
+        fi
+    fi
+
     FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
+
+if [ $DMCE_CACHE = "1" ] && [ -s $dmcepath/cache.hit ]; then
+    _echo "$(wc -l < $dmcepath/cache.hit) unmodified files retrieved from DMCE cache"
+    while read -r f; do
+        dst="${dmcepath}/new/"
+        if [[ "${f}" == */* ]]; then
+            _dir=${f%/*}
+            dst+="${_dir}/"
+            mkdir ${coreutils_args} -p ${dmcepath}/new/${_dir}
+        fi
+        cp -a ${coreutils_args} ${cache_root}/$f.{probedata,exprdata} ${dst}
+    done < $dmcepath/cache.hit
+
+    if [ -s $dmcepath/cache.hit.ma ]; then
+        _echo "$(wc -l < $dmcepath/cache.hit.ma) modified/untracked files retrieved from DMCE cache"
+        # append modified and untracked
+        cat $dmcepath/cache.hit.ma >> $dmcepath/cache.hit
+    fi
+    files_from_cache="$(wc -l < $dmcepath/cache.hit)"
+fi
 
 if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
     :
@@ -295,14 +403,14 @@ else
     wait
     popd &>/dev/null
     # sanity check
-    if [ "$(wc -c < $dmcepath/cmdlookup.cache)" = "0" ]; then
-        echo "error: cmdlookup.cache is empty"
-        ls -l $dmcepath/cmdlookup.cache
-        exit 1
+    if [ -s $dmcepath/cmdlookup.cache  ]; then
+        if [ "$(wc -c < $dmcepath/cmdlookup.cache)" = "0" ]; then
+            echo "error: cmdlookup.cache is empty"
+            exit 1
+        fi
+        # remove duplicates
+        sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
     fi
-
-    # remove duplicates
-    sort -o $dmcepath/cmdlookup.cache -u $dmcepath/cmdlookup.cache
 fi
 
 progress
@@ -678,11 +786,14 @@ EOF
 fi
 
 while read -r c_file; do
+    if [ ! -s $c_file.probed ]; then
+        continue
+    fi
   {
-      # Header
+      # header
       cat $dmcepath/workarea/probe-header > $dmcepath/workarea/$c_file
 
-      # The probed source file itself
+      # the probed source file itself
       cat $c_file.probed >> $dmcepath/workarea/$c_file
 
       # new line
@@ -694,15 +805,14 @@ while read -r c_file; do
       fi
 
       # built-in defines
-
       echo "#ifndef DMCE_NBR_OF_PROBES" >> $dmcepath/workarea/$c_file
       echo "#define DMCE_NBR_OF_PROBES (${nbrofprobesinserted})" >> $dmcepath/workarea/$c_file
       echo "#endif" >> $dmcepath/workarea/$c_file
 
-      # Put the probe in the end
+      # put the probe in the end
       cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
 
-      # Make copy of original file and replace it with the probed one
+      # make copy of original file and replace it with the probed one
       cp $c_file $c_file.dmceoriginal
       cp $dmcepath/workarea/$c_file $c_file
 
@@ -743,6 +853,84 @@ if [ -f "$dmcepath/expr-references.log" ]; then
        rm -f "$dmcepath/expr-references.log"
 fi
 
+if [ "$DMCE_CACHE" = "1" ]; then
+    _echo "populate cache"
+
+    declare -A _dirs=()
+
+    for f in $FILE_LIST; do
+        if [[ ! "${f}" == */* ]]; then
+            continue
+        fi
+        dirname=${f%/*}
+        if [[ "${_dirs[${cache_root}/${dirname}]+foobar}" ]]; then
+            continue
+        fi
+        _dirs[${cache_root}/${dirname}]=1
+    done
+
+    if [ ${#_dirs[@]} -ne 0 ]; then
+        mkdir ${coreutils_args} -p "${!_dirs[@]}"
+    fi
+
+    if [ ! -s $dmcepath/modified-and-untracked.cache ]; then
+        _echo "cache: save skip-list"
+        cat ${coreutils_args} $dmcepath/workarea/skip-list >> ${cache_root}/skip-list
+        sort -o ${cache_root}/skip-list -u ${cache_root}/skip-list
+    fi
+
+    for f in $FILE_LIST; do
+        if [ ! -s $dmcepath/new/$f.probedata ]; then
+            continue
+        fi
+
+        untracked=0
+        dst="${cache_root}"
+        if [ -s $dmcepath/modified-and-untracked.cache ] && grep -q "^$f$" $dmcepath/modified-and-untracked.cache; then
+            md5=$(md5sum < $f.dmceoriginal)
+            md5=${md5%  -}
+            if [ -d "${cache_root}-dirty/${md5:0:2}" ] && [ -d "${cache_root}-dirty/${md5:0:2}/${md5:2}" ]; then
+                continue
+            fi
+            dst+="-dirty/${md5:0:2}/${md5:2}/"
+            # untracked?
+            if [[ "$(git status -u --porcelain -- $f)" == \?\?* ]]; then
+                untracked=1
+            fi
+        fi
+
+        if [[ "${f}" == */* ]]; then
+            dst+="/${f%/*}"
+        fi
+
+        mkdir -p ${coreutils_args} $dst
+
+        cp -a ${coreutils_args} $dmcepath/new/$f.{probedata,exprdata} "${dst}"
+        # untracked?
+        if [ $untracked -eq 1 ]; then
+            if ! git diff /dev/null $f > "${dst}/${f##*/}".diff; then
+                # this is ok
+                true
+            fi
+        else
+            if ! git diff -- $f > "${dst}/${f##*/}".diff; then
+                echo "fatal: 'git diff $f' failed"
+                exit 1
+            fi
+        fi
+        sed -i -e "s,DMCE_NBR_OF_PROBES ([0-9]\+),DMCE_NBR_OF_PROBES (TBD),g" "${dst}/${f##*/}".diff
+    done
+
+    if [ ! -s ${cache_root}.info ]; then
+        cp -a ${coreutils_args} $DMCE_WORK_PATH/${DMCE_MD5}.info ${cache_root}.info
+    fi
+
+    if [ "$DMCE_DEBUG" = false ]; then
+        _echo "DMCE cache: cleanup"
+        rm ${coreutils_args} $dmcepath/{cache.hit,cache.hit.ma,modified-and-untracked.cache}
+    fi
+fi
+
 if [ "$files_probed" == 0 ]; then
     nbrofprobesinserted=0
 else
@@ -776,6 +964,7 @@ else
             file_list+=( "$file" )
         fi
 
+
         nextfile=$file
         str+=("$probe_nbr:$file:$line:$func")
 
@@ -793,6 +982,10 @@ else
         jobcap
     done
     wait
+
+    if [ "${DMCE_CACHE:?}" = "1" ]; then
+        sed -i -e "s,DMCE_NBR_OF_PROBES (TBD),DMCE_NBR_OF_PROBES (${nbrofprobesinserted}),g" $(cut -d: -f2 ${dmcepath}/probe-references.log| sort -u)
+    fi
 
     # Update global dmce probe file, prepend with absolute path to files
     sed -e "s|^|File: $git_top/|" $dmcepath/probe-references.log >> $dmcepath/../global-probe-references.log
