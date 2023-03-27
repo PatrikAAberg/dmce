@@ -104,7 +104,8 @@ for line in info_tmp:
 
 if count >= 6:
     timestamps2nsecs = (end_tsc - start_tsc) / ( 1000000000 * (end_secs - start_secs) + (end_nsecs - start_nsecs))
-    print("CPU timestamps to nanoseconds divider (Nominal cpu clock freq): " + str(timestamps2nsecs), file=sys.stderr)
+    if args.verbose:
+        print("CPU timestamps to nanoseconds divider (Nominal cpu clock freq): " + str(timestamps2nsecs), file=sys.stderr)
 
 print("- - - - -")
 
@@ -114,7 +115,8 @@ codetrees = args.codetree
 if args.numvars is not None:
     entrysize64 = TRACE_ENTRY_HEADER + args.numvars
 else:
-    print("Checking trace entry size", file=sys.stderr)
+    if args.verbose:
+        print("Checking trace entry size", file=sys.stderr)
     entrysize64 = 42
     for infoline in info:
         if "te size:" in infoline:
@@ -125,9 +127,10 @@ else:
         print("dmce trace: Could not find trace entry size in " + ifilename + ", abort" + str(entrysize64), file=sys.stderr)
         sys.exit(1)
 
-print("Raw input file   : " + dfile, file=sys.stderr)
-print("Probe ref file(s): " + probefiles, file=sys.stderr)
-print("Code tree(s)     : " + codetrees, file=sys.stderr)
+if args.verbose:
+    print("Raw input file   : " + dfile, file=sys.stderr)
+    print("Probe ref file(s): " + probefiles, file=sys.stderr)
+    print("Code tree(s)     : " + codetrees, file=sys.stderr)
 
 probefile = probefiles.split(",")
 codetree = codetrees.split(",")
@@ -187,12 +190,14 @@ for i in range(numfrefs):
         if l > longestpath:
             longestpath = l
 
-print("Reading trace buffer", file=sys.stderr)
+if args.verbose:
+    print("Reading trace buffer", file=sys.stderr)
 
 # Read data
 data = np.fromfile(dfile, dtype=np.uint64)
 
-print("Sorting out ring buffer", file=sys.stderr)
+if args.verbose:
+    print("Sorting out ring buffer", file=sys.stderr)
 
 # uint64_t timestamp, uint64_t probenbr, n * uint64_t variable value
 # Find first timestamp where a buffer is exhausted
@@ -216,7 +221,8 @@ if ( (entrysize64 * length) != len(data) ):
 
 data = np.reshape(data, (length, entrysize64))
 
-print("Sort timestamps", file=sys.stderr)
+if args.verbose:
+    print("Sort timestamps", file=sys.stderr)
 
 # Sort on timstamps
 data = data[data[:, 0].argsort()]
@@ -304,7 +310,8 @@ for i in range(numfrefs):
 
 outbuf = []
 
-print("Generating trace output", file=sys.stderr)
+if args.verbose:
+    print("Generating trace output", file=sys.stderr)
 
 steps = int(length / 10)
 

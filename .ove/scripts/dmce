@@ -82,6 +82,7 @@ EOF
     else
         echo "  ${OVE_BASE_DIR}/.config/dmce/*"
     fi
+    echo "        \$OVE_OWEL_DIR/projects/dmce/profile.db"
     echo
     cat << EOF
 EXAMPLES
@@ -92,7 +93,7 @@ EXAMPLES
         ove dmce launch -a -q -- ag dmce-examples
 
         # trace, build, run, view in one go
-        ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
+        ove dmce trace-prepare ag && { ag foobar; ove dmce trace-decode ag; }
 EOF
 }
 
@@ -126,7 +127,6 @@ function _find {
 }
 
 function run {
-    echo "$ ${prog} ${opts}" 1>&2
     eval "${prog}" "${opts}"
 }
 
@@ -136,7 +136,7 @@ function set_profile {
     shift
     _find "dmce-set-profile"
     _getopts "$@"
-    opts="$default_args -p -d $OVE_BASE_DIR/.config/dmce $opts"
+    opts="$opts $default_args -p -d $OVE_BASE_DIR/.config/dmce"
     run
 }
 

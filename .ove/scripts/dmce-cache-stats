@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+function list_cache() {
+	local _dirs
+	local _files
+
+	if ! find /tmp/"${OVE_USER:?}"/dmce/*/cache -type d -maxdepth 0 2> /dev/null; then
+		return 1
+	fi
+
+	_dirs=$(find /tmp/"${OVE_USER:?}"/dmce/*/cache -type d | wc -l)
+	_files=$(find /tmp/"${OVE_USER:?}"/dmce/*/cache -type f | wc -l)
+	{
+		echo "$_dirs directories, $_files files"
+		echo
+		du -hs /tmp/"${OVE_USER:?}"/dmce/*/cache
+		echo
+	} 1>&2
+}
+export -f list_cache
+watch -t -d -x -- bash -c "if list_cache &> /dev/null; then tree --noreport -L 2 \$(list_cache); else echo no cache; fi"

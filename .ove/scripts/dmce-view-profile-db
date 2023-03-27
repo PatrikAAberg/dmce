@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ ! -s "${OVE_OWEL_DIR:?}"/projects/dmce/profile.db ]; then
+	echo "no '${OVE_OWEL_DIR:?}/projects/dmce/profile.db' file found"
+	exit 0
+fi
+
+grep -v '^#' "${OVE_OWEL_DIR:?}"/projects/dmce/profile.db | \
+	column -t -s:

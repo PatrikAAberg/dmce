@@ -24,140 +24,314 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 function usage() {
-    local projs
-    local repos
+	local projs
 
-    repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-    repos="${repos/  / }"
-    projs="${OVE_PROJECT_LIST}"
-    cat << EOF
+	projs="${OVE_PROJECT_LIST}"
+	cat << EOF
 NAME
-        Insert DMCE probes into one repo and build it
+	Insert DMCE probes into one or multiple OVE projects/repos
 
 SYNOPSIS
-        ove dmce trace-prepare git proj
+	ove dmce trace-prepare proj...
 
 OPTIONS
-        git:
-          choose one git of: ${repos}
-
-        proj:
-          choose one from: ${projs}
+	proj:
+	  choose from: ${projs}
 
 DESCRIPTION
-        This plugin is a helper that will insert probes into one git repo. As OVE
-        know how to build the project 'proj' this plugin will also build the code.
+	This plugin is a helper that will insert probes into one or multiple git repo(s). As OVE
+	know (usually) how to build the project 'proj' this plugin will also build the code.
 
-        Use 'ove dmce trace-decode' to decode the trace buffer. Don't forget to install 'fzf'!
+	Use 'ove dmce trace-decode' to decode the trace buffer.
+
+CONFIGURATION
+	DMCE_TRACE_REPO_PATTERN
+		what repos to instrument
+
+	DMCE_TRACE_STEPS
+		what steps to perform
+
+		available	profile dmce build install buildme restore
+		default		profile dmce buildme restore
 
 EXAMPLES
-        # install fzf
-        <package manager> install fzf
+	# prepare the project (insert DMCE probes) and build it
+	ove dmce trace-prepare ag
 
-        # prepare the git and build it
-        ove dmce trace-prepare ag ag
+	# run some test, here we're searching for the word 'foobar'
+	ag foobar
 
-        # run some test, here we're searching for the word 'foobar'
-        ag foobar
+	# decode the trace buffer and launch a trace viewer
+	ove dmce trace-decode ag
 
-        # decode the trace buffer and launch an interactive fzf viewer
-        ove dmce trace-decode ag
-
-        # oneliner (all of the above in one go)
-        ove dmce trace-prepare ag ag && { ag foobar; ove dmce trace-decode ag; }
+	# oneliner (all of the above in one go)
+	ove dmce trace-prepare ag && { ag foobar; ove dmce trace-decode ag; }
 EOF
 }
 
+function _echo() {
+	echo "trace-prepare: $*"
+}
+
 function main() {
-    git="$1"
-    ove_proj="$2"
-    git_full="${OVE_BASE_DIR:?}/$1"
+	local err
+	declare -A repo_hash
+	local offset
+	local p
+	local projs
+	local re
+	local repo
+	local repo_list
+	local repo_short
+	local _start
 
-    # usage and sanity checks
-    if [ $# -lt 2 ]; then
-        usage
-        exit 1
-    elif [ ! -d "${git_full}" ]; then
-        echo "error: ${git_full} is not a directory"
-        usage
-        exit 1
-    elif [ ! -d "${git_full}"/.git ]; then
-        echo "error: ${git_full} does not appear to be a git repo"
-        usage
-        exit 1
-    fi
+	# usage and sanity checks
+	if [ $# -eq 0 ]; then
+		usage
+		exit 1
+	fi
 
-    name="$(basename "$0")-${git/\//_}"
+	if [ "${DMCE_TRACE_STEPS}" = "" ]; then
+		steps="profile dmce buildme restore"
+	else
+		steps="${DMCE_TRACE_STEPS}"
+	fi
 
-    echo "$ cd ${git_full}"
-    if ! cd "${git_full}"; then
-        echo "error: 'cd ${git_full}' failed, weird!"
-        exit 1
-    fi
+	err=0
+	projs="$*"
+	offset=0
 
-    echo "$ ove-dmce set-profile trace"
-    if ! ove-dmce set-profile trace; then
-        echo "error: 'ove dmce set-profile trace' failed"
-        exit 1
-    fi
+	# start with a clean DMCE config
+	if ! dmce-setup "${OVE_BASE_DIR:?}"; then
+		exit 1
+	fi
+	re=\\bdmce\\b
+	if [[ ${steps} =~ $re ]]; then
+		if command -v python &> /dev/null; then
+			_start=$(date '+%s.%N')
+		else
+			_start=$SECONDS
+		fi
 
-    echo "$ ove-dmce launch -a -- $git_full"
-    out=$(ove-dmce launch -a -- "$git_full")
-    ret=$?
-    if [ ${ret} -ne 0 ]; then
-        if [[ ${out} == *error* ]]; then
-            err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
-        else
-            err_string="'ove-dmce launch -a -- $git_full' failed"
-        fi
-        ove-echo red "${err_string}"
-        exit 1
-    fi
+		# run DMCE for each repo involved
+		for p in $projs; do
+			for repo in $(ove-list-path "$p"); do
+				if [ ! -d "${repo}" ]; then
+					continue
+				elif [ ! -e "${repo}"/.git ]; then
+					continue
+				fi
 
-    echo "$ ove build ${ove_proj} && ove install ${ove_proj}"
-    if ! ove build "${ove_proj}" > /dev/null || ! ove install "${ove_proj}" > /dev/null; then
-        err_string="ove build or install for probed project ${ove_proj} failed"
-        ove-echo red "${err_string}"
-        if [ -s "${OVE_LAST_COMMAND}" ]; then
-            cat "${OVE_LAST_COMMAND}"
-        fi
+				repo_short="${repo/${OVE_BASE_DIR}\/}"
+				if [ "$repo_short" = "dmce" ]; then
+					# skip self
+					continue
+				fi
+				repo_list+=" ${repo_short}"
 
-        exit 1
-    fi
+				if [ "$DMCE_TRACE_REPO_PATTERN" != "" ]; then
+					re=${DMCE_TRACE_REPO_PATTERN}
+					if [[ ! ${repo_short} =~ $re ]]; then
+						continue
+					fi
+				fi
 
-    echo "$ ove-dmce launch -c -- $git_full"
-    out=$(ove-dmce launch -c -- "$git_full")
-    ret=$?
-    if [ ${ret} -ne 0 ]; then
-        if [[ ${out} == *error* ]]; then
-            err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
-        else
-            err_string="'ove-dmce launch -c -- $git_full' failed"
-        fi
-        ove-echo red "${err_string}"
-        exit 1
-    fi
+				# already instrumented?
+				if test "${repo_hash["${repo}"]+isset}"; then
+					continue
+				fi
 
-    echo "info: repo '${git_full}' has been instrumented and built. Run some test (executable files below) and then 'ove dmce trace-decode ${git}'"
-    elfs=$(find "${git_full}" -type f -perm -u=x -print -exec file {} \;| grep ELF | cut -d: -f1 | cat -n)
-    if [ "x$elfs" = "x" ]; then
-        echo "warning: no executable ELF files found in '${git}'. Building artifacts outside the git repo? Or did you select the wrong OVE project '$ove_proj'?"
-    else
-        echo "ELF files within the '${git}' repo:"
-        printf "%s\n" "$elfs"
-    fi
+				# run DMCE
+				if ! dmce_one_repo "${repo}" "$offset"; then
+					err=$((err + 1))
+					continue
+				fi
 
-    if [ -d /tmp/$OVE_USER/dmce ]; then
-        # remember dmcebuffer.bin files
-        find /tmp/$OVE_USER/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
-            grep '[0-9]$' | \
-            LC_ALL=C sort > /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre
-    fi
+				n=$(git -C "$repo" grep 'DMCE_NBR_OF_PROBES ('| cut -d: -f2 | sort -u | wc -l)
+				# assert
+				if [ "$n" -ne 1 ]; then
+					echo "error: more than one DMCE_NBR_OF_PROBES in '${repo_short}'"
+					exit 1
+				fi
 
-    # remove any already existing trace lock file at dmce-configure-local default path
-    rm -rf /tmp/$OVE_USER/dmce-trace-buffer-lock
+				# get offset
+				offset=$((offset + $(git -C "$repo" grep 'DMCE_NBR_OF_PROBES (' | \
+					cut -d: -f2 | \
+					sort -u | \
+					grep -o '[0-9]\+')))
 
-    exit 0
+				repo_hash["${repo}"]=1
+
+				# clean up DMCE config files
+				if ! dmce-setup "${OVE_BASE_DIR:?}"; then
+					exit 1
+				fi
+			done
+		done
+
+		if [ $err -ge ${#repo_hash[*]} ]; then
+			exit 1
+		fi
+
+		if command -v python &> /dev/null; then
+			diff="$(python -c "print('{:.1f}'.format($(date '+%s.%N')-$_start))")"
+			dpps="$(python -c "print('{:.1f}'.format($offset/$diff))")"
+		else
+			diff="$((SECONDS - _start))"
+			dpps="$((offset / diff))"
+		fi
+
+		str="${#repo_hash[*]} repo"
+		if [ ${#repo_hash[*]} -gt 1 ]; then
+			str+="s"
+		fi
+
+		_echo "${str}, $offset probes, $diff seconds, $dpps dpps"
+	fi
+
+	re=\\bbuildme\\b
+	if [[ ${steps} =~ $re ]]; then
+		if ! build_multiple_proj "$projs"; then
+			exit 1
+		fi
+	elif ! re=\\bbuild\|install\\b; then
+		exit 1
+	elif [[ ${steps} =~ $re ]]; then
+		# build but we have more than one repo
+		if [ ${#repo_hash[*]} -gt 1 ]; then
+			if ! build_multiple_proj "$projs"; then
+				exit 1
+			fi
+		else
+			if ! build_one_proj "$projs"; then
+				exit 1
+			fi
+		fi
+	fi
+
+	re=\\brestore\\b
+	if [[ ${steps} =~ $re ]]; then
+		# restore source tree
+		for repo in ${!repo_hash[*]}; do
+			_echo "ove-dmce launch -c -q -- $repo"
+			ove-dmce launch -c -q -- "$repo"
+		done
+	fi
+
+	# remember all dmcebuffer.bin files
+	if [ -d /tmp/"${OVE_USER}"/dmce ]; then
+		find /tmp/"${OVE_USER}"/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
+			grep '[0-9]$' | \
+			LC_ALL=C sort > /tmp/"${OVE_USER}"/dmce/dmce-trace-prepare.pre
+	fi
+
+	# remove any already existing trace lock file at dmce-configure-local default path
+	if [ -e /tmp/"${OVE_USER}"/dmce-trace-buffer-lock ]; then
+		rm -rf /tmp/"${OVE_USER}"/dmce-trace-buffer-lock
+	fi
+
+	exit 0
+}
+
+# $1: repo
+# $2: offset
+function dmce_one_repo {
+	local args
+	local default_args
+	local git_full
+	local offset
+	local profile
+	local profile_db
+	local re
+
+	git_full="$1"
+	offset="$2"
+	if ! cd "${git_full}"; then
+		return 1
+	fi
+
+	re=\\bprofile\\b
+	if [[ ${steps} =~ $re ]]; then
+		# any OWEL specific arguments to set-profile?
+		profile_db="${OVE_OWEL_DIR}/projects/dmce/profile.db"
+		git_short=${git_full##*/}
+		if [ ! -s "${profile_db}" ]; then
+			args="-C 1 trace"
+			_echo "no profile.db file found, using '$args' as DMCE profile"
+		else
+			_echo "$profile_db"
+			# read default trace profile and args
+			if grep -q "^default:trace" "${profile_db}"; then
+				default_args=$(grep "^default:trace:" "${profile_db}" | cut -d: -f3-)
+			fi
+
+			# no entry for this repo?
+			if ! grep -q "^$git_short:trace:" "${profile_db}"; then
+				args="$default_args"
+			else
+				args=$(grep "^$git_short:trace:" "${profile_db}" | cut -d: -f3-)
+				if [ "$args" = "default" ]; then
+					args="$default_args"
+				fi
+
+				profile=${args##* }
+				# make sure that we have selected a proper profile
+				profiles="$(dmce-set-profile -l)"
+				re=\\b$profile\\b
+				if [[ ! "${profiles}" =~ ${re} ]]; then
+					echo "error: wrong profile '$profile' - available: $profiles"
+					return 1
+				fi
+			fi
+		fi
+
+		if [ "${args}" != "" ]; then
+			_echo "ove-dmce set-profile $args"
+			# shellcheck disable=SC2086
+			if ! ove-dmce set-profile $args; then
+				return 1
+			fi
+		fi
+	fi
+
+	_echo "ove-dmce launch --ast-cache -a --offset=$offset -q -- $git_full"
+	if ! ove-dmce launch --ast-cache -a --offset="$offset" -q -- "$git_full"; then
+		return 1
+	fi
+}
+
+function build_multiple_proj {
+	local ove_proj
+
+	ove_proj=$1
+
+	echo "$ ove buildme-parallel ${ove_proj}"
+	# shellcheck disable=SC2086
+	if ! ove buildme-parallel ${ove_proj}; then
+		return 1
+	fi
+}
+
+function build_one_proj {
+	local ove_proj
+
+	ove_proj=$1
+
+	re=\\bbuild\\b
+	if [[ ${steps} =~ $re ]]; then
+		echo "$ ove build ${ove_proj}"
+		if ! ove build "${ove_proj}"; then
+			return 1
+		fi
+	fi
+
+	re=\\binstall\\b
+	if [[ ${steps} =~ $re ]]; then
+		echo "$ ove install ${ove_proj}"
+		if ! ove install "${ove_proj}"; then
+			return 1
+		fi
+	fi
 }
 
 main "$@"

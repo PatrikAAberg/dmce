@@ -110,7 +110,7 @@ function main() {
 
     trap cleanup EXIT
 
-    dmce_trace_log="$WORKAREA/dmce-trace-$git.log"
+    dmce_trace_log="$(mktemp -p $WORKAREA --suffix=-dmce-trace-$git.log)"
     dmce_trace_args=
     fzf=0
     fzf_cmd="fzf"
@@ -138,12 +138,12 @@ function main() {
         dmce_trace_args+=" --format raw"
         dmce_trace_args+=" --numvars 5"
     fi
-    dmce_trace_args+=" -t --verbose"
+    dmce_trace_args+=" -t"
+    #dmce_trace_args+=" --verbose"
     dmce_trace_args+=" $data"
     dmce_trace_args+=" $probes"
     dmce_trace_args+=" ${git_full}"
 
-    echo "$ dmce-trace ${dmce_trace_args}"
     if ! dmce-trace ${dmce_trace_args} > ${dmce_trace_log}; then
         echo "error: 'dmce-trace ${dmce_trace_args}' failed"
         exit 1

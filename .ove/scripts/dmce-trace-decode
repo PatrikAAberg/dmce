@@ -24,115 +24,165 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 function usage() {
-    local repos
-
-    repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
-    repos="${repos/dmce/}"
-    repos="${repos/  / }"
-    cat << EOF
+	cat << EOF
 NAME
-        Decode DMCE trace buffer
+	Decode DMCE trace buffer
 
 SYNOPSIS
-        ove dmce trace-decode git
+	ove dmce trace-decode proj
 
 OPTIONS
-        git:
-          choose one git of: ${repos}
+	proj: OVE project
 
 PREREQUISITE
-    A successful run of 'ove dmce trace-prepare'
+	A successful run of 'ove dmce trace-prepare'
 
 DESCRIPTION
-        This OVE plugin will decode one DMCE trace buffer and display the raw trace to the user.
-        If 'fzf' (=github.com/junegunn/fzf) is installed an interactive viewer is launched.
+	This OVE plugin will decode one DMCE trace buffer and display the raw trace to the user.
 
-        It's possible to force the viewer to 'tgui', 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
+	It's possible to force the viewer to 'tgui', 'fzf', 'less', 'stdout', 'stderr' or '<file>'. See EXAMPLES below!
 
 CONFIGURATION
-        # select trace viewer tool
-        DMCE_TRACE_VIEWER tgui|stdout|stderr|less|fzf|<file>
+	DMCE_TRACE_VIEWER tgui|stdout|stderr|less|fzf|<file>
+		select trace viewer tool
+
+	DMCE_TRACE_REPO_PATTERN
+		what repos to decode
+
+	DMCE_TRACE_INFO_PATTERN_INCLUDE
+		include traces that match this pattern in the trace info file
+
+	DMCE_TRACE_INFO_PATTERN_EXCLUDE
+		exclude traces that match this pattern in the trace info file
 
 EXAMPLES
-        # decode the trace buffer and launch the interactive viewer tgui
-        ove dmce trace-decode ag
+	# decode the trace buffer and launch the interactive viewer tgui
+	ove dmce trace-decode ag
 
-        # install fzf
-        <package manager> install fzf
+	# decode the trace buffer and launch an interactive fzf viewer
+	DMCE_TRACE_VIEWER=fzf ove dmce trace-decode ag
 
-        # decode the trace buffer and launch an interactive fzf viewer
-        DMCE_TRACE_VIEWER=fzf ove dmce trace-decode ag
+	# decode the trace buffer and display the trace on stdout
+	DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
 
-        # decode the trace buffer and display the trace on stdout
-        DMCE_TRACE_VIEWER=stdout ove dmce trace-decode ag
+	# decode the trace buffer and save the trace to a file '/tmp/a.trace'
+	DMCE_TRACE_VIEWER=/tmp/a.trace ove dmce trace-decode ag
 
-        # decode the trace buffer and save the trace to a file '/tmp/a.trace'
-        DMCE_TRACE_VIEWER=/tmp/a.trace ove dmce trace-decode ag
+	# decode a multi-repo project
+	ove dmce trace-decode tmux
 EOF
-    exit 1
-}
-
-function init() {
-    # usage and sanity checks
-    if [ $# -ne 1 ]; then
-        usage
-    fi
-
-    git="$1"
-    git_base="${1##*/}"
-    git_full="${OVE_BASE_DIR:?}/$1"
-    name="$(basename "$0")-${git/\//_}"
-
-    if [ ! -d "${git_full}" ]; then
-        echo "error: ${git_full} is not a directory"
-        usage
-    elif [ ! -d "${git_full}"/.git ]; then
-        echo "error: ${git_full} does not appear to be a git repo"
-        usage
-    fi
-
-    if ! cd "${git_full}"; then
-        echo "error: 'cd ${git_full}' failed, weird!"
-        exit 1
-    fi
-}
-
-function cleanup() {
-    echo "Exiting trace"
+	exit 1
 }
 
 function main() {
-    init "$@"
+	local b
+	local repos
+	local probe_refs
 
-    trap cleanup EXIT
+	if [ $# -ne 1 ]; then
+		usage
+		exit 1
+	fi
+	proj="$1"
 
-    if [ ! -d /tmp/$OVE_USER/dmce ]; then
-        echo "error: no '/tmp/$OVE_USER/dmce' directory"
-        exit 1
-    fi
+	if [ ! -d "/tmp/$OVE_USER/dmce" ]; then
+		echo "error: no '/tmp/$OVE_USER/dmce' directory"
+		usage
+		exit 1
+	fi
 
-    find /tmp/$OVE_USER/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
-        grep [0-9]$ | \
-        LC_ALL=C sort > /tmp/$OVE_USER/dmce/dmce-trace-prepare.post
-    if [ ! -s /tmp/$OVE_USER/dmce/dmce-trace-prepare.post ]; then
-        echo "error: no dmcebuffer files found"
-        exit 1
-    fi
+	find "/tmp/$OVE_USER/dmce" -maxdepth 1 -name 'dmcebuffer.bin*' | \
+		grep "[0-9]$" | \
+		LC_ALL=C sort > "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post"
+	if [ ! -s "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post" ]; then
+		echo "error: no dmcebuffer files found"
+		usage
+		exit 1
+	fi
 
-    if [ ! -s /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre ]; then
-        # no old dmcebuffers found
-        b_list="$(cat /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"
-    else
-        # here we had some old dmcebuffers laying around, just take the new ones
-        if ! b_list="$(LC_ALL=C comm -1 -3 /tmp/$OVE_USER/dmce/dmce-trace-prepare.pre /tmp/$OVE_USER/dmce/dmce-trace-prepare.post)"; then
-            exit 1
-        fi
-    fi
+	# here we had some old dmcebuffers laying around, just take the new ones
+	if [ ! -s "/tmp/$OVE_USER/dmce/dmce-trace-prepare.pre" ]; then
+		b_list="$(cat "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post")"
+	elif ! b_list="$(LC_ALL=C comm -1 -3 "/tmp/$OVE_USER/dmce/dmce-trace-prepare.pre" "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post")"; then
+		exit 1
+	fi
 
-    for b in $b_list; do
-        echo "trace $b:"
-        dmce-trace-viewer $b /tmp/$OVE_USER/dmce/${git_base}/probe-references-original.log ${git_full}
-    done
+	if [ "$b_list" = "" ]; then
+		echo "trace-decode: no traces found"
+		usage
+		exit 1
+	fi
+
+	# go through each trace
+	for b in $b_list; do
+		if [ ! -s "$b.info" ]; then
+			echo "error: no '$b.info' file"
+			continue
+		fi
+
+		if [ "$DMCE_TRACE_INFO_PATTERN_INCLUDE" != "" ]; then
+			if ! grep -q "$DMCE_TRACE_INFO_PATTERN_INCLUDE" "$b.info"; then
+				echo "trace-decode: skip $b as it does not match '$DMCE_TRACE_INFO_PATTERN_INCLUDE'"
+				continue
+			fi
+		fi
+
+		if [ "$DMCE_TRACE_INFO_PATTERN_EXCLUDE" != "" ]; then
+			if grep -q "$DMCE_TRACE_INFO_PATTERN_EXCLUDE" "$b.info"; then
+				echo "trace-decode: skip $b as it match '$DMCE_TRACE_INFO_PATTERN_EXCLUDE'"
+				continue
+			fi
+		fi
+
+		echo "trace-decode: proj: $proj buffer: $b"
+
+		repos=
+		probe_refs=
+		for d in $(ove list-path "$proj"); do
+			if [ ! -d "${d}" ]; then
+				continue
+			elif [ ! -e "${d}"/.git ]; then
+				continue
+			fi
+
+			if [ "$DMCE_TRACE_REPO_PATTERN" != "" ]; then
+				re=${DMCE_TRACE_REPO_PATTERN}
+				if [[ ! ${d/${OVE_BASE_DIR}/} =~ $re ]]; then
+					continue
+				fi
+			fi
+
+			ref_f="/tmp/$OVE_USER/dmce/${d/${OVE_BASE_DIR}\/}/probe-references"
+			# detect if tree is probed or not
+			if [ ! -e "$d"/.dmce_state_probed ]; then
+				ref_f+="-original"
+			fi
+			ref_f+=".log"
+
+			# sanity check
+			if [ ! -s "${ref_f}" ]; then
+				echo "trace-decode: ${ref_f} missing, skip ${d}"
+				continue
+			fi
+			repos+="$d,"
+			probe_refs+="${ref_f},"
+		done
+
+		if [ "$repos" = "" ]; then
+			echo "trace-decode: no repos/probe refs found, skip ${d}"
+			continue
+		fi
+
+		repos=${repos:0:-1}
+		probe_refs=${probe_refs:0:-1}
+
+		# launch trace viewer
+		if [ -z "$TMUX" ]; then
+			dmce-trace-viewer "$b" "$probe_refs" "$repos"
+		else
+			ove-run 1 "dmce-trace-viewer $b $probe_refs $repos"
+		fi
+	done
 }
 
 main "$@"
