@@ -695,7 +695,9 @@ while read -r c_file; do
 
       # built-in defines
 
+      echo "#ifndef DMCE_NBR_OF_PROBES" >> $dmcepath/workarea/$c_file
       echo "#define DMCE_NBR_OF_PROBES (${nbrofprobesinserted})" >> $dmcepath/workarea/$c_file
+      echo "#endif" >> $dmcepath/workarea/$c_file
 
       # Put the probe in the end
       cat $DMCE_PROBE_SOURCE >> $dmcepath/workarea/$c_file
