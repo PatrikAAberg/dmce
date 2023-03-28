@@ -139,13 +139,16 @@ static void dmce_dump_trace(int status) {
 
             int i;
             uint64_t oldest = UINT64_MAX;
+            int buffer_full = 0;
 
             for (i = 0; i < DMCE_MAX_HITS; i++) {
                 if ( dmce_buf_p[core * DMCE_MAX_HITS + i].timestamp < oldest)
                     oldest = dmce_buf_p[core * DMCE_MAX_HITS + i].timestamp;
             }
 
-            if (newest_of_oldest < oldest)
+            buffer_full = (dmce_buf_p[core * DMCE_MAX_HITS + DMCE_MAX_HITS - 1].timestamp);
+
+            if ((newest_of_oldest < oldest) && buffer_full)
                 newest_of_oldest = oldest;
         }
 
