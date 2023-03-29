@@ -23,6 +23,8 @@ parser.add_argument('-t', '--notemplates',  action='store_true',        help='If
 parser.add_argument('-n', '--fixnullptr',  action='store_true',        help='If set, dmce will will try to return nullptr instead of \'0\' for C++ when appropriate')
 parser.add_argument('-r', '--noderefs',  action='store_true',        help='If set, dmce will not try to de-reference pointers or struct members in trace probes (useful when looking for bad dereferences')
 parser.add_argument('-M', '--excludecapitals',  action='store_true',        help='Add permutations of captial letters to constructs.exclude, useful to avoid probing captial letter macros')
+parser.add_argument('-y', '--varexclude',   type=str, default = '# Regexps for variables to exclude', help='Comma separated list of variable names to exclue from probing')
+parser.add_argument('-Y', '--varinclude',   type=str, default = '# Regexps for variables to include', help='Comma separated list of variable names to include')
 args = parser.parse_args()
 
 if "do-not-exclude-anything" not in args.exclude:
@@ -34,6 +36,16 @@ if ".*" not in args.include:
     includes = args.include.split(',')
 else:
     includes = [args.include]
+
+if "# Regexps for variables to exclude" not in args.varexclude:
+    varexcludes = args.varexclude.split(',')
+else:
+    varexcludes = [args.varexclude]
+
+if "# Regexps for variables to include" not in args.varinclude:
+    varincludes = args.varinclude.split(',')
+else:
+    varincludes = [args.varinclude, ".*"]
 
 if args.constructs is not None:
     constructs = args.constructs.split(',')
@@ -53,6 +65,8 @@ if args.file is None:
         print(homeDirectory + "/.dmceconfig")
         print(homeDirectory + "/.config/dmce/dmce.exclude")
         print(homeDirectory + "/.config/dmce/dmce.include")
+        print(homeDirectory + "/.config/dmce/dmce.var.exclude")
+        print(homeDirectory + "/.config/dmce/dmce.var.include")
         print(homeDirectory + "/.config/dmce/cmdlookuphook.sh")
         print(homeDirectory + "/.config/dmce/constructs.exclude")
         print(homeDirectory + "/.config/dmce/recognizedexpressions.py")
@@ -239,6 +253,10 @@ if args.verbose:
     print(excludes)
     print("Included files and/or functions:")
     print(includes)
+    print("Excluded files and/or functions:")
+    print(varexcludes)
+    print("Included files and/or functions:")
+    print(varincludes)
     print("Excluded constructs (textual search):")
     print(constructs)
 
@@ -263,7 +281,19 @@ fexcl.close()
 fincl = open(configdir + "/dmce.include", "w")
 for line in includes:
    fincl.write(line + "\n")
-fincl.close()# write dmce.include file
+fincl.close()
+
+# write dmce.var.exclude file
+fexcl = open(configdir + "/dmce.var.exclude", "w")
+for line in varexcludes:
+   fexcl.write(line + "\n")
+fexcl.close()
+
+# write dmce.include file
+fincl = open(configdir + "/dmce.var.include", "w")
+for line in varincludes:
+   fincl.write(line + "\n")
+fincl.close()
 
 # Read up constructs so we do not get doublets
 fcon = open(configdir + "/constructs.exclude", "r")
