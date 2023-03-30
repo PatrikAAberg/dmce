@@ -196,11 +196,11 @@ static void dmce_dump_trace(int status) {
             }
             else {
 
-                sprintf(exit_info,  "Host        : %s\n"
-                                    "Exit cause  : signal handler\n"
-                                    "Core        : %d\n"
-                                    "Signal      : %d (%s)\n"
-                                    "System cores: %d\n", host, dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
+                sprintf(exit_info,   "Host        : %s\n"
+                                     "Exit cause  : signal handler\n"
+                                     "Core        : %d\n"
+                                     "Signal      : %d (%s)\n"
+                                     "System cores: %d\n", host, dmce_signal_core, dmce_signo, strsignal(dmce_signo), num_cores);
             }
 
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->end_monotonic));
@@ -640,6 +640,13 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     }
     return 0;
 }
+
+#include <signal.h>
+void dmce_breakpoint(void) {
+
+    raise(SIGTRAP);
+}
+
 #endif
 
 /* end of file */
