@@ -4,10 +4,16 @@ import sys
 import argparse
 import os
 
+profiles = "printf trace trace-mc coverage syslog racetrack heatmap"
+
+if len(sys.argv) > 1 and (sys.argv[1] == "-l" or sys.argv[1] == "--listprofiles"):
+    print(profiles)
+    sys.exit(0)
+
 descr = 'Set dmce profile. Modifies .dmceconfig and filter files in the dmce config directory.'
 
 parser = argparse.ArgumentParser(description=descr)
-parser.add_argument('profile',    type=str,    help='Available profiles: printf trace trace-mc coverage syslog racetrack heatmap')
+parser.add_argument('profile',    type=str,    help='Available profiles: ' + profiles)
 parser.add_argument('-f', '--file',   type=str, default = None, help='What config file to update, default: $HOME/.dmceconfig')
 parser.add_argument('-d', '--configdir',   type=str, default = None, help='What config folder to update, default: $HOME/.config/dmce')
 parser.add_argument('-I', '--includepaths',   type=str, default = '', help='Comma separated list of includepaths')
@@ -16,6 +22,7 @@ parser.add_argument('-i', '--include',   type=str, default = '.*',   help='Comma
 parser.add_argument('-m', '--memlimit',   type=str, default = '50',   help='If used memory on the system exceeds this limit, DMCE will halt and not spawn new jobs until used memory goes below the limit again (default: 50)')
 parser.add_argument('-c', '--constructs',   type=str, default = None,   help='Comma separated list of words that filter out lines to not probe')
 parser.add_argument('-p', '--keeppaths',  action='store_true',        help='If set, keep paths in .dmceconfig and only update probe file')
+parser.add_argument('-l', '--listprofiles',  action='store_true',        help='List available profiles')
 parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
 parser.add_argument('-s', '--sysincludes',  action='store_true',        help='If set, dmce will use the system include files when parsing code')
 parser.add_argument('-S', '--nosignals',  action='store_true',        help='If set and selected probe supports checking if it should register a signal handler, it will NOT register a signal handler')
