@@ -280,7 +280,7 @@ _echo "$nbr_of_files will be examined"
 
 progress
 
-if [ $DMCE_CACHE = "1" ]; then
+if [ "$DMCE_CACHE" = "1" ]; then
     _echo "DMCE cache: init"
     true > $dmcepath/cache.hit
     true > $dmcepath/cache.hit.ma
@@ -303,7 +303,7 @@ while read -r c_file; do
         continue
     fi
 
-    if [ $DMCE_CACHE = "1" ]; then
+    if [ "$DMCE_CACHE" = "1" ]; then
         if [ -s $dmcepath/modified-and-untracked.cache ] && \
             grep -q "^$c_file$" $dmcepath/modified-and-untracked.cache; then
             # either an untracked or a modified file
@@ -370,7 +370,7 @@ while read -r c_file; do
     FILE_LIST+="$c_file "
 done < $dmcepath/latest.cache
 
-if [ $DMCE_CACHE = "1" ] && [ -s $dmcepath/cache.hit ]; then
+if [ "$DMCE_CACHE" = "1" ] && [ -s $dmcepath/cache.hit ]; then
     _echo "$(wc -l < $dmcepath/cache.hit) unmodified files retrieved from DMCE cache"
     while read -r f; do
         dst="${dmcepath}/new/"
