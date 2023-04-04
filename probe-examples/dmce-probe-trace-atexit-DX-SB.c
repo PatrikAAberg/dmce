@@ -265,16 +265,16 @@ static void dmce_on_exit(int status, void* opaque) {
 static void dmce_signal_handler(int sig) {
 
     char exitdirname[256];
+    /* Make other threads stop */
+    int i;
+    int dmce_n_cores = dmce_num_cores();
+
+    for (i = 0; i < dmce_n_cores; i++ )
+        __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
+
     sprintf(exitdirname, "%s-%s.%ld", DMCE_PROBE_LOCK_DIR_EXIT, program_invocation_short_name, syscall(SYS_getpid));
 
     if (! (mkdir(exitdirname, 0))) {
-
-        /* Make other threads stop */
-        int i;
-        int dmce_n_cores = dmce_num_cores();
-
-        for (i = 0; i < dmce_n_cores; i++ )
-            __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
 
         /* Save current core and sig */
         dmce_signal_core = sched_getcpu();
