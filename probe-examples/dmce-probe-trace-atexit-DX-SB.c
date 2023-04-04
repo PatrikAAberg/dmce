@@ -106,12 +106,16 @@ static void dmce_mkdir(char const* path) {
     free(dir);
 }
 
+static int dmce_nproc_copy = 0;
 static inline int dmce_num_cores() {
 
 #ifdef DMCE_NUM_CORES
             return DMCE_NUM_CORES;
 #else
-            return get_nprocs();
+            if (dmce_nproc_copy == 0)
+                dmce_nproc_copy = get_nprocs();
+
+            return dmce_nproc_copy;
 #endif
 }
 
