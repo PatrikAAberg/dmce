@@ -983,7 +983,7 @@ else
     done
     wait
 
-    if [ "${DMCE_CACHE:?}" = "1" ]; then
+    if [ "${DMCE_CACHE}" = "1" ]; then
         sed -i -e "s,DMCE_NBR_OF_PROBES (TBD),DMCE_NBR_OF_PROBES (${nbrofprobesinserted}),g" $(cut -d: -f2 ${dmcepath}/probe-references.log| sort -u)
     fi
 
