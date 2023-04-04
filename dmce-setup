@@ -105,7 +105,7 @@ DMCE_LOG_FILES:/tmp/${_user}/dmce
 DMCE_GIT_DIFF_ALGORITHM:histogram
 
 # Trace probes can use this define for buffer sizes
-DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 256)
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 64)
 
 # Trace probes can use this define for trace entry number of optional elements
 DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 10
