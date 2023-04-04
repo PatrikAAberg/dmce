@@ -642,7 +642,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 }
 
 #include <signal.h>
-void dmce_breakpoint(void) {
+static inline __attribute__((unused)) void dmce_breakpoint(void) {
 
     raise(SIGTRAP);
 }
