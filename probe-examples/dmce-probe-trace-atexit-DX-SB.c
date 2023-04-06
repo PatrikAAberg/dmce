@@ -627,12 +627,17 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         time = __builtin_ia32_rdtscp(&cpu);
         cpu = cpu & 0x0fff;
 
+        /* The counter itself is protected by the core, but we cant stop tracing if we do not use atomics
         index = dmce_probe_hitcount_p[cpu];
         dmce_probe_hitcount_p[cpu] += 2;
+        */
+
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu], 2, __ATOMIC_RELAXED);
 
         /* lowest bit means trace is stopped */
-        if (index & 1)
+        if (index & 1) {
             return 0;
+        }
 
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
 
