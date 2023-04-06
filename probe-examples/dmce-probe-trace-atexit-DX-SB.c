@@ -280,7 +280,7 @@ static void dmce_signal_handler(int sig) {
         dmce_signal_core = sched_getcpu();
         dmce_signo = sig;
 
-        /* Dump trace and invoke the standard sig handler */
+        /* Dump trace */
 
         dmce_dump_trace(0);
 
@@ -291,6 +291,8 @@ static void dmce_signal_handler(int sig) {
 
         /* We should never get to this point, but if we do: */
         /* After 30 secs we have (hopefully) written the trace buffer, force an exit if we are still here */
+
+        dmce_dump_trace(0);
 
         sleep(30);
         _Exit(1);
