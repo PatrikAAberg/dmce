@@ -262,15 +262,22 @@ static void dmce_on_exit(int status, void* opaque) {
     }
 }
 
-static void dmce_signal_handler(int sig) {
+static inline void dmce_stop_trace_threads(void) {
 
-    char exitdirname[256];
-    /* Make other threads stop */
     int i;
     int dmce_n_cores = dmce_num_cores();
 
     for (i = 0; i < dmce_n_cores; i++ )
         __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
+}
+
+static void dmce_signal_handler(int sig) {
+
+    char exitdirname[256];
+
+    /* If we come from a dmce breakpoint, we assume for now thread traces are already stopped, TODO: make this work properly with gdb */
+    if (sig != SIGTRAP)
+        dmce_stop_trace_threads();
 
     sprintf(exitdirname, "%s-%s.%ld", DMCE_PROBE_LOCK_DIR_EXIT, program_invocation_short_name, syscall(SYS_getpid));
 
@@ -655,6 +662,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 #include <signal.h>
 static inline __attribute__((unused)) void dmce_breakpoint(void) {
 
+    dmce_stop_trace_threads();
     raise(SIGTRAP);
 }
 
