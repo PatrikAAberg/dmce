@@ -290,6 +290,7 @@ if [ "$DMCE_CACHE" = "1" ]; then
         rm ${coreutils_args} ${cache_root}
     fi
     cache_root+="/${DMCE_MD5:?}"
+    mkdir ${coreutils_args} ${cache_root}
 fi
 
 # Populate FILE_LIST
