@@ -1034,8 +1034,10 @@ def main(stdscr, relaunched = False):
     relaunch = False
 
     if not relaunched:
-        init()
         init_screen(stdscr)
+        stdscr.addstr(10,10, "    dmce tgui - Loading trace, please wait...")
+        stdscr.refresh()
+        init()
         index = len(tracebuffer) - 1
 
     c = ord('z')
