@@ -49,6 +49,7 @@ args = parser.parse_args()
 trailing=args.A
 leading=args.B
 showtimestamps = args.t
+parallel = False
 
 # Adjust this according to trace entry struct in probe
 TRACE_ENTRY_HEADER = 3
@@ -61,6 +62,8 @@ if trailing > 0 or leading > 0:
     keep_src_indent = True
 else:
     keep_src_indent = False
+    if args.sort == "seq":
+        parallel = True
 
 if not 'nocores' in args.c:
     cores = args.c.split(',')
@@ -308,123 +311,116 @@ for i in range(numfrefs):
     treedict.append(treedict_tmp)
     probedtree.append(probedtree_tmp)
 
-outbuf = []
-
 if args.verbose:
     print("Generating trace output", file=sys.stderr)
 
-steps = int(length / 10)
+def produce_chunk(range_start, range_end):
+    outbuf = []
+    for n in range(range_start, range_end):
+        pnum = data[n, 1]
+        cpu = data[n, entrysize64 - 1]
 
-for n in range(length):
+        if cores is not None and str(cpu) not in cores:
+            continue
 
-    if args.verbose:
-        if n % steps == 0:
-            print(str(n) + " (" + str(length) + ") " + str(int((n*100) / length)) + "%", file=sys.stderr)
+        if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
 
-    pnum = data[n, 1]
-    cpu = data[n, entrysize64 - 1]
+            # Which ref file index?
+            refindex = sys.maxsize
+            for i in range(numfrefs):
+                if (pnum >= pinterval[i][0]) and (pnum <= pinterval[i][1]):
+                    refindex = i
+                    # adjust pnum with offset
+                    pnum = int(pnum - pinterval[i][0])
+                    break
 
-    if cores is not None and str(cpu) not in cores:
-        continue
-
-    if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
-
-        # Which ref file index?
-        refindex = sys.maxsize
-        for i in range(numfrefs):
-            if (pnum >= pinterval[i][0]) and (pnum <= pinterval[i][1]):
-                refindex = i
-                # adjust pnum with offset
-                pnum = int(pnum - pinterval[i][0])
-                break
-
-        if refindex == sys.maxsize:
-            print("Could not find matching reference information for probe " + str(pnum) + ", abort", file = sys.stderr)
-            sys.exit(1)
-        else:
-            # Convert to nsecs?
-            if timestamps2nsecs:
-                data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
-
-            vs = []
-            for v in range(0, args.numvars):
-                vs.append(format(data[n,v + 2],"04x"))
-
-            refs = prefs[refindex][pnum].rstrip().split(':')
-            fname = refs[1]
-            line = int(refs[2])
-            func = refs[3]
-            varnames = refs[4:]
-            # Editor line numbers start with 1
-            line = line - 1
-
-            # Retrieve source code from cache
-            lsource = treedict[refindex][codetree[refindex] + "/" + fname]
-
-            # reset fname
-            if args.sort == "heat" or args.sort == "collapse" or args.sort == "uniq":
-                fname = ""
+            if refindex == sys.maxsize:
+                print("Could not find matching reference information for probe " + str(pnum) + ", abort", file = sys.stderr)
+                sys.exit(1)
             else:
-                fname = str(cpu)
+                # Convert to nsecs?
+                if timestamps2nsecs:
+                    data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
 
-            if showtimestamps:
-                fname += args.delimiter + str(data[n, 0])
+                vs = []
+                for v in range(0, args.numvars):
+                    vs.append(format(data[n,v + 2],"04x"))
 
-            fname += args.delimiter + codetree[refindex] + "/" + refs[1]
+                refs = prefs[refindex][pnum].rstrip().split(':')
+                fname = refs[1]
+                line = int(refs[2])
+                func = refs[3]
+                varnames = refs[4:]
+                # Editor line numbers start with 1
+                line = line - 1
 
-            if notComplete(data[n, 0]):
-                fname += "<Trace incomplete>"
+                # Retrieve source code from cache
+                lsource = treedict[refindex][codetree[refindex] + "/" + fname]
 
-            if leading or trailing:
-                print("                                             ---")
-            for lcount in range (line - leading, line + 1 + trailing):
-                if lcount > 0:
-                    if 0 <= lcount < len(lsource):
-                        if keep_src_indent:
-                            sl = lsource[lcount].rstrip()
-                        else:
-                            sl = lsource[lcount].strip()
-                    else:
-                        continue
+                # reset fname
+                if args.sort == "heat" or args.sort == "collapse" or args.sort == "uniq":
+                    fname = ""
+                else:
+                    fname = str(cpu)
 
-                    if lcount == line:
-                        if not args.showprobes:
-                            sl, vs = getSourceAndVars(sl, vs, varnames)
-                        else:
-                            if not probedtree:
-                                print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
-                                sys.exit(1)
-                            sldummy, vs = stripProbeExtractVars(sl, vs)
-                        if args.sort == "heat":
-                            out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, ""]
-                        else:
-                            if not args.hl:
-                                out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+                if showtimestamps:
+                    fname += args.delimiter + str(data[n, 0])
+
+                fname += args.delimiter + codetree[refindex] + "/" + refs[1]
+
+                if notComplete(data[n, 0]):
+                    fname += "<Trace incomplete>"
+
+                if leading or trailing:
+                    print("                                             ---")
+                for lcount in range (line - leading, line + 1 + trailing):
+                    if lcount > 0:
+                        if 0 <= lcount < len(lsource):
+                            if keep_src_indent:
+                                sl = lsource[lcount].rstrip()
                             else:
-                                out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
-                    else:
-                        if probedtree and not args.showprobes:
-                            sl = stripProbe(sl)
-                        out = ["", sl, ""]
+                                sl = lsource[lcount].strip()
+                        else:
+                            continue
 
-                    if (args.format == "column"):
-                        fwidth = longestpath
-                        if showtimestamps:
-                            fwidth += 22
-                        fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
-                    elif (args.format == "raw"):
-                        fmt = "{} {} {}"
-                    else:
-                        print("error: unknown format", file=sys.stderr)
-                        sys.exit(1)
+                        if lcount == line:
+                            if not args.showprobes:
+                                sl, vs = getSourceAndVars(sl, vs, varnames)
+                            else:
+                                if not probedtree:
+                                    print("error: option --noprobes used with unprobed tree, abort", file=sys.stderr)
+                                    sys.exit(1)
+                                sldummy, vs = stripProbeExtractVars(sl, vs)
+                            if args.sort == "heat":
+                                out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, ""]
+                            else:
+                                if not args.hl:
+                                    out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, sl, vs]
+                                else:
+                                    out = [fname + args.delimiter + "+" + str(lcount+1) + args.delimiter + func + args.delimiter, Back.BLUE + sl + Style.RESET_ALL, vs]
+                        else:
+                            if probedtree and not args.showprobes:
+                                sl = stripProbe(sl)
+                            out = ["", sl, ""]
 
-                    outstr = fmt.format(*out)
+                        if (args.format == "column"):
+                            fwidth = longestpath
+                            if showtimestamps:
+                                fwidth += 22
+                            fmt = "{: <"+ str(fwidth + 2) + "} {: <"+ str(args.sourcewidth + 2) + "} {}"
+                        elif (args.format == "raw"):
+                            fmt = "{} {} {}"
+                        else:
+                            print("error: unknown format", file=sys.stderr)
+                            sys.exit(1)
 
-                    if args.sort != "seq":
+                        outstr = fmt.format(*out)
                         outbuf.append(outstr)
-                    else:
-                        print(outstr)
+    return outbuf
 
+outbuf = produce_chunk(0, length)
+for outstr in outbuf:
+    print(outstr)
 
 def lstr(slist):
     return len(max(slist, key=len))
