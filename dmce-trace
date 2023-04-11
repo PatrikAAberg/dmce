@@ -25,6 +25,7 @@ import argparse
 import os
 import re
 import glob
+import multiprocessing
 from colorama import Fore, Back, Style
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)))
@@ -50,6 +51,7 @@ trailing=args.A
 leading=args.B
 showtimestamps = args.t
 parallel = False
+CHUNK_SIZE = 1024 * 32
 
 # Adjust this according to trace entry struct in probe
 TRACE_ENTRY_HEADER = 3
@@ -314,8 +316,10 @@ for i in range(numfrefs):
 if args.verbose:
     print("Generating trace output", file=sys.stderr)
 
-def produce_chunk(range_start, range_end):
+def produce_chunk(outbufs, outbufs_index, range_start, range_end):
+
     outbuf = []
+
     for n in range(range_start, range_end):
         pnum = data[n, 1]
         cpu = data[n, entrysize64 - 1]
@@ -416,11 +420,40 @@ def produce_chunk(range_start, range_end):
 
                         outstr = fmt.format(*out)
                         outbuf.append(outstr)
-    return outbuf
+    outbufs[outbufs_index] = outbuf
 
-outbuf = produce_chunk(0, length)
-for outstr in outbuf:
-    print(outstr)
+outbufs_length = (int(length / CHUNK_SIZE) + 1)
+manager = multiprocessing.Manager()
+outbufs = manager.list(range(outbufs_length))
+for i in range(outbufs_length):
+    outbufs[i] = None
+
+if not parallel:
+    produce_chunk(outbufs, 0, 0, length)
+else:
+    entries_written = 0
+    procs = []
+    chunk_count = 0
+
+    while (entries_written < length ):
+        if (length - entries_written) < CHUNK_SIZE:
+            produce_chunk(outbufs, chunk_count, entries_written, length)
+        else:
+            p = multiprocessing.Process(target=produce_chunk, args=(outbufs, chunk_count, entries_written, entries_written + CHUNK_SIZE,))
+            procs.append(p)
+            p.start()
+
+        entries_written += CHUNK_SIZE
+        chunk_count += 1
+
+    for p in procs:
+        p.join()
+
+for outbuf in outbufs:
+    if outbuf == None:
+        break
+    for outstr in outbuf:
+        print(outstr)
 
 def lstr(slist):
     return len(max(slist, key=len))
