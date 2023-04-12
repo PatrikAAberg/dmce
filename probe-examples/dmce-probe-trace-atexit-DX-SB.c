@@ -45,6 +45,13 @@ typedef struct {
 
 typedef struct {
 
+    uint32_t value;
+    uint32_t pad1;
+    uint64_t pad2[7];
+} dmce_buf_index_t;
+
+typedef struct {
+
     uint64_t start_tsc;
     uint64_t end_tsc;
     struct timespec start_monotonic;
@@ -70,11 +77,11 @@ extern char *program_invocation_short_name;
 
 #ifdef __cplusplus
 static dmce_probe_entry_t* dmce_buf_p = nullptr;
-static unsigned int* dmce_probe_hitcount_p = nullptr;
+static dmce_buf_index_t* dmce_probe_hitcount_p = nullptr;
 static dmce_time_info_t* dmce_time_info_p = nullptr;
 #else
 static dmce_probe_entry_t* dmce_buf_p = 0;
-static unsigned int* dmce_probe_hitcount_p = 0;
+static dmce_buf_index_t* dmce_probe_hitcount_p = 0;
 static dmce_time_info_t* dmce_time_info_p = 0;
 #endif
 static int dmce_buffer_setup_done = 0;
@@ -268,7 +275,7 @@ static inline void dmce_stop_trace_threads(void) {
     int dmce_n_cores = dmce_num_cores();
 
     for (i = 0; i < dmce_n_cores; i++ )
-        __atomic_fetch_add (&dmce_probe_hitcount_p[i], 1, __ATOMIC_RELAXED);
+        __atomic_fetch_add (&dmce_probe_hitcount_p[i].value, 1, __ATOMIC_RELAXED);
 }
 
 static void dmce_signal_handler(int sig) {
@@ -544,7 +551,10 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             memset(dmce_buf_p, 0, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
 
             dmce_trace_enabled_p = (int*)calloc(1, sizeof(int));
-            dmce_probe_hitcount_p = (unsigned int*)calloc(dmce_num_cores(), sizeof(unsigned int));
+
+            dmce_probe_hitcount_p = (dmce_buf_index_t*)aligned_alloc(64, dmce_num_cores() * sizeof(dmce_buf_index_t));
+            memset(dmce_probe_hitcount_p, 0, dmce_num_cores() * sizeof(dmce_buf_index_t));
+
             dmce_time_info_p = (dmce_time_info_t*)malloc(sizeof(dmce_time_info_t));
 
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->start_monotonic));
@@ -639,7 +649,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         dmce_probe_hitcount_p[cpu] += 2;
         */
 
-        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu], 2, __ATOMIC_RELAXED);
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2, __ATOMIC_RELAXED);
 
         /* lowest bit means trace is stopped */
         if (index & 1) {
