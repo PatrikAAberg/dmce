@@ -296,13 +296,11 @@ static void dmce_signal_handler(int sig) {
     }
     else {
 
-        /* We should never get to this point, but if we do: */
-        /* After 30 secs we have (hopefully) written the trace buffer, force an exit if we are still here */
+        /* If we receive multiple signals (typically SIGINT while writing trace buffer): */
+        /* After 2 minutes we have (hopefully) written the trace buffer, force an exit if we are still here */
 
-        dmce_dump_trace(0);
-
-        sleep(30);
-        _Exit(1);
+        sleep(2 * 60);
+        _Exit(128 + sig);
      }
 }
 
