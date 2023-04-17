@@ -7,15 +7,12 @@
 
 /* read the cpu timestamp counter */
 static uint64_t dmce_rdtsc(void) {
-#if defined(__x86_64__)
-    unsigned hi, lo;
-    __asm__ __volatile__ ("rdtsc"
-                          : "=a"(lo), "=d"(hi)
-                          :
-                          : "memory");
-    return ((uint64_t) lo) | (((uint64_t) hi) << 32);
+#if !defined(__x86_64__)
+#error Architecture not supported
 #else
-#error Unsupported architecture
+    unsigned int hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi) : : "memory");
+    return (((uint64_t) hi) << 32) | ((uint64_t) lo);
 #endif
     }
 
