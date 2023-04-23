@@ -51,8 +51,8 @@ CONFIGURATION
 	DMCE_TRACE_STEPS
 		what steps to perform
 
-		available	profile dmce build install buildme restore
-		default		profile dmce buildme restore
+		available	setup profile dmce build install buildme restore
+		default		setup profile dmce buildme restore
 
 EXAMPLES
 	# prepare the project (insert DMCE probes) and build it
@@ -101,10 +101,14 @@ function main() {
 	projs="$*"
 	offset=0
 
-	# start with a clean DMCE config
-	if ! dmce-setup "${OVE_BASE_DIR:?}"; then
-		exit 1
+	re=\\bsetup\\b
+	if [[ ${steps} =~ $re ]]; then
+		# start with a clean DMCE config
+		if ! dmce-setup "${OVE_BASE_DIR:?}"; then
+			exit 1
+		fi
 	fi
+
 	re=\\bdmce\\b
 	if [[ ${steps} =~ $re ]]; then
 		if command -v python &> /dev/null; then
@@ -162,9 +166,12 @@ function main() {
 
 				repo_hash["${repo}"]=1
 
-				# clean up DMCE config files
-				if ! dmce-setup "${OVE_BASE_DIR:?}"; then
-					exit 1
+				re=\\bsetup\\b
+				if [[ ${steps} =~ $re ]]; then
+					# clean up DMCE config files
+					if ! dmce-setup "${OVE_BASE_DIR:?}"; then
+						exit 1
+					fi
 				fi
 			done
 		done
