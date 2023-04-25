@@ -4,7 +4,7 @@ DMCE_MEMORY_LIMIT:50
 DMCE_EXEC_PATH:
 
 # Working directory root
-DMCE_WORK_PATH:/tmp/$USER/dmce
+DMCE_WORK_PATH:
 
 # config files path. (dmce.exclude, dmce.include etc.)
 DMCE_CONFIG_PATH:

@@ -3,15 +3,15 @@
 .NOTPARALLEL:
 
 gcc_torture:
-	@test/gcc.c-torture/gcc.c-torture.sh || true
+	@test/gcc_torture/gcc_torture.sh || true
 
 gcc_torture_vars:
-	@test/gcc.c-torture/gcc.c-torture.sh 5 || true
+	@test/gcc_torture/gcc_torture.sh 10 || true
 
 gplusplus_torture:
-	@test/g++.dg-torture/g++.dg-torture.sh || true
+	@test/gplusplus_torture/gplusplus_torture.sh || true
 
 gplusplus_torture_vars:
-	@test/g++.dg-torture/g++.dg-torture.sh 5 || true
+	@test/gplusplus_torture/gplusplus_torture.sh 10 || true
 
 test: gcc_torture gcc_torture_vars gplusplus_torture gplusplus_torture_vars

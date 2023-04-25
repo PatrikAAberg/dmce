@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-numVars=$1
+
 set -e
+
+if [ $# -eq 0 ]; then
+	numVars=0
+else
+	numVars=$1
+fi
 
 # Hard coded or follow distro
 #gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
@@ -17,24 +23,30 @@ function _echo() {
 		a="${PROG_NAME}"
 	fi
 
-	echo $(date '+%Y-%m-%d %H:%M:%S'):${a}:$@
+	echo "$(date '+%Y-%m-%d %H:%M:%S'):${a}:$*"
 }
-_echo "running gcc.dg-torture"
+_echo "running $PROG_NAME"
 
-# DMCE work directory
-dmce_work_path="/tmp/${USER}/dmce"
+p="/tmp/${USER}/dmce"
+if ! mkdir -pv "$p"; then
+	exit 1
+elif [ "$UNIQ_WORK_PATH" = "" ]; then
+	dmce_work_path="${p}"
+elif ! dmce_work_path="$(mktemp -d -p ${p})"; then
+	exit 1
+fi
 
 # test work directory
 my_work_path="${dmce_work_path}/test/${PROG_NAME}"
-my_test_path=$(dirname $(echo ${PWD}/$0))
+my_test_path=$(dirname ${PWD}/$0)
 mkdir -v -p ${my_work_path}
 [ -d ${my_work_path}/gcc-${gcc_version} ] && rm -rf ${my_work_path}/gcc-${gcc_version}
 
 # temporary hide errors
 set +e
+
 # DMCE exec directory
-dmce_exec_path="$(git rev-parse --show-toplevel 2> /dev/null)"
-if [ $? -ne 0 ]; then
+if ! dmce_exec_path="$(git rev-parse --show-toplevel 2> /dev/null)"; then
 	set -e
 	if ! [ -e dmce/.git ]; then
 		_echo "fetch DMCE"
@@ -45,6 +57,13 @@ fi
 set -e
 
 cd ${my_work_path}
+
+function cleanup() {
+	if [ -e gcc-${gcc_version}.tar.xz ]; then
+		rm gcc-${gcc_version}.tar.xz
+	fi
+}
+trap cleanup EXIT
 
 if [ -e "gcc-${gcc_version}.tar.xz" ]; then
 	archive="xz"
@@ -64,12 +83,14 @@ else
 		archive="xz"
 	fi
 fi
+trap - EXIT
 
 _echo "unpack GCC"
-tar --no-same-owner -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+tar --no-same-owner -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/gcc.c-torture
 
 _echo "create git"
-cd gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+mv gcc-${gcc_version}/gcc/testsuite/gcc.c-torture gcc-${gcc_version}/gcc/testsuite/$PROG_NAME
+cd gcc-${gcc_version}/gcc/testsuite/$PROG_NAME || exit
 
 git init -q
 git config gc.autoDetach false
@@ -129,8 +150,8 @@ cap_jobs() {
 	fi
 }
 
-> ${my_work_path}/compile-errors
-> ${my_work_path}/compile-timeouts
+true > ${my_work_path}/compile-errors
+true > ${my_work_path}/compile-timeouts
 _timeout=10
 _max_jobs=200
 set +e
@@ -167,6 +188,7 @@ fi
 
 # add DMCE config and update paths
 cp -v ${dmce_exec_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
+sed -i "s|DMCE_WORK_PATH:.*|DMCE_WORK_PATH:${dmce_work_path}|" .dmceconfig
 sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:${dmce_exec_path}|" .dmceconfig
 sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:${my_test_path}|" .dmceconfig
 sed -i "s|DMCE_CMD_LOOKUP_HOOK:.*|DMCE_CMD_LOOKUP_HOOK:${my_test_path}/cmdlookuphook.sh|" .dmceconfig
@@ -175,10 +197,10 @@ if [[ "$numVars" -eq "0" ]]; then
     sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test.c|" .dmceconfig
 else
-    echo "10 variables probes enabled"
+    echo "$numVars variables probes enabled"
     sed -i "s|DMCE_PROBE_SOURCE:.*|DMCE_PROBE_SOURCE:${my_test_path}/dmce-probe-test-DX.c|" .dmceconfig
     sed -i "s|DMCE_PROBE_PROLOG:.*|DMCE_PROBE_PROLOG:${my_test_path}/dmce-prolog-test-DX.c|" .dmceconfig
-    echo "DMCE_NUM_DATA_VARS:10" >> .dmceconfig
+    echo "DMCE_NUM_DATA_VARS:$numVars" >> .dmceconfig
     echo "DMCE_TRACE_VAR_TYPE:unsigned long" >> .dmceconfig
 fi
 
@@ -187,11 +209,11 @@ git commit -q -m "DMCE config"
 git --no-pager log --oneline --shortstat --no-color
 
 _echo "launch DMCE"
-${dmce_exec_path}/dmce-launcher -n $(git rev-list --all --count) --debug
+${dmce_exec_path}/dmce-launcher -a --debug
 
 _echo "compile"
-> ${my_work_path}/compile-errors
-find -name '*.err' -exec rm {} \;
+true > ${my_work_path}/compile-errors
+find . -name '*.err' -exec rm {} \;
 
 if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
 	echo "error: empty probe-list"
@@ -207,7 +229,7 @@ while read -r f; do
 	cap_jobs $_max_jobs
 done < ${dmce_work_path}/${PROG_NAME}/workarea/probe-list
 wait
-find -name '*.err' -type f ! -size 0 -exec cat {} \;
+find . -name '*.err' -type f ! -size 0 -exec cat {} \;
 errors=$(wc -l < ${my_work_path}/compile-errors)
 _echo "exit: ${errors}"
 exit ${errors}
