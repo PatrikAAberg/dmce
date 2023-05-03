@@ -122,7 +122,10 @@ function main() {
 			for repo in $(ove-list-path "$p"); do
 				if [ ! -d "${repo}" ]; then
 					continue
-				elif [ ! -e "${repo}"/.git ]; then
+				elif ! repo=$(GIT_CEILING_DIRECTORIES="${OVE_BASE_DIR}" git \
+					-C "${repo}" \
+					rev-parse \
+					--show-toplevel); then
 					continue
 				fi
 
