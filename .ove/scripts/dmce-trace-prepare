@@ -117,18 +117,24 @@ function main() {
 			_start=$SECONDS
 		fi
 
-		# run DMCE for each repo involved
-		for p in $projs; do
-			for repo in $(ove-list-path "$p"); do
-				if [ ! -d "${repo}" ]; then
+		# for each project and all dependencies
+		for p in $projs $(ove-list-deps "${projs}"); do
+			# get path(s) involved for this project/dependency
+			for repo in $(ove-proj2val "$p" path); do
+				if [ "${OVE_BASE_DIR}" = "${repo}" ]; then
+					# skip base dir
+					continue
+				elif [ ! -d "${repo}" ]; then
 					continue
 				elif ! repo=$(GIT_CEILING_DIRECTORIES="${OVE_BASE_DIR}" git \
 					-C "${repo}" \
 					rev-parse \
-					--show-toplevel); then
+					--show-toplevel 2> /dev/null); then
 					continue
 				fi
 
+				_echo "project: $p"
+				_echo "path: $repo"
 				repo_short="${repo/${OVE_BASE_DIR}\/}"
 				if [ "$repo_short" = "dmce" ]; then
 					# skip self
@@ -149,7 +155,7 @@ function main() {
 				fi
 
 				# run DMCE
-				if ! dmce_one_repo "${repo}" "$offset"; then
+				if ! dmce_one_repo "${repo}" "${p}" "$offset"; then
 					err=$((err + 1))
 					continue
 				fi
@@ -244,7 +250,8 @@ function main() {
 }
 
 # $1: repo
-# $2: offset
+# $2: project
+# $3: offset
 function dmce_one_repo {
 	local args
 	local default_args
@@ -255,7 +262,9 @@ function dmce_one_repo {
 	local re
 
 	git_full="$1"
-	offset="$2"
+	proj="$2"
+	offset="$3"
+
 	if ! cd "${git_full}"; then
 		return 1
 	fi
@@ -264,24 +273,25 @@ function dmce_one_repo {
 	if [[ ${steps} =~ $re ]]; then
 		# any OWEL specific arguments to set-profile?
 		profile_db="${OVE_OWEL_DIR}/projects/dmce/profile.db"
-		git_short=${git_full##*/}
 		if [ ! -s "${profile_db}" ]; then
 			args="-C 1 trace"
-			_echo "no profile.db file found, using '$args' as DMCE profile"
+			_echo "profile.db not found, using '$args' as profile"
 		else
-			_echo "$profile_db"
+			_echo "profile.db: $profile_db"
 			# read default trace profile and args
 			if grep -q "^default:trace" "${profile_db}"; then
 				default_args=$(grep "^default:trace:" "${profile_db}" | cut -d: -f3-)
 			fi
 
-			# no entry for this repo?
-			if ! grep -q "^$git_short:trace:" "${profile_db}"; then
+			# no profile for this repo?
+			if ! grep -q "^$proj:trace:" "${profile_db}"; then
 				args="$default_args"
+				_echo "no profile found for $proj"
 			else
-				args=$(grep "^$git_short:trace:" "${profile_db}" | cut -d: -f3-)
+				args=$(grep "^$proj:trace:" "${profile_db}" | cut -d: -f3-)
 				if [ "$args" = "default" ]; then
 					args="$default_args"
+					_echo "using default profile for $proj"
 				fi
 
 				profile=${args##* }

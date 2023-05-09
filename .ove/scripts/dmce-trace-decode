@@ -139,7 +139,10 @@ function main() {
 		repos=
 		probe_refs=
 		for d in $(ove list-path "$proj"); do
-			if [ ! -d "${d}" ]; then
+			if [ "${OVE_BASE_DIR}" = "${d}" ]; then
+				# skip base dir
+				continue
+			elif [ ! -d "${d}" ]; then
 				continue
 			elif ! d=$(GIT_CEILING_DIRECTORIES="${OVE_BASE_DIR}" git \
 				-C "${d}" \
