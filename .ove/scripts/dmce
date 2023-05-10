@@ -92,8 +92,11 @@ EXAMPLES
         # launch DMCE on two repos
         ove dmce launch -a -q -- ag dmce-examples
 
-        # trace, build, run, view in one go
+        # trace, build, run, view in one go (monorepo)
         ove dmce trace-prepare ag && { ag foobar; ove dmce trace-decode ag; }
+
+        # trace, build, run, view in one go (multirepo)
+        ove dmce trace-prepare tmux && { tmux ls; ove dmce trace-decode tmux; }
 EOF
 }
 

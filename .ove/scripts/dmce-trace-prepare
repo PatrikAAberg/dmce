@@ -64,8 +64,11 @@ EXAMPLES
 	# decode the trace buffer and launch a trace viewer
 	ove dmce trace-decode ag
 
-	# oneliner (all of the above in one go)
+	# monorepo oneliner (the above three commands in one go)
 	ove dmce trace-prepare ag && { ag foobar; ove dmce trace-decode ag; }
+
+	# multirepo oneliner
+	ove dmce trace-prepare tmux && { tmux ls; ove dmce trace-decode tmux; }
 EOF
 }
 
