@@ -44,8 +44,20 @@ parser.add_argument('--format',         type=str, default="column", help='Output
 parser.add_argument('--sort',           type=str, default="seq",    help='Sorting scheme (seq|heat|uniq|collapse), default: seq')
 parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
+parser.add_argument('--bundle',         action='store_true',        help='Generate bundle .zip file in current directory')
 
 args = parser.parse_args()
+
+outfile = sys.stdout
+
+if args.bundle:
+    noutfile = os.path.basename(args.dfile)
+    noutfile = noutfile.replace("dmcebuffer.bin","dmce-trace")
+    print("Creating bundle as " + os.getcwd() + "/" + noutfile + ".zip")
+    outdir = noutfile
+    outzip = outdir + ".zip"
+    noutfile = noutfile + ".trace"
+    outfile = open(noutfile, "w")
 
 trailing=args.A
 leading=args.B
@@ -57,7 +69,7 @@ CHUNK_SIZE = 1024 * 32
 TRACE_ENTRY_HEADER = 3
 
 if showtimestamps and args.sort != "seq":
-    print("dmce-trace: error: -t cannot be combined with --sort, abort")
+    print("dmce-trace: error: -t cannot be combined with --sort, abort", file = sys.stderr)
     sys.exit(1)
 
 if trailing > 0 or leading > 0:
@@ -78,13 +90,14 @@ ifile = open(ifilename)
 info_tmp = ifile.readlines()
 ifile.close()
 info = []
+uniqsourcefiles = []
 timestamps2nsecs = 0;
 timestamp_start = 0;
 
 count = 0
 for line in info_tmp:
     if not "#" in line:
-        print(line.rstrip())
+        print(line.rstrip(), file = outfile)
         info.append(line)
     else:
         fields = line.split(" ")
@@ -112,7 +125,7 @@ if count >= 6:
     if args.verbose:
         print("CPU timestamps to nanoseconds divider (Nominal cpu clock freq): " + str(timestamps2nsecs), file=sys.stderr)
 
-print("- - - - -")
+print("- - - - -", file = outfile)
 
 probefiles = args.probefile
 codetrees = args.codetree
@@ -301,6 +314,8 @@ for i in range(numfrefs):
 
     for filename in tree_tmp:
         if os.path.isfile(filename) and re_source.search(filename):
+            if filename not in uniqsourcefiles:
+                uniqsourcefiles.append(filename)
             f = open(filename)
             treedict_tmp[filename] = f.readlines()
             f.close()
@@ -376,7 +391,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                     fname += "<Trace incomplete>"
 
                 if leading or trailing:
-                    print("                                             ---")
+                    print("                                             ---", file = outfile)
                 for lcount in range (line - leading, line + 1 + trailing):
                     if lcount > 0:
                         if 0 <= lcount < len(lsource):
@@ -453,7 +468,7 @@ for outbuf in outbufs:
     if outbuf == None:
         break
     for outstr in outbuf:
-        print(outstr)
+        print(outstr, file = outfile)
 
 def lstr(slist):
     return len(max(slist, key=len))
@@ -470,7 +485,7 @@ if args.sort != "seq":
 
         for i in range(len(sortedarr[0])):
             out = [sortedarr[0][i] , " occurs:" + str(sortedarr[1][i])]
-            print( fmt.format(*out) )
+            print( fmt.format(*out) , file = outfile)
 
     elif args.sort == "heat":
         arr, count = np.unique(outbuf, return_counts=True)
@@ -483,7 +498,7 @@ if args.sort != "seq":
 
         for i in sind:
             out = [arr[i] , " heat:" + str(count[i]) ]
-            print( fmt.format(*out) )
+            print( fmt.format(*out) , file = outfile)
 
     elif args.sort == "collapse":
         uniqarr, count = np.unique(outbuf, return_counts=True)
@@ -502,7 +517,23 @@ if args.sort != "seq":
 
         for i in range(len(uniqarr)):
             out = [uniqarr[i] , " collapsed:" + str(count[i])]
-            print( fmt.format(*out) )
+            print( fmt.format(*out) , file = outfile)
 
+
+# If bundle, zip it!
+if args.bundle:
+    import zipfile
+    import fnmatch
+
+    with zipfile.ZipFile(outzip, 'a') as z:
+        z.write(noutfile, noutfile)
+        for fname in uniqsourcefiles:
+            for c in codetree:
+                if c in fname:
+                    dest = fname.replace(os.path.dirname(c) + "/", "")
+                    z.write(fname, dest)
+        z.close()
+
+    os.remove(noutfile)
 
 # end of file
