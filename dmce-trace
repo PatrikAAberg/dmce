@@ -519,19 +519,24 @@ if args.sort != "seq":
             out = [uniqarr[i] , " collapsed:" + str(count[i])]
             print( fmt.format(*out) , file = outfile)
 
+outfile.close()
 
 # If bundle, zip it!
 if args.bundle:
     import zipfile
     import fnmatch
 
-    with zipfile.ZipFile(outzip, 'a') as z:
+    with zipfile.ZipFile(outzip, 'w') as z:
         z.write(noutfile, noutfile)
         for fname in uniqsourcefiles:
             for c in codetree:
                 if c in fname:
                     dest = fname.replace(os.path.dirname(c) + "/", "")
                     z.write(fname, dest)
+        z.close()
+
+    # zipfile needs a barrier
+    with zipfile.ZipFile(outzip, 'r') as z:
         z.close()
 
     os.remove(noutfile)
