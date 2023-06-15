@@ -44,13 +44,15 @@ parser.add_argument('--format',         type=str, default="column", help='Output
 parser.add_argument('--sort',           type=str, default="seq",    help='Sorting scheme (seq|heat|uniq|collapse), default: seq')
 parser.add_argument('-t',               action='store_true',        help='Show timestamps')
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
-parser.add_argument('--bundle',         action='store_true',        help='Generate bundle .zip file in current directory')
+parser.add_argument('--bundle',         action='store_true',        help='Generate bundle .zip file in current directory, implies -t --delimiter @')
 
 args = parser.parse_args()
 
 outfile = sys.stdout
 
 if args.bundle:
+    args.t = True
+    args.delimiter = "@"
     noutfile = os.path.basename(args.dfile)
     noutfile = noutfile.replace("dmcebuffer.bin","dmce-trace")
     print("Creating bundle as " + os.getcwd() + "/" + noutfile + ".zip")
@@ -385,7 +387,12 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 if showtimestamps:
                     fname += args.delimiter + str(data[n, 0])
 
-                fname += args.delimiter + codetree[refindex] + "/" + refs[1]
+                if args.bundle:
+                    path = os.path.basename(codetree[refindex]) + "/"
+                else:
+                    path = codetree[refindex] + "/"
+
+                fname += args.delimiter + path + refs[1]
 
                 if notComplete(data[n, 0]):
                     fname += "<Trace incomplete>"
