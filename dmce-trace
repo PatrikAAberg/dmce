@@ -318,7 +318,7 @@ for i in range(numfrefs):
         if os.path.isfile(filename) and re_source.search(filename):
             if filename not in uniqsourcefiles:
                 uniqsourcefiles.append(filename)
-            f = open(filename)
+            f = open(filename, errors="replace")
             treedict_tmp[filename] = f.readlines()
             f.close()
             if probedtree_tmp == False:

@@ -59,7 +59,7 @@ def parse_file(f, index):
     open_succeeded = False
     while not open_succeeded:
         try:
-            fp = open(f)
+            fp = open(f, errors="replace")
             open_succeeded = True
         except:
             time.sleep(1)
