@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+#
+# MIT License
+#
+# Copyright (c) 2023 Ericsson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+# OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function usage() {
+	local projs
+
+	projs="${OVE_PROJECT_LIST:?}"
+	cat << EOF
+NAME
+	Insert DMCE probes into one or multiple OVE projects/repos
+
+SYNOPSIS
+	ove dmce trace-prepare-auto proj...
+
+OPTIONS
+	proj:
+	  choose from: ${projs}
+
+DESCRIPTION
+	Wrapper on top of "ove dmce trace-prepare". This plugin tries to
+	automate the build process for a project.
+
+CONFIGURATION
+	DMCE_TRACE_REPO_PATTERN
+		what repos to instrument
+
+EXAMPLES
+	ove dmce trace-prepare-auto ag
+EOF
+}
+function macros_a() {
+	local m
+
+	if grep "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
+		macros=$(grep --binary-files=text "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | \
+			grep -o '"[a-zA-Z_]\+"' | \
+			sort -u | \
+			tr -d '"' | \
+			grep -v DMCE_PROBE)
+		for m in $macros; do
+			echo "$m" | tr -dc '[:print:]' >> "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude"
+			echo >> "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude"
+			nbr_macros_fixed=$((nbr_macros_fixed + 1))
+		done
+	fi
+}
+
+# $1: grep pattern
+function macro_helper() {
+	local m
+
+	if ! grep --binary-files=text -q "$1" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
+		return
+	fi
+
+	while read -r m; do
+		echo "$m" | tr -dc '[:print:]'
+		echo
+	done <<<"$(grep --binary-files=text "$1" "${OVE_TMP}/dmce-trace-prepare-auto.log" | \
+		awk '{print $NF}' | \
+		grep -v DMCE_PROBE | \
+		sort -u)"
+}
+
+function macros_b() {
+	local m
+
+	for m in $(macro_helper "note: in expansion of macro"); do
+		echo "$m" >> "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude"
+		nbr_macros_fixed=$((nbr_macros_fixed + 1))
+	done
+}
+
+function macros_c() {
+	local m
+
+	for m in $(macro_helper "note: in definition of macro"); do
+		echo "$m" >> "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude"
+		nbr_macros_fixed=$((nbr_macros_fixed + 1))
+	done
+}
+
+function remove_file() {
+	local f
+	local f_base
+
+	while read -r f; do
+		f_base=${f##*/}
+
+		if [ ${ignored[${f_base}]+isset} ]; then
+			# already ignored
+			continue
+		elif ! sed -i -e "s,^\($1.* -e\)\(.*\) trace-mc,\1\2\,$f_base trace-mc,g" \
+			"${profile_db}"; then
+			echo "warning: failed to update '${profile_db}' for file '$f_base'"
+			continue
+		fi
+
+		echo "dmce-trace-prepare-auto: file '$f_base' ignored"
+		ignored[${f_base}]=1
+	done <<<"$(grep " error:" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | cut -d: -f1)"
+}
+
+function sanity_checks() {
+	if [ $# -eq 0 ]; then
+		usage
+		exit 1
+	elif [ ! -e "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude" ]; then
+		echo "error: run 'ove install dmce' and try again"
+		exit 1
+	elif [ ! -s "${profile_db}" ]; then
+		echo "creating '${profile_db}'"
+		mkdir -p -v "${OVE_OWEL_DIR:?}/projects/dmce"
+		true > "${profile_db}"
+	fi
+
+	if ! grep -q "^$1:trace:.*trace-mc" "${profile_db}"; then
+		echo "$1:trace:-C 1 -e foo.c trace-mc" >> "${profile_db}"
+	elif ! grep -q "^$1:trace:.*-e.*trace-mc" "${profile_db}"; then
+		# first save previous entry then update it with '-e foo.c'
+		if ! sed -i -e "s,^\($1:trace:.*trace-mc\),#\1\n\1,g" \
+			"${profile_db}"; then
+			echo "error: could not save previous entry in '${profile_db}'"
+			exit 1
+		elif ! sed -i -e "s,^\($1:trace:.*\) trace-mc,\1 -e foo.c trace-mc,g" \
+			"${profile_db}"; then
+			echo "error: failed to update '${profile_db}'"
+			exit 1
+		fi
+	fi
+}
+
+function main() {
+	local i
+	local nbr_macros_fixed
+	declare -A -g ignored
+	profile_db="${OVE_OWEL_DIR:?}/projects/dmce/profile.db"
+
+	sanity_checks "$@"
+
+	export GCC_COLORS=""
+	i=0
+	while true; do
+		i=$((i + 1))
+		if [ $i -gt 1 ]; then
+			# setup on first iteration
+			export DMCE_TRACE_STEPS="profile dmce buildme restore"
+		fi
+
+		# insert traces and build
+		ove-dmce-trace-prepare "$@" |& tee "${OVE_TMP:?}/dmce-trace-prepare-auto.log"
+		if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+			break
+		fi
+
+		# clear probes
+		ove-dmce launch -c -q -- "$1"
+
+		# macro errros?
+		nbr_macros_fixed=0
+		macros_a
+		macros_b
+		macros_c
+
+		if [ $nbr_macros_fixed -gt 0 ]; then
+			tail -$nbr_macros_fixed "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude" | \
+				sed -e "s,^\(.*\)$,dmce-trace-prepare-auto: macro '\1' ignored,g"
+			continue
+		fi
+
+		# still errors, remove the complete file
+		remove_file "$1"
+	done
+}
+
+main "$@"
