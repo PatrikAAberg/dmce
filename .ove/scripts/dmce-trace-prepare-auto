@@ -106,10 +106,16 @@ function remove_file() {
 	local f
 	local f_base
 
+	if ! grep -q " error:" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
+		exit 1
+	fi
+
 	while read -r f; do
 		f_base=${f##*/}
 
-		if [ ${ignored[${f_base}]+isset} ]; then
+		if [ "$f_base" = "" ]; then
+			continue
+		elif [ ${ignored[${f_base}]+isset} ]; then
 			# already ignored
 			continue
 		elif ! sed -i -e "s,^\($1.* -e\)\(.*\) trace-mc,\1\2\,$f_base trace-mc,g" \
