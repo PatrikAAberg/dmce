@@ -58,6 +58,7 @@ function init() {
 	fi
 
 	export OVE_LOCAL_ECHO=1
+	export DMCE_TRACE_REPO_PATTERN="${repo##*/}$"
 }
 
 function instrument() {
@@ -92,7 +93,6 @@ function decode() {
 			# remember all previous dmce trace zip files
 			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/before"
 		fi
-		export DMCE_TRACE_REPO_PATTERN="${repo##*/}$"
 		ove dmce-trace-decode "${proj}"
 		if [ "${REPLY}" = "g" ]; then
 			# any new zip files created?

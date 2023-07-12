@@ -136,8 +136,6 @@ function main() {
 					continue
 				fi
 
-				_echo "project: $p"
-				_echo "path: $repo"
 				repo_short="${repo/${OVE_BASE_DIR}\/}"
 				if [ "$repo_short" = "dmce" ]; then
 					# skip self
@@ -157,6 +155,8 @@ function main() {
 					continue
 				fi
 
+				_echo "project: $p"
+				_echo "path: $repo"
 				# run DMCE
 				if ! dmce_one_repo "${repo}" "${p}" "$offset"; then
 					err=$((err + 1))
