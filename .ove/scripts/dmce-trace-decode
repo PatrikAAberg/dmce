@@ -141,7 +141,7 @@ function main() {
 
 		repos=
 		probe_refs=
-		for d in $(ove list-path "$proj"); do
+		for d in $(ove-list-path "$proj"); do
 			if [ "${OVE_BASE_DIR}" = "${d}" ]; then
 				# skip base dir
 				continue
@@ -150,7 +150,7 @@ function main() {
 			elif ! d=$(GIT_CEILING_DIRECTORIES="${OVE_BASE_DIR}" git \
 				-C "${d}" \
 				rev-parse \
-				--show-toplevel); then
+				--show-toplevel 2> /dev/null); then
 				continue
 			fi
 
@@ -189,7 +189,7 @@ function main() {
 		if [ -z "$TMUX" ]; then
 			dmce-trace-viewer "$b" "$probe_refs" "$repos"
 		else
-			ove-run 1 "dmce-trace-viewer $b $probe_refs $repos"
+			ove-run 1 "DMCE_TRACE_VIEWER=$DMCE_TRACE_VIEWER dmce-trace-viewer $b $probe_refs $repos"
 		fi
 	done
 }

@@ -56,6 +56,8 @@ function init() {
 		echo "error: can not get git toplevel for '${path}'"
 		exit 1
 	fi
+
+	export OVE_LOCAL_ECHO=1
 }
 
 function instrument() {
@@ -82,9 +84,6 @@ function decode() {
 	if [ "${REPLY}" = "t" ] || [ "${REPLY}" = "g" ]; then
 		if [ "${REPLY}" = "t" ]; then
 			export DMCE_TRACE_VIEWER="tgui"
-		elif ! command -v dmce-gui > /dev/null; then
-			echo "error: can not find 'dmce-gui'"
-			exit 1
 		else
 			export DMCE_TRACE_VIEWER="gui"
 		fi
@@ -99,7 +98,11 @@ function decode() {
 			# any new zip files created?
 			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/after"
 			for f in $(comm -1 -3 "${OVE_TMP}/before" "${OVE_TMP}/after"); do
-				dmce-gui "${f}"
+				if ! command -v dmce-gui > /dev/null; then
+					echo "scp -p ${HOSTNAME}:${PWD}/${f} /var/tmp/${f} && dmce-gui -f /var/tmp/${f}"
+				else
+					dmce-gui -f "${f}"
+				fi
 			done
 		fi
 	fi
@@ -155,13 +158,16 @@ function execute() {
 
 		while true; do
 			read -r -p "# "
-			if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+			if [ "${REPLY}" = "all" ]; then
+				break
+			elif ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
 				continue
 			elif [ "${REPLY}" -ge $i ]; then
 				continue
 			fi
 			break
 		done
+
 		if [ "${REPLY}" = "all" ]; then
 			trap decode EXIT
 			for j in $(seq 0 "${i}"); do
