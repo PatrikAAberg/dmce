@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+#
+# MIT License
+#
+# Copyright (c) 2023 Ericsson
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is furnished
+# to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+# OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+# OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function usage() {
+	cat << EOF
+NAME
+	trace-lazy
+
+SYNOPSIS
+	ove dmce trace-lazy proj
+
+OPTIONS
+	proj:
+	  choose from: ${OVE_PROJECT_LIST}
+
+DESCRIPTION
+	Interactive guide to DMCE trace.
+
+EXAMPLES
+	ove dmce trace-lazy ag
+EOF
+}
+
+function init() {
+	if [ $# -eq 0 ]; then
+		usage
+		exit 1
+	fi
+
+	proj="$1"
+	if ! path=$(ove-proj2val "${proj}" path); then
+		exit 1
+	elif ! repo=$(git -C "${path}" rev-parse --show-toplevel 2> /dev/null); then
+		echo "error: can not get git toplevel for '${path}'"
+		exit 1
+	fi
+}
+
+function instrument() {
+	if ! ove dmce-trace-prepare-auto "${proj}"; then
+		echo "error: 'ove dmce-trace-prepare-auto ${proj}' failed"
+		exit 1
+	fi
+}
+
+function cleanup() {
+	mkdir -pv "${OVE_ARCHIVE_DIR}"
+	find /tmp/"${OVE_USER}"/dmce/ -maxdepth 1 -name 'dmcebuffer.bin-*' -exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+	find . -maxdepth 1 -name 'dmce-trace*.zip' -exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+}
+
+function _exit() {
+	exit
+}
+function decode() {
+	local f
+
+	trap _exit INT
+	read -r -p "decode? (g/t/N) "
+	if [ "${REPLY}" = "t" ] || [ "${REPLY}" = "g" ]; then
+		if [ "${REPLY}" = "t" ]; then
+			export DMCE_TRACE_VIEWER="tgui"
+		elif ! command -v dmce-gui > /dev/null; then
+			echo "error: can not find 'dmce-gui'"
+			exit 1
+		else
+			export DMCE_TRACE_VIEWER="gui"
+		fi
+
+		if [ "${REPLY}" = "g" ]; then
+			# remember all previous dmce trace zip files
+			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/before"
+		fi
+		export DMCE_TRACE_REPO_PATTERN="${repo##*/}$"
+		ove dmce-trace-decode "${proj}"
+		if [ "${REPLY}" = "g" ]; then
+			# any new zip files created?
+			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/after"
+			for f in $(comm -1 -3 "${OVE_TMP}/before" "${OVE_TMP}/after"); do
+				dmce-gui "${f}"
+			done
+		fi
+	fi
+
+	read -r -p "cleanup? (y/N) "
+	if [ "${REPLY}" = "y" ]; then
+		cleanup
+	fi
+}
+
+function execute() {
+	local args
+	local bin
+	local i
+	local j
+	local f
+	declare -a elfs
+
+	i=0
+	# search for ELF executables
+	for f in $(find "${path}" -type f -perm -u=x -print0 | \
+		xargs -0 file | \
+		grep 'ELF.*interpreter' | \
+		cut -d: -f1 | \
+		sort); do
+
+		if command -v readelf > /dev/null; then
+			if ! readelf -a "${f}" | grep -q -m 1 dmce_probe_body; then
+				# an ELF without DMCE symbols => next
+				continue
+			fi
+		fi
+
+		elfs[${i}]="${f}"
+		i=$((i + 1))
+	done
+	if [ "${i}" -eq 0 ]; then
+		echo "error: no executables found"
+		exit 1
+	fi
+
+	if [ "${#elfs[@]}" -eq 1 ]; then
+		bin=${elfs[0]}
+		echo "program: ${bin}"
+		read -r -p "args: "
+		args="${REPLY}"
+		trap decode EXIT
+		time eval "${bin}" "${args}"
+	else
+		for j in $(seq 0 "$((i - 1))"); do
+			printf "%s %s\n" "${j}" "${elfs[${j}]}"
+		done
+
+		while true; do
+			read -r -p "# "
+			if ! [[ "${REPLY}" =~ ^[0-9]+$ ]]; then
+				continue
+			elif [ "${REPLY}" -ge $i ]; then
+				continue
+			fi
+			break
+		done
+		if [ "${REPLY}" = "all" ]; then
+			trap decode EXIT
+			for j in $(seq 0 "${i}"); do
+				time eval "${elfs[${j}]}"
+			done
+		else
+			bin="${elfs[${REPLY}]}"
+			echo "program: ${bin}"
+			read -r -p "args: "
+			args="${REPLY}"
+			trap decode EXIT
+			time eval "${bin}" "${args}"
+		fi
+	fi
+}
+
+function main() {
+	init "$@"
+
+	read -r -p "instrument? (y/N) "
+	if [ "${REPLY}" = "y" ]; then
+		instrument
+	fi
+
+	read -r -p "execute? (y/N) "
+	if [ "${REPLY}" = "y" ]; then
+		execute
+	fi
+}
+
+main "$@"
