@@ -93,7 +93,9 @@ function decode() {
 			# remember all previous dmce trace zip files
 			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/before"
 		fi
-		ove dmce-trace-decode "${proj}"
+
+		# unset TMUX will serialize decode
+		TMUX='' ove dmce-trace-decode "${proj}"
 		if [ "${REPLY}" = "g" ]; then
 			# any new zip files created?
 			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/after"
