@@ -36,7 +36,7 @@ OPTIONS
 	  choose from: ${OVE_PROJECT_LIST}
 
 DESCRIPTION
-	Interactive guide to DMCE trace.
+	Interactive guide to DMCE Trace.
 
 EXAMPLES
 	ove dmce trace-lazy ag
