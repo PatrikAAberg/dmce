@@ -2,6 +2,9 @@
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
 #define __DMCE_PROBE_FUNCTION__HEADER__
 #ifdef __cplusplus
+#if __cplusplus < 201103L
+#define nullptr (0)
+#endif
 static int* dmce_trace_enabled_p = nullptr;
 #else
 static int* dmce_trace_enabled_p = 0;
