@@ -212,6 +212,8 @@ if os.path.exists(configpath + "/dmce.var.include"):
     dmcevarinclude = open(configpath + "/dmce.var.include")
     varincludelines = dmcevarinclude.readlines()
     dmcevarinclude.close()
+else:
+    varincludelines = [".*"]
 
 for var in varexcludelines:
     if not "#" in var:
