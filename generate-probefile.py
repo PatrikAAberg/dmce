@@ -514,6 +514,7 @@ re_vardecl = re.compile(r'.*-VarDecl Hexnumber.*(used|referenced)\s(\S*)\s.*')
 # Variable and param var declarations to ignore
 re_parmdeclarations_ignore = []
 re_parmdeclarations_ignore.append(re.compile(r'.*\'std::string\'.*'))   # Clang 10 sometimes confuses string.length() with de-reffed member variable type
+re_parmdeclarations_ignore.append(re.compile(r'.*Hexnumber parent Hexnumber prev Hexnumber.*')) # From Clang 16 this can be used to detect static member variables initialized on top level to avoid accesing them with only member name
 
 # De-reffed member vars and pointers
 re_memberdeclarations = []
