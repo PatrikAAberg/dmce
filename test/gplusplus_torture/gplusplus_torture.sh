@@ -242,23 +242,23 @@ rm_file_list+=" condexpr1.cpp"                        # file not yet examined
 rm_file_list+=" default4.cpp"                         # file not yet examined
 rm_file_list+=" pr31863.cpp"                          # recursive
 
-if [[ "$numVars" -ne "0" ]]; then
-rm_file_list+=" Wunused-var-10.cpp"                   # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" pr43365.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" pr79377.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" temp-extend2.cpp"                     # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" spec24.cpp"                           # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" tls-3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" pass_y.h"                             # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" initlist90.cpp"                       # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" volatile1.cpp"                        # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" fnname3.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" cleanup1.cpp"                         # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" addr-const1.cpp"                      # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" ctor1.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
-rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
-fi
+#if [[ "$numVars" -ne "0" ]]; then
+#rm_file_list+=" Wunused-var-10.cpp"                   # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" pr43365.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" pr79377.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" temp-extend2.cpp"                     # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" spec24.cpp"                           # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" tls-3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" pass_y.h"                             # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" initlist90.cpp"                       # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" volatile1.cpp"                        # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" fnname3.cpp"                          # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" cleanup1.cpp"                         # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" addr-const1.cpp"                      # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" ctor1.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+#rm_file_list+=" dtor3.cpp"                            # re-declaration of struct members shows up as ordinary declarations in AST
+#fi
 
 set +e
 for f in $rm_file_list; do
