@@ -29,6 +29,9 @@ import time
 do_print=0
 parsed_file = sys.argv[1]
 
+if do_print:
+    print("dmce: Parsing " + parsed_file, file=sys.stderr)
+
 # Disable probing all together?
 no_probes = os.getenv('DMCE_NOPROBES')
 if no_probes is not None:
