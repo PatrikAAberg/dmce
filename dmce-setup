@@ -98,6 +98,9 @@ DMCE_PROBE_TEMPLATES:YES
 # Fix return of nullpointer instead of 0 for C++ when appropriate (YES | NO)
 DMCE_FIX_NULLPTR:NO
 
+# Pick up toplevel variables (YES | NO)
+DMCE_TOP_LEVEL_VARS:NO
+
 # Log files
 DMCE_LOG_FILES:/tmp/${_user}/dmce
 

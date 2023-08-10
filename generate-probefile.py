@@ -78,6 +78,12 @@ fnptr = os.getenv('DMCE_FIX_NULLPTR')
 if fnptr is not None and fnptr == "YES":
     fix_nullptr = True
 
+# Pick up variables also from top level?
+top_level_vars = False
+tlevel = os.getenv('DMCE_TOP_LEVEL_VARS')
+if tlevel is not None and tlevel == "YES":
+    top_level_vars = True
+
 # variable type specified?
 tvtype = os.getenv('DMCE_TRACE_VAR_TYPE')
 if tvtype is None:
@@ -1503,8 +1509,9 @@ while (lineindex < linestotal):
             count += 1
 
         if top:
-            secStackPos.append((sys.maxsize, 0))
-            secStackVars.append(varname)
+            if top_level_vars:
+                secStackPos.append((sys.maxsize, 0))
+                secStackVars.append(varname)
         else:
             # copy scope, add new var
             scope = secStackPos.pop()
