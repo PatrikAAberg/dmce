@@ -315,6 +315,9 @@ skipcend = "0"
 last_lstart = "0"
 last_cstart = "0"
 
+currentSectionLend = 0
+currentSectionCend = 0
+
 probes = 0
 
 ftrace_infunc = False
