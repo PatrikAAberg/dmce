@@ -114,7 +114,9 @@ static void dmce_mkdir(char const* path) {
 }
 
 static int dmce_nproc_copy = 0;
-static inline int dmce_num_cores() {
+static inline int dmce_num_cores(void);
+
+static inline int dmce_num_cores(void) {
 
 #ifdef DMCE_NUM_CORES
             return DMCE_NUM_CORES;
