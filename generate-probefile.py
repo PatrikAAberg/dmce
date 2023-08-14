@@ -299,6 +299,8 @@ in_member_expr = False
 member_expr_tab = 0
 in_macro_guard = False
 macro_guard_tab = 0
+parsing_error = False
+parsing_error_tab = 0
 
 lineindex = 0
 
@@ -659,11 +661,6 @@ while (lineindex < linestotal):
 
     linebuf[lineindex] = linebuf[lineindex].replace(", <invalid sloc>","")
     linebuf[lineindex] = linebuf[lineindex].replace("<invalid sloc>, ","")
-    if re_skip_ast_entry.match(linebuf[lineindex]):
-        if do_print:
-            print("Skipped ast entry!")
-        lineindex+=1
-        continue
 
     # Addition according to diff file?
     if linebuf[lineindex].startswith("+"):
@@ -696,6 +693,18 @@ while (lineindex < linestotal):
         in_member_expr = False
     if (in_macro_guard) and (tab <= macro_guard_tab):
         in_macro_guard = False
+
+# Something to use if parsing errors are really causing problems in the future
+#    if (parsing_error and (tab <= parsing_error_tab)):
+#        parsing_error = False
+
+    if re_skip_ast_entry.match(linebuf[lineindex]):
+#        parsing_error = True
+#        parsing_error_tab = tab
+        if do_print:
+            print("AST ERROR: " + linebuf[lineindex])
+        lineindex += 1
+        continue
 
     # file refs
     anypos = re_file_ref_anypos.match(linebuf[lineindex])
@@ -1096,7 +1105,7 @@ while (lineindex < linestotal):
         print("Parsed file: " + parsed_file)
         print("Parsed AST line:                     " + linebuf[lineindex])
         print("Position => " + "start: " + lstart + ", " + cstart + " last_lstart: " + last_lstart + " last_cstart: " + last_cstart + "  end: " + lend + ", " + cend + "  skip (end): " + skiplend + ", " + skipcend + "  scope (start): " + scopelstart + ", " + scopecstart + "  exp (end): " + str(cur_lend) + ", " + str(cur_cend))
-        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) + " in_macro_guard: " + str(in_macro_guard))
+        print("Flags => " + " in parsed file: " + str(in_parsed_file) +  " skip: " + str(skip) + " trailing: " + str(trailing) + " backtrailing: " + str(backtrailing) + " inside expression: " + str(inside_expression) + " skip scope: " + str(skip_scope) + "in parmdecl: " + str(in_parmdecl) + " sct: " + str(skip_scope_tab) + " infuncscope: " + str(in_function_scope) + " in_conditional_sequence_point: " + str(in_conditional_sequence_point) + " in_member_expr: " + str(in_member_expr) + " FRP: " + str(function_returns_pointer) + " in_macro_guard: " + str(in_macro_guard) + " parsing error: " + str(parsing_error))
 
     # ...and this is above. Check if found (almost) the end of an expression and update in that case
     if inside_expression:
