@@ -1746,6 +1746,9 @@ while (i < expdb_index):
         if (expdb_exppatternmode[i] < 0):
            if (ls not in probed_lines):
                 line = pbuf[ls]
+                if not line.isascii():
+                    bail_out=1
+
                 comment = "; /* Function entry: "
                 if expdb_exppatternmode[i] == -2:
                     comment = "; /* Function exit: "
@@ -1803,9 +1806,15 @@ while (i < expdb_index):
                 while ((lp < len(pbuf)) and not found and not bail_out):
                     line = pbuf[lp].rstrip()
 
+                    # Clang sometimes mixes one or two byte rep of strings, making column count wrong
+                    if not line.isascii():
+                        bail_out=1
+                        break
+
                     #Bail out candidates to MAYBE be fixed later
                     if ("#define" in line):
                         bail_out=1
+                        break
 
                     # Filter out escaped backslash
                     line = re.sub(r'\\\\', "xx", line)
