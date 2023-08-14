@@ -211,6 +211,8 @@ git --no-pager log --oneline --shortstat --no-color
 _echo "launch DMCE"
 ${dmce_exec_path}/dmce-launcher -a --debug
 
+${dmce_exec_path}/dmce-stats
+
 _echo "compile"
 true > ${my_work_path}/compile-errors
 find . -name '*.err' -exec rm {} \;
