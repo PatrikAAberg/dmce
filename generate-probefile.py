@@ -474,6 +474,7 @@ re_sections_to_not_skip.append(re.compile(r'.*CXXRecordDecl Hexnumber.*class.*de
 
 # The ones to skip
 re_sections_to_skip = []
+re_sections_to_skip.append(re.compile(r'.*-ConstantExpr.*'))
 re_sections_to_skip.append(re.compile(r'.*-VarDecl Hexnumber.*const.*'))
 re_sections_to_skip.append(re.compile(r'.*-InitListExpr.*'))
 re_sections_to_skip.append(re.compile(r'.*RecordDecl Hexnumber.*'))
