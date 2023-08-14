@@ -449,9 +449,9 @@ if do_print:
 
 # Regexps for file refs, trailing and states
 
-re_file_ref_anypos              = re.compile(r'.*<(.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
-re_file_ref_middle              = re.compile(r'.*\, (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
-re_file_ref_right               = re.compile(r'.*<.*> (.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
+re_file_ref_anypos              = re.compile(r'.*<(.*\.\w.*|.*\.c|.*\.cpp|.*\.cc|.*\.c|.*\.h|.*\.hh|.*\.hpp|.*\.inc):\d*:\d*.*')
+re_file_ref_middle              = re.compile(r'.*\, (.*\.\w.*|.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*>.*')
+re_file_ref_right               = re.compile(r'.*<.*> (.*\.\w.*|.*\.c|.*\.cpp|.*\.cc|.*\.h|.*\.hh|.*\.hpp|.*\.inc):.*')
 re_compound                     = re.compile(r'.*CompoundStmt.*')
 re_from_backtrailed_statement   = re.compile(r'.*(<line:\d*:\d*,\sline:\d*:\d*>|-IfStmt|-DoStmt|-CompoundStmt).*')
 re_update_pos_A                 = re.compile(r'.*<line:(\d*):(\d*)\,\sline:(\d*):(\d*)>.*')
