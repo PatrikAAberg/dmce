@@ -8,7 +8,8 @@ do
    echo "DMCE_PROBE${i}: " $(git grep -P "DMCE_PROBE${i}\(\d" | wc -l)
 done
 
-echo
-echo "Available structure printout macros"
-echo "--------------------------------------"
-grep -r dmce_print | sed s/.probed.dmcestructs//g | sed s/#define//g | sed 's/{\\//g' | sort | uniq
+# Disable these for now, maybe put under switch later
+#echo
+#echo "Available structure printout macros"
+#echo "--------------------------------------"
+#grep -r dmce_print | sed s/.probed.dmcestructs//g | sed s/#define//g | sed 's/{\\//g' | sort | uniq
