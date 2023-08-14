@@ -740,7 +740,7 @@ while (lineindex < linestotal):
 #    print("anyposself: " + str(anyposself))
 #    print("rightself: " + str(rightself))
 #    print("middleself: " + str(middleself))
-#    print("anyposother: " + str(anyposotherother))
+#    print("anyposother: " + str(anyposother))
 #    print("rightother: " + str(rightother))
 #    print("middleother: " + str(middleother))
 
