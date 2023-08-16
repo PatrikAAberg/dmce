@@ -4,7 +4,7 @@ import sys
 import argparse
 import os
 
-profiles = "printf trace trace-mc coverage syslog racetrack heatmap"
+profiles = "printf trace-mc trace coverage syslog racetrack heatmap stub"
 
 if len(sys.argv) > 1 and (sys.argv[1] == "-l" or sys.argv[1] == "--listprofiles"):
     print(profiles)
@@ -170,7 +170,7 @@ while count < len(clines):
             if "DMCE_POST_HOOK" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
 
-        # trace-mt profile
+        # trace-mc profile
         elif args.profile == "trace-mc":
             if "DMCE_NUM_DATA_VARS" in clines[count]:
                 clines[count] = "DMCE_NUM_DATA_VARS:5\n"
@@ -194,6 +194,20 @@ while count < len(clines):
 
             if "DMCE_PROBE_SOURCE" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-probe-user-atexit.c")
+
+            if "DMCE_PROBE_PROLOG" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
+
+            if "DMCE_POST_HOOK" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-null")
+
+        # stub profile
+        elif args.profile == "stub":
+            if "DMCE_NUM_DATA_VARS" in clines[count]:
+                clines[count] = "DMCE_NUM_DATA_VARS:0\n"
+
+            if "DMCE_PROBE_SOURCE" in clines[count]:
+                clines[count] = setProbeOrProlog(clines[count], "dmce-probe-stub.c")
 
             if "DMCE_PROBE_PROLOG" in clines[count]:
                 clines[count] = setProbeOrProlog(clines[count], "dmce-prolog-default.c")
