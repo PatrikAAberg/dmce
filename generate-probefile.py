@@ -655,6 +655,7 @@ def clean_stackvars():
             i+=1
 
 # Populate c expression database
+tab = 0
 while (lineindex < linestotal):
     if do_print:
         print("---------------------")
