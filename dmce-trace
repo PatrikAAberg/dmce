@@ -481,7 +481,7 @@ for outbuf in outbufs:
     if outbuf == None:
         break
     for outstr in outbuf:
-        print(outstr, file = outfile)
+        print(outstr.encode(encoding="ascii",errors="ignore"), file = outfile)
 
 def lstr(slist):
     return len(max(slist, key=len))
