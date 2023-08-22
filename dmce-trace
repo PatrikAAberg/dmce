@@ -127,7 +127,6 @@ if count >= 6:
     if args.verbose:
         print("CPU timestamps to nanoseconds divider (Nominal cpu clock freq): " + str(timestamps2nsecs), file=sys.stderr)
 
-print("- - - - -", file = outfile)
 
 probefiles = args.probefile
 codetrees = args.codetree
@@ -183,6 +182,11 @@ for i in range(numfrefs):
     state_probed = False
     if os.path.exists(codetree[i] + "/.dmce_state_probed"):
         state_probed  = True
+
+    if state_probed:
+        print("Probed code tree: yes", file = outfile)
+    else:
+        print("Probed code tree: no", file = outfile)
 
     if state_probed and original:
         print("dmce trace: Detected a probed code tree " + codetree[i] + " combined with " + probefile[i]  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
@@ -332,6 +336,8 @@ for i in range(numfrefs):
 
 if args.verbose:
     print("Generating trace output", file=sys.stderr)
+
+print("- - - - -", file = outfile)
 
 def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
