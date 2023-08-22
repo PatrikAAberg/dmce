@@ -34,6 +34,7 @@ parser.add_argument('-r', '--noderefs',  action='store_true',        help='If se
 parser.add_argument('-M', '--excludecapitals',  action='store_true',        help='Add permutations of captial letters to constructs.exclude, useful to avoid probing captial letter macros')
 parser.add_argument('-y', '--varexclude',   type=str, default = '# Regexps for variables to exclude', help='Comma separated list of variable names to exclue from probing')
 parser.add_argument('-Y', '--varinclude',   type=str, default = '# Regexps for variables to include', help='Comma separated list of variable names to include')
+parser.add_argument('-E', '--tentries',   type=str, default = '1024 * 64', help='Number of trace entries')
 args = parser.parse_args()
 
 if "do-not-exclude-anything" not in args.exclude:
@@ -172,6 +173,14 @@ while count < len(clines):
 
         # trace-mc profile
         elif args.profile == "trace-mc":
+            if "DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES" in clines[count]:
+                try:
+                    eval(args.tentries)
+                except:
+                    print("error: cannot evaluate number of trace entries")
+                    sys.exit(1)
+                clines[count] = "DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (" + args.tentries + ")\n"
+
             if "DMCE_NUM_DATA_VARS" in clines[count]:
                 clines[count] = "DMCE_NUM_DATA_VARS:5\n"
 
