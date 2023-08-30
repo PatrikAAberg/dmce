@@ -67,7 +67,7 @@ trailing=args.A
 leading=args.B
 showtimestamps = args.t
 parallel = False
-CHUNK_SIZE = 1024 * 32
+CHUNK_SIZE = 1024 * 128
 
 # Adjust this according to trace entry struct in probe
 TRACE_ENTRY_HEADER = 3
