@@ -556,14 +556,18 @@ if args.bundle:
     import fnmatch
 
     with zipfile.ZipFile(outzip, 'w') as z:
+        count = 0
         for of in outfilenames:
-            z.write(of, of)
+            print("Deflating frag " + str(count) + " out of " + str(len(outfilenames)))
+            z.write(of, of, compress_type=zipfile.ZIP_DEFLATED)
+            count += 1
 
+        print("Picking relevant source files")
         for fname in uniqsourcefiles:
             for c in codetree:
                 if c in fname:
                     dest = fname.replace(os.path.dirname(c) + "/", "")
-                    z.write(fname, dest)
+                    z.write(fname, dest, compress_type=zipfile.ZIP_DEFLATED)
         z.close()
 
     # zipfile needs a barrier
@@ -572,5 +576,5 @@ if args.bundle:
 
     for of in outfilenames:
         os.remove(of)
-
+    print("dmce-trace: Done!")
 # end of file
