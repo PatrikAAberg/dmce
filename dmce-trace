@@ -58,8 +58,10 @@ if args.bundle:
     print("Creating bundle as " + os.getcwd() + "/" + noutfile + ".zip")
     outdir = noutfile
     outzip = outdir + ".zip"
-    noutfile = noutfile + ".trace"
+    noutfilebase = noutfile
+    noutfile = noutfile + ".dmcetracefrag-0"
     outfile = open(noutfile, "w")
+    outfilenames = [noutfile]
 
 trailing=args.A
 leading=args.B
@@ -477,11 +479,25 @@ else:
     for p in procs:
         p.join()
 
-for outbuf in outbufs:
-    if outbuf == None:
-        break
-    for outstr in outbuf:
-        print(outstr.encode(encoding="ascii",errors="ignore"), file = outfile)
+if not args.bundle:
+    for outbuf in outbufs:
+        if outbuf == None:
+            break
+        for outstr in outbuf:
+            print(outstr.encode(encoding="ascii",errors="ignore"), file = outfile)
+else:
+    # In bundles, create several numbered data files for easier handling of large traces at later stages
+    filecount = 1
+    for outbuf in outbufs:
+        if outbuf == None:
+            break
+        tmpoutfilename = noutfilebase + ".dmcetracefrag-" + str(filecount)
+        tmpoutfile = open(tmpoutfilename,"w")
+        for outstr in outbuf:
+            print(outstr.encode(encoding="ascii",errors="ignore"), file = tmpoutfile)
+        tmpoutfile.close()
+        outfilenames.append(tmpoutfilename)
+        filecount += 1
 
 def lstr(slist):
     return len(max(slist, key=len))
@@ -540,7 +556,9 @@ if args.bundle:
     import fnmatch
 
     with zipfile.ZipFile(outzip, 'w') as z:
-        z.write(noutfile, noutfile)
+        for of in outfilenames:
+            z.write(of, of)
+
         for fname in uniqsourcefiles:
             for c in codetree:
                 if c in fname:
@@ -552,6 +570,7 @@ if args.bundle:
     with zipfile.ZipFile(outzip, 'r') as z:
         z.close()
 
-    os.remove(noutfile)
+    for of in outfilenames:
+        os.remove(of)
 
 # end of file
