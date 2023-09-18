@@ -479,6 +479,13 @@ else:
     for p in procs:
         p.join()
 
+def write_chunk(tmpoutfilename, outbuf):
+        tmpoutfile = open(tmpoutfilename,"w")
+        for outstr in outbuf:
+            print(outstr.encode(encoding="ascii",errors="ignore"), file = tmpoutfile)
+        tmpoutfile.close()
+
+
 if not args.bundle:
     for outbuf in outbufs:
         if outbuf == None:
@@ -488,16 +495,25 @@ if not args.bundle:
 else:
     # In bundles, create several numbered data files for easier handling of large traces at later stages
     filecount = 1
+    procs = []
     for outbuf in outbufs:
         if outbuf == None:
             break
         tmpoutfilename = noutfilebase + ".dmcetracefrag-" + str(filecount)
-        tmpoutfile = open(tmpoutfilename,"w")
-        for outstr in outbuf:
-            print(outstr.encode(encoding="ascii",errors="ignore"), file = tmpoutfile)
-        tmpoutfile.close()
+# Keep this for a while
+#        tmpoutfile = open(tmpoutfilename,"w")
+#
+#        for outstr in outbuf:
+#            print(outstr.encode(encoding="ascii",errors="ignore"), file = tmpoutfile)
+#        tmpoutfile.close()
+        p = multiprocessing.Process(target=write_chunk, args=(tmpoutfilename, outbuf,))
+        procs.append(p)
+        p.start()
+
         outfilenames.append(tmpoutfilename)
         filecount += 1
+    for p in procs:
+        p.join()
 
 def lstr(slist):
     return len(max(slist, key=len))
