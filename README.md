@@ -42,13 +42,17 @@ After dmce probing:
 
 ## Dependencies
 
-clang-check 10.0.0+
-
 git 2.10+
 
 bash 4+
 
 python 3+
+
+clang
+
+Normally works with clang-check (llvm) versions 10+
+
+Currently recommended clang-check (llvm) version: 17 
 
 ## How to get started
 
