@@ -1,9 +1,9 @@
 Package: dmce
-Version: 1.7-4
+Version: 1.8-0
 Section: unknown
 Priority: optional
 Architecture: amd64
-Depends: git (>=2.0.0), clang-tools (>=6.0.0), python3 (>=3.0.0)
+Depends: git (>=2.0.0), clang-tools (>=10.0.0), python3 (>=3.0.0)
 Maintainer: Patrik Aberg <patrik.aberg@ericsson.com>
 Description: dmce
  Did My Code Execute, source-code level instrumentation tool
