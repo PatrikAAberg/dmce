@@ -499,7 +499,7 @@ else:
 def write_chunk(tmpoutfilename, outbuf):
         tmpoutfile = open(tmpoutfilename,"w")
         for outstr in outbuf:
-            print(outstr.encode(encoding="ascii",errors="ignore"), file = tmpoutfile)
+            print(outstr.encode(encoding="ascii",errors="ignore").decode(), file = tmpoutfile)
         tmpoutfile.close()
 
 
@@ -508,7 +508,7 @@ if not args.bundle:
         if outbuf == None:
             break
         for outstr in outbuf:
-            print(outstr.encode(encoding="ascii",errors="ignore"), file = outfile)
+            print(outstr.encode(encoding="ascii",errors="ignore").decode(), file = outfile)
 else:
     # In bundles, create several numbered data files for easier handling of large traces at later stages
     filecount = 1
