@@ -49,6 +49,22 @@ parser.add_argument('--nocompress',     action='store_true',        help='Used t
 
 args = parser.parse_args()
 
+if not os.path.isfile(args.dfile):
+    print("dmce-trace: Could not find data file : " + args.dfile, file = sys.stderr)
+    exit(1)
+
+if not os.path.isfile(args.dfile + ".info"):
+    print("dmce-trace: Could not find .info file: " + args.dfile + ".info", file = sys.stderr)
+    exit(1)
+
+if not os.path.isfile(args.probefile):
+    print("dmce-trace: Could not find probe references file: " + args.probefile, file = sys.stderr)
+    exit(1)
+
+if not os.path.isdir(args.codetree):
+    print("dmce-trace: Could not find code tree: " + args.codetree, file = sys.stderr)
+    exit(1)
+
 outfile = sys.stdout
 
 if args.bundle:
