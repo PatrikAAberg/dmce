@@ -362,24 +362,57 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
     outbuf = []
 
-    for n in range(range_start, range_end):
-
+    n = range_start
+    while n < range_end:
         # Convert to nsecs?
         if timestamps2nsecs:
             data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
 
+        ts = data[n, 0]
         pnum = data[n, 1]
-        cpu = data[n, entrysize64 - 1]
+        cpu = data[n, 2]
 
         if cores is not None and str(cpu) not in cores:
             continue
 
-        if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
+        if pnum != 3735928559 and ts != 0:                         # not 0xdeadbeef, timestamp exist
+
+            # Special probe number hexdump header
+            if pnum == 1024 * 1024 * 1024:
+                size = data[n, 3]
+                num_entries = data[n, 4]
+                outstr = str(cpu) + args.delimiter
+                outstr += str(ts) + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "dmce_hexdump" + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "hexdump:"
+                while n < len(data) and num_entries > 0:
+                    n += 1
+                    pnum = data[n, 1]
+                    if pnum  == 1024 * 1024 * 1024 + 1 and cpu == data[n, 2]:
+                        num_entries -= 1
+                        outstr += format(data[n, 3],"04x") + " "
+                        outstr += format(data[n, 4],"04x") + " "
+                        outstr += format(data[n, 5],"04x") + " "
+                        outstr += format(data[n, 6],"04x") + " "
+                        outstr += format(data[n, 7],"04x") + " "
+
+                outbuf.append(outstr)
+                n += 1
+                continue
+
+            # Special probe number hexdump data
+            # Just skip over, the thread catching the header will embed all data into one entry
+            if pnum == 1024 * 1024 * 1024 + 1:
+                n += 1
+                continue
 
             # Special probe number dmce_intial_overhead
             if pnum == 1024 * 1024 * 1024 + 2:
                 outstr = str(cpu) + args.delimiter
-                outstr += str(data[n, 0]) + args.delimiter
+                outstr += str(ts) + args.delimiter
                 outstr += "---" + args.delimiter
                 outstr += "---" + args.delimiter
                 outstr += "dmce_initial_overhead" + args.delimiter
@@ -402,7 +435,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
             else:
                 vs = []
                 for v in range(0, args.numvars):
-                    vs.append(format(data[n,v + 2],"04x"))
+                    vs.append(format(data[n,v + 3],"04x"))
 
                 refs = prefs[refindex][pnum].rstrip().split(':')
                 fname = refs[1]
@@ -422,7 +455,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                     fname = str(cpu)
 
                 if showtimestamps:
-                    fname += args.delimiter + str(data[n, 0])
+                    fname += args.delimiter + str(ts)
 
                 if args.bundle:
                     path = os.path.basename(codetree[refindex]) + "/"
@@ -431,7 +464,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
                 fname += args.delimiter + path + refs[1]
 
-                if notComplete(data[n, 0]):
+                if notComplete(ts):
                     fname += "<Trace incomplete>"
 
                 if leading or trailing:
@@ -479,6 +512,8 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
                         outstr = fmt.format(*out)
                         outbuf.append(outstr)
+        n += 1
+
     outbufs[outbufs_index] = outbuf
 
 outbufs_length = (int(length / CHUNK_SIZE) + 1)
