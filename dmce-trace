@@ -363,6 +363,11 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
     outbuf = []
 
     for n in range(range_start, range_end):
+
+        # Convert to nsecs?
+        if timestamps2nsecs:
+            data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
+
         pnum = data[n, 1]
         cpu = data[n, entrysize64 - 1]
 
@@ -371,7 +376,18 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
         if pnum != 3735928559 and data[n, 0] != 0:                         # not 0xdeadbeef, timestamp exist
 
-            # Which ref file index?
+            # Special probe number dmce_intial_overhead
+            if pnum == 1024 * 1024 * 1024 + 2:
+                outstr = str(cpu) + args.delimiter
+                outstr += str(data[n, 0]) + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "dmce_initial_overhead" + args.delimiter
+                outstr += "---" + args.delimiter
+                outbuf.append(outstr)
+                continue
+
+             # Which ref file index?
             refindex = sys.maxsize
             for i in range(numfrefs):
                 if (pnum >= pinterval[i][0]) and (pnum <= pinterval[i][1]):
@@ -384,10 +400,6 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 print("Could not find matching reference information for probe " + str(pnum) + ", abort", file = sys.stderr)
                 sys.exit(1)
             else:
-                # Convert to nsecs?
-                if timestamps2nsecs:
-                    data[n, 0] = int((data[n, 0] - start_tsc) / timestamps2nsecs) + start_secs * 1000000000 + start_nsecs
-
                 vs = []
                 for v in range(0, args.numvars):
                     vs.append(format(data[n,v + 2],"04x"))
