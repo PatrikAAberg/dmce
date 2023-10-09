@@ -375,41 +375,42 @@ def draw(stdscr):
 
     # code view
     srcpath = tracebuffer[index].split("@")[3]
+    srcindex = 0
+    if os.path.isfile(srcpath):
+        sf = open(srcpath)
+        codebuffer = sf.readlines()
+        sf.close()
+        srcindex = int(tracebuffer[index].split("@")[4]) - 1
 
-    sf = open(srcpath)
-    codebuffer = sf.readlines()
-    sf.close()
-    srcindex = int(tracebuffer[index].split("@")[4]) - 1
+        if old_srcpath != srcpath:
+            src_start = srcindex - int(num_srclines / 2)
+            old_srcpath = srcpath
 
-    if old_srcpath != srcpath:
-        src_start = srcindex - int(num_srclines / 2)
-        old_srcpath = srcpath
+        if src_start > srcindex:
+            src_start = srcindex - int(num_srclines / 2)
 
-    if src_start > srcindex:
-        src_start = srcindex - int(num_srclines / 2)
+        if srcindex > (src_start + num_srclines - 1):
+            src_start = srcindex - int(num_srclines / 2) + 1
 
-    if srcindex > (src_start + num_srclines - 1):
-        src_start = srcindex - int(num_srclines / 2) + 1
+        wcout = w_screen - (w_screen - wx_varsview) - 1
 
-    wcout = w_screen - (w_screen - wx_varsview) - 1
+        # an empty line just below the divider
+        stdscr.addstr(wy_codeview - 1, wx_codeview, "".ljust(wcout))
 
-    # an empty line just below the divider
-    stdscr.addstr(wy_codeview - 1, wx_codeview, "".ljust(wcout))
-
-    for i in range(num_srclines):
-        if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
-            # get source line
-            s=check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
-            # cap at cout
-            t=s[:wcout]
-            # left adjust
-            u=t.ljust(wcout)
-            if (src_start + i) == srcindex:
-                stdscr.addstr(wy_codeview + i, wx_codeview, u, curses.A_REVERSE)
+        for i in range(num_srclines):
+            if (src_start + i) < len(codebuffer) and (src_start + i) >= 0:
+                # get source line
+                s=check_and_clean_probes(codebuffer[src_start + i]).rstrip().replace('\t', '        ')
+                # cap at cout
+                t=s[:wcout]
+                # left adjust
+                u=t.ljust(wcout)
+                if (src_start + i) == srcindex:
+                    stdscr.addstr(wy_codeview + i, wx_codeview, u, curses.A_REVERSE)
+                else:
+                    stdscr.addstr(wy_codeview + i, wx_codeview, u)
             else:
-                stdscr.addstr(wy_codeview + i, wx_codeview, u)
-        else:
-            stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
+                stdscr.addstr(wy_codeview + i, wx_codeview, "                                                                           ")
 
     # vars view
     varstr = tracebuffer[index].split("@")[7:]
