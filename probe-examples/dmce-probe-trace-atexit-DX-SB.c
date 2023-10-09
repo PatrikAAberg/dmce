@@ -536,8 +536,17 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
 
     if (dmce_unlikely((!dmce_buffer_setup_done) || (!__atomic_load_n (&dmce_buffer_setup_done, __ATOMIC_SEQ_CST)))) {
 
+        uint32_t cpu;
+        uint64_t timestart;
+        uint64_t timeend;
+        unsigned int index;
+        dmce_probe_entry_t* e_p;
+
         char entrydirname[256];
         sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
+
+        timestart = __builtin_ia32_rdtscp(&cpu);
+        cpu = cpu & 0x0fff;
 
         if (dmce_unlikely(! (mkdir(entrydirname, 0)))) {
 
@@ -547,7 +556,6 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             /* env var format: dmce_enabled_p dmce_buf_p dmce_probe_hitcount_p dmce_time_info_p */
 
             char s[32 * 3];
-            uint32_t cpu;
 
             dmce_buf_p = (dmce_probe_entry_t*)aligned_alloc( 64, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
             memset(dmce_buf_p, 0, dmce_num_cores() * (DMCE_MAX_HITS + 10) * sizeof(dmce_probe_entry_t));
@@ -560,7 +568,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             dmce_time_info_p = (dmce_time_info_t*)malloc(sizeof(dmce_time_info_t));
 
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->start_monotonic));
-            dmce_time_info_p->start_tsc = __builtin_ia32_rdtscp(&cpu);
+            dmce_time_info_p->start_tsc = timestart;
 
             __atomic_store_n (&dmce_trace_enabled_p, dmce_trace_enabled_p, __ATOMIC_SEQ_CST);
             __atomic_store_n (&dmce_buf_p, dmce_buf_p, __ATOMIC_SEQ_CST);
@@ -634,7 +642,24 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
             __atomic_store_n (&dmce_time_info_p, dmce_time_info_p, __ATOMIC_SEQ_CST);
         }
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
-    }
+
+        timeend = __builtin_ia32_rdtscp(&cpu);
+
+        /* Add two trace entries to reflect the time spent in init above */
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2, __ATOMIC_RELAXED);
+        index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
+        e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
+        e_p->timestamp = timestart;
+        e_p->probenbr = 1024 * 1024 * 1024 + 2;
+        e_p->cpu = cpu;
+
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2, __ATOMIC_RELAXED);
+        index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
+        e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
+        e_p->timestamp = timeend;
+        e_p->probenbr = 1024 * 1024 * 1024 + 2;
+        e_p->cpu = cpu;
+     }
 
     if (dmce_likely(dmce_trace_is_enabled())) {
 
