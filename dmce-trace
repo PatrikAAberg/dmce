@@ -373,6 +373,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
         cpu = data[n, 2]
 
         if cores is not None and str(cpu) not in cores:
+            n += 1
             continue
 
         if pnum != 3735928559 and ts != 0:                         # not 0xdeadbeef, timestamp exist
@@ -418,6 +419,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 outstr += "dmce_initial_overhead" + args.delimiter
                 outstr += "---" + args.delimiter
                 outbuf.append(outstr)
+                n += 1
                 continue
 
              # Which ref file index?
@@ -630,6 +632,7 @@ if args.sort != "seq":
 
 outfile.close()
 
+
 # If bundle, zip it!
 if args.bundle:
     import zipfile
@@ -664,4 +667,5 @@ if args.bundle:
     for of in outfilenames:
         os.remove(of)
     print("dmce-trace: Done!")
+
 # end of file
