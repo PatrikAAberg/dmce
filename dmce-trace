@@ -388,7 +388,7 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 outstr += "---" + args.delimiter
                 outstr += "dmce_hexdump" + args.delimiter
                 outstr += "---" + args.delimiter
-                outstr += "hexdump:"
+                outstr += "dmce_hexdump "
 #                print("Header, num entries: " + str(num_entries) + "   cpu: " + str(data[n, 2]), file=sys.stderr)
                 n += 1
                 while n < length and num_entries > 0:
@@ -396,13 +396,15 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 #                    print("Check payload, pnum: " + str(pnum) + "  cpu: " + str(data[n, 2]), file=sys.stderr)
                     if pnum  == 1024 * 1024 * 1024 + 1 and cpu == data[n, 2]:
                         num_entries -= 1
-                        outstr += " " + str(int(data[n,3]).to_bytes(8, "little").hex())
-                        outstr += " " + str(int(data[n,4]).to_bytes(8, "little").hex())
-                        outstr += " " + str(int(data[n,5]).to_bytes(8, "little").hex())
-                        outstr += " " + str(int(data[n,6]).to_bytes(8, "little").hex())
-                        outstr += " " + str(int(data[n,7]).to_bytes(8, "little").hex())
+                        hexstr = ""
+                        hexstr += str(int(data[n,3]).to_bytes(8, "little").hex())
+                        hexstr += str(int(data[n,4]).to_bytes(8, "little").hex())
+                        hexstr += str(int(data[n,5]).to_bytes(8, "little").hex())
+                        hexstr += str(int(data[n,6]).to_bytes(8, "little").hex())
+                        hexstr += str(int(data[n,7]).to_bytes(8, "little").hex())
+                        outstr += ' '.join(hexstr[i:i+2] for i in range(0, len(hexstr), 2)) + " "
 #                        print("Payload, num_entries: " + str(num_entries), file=sys.stderr)
-                        print(outstr)
+#                        print(outstr)
                     n += 1
 #                print("Done writing payload, num entries: " + str(num_entries), file=sys.stderr)
                 outbuf.append(outstr)
