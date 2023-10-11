@@ -389,19 +389,23 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 outstr += "dmce_hexdump" + args.delimiter
                 outstr += "---" + args.delimiter
                 outstr += "hexdump:"
-                while n < len(data) and num_entries > 0:
-                    n += 1
+#                print("Header, num entries: " + str(num_entries) + "   cpu: " + str(data[n, 2]), file=sys.stderr)
+                n += 1
+                while n < length and num_entries > 0:
                     pnum = data[n, 1]
+#                    print("Check payload, pnum: " + str(pnum) + "  cpu: " + str(data[n, 2]), file=sys.stderr)
                     if pnum  == 1024 * 1024 * 1024 + 1 and cpu == data[n, 2]:
                         num_entries -= 1
-                        outstr += format(data[n, 3],"04x") + " "
-                        outstr += format(data[n, 4],"04x") + " "
-                        outstr += format(data[n, 5],"04x") + " "
-                        outstr += format(data[n, 6],"04x") + " "
-                        outstr += format(data[n, 7],"04x") + " "
-
+                        outstr += " " + str(int(data[n,3]).to_bytes(8, "little").hex())
+                        outstr += " " + str(int(data[n,4]).to_bytes(8, "little").hex())
+                        outstr += " " + str(int(data[n,5]).to_bytes(8, "little").hex())
+                        outstr += " " + str(int(data[n,6]).to_bytes(8, "little").hex())
+                        outstr += " " + str(int(data[n,7]).to_bytes(8, "little").hex())
+#                        print("Payload, num_entries: " + str(num_entries), file=sys.stderr)
+                        print(outstr)
+                    n += 1
+#                print("Done writing payload, num entries: " + str(num_entries), file=sys.stderr)
                 outbuf.append(outstr)
-                n += 1
                 continue
 
             # Special probe number hexdump data
