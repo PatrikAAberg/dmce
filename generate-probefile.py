@@ -101,6 +101,8 @@ if (len(sys.argv) != 5):
 # Read constructs exclude file
 cxl = open(configpath + "/constructs.exclude")
 cxl_buf = cxl.readlines()
+# dmce special keywords
+cxl_buf.append("DMCE_HEXDUMP")
 cxl.close()
 
 # Create list of functions to include
