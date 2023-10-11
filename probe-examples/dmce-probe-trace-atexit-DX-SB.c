@@ -699,13 +699,15 @@ static inline void dmce_hexdump(void* buf_p, uint64_t size) {
     if (dmce_likely(dmce_trace_is_enabled())) {
 
         uint32_t cpu;
+        uint32_t dummy;
         uint64_t time;
         uint64_t oldtime;
         unsigned int index;
+        unsigned int wrapped_index;
         int i;
 
         /* 3 times 64 bit fragment header, 5 times 64 bit for data */
-        int num_entries = size / (5 * sizeof(uint64_t)) + 1;
+        int num_payload_entries = size / (5 * sizeof(uint64_t)) + 1;
 
         /* What core are we on, and what is the time? */
         time = __builtin_ia32_rdtscp(&cpu);
@@ -716,43 +718,45 @@ static inline void dmce_hexdump(void* buf_p, uint64_t size) {
         dmce_probe_hitcount_p[cpu] += 2;
         */
 
-        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2 * num_entries, __ATOMIC_RELAXED);
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2 * (num_payload_entries + 1), __ATOMIC_RELAXED);
 
         /* lowest bit means trace is stopped */
         if (index & 1) {
             return;
         }
 
-        index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
+        index = index >> NBR_STATUS_BITS;
+        wrapped_index = index % DMCE_MAX_HITS;
 
-        dmce_probe_entry_t* e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
+        dmce_probe_entry_t* e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = time;
         e_p->probenbr = 1024 * 1024 * 1024;
         e_p->vars[0] = size;
-        e_p->vars[1] = num_entries;
+        e_p->vars[1] = num_payload_entries;
         e_p->cpu = cpu;
+        index += 1;
 
-        for (i = 0; i < num_entries; i++) {
-
-            unsigned int bufind = (index +  1 + i) % DMCE_MAX_HITS;
+        for (i = 0; i < num_payload_entries; i++) {
 
             oldtime = time;
-
             while (time == oldtime) {
 
-                time = __builtin_ia32_rdtscp(&cpu);
+                time = __builtin_ia32_rdtscp(&dummy);
             }
 
-            e_p[bufind].timestamp = time;
-            e_p[bufind].probenbr = 1024 * 1024 * 1024 + 1;
+            wrapped_index = (index + i) % DMCE_MAX_HITS;
+            e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
+
+            e_p->timestamp = time;
+            e_p->probenbr = 1024 * 1024 * 1024 + 1;
             e_p->cpu = cpu;
 
             if (size >= 5 * sizeof(uint64_t))
                 /* Full entry */
-                memcpy(&(e_p[bufind].vars[0]), buf_p, 5 * sizeof(uint64_t));
+                memcpy(&(e_p->vars[0]), buf_p + (i * 5 * sizeof(uint64_t)), 5 * sizeof(uint64_t));
             else
                 /* Tail */
-                memcpy(&(e_p[bufind].vars[0]), buf_p, size);
+                memcpy(&(e_p->vars[0]), buf_p + (i * 5 * sizeof(uint64_t)), size);
             size -= 5 * sizeof(uint64_t);
         }
     }
