@@ -182,7 +182,7 @@ function main() {
 		fi
 
 		# clear probes
-		ove-dmce launch -c -q -- "$1"
+		ove-dmce launch -c -- "$1"
 
 		# macro errros?
 		nbr_macros_fixed=0

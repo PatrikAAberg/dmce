@@ -47,7 +47,7 @@ LOW-LEVEL COMMANDS
           ove dmce set-profile [options]
 
         launch:
-          # run 'dmce-launcher' in sequence on all/specified repos
+          # run 'dmce' in sequence on all/specified repos
           ove dmce launch [options] [-- git...]
 
         summary-bin:
@@ -90,7 +90,7 @@ EXAMPLES
         ove dmce set-profile trace
 
         # launch DMCE on two repos
-        ove dmce launch -a -q -- ag dmce-examples
+        ove dmce launch -a -- ag dmce-examples
 
         # trace, build, run, view in one go (monorepo)
         ove dmce trace-prepare ag && { ag foobar; ove dmce trace-decode ag; }
@@ -150,9 +150,9 @@ function launch {
 
     shift
 
-    _find "dmce-launcher"
+    _find "dmce"
     if [ $# -eq 0 ]; then
-        opts="-a -q"
+        opts="-a"
         repos="${OVE_REPO_LIST//${OVE_BASE_DIR}\//}"
     else
         _getopts "$@"

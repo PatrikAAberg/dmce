@@ -281,7 +281,7 @@ while count < len(clines):
                 clines[count] = setProbeOrProlog(clines[count], "dmce-post-hook-racetrack")
 
         else:
-            print("Unknown profile (please use trace, trace-mc, coverage, heatmap, racetrack, printf or syslog), abort")
+            print("error: unknown profile. Available profiles: " + profiles, file=sys.stderr)
             sys.exit(1)
 
 # Modify config folder

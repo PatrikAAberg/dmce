@@ -1,0 +1,1747 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2016 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+set -e
+set -f
+
+function usage() {
+	cat <<EOF
+NAME
+    DMCE - Did My Code Execute
+
+SYNOPSIS
+    dmce [options]
+
+OPTIONS
+    GENERAL
+      -c                     Restore source code state
+      -f, --file file        Manually point out a custom .dmceconfig file
+      -h, --help             This help
+      --update-config        Update config. USE WITH CARE!
+      -v, --verbose          Explain what is being done
+      --version              Print version and exit
+
+    SELECTION
+      -a, --all              Probe entire history
+      -d val                 Number of weeks from HEAD
+      --head[=]<val>         <val> is the HEAD to which comparison is done
+      -n val                 Number of commits from HEAD
+      --offset[=]<val>       Assign probes starting from <val>
+      -p, --profile p        Select profile p. Available: coverage heatmap printf racetrack stub syslog trace trace-mc
+      -r val                 SHA-1 delta HEAD..<val>
+
+    FILTER
+      --calltrace            Only probe entry and exit of calls
+      --constructs           Comma separated list of words that filter out lines to not probe
+      --exclude              Comma separated list of files and functions to exclude: <file,:function,file:function >
+      --include              Comma separated list of files and functions to include: <file,:function,file:function >
+      --structs              Produce struct-printing macros
+      --varexclude           Comma separated list of variable names to exclue from probing
+      --varinclude           Comma separated list of variable names to include
+
+    PERFORMANCE
+      --cache                Use cache to speed up consecutive runs
+      -C                     Clear cache
+      -j val                 Number of jobs to run simultaneously (default: $(getconf _NPROCESSORS_ONLN))
+      -m val                 Memory limit
+      -s                     Print cache stats
+
+    DEBUG
+      --debug                Enable debug mode
+
+  DESCRIPTION
+    dmce is the main entry point for running DMCE. To be executed from within the git repo root:
+
+    $ cd /path/to/git/
+    $ dmce ...
+
+  FILES
+    Probe reference file:                       /tmp/$USER/dmce/<git>/probe-references-original.log
+    Probe reference file (probed line numbers): /tmp/$USER/dmce/<git>/probe-references.log
+    Expressions                                 /tmp/$USER/dmce/<git>/expr-references.log
+    Trace buffer:                               /tmp/$USER/dmce/dmcebuffer.bin[-<exe>.<pid>]
+    Trace info:                                 /tmp/$USER/dmce/dmcebuffer.bin[-<exe>.<pid>].info
+
+  EXAMPLES:
+    # Run DMCE on the entire git history
+    $ dmce
+
+    # Run DMCE on your latest commit
+    $ dmce -n 1
+
+    # Run DMCE on your unstaged and/or staged changes
+    $ dmce -n 1
+
+    # Run DMCE on the last 15 commits
+    $ dmce -n 15
+
+    # Run DMCE on HEAD..SHA-1
+    $ dmce -r SHA-1
+
+    # Run DMCE on SHA1..SHA-2
+    $ dmce -r SHA-2 --head=SHA1
+
+    # Run DMCE on commits created in the last 10 weeks
+    $ dmce -d 10
+
+    # Run DMCE on the last 100 commits. Start assigning probe numbers from 254.
+    $ dmce -n 100 --offset 254
+
+  PLUMBING
+    Use the tool 'dmce-set-profile'.
+
+  SEE ALSO
+    https://github.com/PatrikAAberg/dmce
+
+  BUGS:
+    https://github.com/PatrikAAberg/dmce/issues
+EOF
+	exit 1
+}
+
+function _echo() {
+	if [ "${state[verbose]-false}" = "false" ]; then
+		return
+	fi
+
+	echo "${EPOCHREALTIME}: $*"
+}
+
+function prerequisites() {
+	local c
+	declare -a deps
+
+	_echo "${FUNCNAME[0]}"
+
+	deps+=("clang-check")
+	deps+=("dmce-set-profile")
+	deps+=("getconf")
+	deps+=("git")
+	deps+=("python3")
+
+	for c in "${deps[@]}"; do
+		if ! command -v "$c" >/dev/null; then
+			echo "error: command '$c' not found" 1>&2
+			exit 1
+		fi
+	done
+}
+
+function argparse() {
+	local optspec
+	local val
+	declare -A -g state
+
+	_echo "${FUNCNAME[0]}"
+
+	state[ast_cache]=false
+	state[ast_cache_compress]=false
+	state[ast_cache_dir]=
+	state[cache]=0
+	state[checkout_head]=false
+	state[debug]=false
+	state[file]=""
+	state[files_from_cache]=0
+	state[files_probed]=0
+	state[files_skipped]=0
+	state[j]=$(getconf _NPROCESSORS_ONLN)
+	state[m]=0
+	state[nbr_of_files]=0
+	state[nbrofprobesinserted]=0
+	state[new]=HEAD
+	state[number_of_commits]=1
+	state[offset]=0
+	state[old]=
+	state[print_version]=false
+	state[print_cache_stats]=false
+	state[probe_all]=0
+	state[profile]=""
+	state[restore]=false
+	state[search_method]=commit
+	state[update_config]=false
+	state[verbose]=false
+	state[weeks]=
+
+	if [ "$#" -eq 0 ]; then
+		return 0
+	fi
+
+	optspec+="a"
+	optspec+="c"
+	optspec+="C"
+	optspec+="d:"
+	optspec+="f:"
+	optspec+="h"
+	optspec+="j:"
+	optspec+="m:"
+	optspec+="n:"
+	optspec+="p:"
+	optspec+="r:"
+	optspec+="s"
+	optspec+="v"
+	optspec+="-:"
+
+	while getopts "$optspec" optchar; do
+		case "${optchar}" in
+			-)
+				case "${OPTARG}" in
+					all)
+						state[probe_all]=1
+						;;
+					cache)
+						state[ast_cache_compress]=false
+						state[ast_cache]=true
+						state[cache]=1
+						;;
+					calltrace)
+						export DMCE_PARSER_MODE=calltrace
+						;;
+					constructs)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[constructs]=$val
+						;;
+					debug)
+						set -x
+						state[debug]=true
+						;;
+					exclude)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[exclude]=$val
+						;;
+					file)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[file]=$val
+						;;
+					head)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[new]=$val
+						state[checkout_head]=true
+						;;
+					head=*)
+						val=${OPTARG#*=}
+						state[new]=$val
+						state[checkout_head]=true
+						;;
+					help)
+						usage
+						;;
+					include)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[include]=$val
+						;;
+					offset)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[offset]=$val
+						;;
+					offset=*)
+						val=${OPTARG#*=}
+						state[offset]=$val
+						;;
+					profile)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[profile]=$val
+						;;
+					structs)
+						export DMCE_STRUCTS=stderr
+						;;
+					update-config)
+						state[update_config]=true
+						;;
+					varexclude)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[varexclude]=$val
+						;;
+					varinclude)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[varinclude]=$val
+						;;
+					verbose)
+						state[verbose]=true
+						;;
+					version)
+						state[print_version]=true
+						;;
+					*)
+						if [ "$OPTERR" = 1 ]; then
+							_echo "illegal option -- ${OPTARG}" >&2
+							usage
+						fi
+						;;
+				esac;;
+
+			a)
+				state[probe_all]=1
+				;;
+			c)
+				state[restore]=true
+				;;
+			C)
+				state[clear_cache]=true
+				;;
+			d)
+				state[weeks]="$OPTARG"
+				state[search_method]="weeks"
+				;;
+			f)
+				state[file]=${OPTARG}
+				;;
+			h)
+				usage
+				;;
+			j)
+				state[j]=${OPTARG}
+				;;
+			m)
+				state[m]=${OPTARG}
+				;;
+			n)
+				state[number_of_commits]=${OPTARG}
+				state[search_method]="commits"
+				;;
+			p)
+				state[profile]=${OPTARG}
+				;;
+			r)
+				state[old]="${OPTARG}"
+				state[search_method]="raw"
+				;;
+			s)
+				state[print_cache_stats]=true
+				;;
+			v)
+				state[verbose]=true
+				;;
+			*)
+				if [ "$OPTERR" == 1 ]; then
+					usage
+				fi
+				;;
+		esac
+	done
+}
+
+function print_cache_stats() {
+	local d
+	local f
+
+	set +f
+	d=$(find "${DMCE_WORK_PATH:?}"/*/cache/ -type d 2>/dev/null | wc -l)
+	f=$(find "${DMCE_WORK_PATH:?}"/*/cache/ -type f 2>/dev/null | wc -l)
+	if [ "$f" -ne 0 ]; then
+		du -hs "${DMCE_WORK_PATH:?}"/*/cache/
+		echo
+	fi
+	set -f
+
+	echo "$d directories, $f files"
+}
+
+function command_line_overrides_comma_separated() {
+	local a
+	declare -A arg2file
+
+	_echo "${FUNCNAME[0]}"
+
+	arg2file[constructs]="constructs.exclude"
+	arg2file[exclude]="dmce.exclude"
+	arg2file[include]="dmce.include"
+	arg2file[varinclude]="dmce.var.include"
+	arg2file[varexclude]="dmce.var.exclude"
+
+	for a in "${!arg2file[@]}"; do
+		if [ "${state[$a]}" = "" ]; then
+			continue
+		fi
+
+		printf "%s\n" ${state[$a]/,/$'\n'} >"${state[dmce_work_dir]}"/config/${arg2file[$a]}
+	done
+}
+
+function init() {
+	local r
+
+	_echo "${FUNCNAME[0]}"
+
+	prerequisites
+	argparse "$@"
+
+	# for sort
+	export LC_ALL=C
+
+	if r=$(git rev-parse --show-toplevel 2>/dev/null); then
+		state[git_root]=${r}
+		state[git_name]=${r##*/}
+	fi
+
+	# find out what config file to use. Look in this order: cmd line, git root, home dir
+	if [ "${state[file]}" != "" ]; then
+		if [ ! -e "${state[file]}" ]; then
+			echo "error: could not find config file: ${state[file]}" 1>&2
+			exit 1
+		fi
+		state[file]=$(readlink -f "${state[file]}")
+	elif [ -e "${state[git_root]}"/.dmceconfig ]; then
+		state[file]="${state[git_root]}"/.dmceconfig
+	elif [ -e "$HOME"/.dmceconfig ]; then
+		state[file]=$HOME/.dmceconfig
+	else
+		echo "error: could not find a valid '.dmceconfig' file" 1>&2
+		exit 1
+	fi
+
+	read_config_file
+
+	set_version
+
+	if [ "${state[print_version]}" = true ]; then
+		echo "DMCE ${state[version]}"
+		exit 0
+	elif [ "${state[print_cache_stats]}" = "true" ]; then
+		print_cache_stats
+		exit 0
+	elif [ "${r}" = "" ]; then
+		# exit if we are not within a git repository
+		exit 0
+	elif [ "$(readlink -f "${DMCE_EXEC_PATH}")" = "${state[git_root]}" ] || [ -x "${state[git_root]}"/dmce ]; then
+		echo "error: do not run DMCE on DMCE" 1>&2
+		exit 1
+	elif [ "${state[m]}" -gt 0 ] && [ "${state[m]}" -le "$(mem_used)" ]; then
+		echo "error: increase the memory limit (-m option). Current memory usage: $(mem_used)%." 1>&2
+		exit 1
+	elif [ "${state[debug]}" = true ]; then
+		coreutils_args="-v"
+	fi
+
+	state[dmce_work_dir]="$DMCE_WORK_PATH/${state[git_name]:?}"
+
+	# directory set up
+	rm ${coreutils_args} -rf "${state[dmce_work_dir]}"/{old,new,workarea}
+	mkdir ${coreutils_args} -p "${state[dmce_work_dir]}"/{old,new,workarea,cache,config}
+
+	# copy .dmceconfig and config files
+	set +f
+	cp ${coreutils_args} -a "${DMCE_CONFIG_PATH:?}"/* "${state[dmce_work_dir]}"/config
+	cp ${coreutils_args} -a "${state[file]}" "${state[dmce_work_dir]}"/config
+	set -f
+
+	# work on .dmceconfig file from now on
+	state[file]="${state[dmce_work_dir]}"/config/.dmceconfig
+
+	# profile set on command line?
+	if [ "${state[profile]}" != "" ]; then
+		if ! dmce-set-profile -f "${state[file]}" -p -d "${state[dmce_work_dir]}"/config "${state[profile]}"; then
+			exit 1
+		fi
+
+		# re-read config file to populate environment variables
+		read_config_file
+	fi
+
+	# more overrides?
+	command_line_overrides_comma_separated
+
+	prepare
+
+	header_files
+
+	cache_prepare
+}
+
+function set_version() {
+	local dmce_dir
+
+	_echo "${FUNCNAME[0]}"
+
+	dmce_dir="${BASH_SOURCE[0]}"
+	dmce_dir="${dmce_dir%/*}"
+	dmce_dir="$(cd "${dmce_dir}" && pwd -P)"
+	if [ -d "${dmce_dir}"/.git ]; then
+		state[version]=$(GIT_CEILING_DIRECTORIES="$dmce_dir" git -C "$dmce_dir" describe --tags --always --dirty --long 2>/dev/null)
+	elif [ -s "${dmce_dir}/debian/control" ]; then
+		state[version]=$(grep '^Version:' "${dmce_dir}/debian/control" | cut -d' ' -f2)
+	elif [ -s "$DMCE_EXEC_PATH"/version ]; then
+		state[version]=$(cat "$DMCE_EXEC_PATH"/version)
+	fi
+
+	if [ "${state[version]}" = "" ]; then
+		state[version]="unknown"
+	fi
+}
+
+function read_config_file() {
+	local c
+	local conf_val
+	local conf_var
+	local dmceconfig
+	local mandatory_configs
+
+	if [ "${state[file]}" = "" ]; then
+		return
+	fi
+
+	_echo "${FUNCNAME[0]}: ${state[file]}"
+
+	while read -r dmceconfig; do
+		if [[ ${dmceconfig} == \#* ]] || [[ ${dmceconfig} == '' ]]; then
+			continue
+		fi
+		conf_var=${dmceconfig%%:*}
+		conf_val=${dmceconfig##*:}
+		# escape double quotes
+		conf_val=${conf_val//\"/\\\"}
+		eval "$conf_var"=\""$conf_val"\"
+		export "${conf_var:?}"
+	done <"${state[file]}"
+
+	mandatory_configs+=("DMCE_EXEC_PATH")
+	mandatory_configs+=("DMCE_CONFIG_PATH")
+	mandatory_configs+=("DMCE_WORK_PATH")
+	mandatory_configs+=("DMCE_PROBE_SOURCE")
+	mandatory_configs+=("DMCE_PROBE_PROLOG")
+
+	for c in "${mandatory_configs[@]}"; do
+		if [ "${!c}" = "" ]; then
+			echo "error: mandatory config '${c}' missing, please add it to ${state[file]} and re-try" 1>&2
+			exit 1
+		fi
+	done
+
+	# sanity checks
+	if [ ! -e "$DMCE_PROBE_SOURCE" ]; then
+		echo "error: could not find probe: ${DMCE_PROBE_SOURCE}" 1>&2
+		exit 1
+	elif [ ! -e "$DMCE_PROBE_PROLOG" ]; then
+		echo "error: could not find prolog: ${DMCE_PROBE_PROLOG}" 1>&2
+		exit 1
+	fi
+
+	if [ -n "${DMCE_CMD_LOOKUP_HOOK}" ]; then
+		if [ ! -e "$DMCE_CMD_LOOKUP_HOOK" ]; then
+			echo "error: could not find lookup hook: ${DMCE_CMD_LOOKUP_HOOK}" 1>&2
+			exit 1
+		fi
+	fi
+
+	if [ -n "${DMCE_CACHE}" ] && [ "${state[cache]}" -ne 1 ]; then
+		state[cache]=${DMCE_CACHE}
+	fi
+	_echo "config file: ${state[file]}"
+}
+
+function prepare() {
+	_echo "${FUNCNAME[0]}"
+
+	# extract any probe defines
+	mkdir ${coreutils_args} -p "${state[dmce_work_dir]}"
+	grep "DMCE_PROBE_DEFINE" "${state[file]}" |
+		sed -E "s,DMCE_PROBE_DEFINE:,#define ,g" >"${state[dmce_work_dir]}"/probedefines.h
+	if [ ! -s "${state[dmce_work_dir]}"/probedefines.h ]; then
+		rm ${coreutils_args} "${state[dmce_work_dir]}"/probedefines.h
+	fi
+
+	# for dmce-post-hook-racetrack
+	export DMCE_PROBE_REFERENCES="${state[dmce_work_dir]}/probe-references.log"
+
+	# restoring old probe state
+	while read -r f; do
+		{
+			mv ${coreutils_args} "$f" "${f%%.dmceoriginal}"
+			touch "${f%%.dmceoriginal}"
+		} &
+		job_cap
+	done < <(find "${state[git_root]}" -name "*.dmceoriginal")
+	wait
+
+	# removing any files containing dmce struct macros
+	find "${state[git_root]}" -name "*.probed.dmcestructs" -exec rm ${coreutils_args} {} \;
+
+	if [ "${state[restore]}" = true ]; then
+		_echo "restore source code state"
+		rm ${coreutils_args} -f "${state[git_root]}/.dmce_state_probed"
+		exit 0
+	elif [ "${state[clear_cache]}" = true ]; then
+		_echo "clear cache"
+		if [ -d "${state[dmce_work_dir]}/cache" ]; then
+			rm ${coreutils_args} -rf "${state[dmce_work_dir]}"/cache
+		fi
+		set +f
+		rm ${coreutils_args} -rf "$DMCE_WORK_PATH"/*/cache
+		set -f
+		exit 0
+	fi
+
+	touch "${state[git_root]}/.dmce_state_probed"
+
+	if [ "${state[checkout_head]}" = true ] && ! git checkout -q "${state[new]}"; then
+		echo "error: 'git checkout -q ${state[new]}' failed" 1>&2
+		exit 1
+	fi
+
+	if [ "${state[search_method]}" == "weeks" ]; then
+		_echo "search by weeks (${state[weeks]})"
+		state[old]=$(git log -n 1 --before="${state[weeks]}".weeks --pretty=%h | head -n 1)
+		if [ "${state[old]}" = "" ]; then
+			echo "error: could not retreive SHA-1. Too many weeks?" 1>&2
+			exit 1
+		fi
+	elif [ "${state[search_method]}" == "commits" ]; then
+		_echo "search by number of commits (${state[number_of_commits]})"
+		state[old]=$(git log --oneline -"${state[number_of_commits]}" --pretty=%h | tail -1)
+	elif [ "${state[search_method]}" == "raw" ]; then
+		_echo "search from ${state[new]} to ${state[old]}"
+	else
+		_echo "no selection method specified, probe the entire history"
+		state[probe_all]=1
+		state[number_of_commits]=$(git rev-list --count HEAD)
+		state[old]=$(git log --oneline -"${state[number_of_commits]}" --pretty=%h | tail -1)
+	fi
+
+	if ! state[new_rev]=$(git rev-list -1 "${state[new]}"); then
+		echo "error: could not run 'git rev-list -1 ${state[new]}'" 1>&2
+		exit 1
+	elif ! state[old_rev]=$(git rev-list -1 "${state[old]}"); then
+		echo "error: could not run 'git rev-list -1 ${state[old]}'" 1>&2
+		exit 1
+	fi
+}
+
+function without_worktree() {
+	_echo "${FUNCNAME[0]}"
+
+	_echo "set up old SHA-1: ${state[old_git_dir]} using 'cp' (might be slow)"
+	if [ -d "${state[old_git_dir]}" ]; then
+		rm ${coreutils_args} -rf "${state[old_git_dir]}"
+	fi
+	cp ${coreutils_args} -ar "${state[git_root]}" "${state[old_git_dir]}" &>/dev/null
+}
+
+function with_worktree() {
+	local remove_old_git_dir
+	local setup_worktree
+
+	_echo "${FUNCNAME[0]}"
+
+	setup_worktree=1
+	remove_old_git_dir=0
+
+	# remove any old repos laying around
+	if [ -d "${state[old_git_dir]}"/.git ]; then
+		_echo "a none-worktree repo found at '${state[old_git_dir]}' - remove repo"
+		remove_old_git_dir=1
+	elif [ -e "${state[old_git_dir]}"/.git ]; then
+		if ! git -C "${state[old_git_dir]}" status --porcelain &>/dev/null; then
+			_echo "worktree is broken (git status fails) - remove repo"
+			remove_old_git_dir=1
+		else
+			worktree=$(grep gitdir: "${state[old_git_dir]}"/.git | awk '{print $2}')
+			if [[ $worktree =~ ${state[git_root]} ]]; then
+				if ! git -C "${state[old_git_dir]}" status --porcelain &>/dev/null; then
+					_echo "worktree is broken - remove worktree"
+					remove_old_git_dir=1
+				else
+					_echo "worktree health check OK"
+					setup_worktree=0
+				fi
+			else
+				_echo "worktree '$worktree' does not match '${state[git_root]}' - remove worktree"
+				remove_old_git_dir=1
+			fi
+		fi
+	fi
+
+	if [ $remove_old_git_dir -eq 1 ]; then
+		rm ${coreutils_args} -rf "${state[old_git_dir]}"
+	fi
+
+	if [ $setup_worktree -eq 1 ]; then
+		_echo "git worktree add -f ${state[old_git_dir]} ${state[old]}"
+		git -C "${state[git_root]}" worktree add -f "${state[old_git_dir]}" "${state[old]}"
+	fi
+
+	return 0
+}
+
+function header_files() {
+	_echo "${FUNCNAME[0]}"
+
+	# remove old inc directory
+	rm ${coreutils_args} -rf "${state[dmce_work_dir]}"/inc/{old,new}
+
+	# re-create inc directories
+	mkdir ${coreutils_args} -p "${state[dmce_work_dir]}"/inc/{old,new}
+
+	state[old_git_dir]="$DMCE_WORK_PATH/baseline/${state[git_name]}"
+	mkdir ${coreutils_args} -p "$DMCE_WORK_PATH/baseline"
+	# use git worktree' (git >=2.5) if available
+	if git help -a | grep -w -q worktree; then
+		with_worktree
+	else
+		without_worktree
+	fi
+
+	_echo "git -C ${state[old_git_dir]} clean/reset/checkout ${state[old]}"
+	git -C "${state[old_git_dir]}" clean -dfx || true
+	git -C "${state[old_git_dir]}" reset --hard &>/dev/null || true
+	git -C "${state[old_git_dir]}" checkout "${state[old]}" &>/dev/null || true
+
+	_echo "copy header files to ${state[dmce_work_dir]}/inc/new"
+	if ! "${DMCE_EXEC_PATH}"/dmce-copy-headers "${state[git_root]}" "${state[dmce_work_dir]}"/inc/new; then
+		exit 1
+	elif ! "${DMCE_EXEC_PATH}"/dmce-copy-headers "${state[old_git_dir]}" "${state[dmce_work_dir]}"/inc/old; then
+		exit 1
+	fi
+
+	return 0
+}
+
+function get_dir_md5() {
+	local d
+	local md5
+
+	if [ $# -ne 1 ]; then
+		echo "error: get_dir_md5: no args" 1>&2
+		exit 1
+	elif [ ! -d "$1" ]; then
+		echo "error: get_dir_md5: $1 is not a dir" 1>&2
+		exit 1
+	fi
+	d="$1"
+
+	if command -v md5deep >/dev/null; then
+		# o f = regular files only
+		# r   = recursive
+		# s   = silent mode
+		md5=$(md5deep \
+			-o f \
+			-r "${d}" \
+			-s |
+			awk '{print $1}' |
+			sort |
+			md5sum)
+	else
+		md5=$(find \
+			"${d}" \
+			-type f \
+			-print0 |
+			xargs -0 md5sum |
+			awk '{print $1}' |
+			sort |
+			md5sum)
+	fi
+
+	if [ "${md5}" = "" ]; then
+		exit 1
+	fi
+
+	echo "${md5%  -}"
+}
+
+function cache_prepare() {
+	local cache_root
+	local md5
+
+	if [ "${state[cache]}" != "1" ]; then
+		return 0
+	fi
+
+	_echo "${FUNCNAME[0]}"
+	{
+		{
+			clang-check --version | grep -o 'LLVM version.*'
+			git --version
+			python3 --version
+		} | sed 's,version,,g'
+		echo "DMCE ${state[version]}"
+		grep -E -v '^$|^#|^DMCE_CACHE:' "${state[file]}"
+		grep -h -E -v '^$|^#' "${state[dmce_work_dir]}"/config/dmce.{pos,var}.{include,exclude} || :
+		cat "${state[dmce_work_dir]}"/config/{constructs.exclude,recognizedexpressions.py}
+		echo "inc:$(get_dir_md5 "${state[dmce_work_dir]}/inc")"
+	} >"${DMCE_WORK_PATH}/dmce.info"
+
+	md5=$(md5sum <"${DMCE_WORK_PATH}/dmce.info")
+	md5=${md5%  -}
+	mv ${coreutils_args} "${DMCE_WORK_PATH}/dmce.info" "${DMCE_WORK_PATH}/${md5}.info"
+	_echo "md5: $md5"
+	if [ "${state[debug]}" = true ]; then
+		echo "${DMCE_WORK_PATH}/${md5}.info"
+		cat -n "${DMCE_WORK_PATH}/${md5}.info"
+	fi
+
+	state[md5]=$md5
+
+	true >"${state[dmce_work_dir]}"/cache.hit
+	true >"${state[dmce_work_dir]}"/cache.hit.ma
+	cache_root="${state[dmce_work_dir]}/cache/${state[old_rev]}-${state[new_rev]}"
+	# remove old file cache
+	if [ -f "${cache_root}" ]; then
+		rm ${coreutils_args} "${cache_root}"
+	fi
+	cache_root+="/${state[md5]}"
+	mkdir ${coreutils_args} -p "${cache_root}"
+
+	state[dmce_cache_root]=${cache_root}
+
+	setup_ast_cache
+}
+
+function summary() {
+	_echo "${FUNCNAME[0]}"
+
+	printf "===============================================\n"
+	{
+		printf "git repository@%s\n" "${state[git_root]}"
+		if [ "${state[old]}" != "${state[old_rev]}" ]; then
+			printf "Old SHA-1@%s (%s)\n" "${state[old]}" "${state[old_rev]}"
+		else
+			printf "Old SHA-1@%s\n" "${state[old]}"
+		fi
+		if [ "${state[new]}" != "${state[new_rev]}" ]; then
+			printf "New SHA-1@%s (%s)\n" "${state[new]}" "${state[new_rev]}"
+		else
+			printf "New SHA-1@%s\n" "${state[new]}"
+		fi
+		printf "Files examined@%s\n" "${state[nbr_of_files]}"
+		printf "Files probed@%s\n" "$((state[files_probed] - state[files_from_cache]))"
+		printf "Files from cache@%s\n" "${state[files_from_cache]}"
+		printf "Files skipped@%s\n" "${state[files_skipped]}"
+		printf "Probes inserted@%s\n" "${state[nbrofprobesinserted]}"
+		printf "Config directory@%s\n" "${state[dmce_work_dir]}"/config
+		if [ "${state[nbrofprobesinserted]}" -ne 0 ]; then
+			printf "Probe metadata@%s\n" "${state[dmce_work_dir]}/probe-references.log"
+			printf "Probe metadata (original files)@%s\n" "${state[dmce_work_dir]}/probe-references-original.log"
+			printf "Expressions@%s\n" "${state[dmce_work_dir]}/expr-references.log"
+		fi
+		printf "DMCE version@%s\n" "${state[version]}"
+	} | column -t -s@
+	printf "===============================================\n"
+}
+
+function job_cap() {
+	if [ "${state[j]}" -eq 0 ]; then
+		return
+	fi
+
+	while true; do
+		mapfile -t job_list < <(jobs -p -r)
+		if [ "${#job_list[@]}" -lt "${state[j]}" ]; then
+			return
+		fi
+		wait -n || true
+	done
+}
+
+function mem_used() {
+	local ntot
+	local nused
+	local p
+
+	eval "$(free | {
+		read -r foo
+			# shellcheck disable=SC2034
+			read -r bar total used foo
+			echo "ntot=$total nused=$used"
+		})"
+	p=$((nused * 100 / ntot)) || true
+	echo "${p}"
+}
+
+function mem_cap() {
+	local percentused
+
+	if [ "${state[m]}" = "0" ] || [ "${state[m]}" = "100" ]; then
+		return
+	fi
+
+	while true; do
+		# shellcheck disable=SC2154
+		percentused=$(mem_used)
+		if [ "$percentused" -ge "${state[m]}" ]; then
+			_echo "memory limit of ${state[m]}% reached (used: ${percentused}%)"
+			sleep 1
+			continue
+		fi
+		break
+	done
+}
+
+function print_state() {
+	local v
+
+	if [ "${state[debug]}" = false ]; then
+		return
+	fi
+
+	for v in "${!state[@]}"; do
+		echo "$v=${state[$v]}"
+	done | sort | column -t -s=
+
+	set | grep "^DMCE_.*=" | sort
+}
+
+function setup_ast_cache() {
+	local a
+	local ast_cache_files
+	local clang_check_md5
+
+	if [ "${state[ast_cache]}" = false ]; then
+		return
+	fi
+
+	_echo "${FUNCNAME[0]}"
+
+	clang_check_md5=$(md5sum "$(readlink -f "$(command -v clang-check)")")
+	clang_check_md5=${clang_check_md5%% *}
+	state[ast_cache_dir]="${state[dmce_work_dir]}/cache/clang/$clang_check_md5"
+	mkdir ${coreutils_args} -p "${state[ast_cache_dir]}"
+	ast_cache_files=$(find "${state[ast_cache_dir]}" -type f | wc -l)
+	_echo "local AST cache '${state[ast_cache_dir]}' contains $ast_cache_files files"
+
+	# sanity check AST cache
+	if [ "$ast_cache_files" -eq 0 ]; then
+		return 0
+	fi
+	_echo "sanity check AST cache"
+	a=$(find "${state[ast_cache_dir]}" -type f | head -1 | xargs file)
+	if [ "${state[ast_cache_compress]}" = true ] && [[ $a != *"XZ compressed data" ]]; then
+		echo "error: the AST cache is not compressed and you want to run with compression. AST cache: ${state[ast_cache_dir]}" 1>&2
+		echo "rm -rf ${state[ast_cache_dir]} might help" 1>&2
+		exit 1
+	elif [ "${state[ast_cache_compress]}" = false ] && [[ $a == *"XZ compressed data" ]]; then
+		echo "error: the AST cache is compressed and you want to run without compression. AST cache: ${state[ast_cache_dir]}" 1>&2
+		echo "rm -rf ${state[ast_cache_dir]} might help" 1>&2
+		exit 1
+	fi
+}
+
+function setup() {
+	_echo "${FUNCNAME[0]}"
+
+	if ! cd "${state[git_root]}"; then
+		exit 1
+	fi
+
+	c="${state[dmce_work_dir]}/cache/${state[old_rev]}-${state[new_rev]}.files"
+	# check if we have this interval in our FILE cache
+	if [ -s "$c" ] && [ "$(tail -1 "${c}" | cut -d':' -f1)" = "DMCE" ]; then
+		_echo "using file cache: $c"
+		cp ${coreutils_args} -a "${c}" "${state[dmce_work_dir]}/latest.cache"
+		# remove watermark
+		sed -i '$ d' "${state[dmce_work_dir]}"/latest.cache
+	else
+		_echo "ask git to list modified and added files. Saving files here: ${state[dmce_work_dir]}/latest.cache"
+		git diff -l99999 --diff-filter=MA --name-status "${state[old]}" "${state[new]}" | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 >"${state[dmce_work_dir]}/latest.cache"
+		cp ${coreutils_args} -a "${state[dmce_work_dir]}/latest.cache" "${c}"
+		# add watermark
+		echo "DMCE: $(date '+%Y-%m-%d %H:%M:%S')" >>"${c}"
+	fi
+
+	# add modified/untracked files
+	git status -u --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >"${state[dmce_work_dir]}"/modified-and-untracked.cache || :
+	if [ -s "${state[dmce_work_dir]}"/modified-and-untracked.cache ]; then
+		cat "${state[dmce_work_dir]}"/modified-and-untracked.cache >>"${state[dmce_work_dir]}"/latest.cache
+	fi
+
+	if [ "${state[probe_all]}" -eq 1 ]; then
+		git show -l99999 --diff-filter=MA --name-status "${state[old]}" | grep -E '\.c$|\.cpp$|\.cc$|\.h$' | cut -f2 >>"${state[dmce_work_dir]}"/latest.cache
+	fi
+
+	if [ ! -s "${state[dmce_work_dir]}"/latest.cache ]; then
+		echo "error: no modified/added files found. Increase commit delta with the '-n #' or '-a' options" 1>&2
+		exit 1
+	fi
+
+	# uniq
+	sort -o "${state[dmce_work_dir]}"/latest.cache -u "${state[dmce_work_dir]}"/latest.cache
+
+	state[nbr_of_files]=$(wc -l <"${state[dmce_work_dir]}"/latest.cache)
+	_echo "found ${state[nbr_of_files]} modified/added file(s)"
+
+	if [ "${state[include]}" = "" ]; then
+		_echo "dmce.include: exclude comments and blank rows, dont care about eventual function names"
+		grep -E -v '^#|^$' "$DMCE_CONFIG_PATH"/dmce.include | cut -d':' -f1 >"${state[dmce_work_dir]}"/config/dmce.include
+	fi
+
+	if [ "${state[exclude]}" = "" ]; then
+		_echo "dmce.exclude: exclude comments, blank rows and file:function lines"
+		grep -E -v '^#|^$|:' "$DMCE_CONFIG_PATH"/dmce.exclude >"${state[dmce_work_dir]}"/config/dmce.exclude || :
+	fi
+
+	if [ "${state[verbose]}" = "true" ]; then
+		_echo "includes: "
+		cat "${state[dmce_work_dir]}"/config/dmce.include
+		_echo "excludes: "
+		cat "${state[dmce_work_dir]}"/config/dmce.exclude
+	fi
+
+	grep -f "${state[dmce_work_dir]}"/config/dmce.include "${state[dmce_work_dir]}"/latest.cache | grep -vf "${state[dmce_work_dir]}"/config/dmce.exclude | cat >"${state[dmce_work_dir]}"/latest.cache.tmp
+
+	comm -23 --nocheck-order "${state[dmce_work_dir]}"/latest.cache "${state[dmce_work_dir]}"/latest.cache.tmp >"${state[dmce_work_dir]}"/files_excluded.log
+	if [ ! -s "${state[dmce_work_dir]}/files_excluded.log" ]; then
+		_echo "0 files excluded"
+	elif [ "${state[debug]}" = true ]; then
+		_echo "excluded file(s):"
+		cat -n <"${state[dmce_work_dir]}"/files_excluded.log
+	else
+		_echo "$((state[nbr_of_files] - $(wc -l <"${state[dmce_work_dir]}"/latest.cache.tmp))) files excluded. View these files in ${state[dmce_work_dir]}/files_excluded.log"
+	fi
+	mv "${state[dmce_work_dir]}"/latest.cache.tmp "${state[dmce_work_dir]}"/latest.cache
+	state[nbr_of_files]=$(wc -l <"${state[dmce_work_dir]}"/latest.cache)
+	if [ "${state[nbr_of_files]}" -eq 0 ]; then
+		echo "error: no files after include and exclude filter" 1>&2
+		exit 1
+	fi
+
+	populate_file_list
+	cache_prepare_late
+	produce_command_lines
+	copy_files_to_work_dir
+	clang_prepare
+	print_state
+}
+
+function populate_file_list() {
+	_echo "${FUNCNAME[0]}: ${state[nbr_of_files]} file(s) will be examined"
+
+	FILE_LIST=""
+	while read -r c_file; do
+		if [ ! -s "${c_file}" ]; then
+			_echo "ignore '$c_file' as is does not exist or is empty"
+			continue
+		elif [[ ${c_file} == *" "* ]]; then
+			_echo "ignore '$c_file' as it contains one or more spaces"
+			continue
+		fi
+
+		if [ "${state[cache]}" != "1" ]; then
+			FILE_LIST+="$c_file "
+			continue
+		fi
+
+		# cache stuff below
+		if [ -s "${state[dmce_work_dir]}"/modified-and-untracked.cache ] &&
+			grep -q "^$c_file$" "${state[dmce_work_dir]}"/modified-and-untracked.cache; then
+			# either an untracked or a modified file
+			md5=$(md5sum <"${c_file}")
+			md5=${md5%  -}
+			md5_root="${state[dmce_cache_root]}-dirty/${md5:0:2}/${md5:2}"
+			if [ -d "${md5_root}" ]; then
+				if [[ "$(git status -u --porcelain -- "$c_file")" == \?\?* ]]; then
+					_echo "MD5 for $c_file exist and it is an untracked file. Rename the file to '$c_file.dmceoriginal'"
+					untracked=1
+					mv ${coreutils_args} "${c_file}" "${c_file}".dmceoriginal
+				else
+					_echo "MD5 for $c_file exist and it is a modified file - git checkout and apply the cache diff"
+					cp ${coreutils_args} "${c_file}" "${c_file}.dmceoriginal"
+					git checkout -q "${c_file}"
+				fi
+				# sanity check and apply the diff
+				if ! git apply --check --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
+					echo "fatal: '${md5_root}/${c_file}.diff' does not apply"
+					exit 1
+				elif ! git apply --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
+					echo "fatal: '${md5_root}/${c_file}.diff' does not apply"
+					exit 1
+				fi
+
+				# setup directory structure
+				dst="${state[dmce_work_dir]}/new/"
+				if [[ ${c_file} == */* ]]; then
+					_dir=${c_file%/*}
+					dst+="${_dir}/"
+					mkdir ${coreutils_args} -p "${state[dmce_work_dir]}/new/${_dir}"
+				fi
+
+				# copy probedata and exprdata
+				cp ${coreutils_args} -a "${md5_root}/${c_file}".{probedata,exprdata} "${dst}"
+
+				# remember all modified/untracked files
+				echo "$c_file" >>"${state[dmce_work_dir]}"/cache.hit.ma
+				continue
+			fi
+		elif [ -s "${state[dmce_cache_root]}/${c_file}.probedata" ]; then
+			if [ ! -s "${state[dmce_cache_root]}/${c_file}.diff" ]; then
+				echo "fatal: '${state[dmce_cache_root]}/${c_file}.diff' missing"
+				exit 1
+			fi
+
+			# create a dmceoriginal file
+			cp ${coreutils_args} "${c_file}" "${c_file}".dmceoriginal
+
+			# apply the diff
+			git apply --whitespace=nowarn -- "${state[dmce_cache_root]}"/"${c_file}".diff
+
+			# remember this
+			echo "$c_file" >>"${state[dmce_work_dir]}"/cache.hit
+
+			continue
+		elif [ -s "${state[dmce_cache_root]}"/skip-list ] && grep -q "^$c_file$" "${state[dmce_cache_root]}"/skip-list; then
+			# ignore if in skip list
+			continue
+		fi
+		FILE_LIST+="$c_file "
+	done <"${state[dmce_work_dir]}"/latest.cache
+}
+
+function cache_prepare_late() {
+	if [ "${state[cache]}" != "1" ]; then
+		return 0
+	elif [ ! -s "${state[dmce_work_dir]}"/cache.hit ]; then
+		return 0
+	fi
+
+	_echo "${FUNCNAME[0]}: $(wc -l <"${state[dmce_work_dir]}"/cache.hit) unmodified files retrieved from cache"
+
+	while read -r f; do
+		dst="${state[dmce_work_dir]}/new/"
+		if [[ ${f} == */* ]]; then
+			_dir=${f%/*}
+			dst+="${_dir}/"
+			mkdir ${coreutils_args} -p "${state[dmce_work_dir]}"/new/"${_dir}"
+		fi
+		cp ${coreutils_args} -a "${state[dmce_cache_root]}"/"$f".{probedata,exprdata} "${dst}"
+	done <"${state[dmce_work_dir]}"/cache.hit
+
+	if [ -s "${state[dmce_work_dir]}"/cache.hit.ma ]; then
+		_echo "$(wc -l <"${state[dmce_work_dir]}"/cache.hit.ma) modified/untracked files retrieved from cache"
+		# append modified and untracked
+		cat "${state[dmce_work_dir]}"/cache.hit.ma >>"${state[dmce_work_dir]}"/cache.hit
+	fi
+	state[files_from_cache]="$(wc -l <"${state[dmce_work_dir]}"/cache.hit)"
+
+	return 0
+}
+
+function produce_command_lines() {
+	_echo "${FUNCNAME[0]}"
+
+	if [ -n "${DMCE_CMD_LOOKUP_HOOK}" ]; then
+		_echo "producing individual command lines if available"
+		pushd "$DMCE_CONFIG_PATH" &>/dev/null
+		if [ -e "${state[dmce_work_dir]}"/cmdlookup.cache ]; then
+			rm ${coreutils_args} "${state[dmce_work_dir]}"/cmdlookup.cache
+		fi
+		for c_file in $FILE_LIST; do
+			$DMCE_CMD_LOOKUP_HOOK "${c_file}" >>"${state[dmce_work_dir]}"/cmdlookup.cache &
+			job_cap
+		done
+		wait
+		popd &>/dev/null
+		if [ ! -s "${state[dmce_work_dir]}"/cmdlookup.cache ]; then
+			return 0
+		elif [ "$(wc -c <"${state[dmce_work_dir]}"/cmdlookup.cache)" = "0" ]; then
+			echo "error: cmdlookup.cache is empty" 1>&2
+			exit 1
+		fi
+
+		# remove duplicates
+		sort -o "${state[dmce_work_dir]}"/cmdlookup.cache -u "${state[dmce_work_dir]}"/cmdlookup.cache
+	fi
+
+	_echo "producing compile_commands.json files (used by clang-check)"
+	declare -A _dirs=()
+
+	# creating folder structure
+	for c_file in $FILE_LIST; do
+		if [[ ${c_file} != */* ]]; then
+			continue
+		fi
+		d=${c_file%/*}
+		if [[ "${_dirs["${state[dmce_work_dir]}"/new/$d]+foobar}" ]]; then
+			# already seen
+			continue
+		fi
+		_dirs["${state[dmce_work_dir]}"/new/$d]=1
+		if ! [[ "${_dirs["${state[dmce_work_dir]}"/old/$d]+foobar}" ]]; then
+			_dirs["${state[dmce_work_dir]}"/old/$d]=1
+		fi
+
+		if ! [[ "${_dirs["${state[dmce_work_dir]}"/workarea/$d]+foobar}" ]]; then
+			_dirs["${state[dmce_work_dir]}"/workarea/$d]=1
+		fi
+	done
+
+	if [ ${#_dirs[@]} -ne 0 ]; then
+		mkdir ${coreutils_args} -p "${!_dirs[@]}"
+	fi
+
+	if [ -z ${DMCE_CMD_LOOKUP_HOOK+x} ]; then
+		for c_file in $FILE_LIST; do
+			# Is this needed? Maybe optimize the gen script instead
+			# TODO: Check for c or c++
+			# TODO: Add -I.../inc/new and -I.../inc/old directives
+			echo -e "{\n\"directory\": \"${state[dmce_work_dir]}/new/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," >"${state[dmce_work_dir]}"/new/"$c_file".JSON &
+			echo -e "{\n\"directory\": \"${state[dmce_work_dir]}/old/\",\n\"command\": \"$DMCE_DEFAULT_C_COMMAND_LINE $c_file\",\n\"file\": \"$c_file\"\n}," >"${state[dmce_work_dir]}"/old/"$c_file".JSON &
+			job_cap
+		done
+		wait
+
+		# JSON start
+		echo '[' >"${state[dmce_work_dir]}"/new/compile_commands.json
+		echo '[' >"${state[dmce_work_dir]}"/old/compile_commands.json
+
+		# Assemble json files
+		find "${state[dmce_work_dir]}"/new -name '*.JSON' -print0 | xargs -0 cat >>"${state[dmce_work_dir]}"/new/compile_commands.json &
+		find "${state[dmce_work_dir]}"/old -name '*.JSON' -print0 | xargs -0 cat >>"${state[dmce_work_dir]}"/old/compile_commands.json &
+		wait
+
+		# JSON end
+		echo ']' >>"${state[dmce_work_dir]}"/new/compile_commands.json
+		echo ']' >>"${state[dmce_work_dir]}"/old/compile_commands.json
+	else
+		true "${DMCE_DEFAULT_C_COMMAND_LINE:?}"
+		true "${DMCE_DEFAULT_CPP_COMMAND_LINE:?}"
+		true "${DMCE_DEFAULT_H_COMMAND_LINE:?}"
+
+		DMCE_GIT_NAME=${state[git_name]} "$DMCE_EXEC_PATH"/generate-compile-commands.py "${state[dmce_work_dir]}"/new "${state[dmce_work_dir]}"/cmdlookup.cache <"${state[dmce_work_dir]}"/latest.cache | sed -e "s/\$USER/${USER}/g" >"${state[dmce_work_dir]}"/new/compile_commands.json &
+		DMCE_GIT_NAME=${state[git_name]} "$DMCE_EXEC_PATH"/generate-compile-commands.py "${state[dmce_work_dir]}"/old "${state[dmce_work_dir]}"/cmdlookup.cache <"${state[dmce_work_dir]}"/latest.cache | sed -e "s/\$USER/${USER}/g" >"${state[dmce_work_dir]}"/old/compile_commands.json &
+		wait
+	fi
+}
+
+function copy_files_to_work_dir() {
+	local newdestdir
+	local c_file
+
+	_echo "${FUNCNAME[0]}"
+
+	for c_file in $FILE_LIST; do
+		{
+			if [[ ${c_file} == */* ]]; then
+				newdestdir="${state[dmce_work_dir]}"/new/${c_file%/*}
+			else
+				newdestdir="${state[dmce_work_dir]}"/new
+			fi
+
+			cp ${coreutils_args} "${c_file}" "$newdestdir"/
+		} &
+		job_cap
+	done
+	wait
+}
+
+function clang_prepare() {
+	local c_file
+	local touch_files
+
+	_echo "${FUNCNAME[0]}"
+
+	true >"${state[dmce_work_dir]}"/workarea/clang-list.old
+	for c_file in $FILE_LIST; do
+		# Probe the entire history? Just create an empty clang file
+		if [ "${state[probe_all]}" -eq 1 ]; then
+			touch_files+="${state[dmce_work_dir]}/old/$c_file.clang "
+			# c_file does not exist in ${state[old]}, create an empty file AND clang file
+		elif ! [ -e "${state[old_git_dir]}/${c_file}" ]; then
+			touch_files+="${state[dmce_work_dir]}/old/$c_file ${state[dmce_work_dir]}/old/$c_file.clang "
+		else
+			cp ${coreutils_args} -a "${state[old_git_dir]}/${c_file}" "${state[dmce_work_dir]}/old/$c_file" &
+			echo "${c_file}" >>"${state[dmce_work_dir]}"/workarea/clang-list.old
+		fi
+		job_cap
+	done
+	wait
+
+	if [ "x${touch_files}" != "x" ]; then
+		printf "%s\n" "$touch_files" | xargs touch
+	fi
+}
+
+# $1: _file
+function run_clang() {
+	local _base
+	local _file
+
+	_file="$1"
+	if [ ! -s "$_file" ]; then
+		return 0
+	fi
+
+	_echo "${FUNCNAME[0]}: $1"
+
+	if [ "${state[ast_cache]}" = true ]; then
+		md5=$(md5sum "$_file")
+		md5=${md5%% *}
+		md5_s=${md5:0:2}
+		_base="${_file/"${state[dmce_work_dir]}"/}"
+		# remove first component "/new/" or "/old/"
+		_base=${_base#*/}
+		_base=${_base#*/}
+		md5_e=${md5:2}_${_base//\//_}
+	fi
+
+	if [ "${state[ast_cache]}" = true ] && [ -d "${state[ast_cache_dir]}/$md5_s" ] && [ -s "${state[ast_cache_dir]}/$md5_s/$md5_e" ]; then
+		ext=
+		if [ "${state[ast_cache_compress]}" = true ]; then
+			ext=".xz"
+		fi
+		cp ${coreutils_args} -a "${state[ast_cache_dir]}/$md5_s/$md5_e" "$_file.clang${ext}"
+		if [ "${state[ast_cache_compress]}" = true ]; then
+			xz -d "$_file.clang${ext}"
+		fi
+	else
+		eval clang-check "$_file" -ast-dump --extra-arg="-fno-color-diagnostics" 2>"$_file".clangcheck.log >"$_file".clang || true
+		if [ "${state[ast_cache]}" = true ]; then
+			mkdir ${coreutils_args} -p "${state[ast_cache_dir]}/$md5_s"
+			if [ "${state[ast_cache_compress]}" = true ]; then
+				xz -c --keep "$_file".clang >"${state[ast_cache_dir]}/$md5_s/$md5_e"
+			else
+				cp ${coreutils_args} -a "$_file".clang "${state[ast_cache_dir]}/$md5_s/$md5_e"
+			fi
+		fi
+	fi
+
+	remove_spaces "$_file".clang
+}
+
+function remove_spaces() {
+	local f=$1
+	local f_size
+	local num_spaces
+	local percentage_spaces
+
+	if [ ! -s "$f" ]; then
+		return
+	fi
+
+	_echo "${FUNCNAME[0]}: $f"
+
+	f_size=$(stat -c '%s' "$f")
+	if [ "$f_size" -lt 1048576 ]; then
+		return
+	fi
+	num_spaces=$(tr -cd ' ' <"$f" | wc -c)
+	percentage_spaces=$((100 * num_spaces / f_size))
+	if [ "${percentage_spaces}" -gt 95 ]; then
+		true >"${state[dmce_work_dir]}"/old/"${c_file}".clang
+	fi
+
+	return 0
+}
+
+function run_one() {
+	local cmd
+	local f=$1
+	local esc_c_file
+	local t0=$SECONDS
+
+	_echo "${FUNCNAME[0]}: $f"
+
+	# run clang
+	run_clang "${state[dmce_work_dir]}"/old/"$f"
+	run_clang "${state[dmce_work_dir]}"/new/"$f"
+
+	# cut ast top
+	esc_c_file="<${f//\./\\\.}"
+	esc_c_file="${esc_c_file//\//\\\/}"
+	sed -i -n -e "/${esc_c_file}/,\$p" "${state[dmce_work_dir]}"/{old,new}/"$f".clang
+
+	# replace all hexnumbers and "branches" (in-place) on clang-files
+	sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' "${state[dmce_work_dir]}"/{old,new}/"$f".clang
+
+	# remove position dependent stuff (line numbers) from clang output
+	sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/old/"$f".clang >"${state[dmce_work_dir]}"/old/"$f".clang.filtered
+	sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/new/"${c_file}".clang >"${state[dmce_work_dir]}"/new/"${c_file}".clang.filtered
+
+	# create filtered clang diff
+	git --no-pager diff \
+		--diff-algorithm="${DMCE_GIT_DIFF_ALGORITHM-histogram}" \
+		-U0 \
+		"${state[dmce_work_dir]}"/old/"$f".clang.filtered \
+		"${state[dmce_work_dir]}"/new/"$f".clang.filtered >"${state[dmce_work_dir]}"/new/"$f".clang.filtereddiff || true
+
+	# producing clang diffs
+	"$DMCE_EXEC_PATH"/create-clang-diff "${state[dmce_work_dir]}"/new/"$f".clang.filtereddiff
+
+	# inserting probes
+	if [ ! -e "${state[dmce_work_dir]}"/new/"$f".clangdiff ]; then
+		return
+	fi
+	true >"${state[dmce_work_dir]}"/new/"${c_file}".probedata
+	cmd+=" DMCE_CONFIG_PATH=${state[dmce_work_dir]}/config"
+	cmd+=" $DMCE_EXEC_PATH/generate-probefile.py"
+	cmd+=" $c_file"
+	cmd+=" $c_file.probed"
+	cmd+=" ${state[dmce_work_dir]}/new/$c_file.probedata"
+	cmd+=" ${state[dmce_work_dir]}/new/$c_file.exprdata"
+	cmd+=" <${state[dmce_work_dir]}/new/$c_file.clangdiff"
+	if [ "${state[debug]}" = true ]; then
+		# shellcheck disable=SC2086
+		eval $cmd >"${state[dmce_work_dir]}"/new/"${c_file}".probegen.log
+	else
+		# shellcheck disable=SC2086
+		eval $cmd >/dev/null
+	fi
+
+	# print a warning if this function takes more than 5 seconds
+	if [ "${state[debug]}" = true ] && [ $((SECONDS - t0)) -ge 5 ]; then
+		_echo "warning: $c_file took $((SECONDS - t0)) secs to process"
+	fi
+}
+
+function run() {
+	local c_file
+
+	_echo "${FUNCNAME[0]}"
+
+	for c_file in $FILE_LIST; do
+		eval run_one "${c_file}" &
+		job_cap
+		mem_cap
+	done
+	wait
+
+	state[nbrofprobesinserted]=$(find "${state[dmce_work_dir]}"/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | wc -l)
+}
+
+function create_probe_skip_list() {
+	_echo "${FUNCNAME[0]}"
+
+	find "${state[dmce_work_dir]}"/new -name '*.probedata' ! -size 0 |
+		sed -e "s|${state[dmce_work_dir]}/new/||" -e "s|.probedata$||" >"${state[dmce_work_dir]}"/workarea/probe-list &
+
+	find "${state[dmce_work_dir]}"/new -name '*.probedata' -size 0 |
+		sed -e "s|${state[dmce_work_dir]}/new/||" -e "s|.probedata$||" >"${state[dmce_work_dir]}"/workarea/skip-list &
+	wait
+
+	# if struct parsing enabled, do not skip anything
+	if [ "X${DMCE_STRUCTS}" != "X" ]; then
+		cat "${state[dmce_work_dir]}"/workarea/skip-list >>"${state[dmce_work_dir]}"/workarea/probe-list
+		rm ${coreutils_args} -f "${state[dmce_work_dir]}"/workarea/skip-list
+		true >"${state[dmce_work_dir]}"/workarea/skip-list
+		state[size_of_user]=1
+	else
+		state[size_of_user]=0
+	fi
+}
+
+function update_probed_files() {
+	_echo "${FUNCNAME[0]}"
+
+	if [ -e "$DMCE_PROBE_PROLOG" ]; then
+		_echo "using prolog file: $DMCE_PROBE_PROLOG"
+		cp ${coreutils_args} -a "$DMCE_PROBE_PROLOG" "${state[dmce_work_dir]}"/workarea/probe-header
+		# size_of_user compensates for the header put first in all source files by DMCE
+		state[size_of_user]=$((state[size_of_user] + $(wc -l <"$DMCE_PROBE_PROLOG")))
+	else
+		cat >"${state[dmce_work_dir]}"/workarea/probe-header <<EOF
+#ifndef __DMCE_PROBE_FUNCTION__HEADER__
+#define __DMCE_PROBE_FUNCTION__HEADER__
+static void dmce_probe_body(unsigned int probenbr);
+#define DMCE_NBR_OF_PROBES (${state[nbrofprobesinserted]})
+#define DMCE_PROBE(a) (dmce_probe_body(a))
+#endif
+EOF
+		# size_of_user compensates for the header put first in all source files by DMCE
+		state[size_of_user]=$((state[size_of_user] + $(wc -l <"${state[dmce_work_dir]}"/workarea/probe-header)))
+	fi
+
+	while read -r c_file; do
+		if [ ! -s "${c_file}".probed ]; then
+			continue
+		fi
+		{
+			# header
+			cat "${state[dmce_work_dir]}"/workarea/probe-header >"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+			# the probed source file itself
+			cat "${c_file}".probed >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+			# new line
+			echo "" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+			# any defines from the config file
+			if [ -s "${state[dmce_work_dir]}"/probedefines.h ]; then
+				cat "${state[dmce_work_dir]}"/probedefines.h >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+			fi
+
+			# append built-in defines
+			{
+				echo "#ifndef DMCE_NBR_OF_PROBES"
+				echo "#define DMCE_NBR_OF_PROBES (${state[nbrofprobesinserted]})"
+				echo "#endif"
+			} >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+			# put the probe in the end
+			cat "$DMCE_PROBE_SOURCE" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+			# make copy of original file and replace it with the probed one
+			cp ${coreutils_args} "${c_file}" "${c_file}".dmceoriginal
+			cp ${coreutils_args} "${state[dmce_work_dir]}"/workarea/"${c_file}" "${c_file}"
+
+			# remove probed working files from tree
+			rm ${coreutils_args} "$c_file".probed
+		} &
+		job_cap
+	done <"${state[dmce_work_dir]}"/workarea/probe-list
+	# remove skipped working files from tree
+	if [ -s "${state[dmce_work_dir]}"/workarea/skip-list ]; then
+		xargs rm ${coreutils_args} 2>/dev/null <<<"$(sed -e 's/$/.probed/g' "${state[dmce_work_dir]}"/workarea/skip-list)" || :
+	fi
+	wait
+}
+
+function collect_results() {
+	_echo "${FUNCNAME[0]}"
+
+	state[files_probed]=$(wc -l <"${state[dmce_work_dir]}"/workarea/probe-list 2>/dev/null)
+	state[files_skipped]=$(wc -l <"${state[dmce_work_dir]}"/workarea/skip-list 2>/dev/null)
+	if [ "${state[verbose]}" = "true" ]; then
+		_echo "${state[files_probed]} file(s) probed:"
+		while read -r f; do
+			echo "${state[git_root]}/$f"
+		done <"${state[dmce_work_dir]}"/workarea/probe-list | sort | cat -n
+
+		if [ "${state[files_skipped]}" -gt 0 ]; then
+			echo "${state[files_skipped]} file(s) skipped:"
+			while read -r f; do
+				echo "${state[git_root]}/$f"
+			done <"${state[dmce_work_dir]}"/workarea/skip-list | sort | cat -n
+		fi
+	fi
+
+	if [ -f "${state[dmce_work_dir]}/probe-references.log" ]; then
+		rm ${coreutils_args} -f "${state[dmce_work_dir]}/probe-references.log"
+	fi
+
+	if [ -f "${state[dmce_work_dir]}/expr-references.log" ]; then
+		rm ${coreutils_args} -f "${state[dmce_work_dir]}/expr-references.log"
+	fi
+}
+
+function cache_populate() {
+	if [ "${state[cache]}" != "1" ]; then
+		return 0
+	fi
+
+	_echo "${FUNCNAME[0]}"
+
+	declare -A _dirs=()
+
+	for f in $FILE_LIST; do
+		if [[ ${f} != */* ]]; then
+			continue
+		fi
+		d=${f%/*}
+		if [[ "${_dirs[${state[dmce_cache_root]}/${d}]+foobar}" ]]; then
+			continue
+		fi
+		_dirs[${state[dmce_cache_root]}/${d}]=1
+	done
+
+	if [ ${#_dirs[@]} -ne 0 ]; then
+		mkdir ${coreutils_args} -p "${!_dirs[@]}"
+	fi
+
+	if [ ! -s "${state[dmce_work_dir]}"/modified-and-untracked.cache ]; then
+		_echo "cache: save skip-list"
+		cat ${coreutils_args} "${state[dmce_work_dir]}"/workarea/skip-list >>"${state[dmce_cache_root]}"/skip-list
+		sort -o "${state[dmce_cache_root]}"/skip-list -u "${state[dmce_cache_root]}"/skip-list
+	fi
+
+	for f in $FILE_LIST; do
+		if [ ! -s "${state[dmce_work_dir]}"/new/"$f".probedata ]; then
+			continue
+		fi
+
+		untracked=0
+		dst="${state[dmce_cache_root]}"
+		if [ -s "${state[dmce_work_dir]}"/modified-and-untracked.cache ] &&
+			grep -q "^$f$" "${state[dmce_work_dir]}"/modified-and-untracked.cache; then
+			md5=$(md5sum <"$f".dmceoriginal)
+			md5=${md5%  -}
+			if [ -d "${state[dmce_cache_root]}-dirty/${md5:0:2}" ] && [ -d "${state[dmce_cache_root]}-dirty/${md5:0:2}/${md5:2}" ]; then
+				continue
+			fi
+			dst+="-dirty/${md5:0:2}/${md5:2}/"
+			# untracked?
+			if [[ "$(git status -u --porcelain -- "$f")" == \?\?* ]]; then
+				untracked=1
+			fi
+		fi
+
+		if [[ ${f} == */* ]]; then
+			dst+="/${f%/*}"
+		fi
+
+		mkdir ${coreutils_args} -p "$dst"
+
+		cp ${coreutils_args} -a "${state[dmce_work_dir]}"/new/"$f".{probedata,exprdata} "${dst}"
+		# untracked?
+		if [ $untracked -eq 1 ]; then
+			if ! git diff /dev/null "$f" >"${dst}/${f##*/}".diff; then
+				# this is ok
+				true
+			fi
+		else
+			if ! git diff -- "$f" >"${dst}/${f##*/}".diff; then
+				echo "fatal: 'git diff $f' failed"
+				exit 1
+			fi
+		fi
+		sed -i -e "s,DMCE_NBR_OF_PROBES ([0-9]\+),DMCE_NBR_OF_PROBES (TBD),g" "${dst}/${f##*/}".diff
+	done
+
+	if [ ! -s "${state[dmce_cache_root]}".info ]; then
+		cp ${coreutils_args} -a "$DMCE_WORK_PATH"/"${state[md5]}".info "${state[dmce_cache_root]}".info
+	fi
+
+	if [ "${state[debug]}" = false ]; then
+		_echo "cache: cleanup"
+		rm ${coreutils_args} "${state[dmce_work_dir]}"/{cache.hit,cache.hit.ma,modified-and-untracked.cache}
+	fi
+}
+
+function assemble() {
+	local file
+	local nextfile
+	local probe_nbr
+	local sed_cmds
+	local sed_exp
+	local var
+
+	_echo "${FUNCNAME[0]}"
+
+	create_probe_skip_list
+	update_probed_files
+	collect_results
+	cache_populate
+
+	if [ "${state[files_probed]}" -eq 0 ]; then
+		state[nbrofprobesinserted]=0
+		return 0
+	fi
+
+	_echo "assemble and assign probes"
+	# Assign DMCE_PROBE numbers.
+	probe_nbr=${state[offset]}
+	nextfile=""
+	file=""
+	# set-up an ordered list with the probe-files
+	# we iterate through
+	declare -a file_list=()
+	declare -a str=()
+	while IFS=':' read -r file line func; do
+		# compensate for prolog and extra #include line
+		line=$((line + state[size_of_user] + 1))
+
+		if [ "$nextfile" == "" ]; then
+			# First time, create 'sed' expression
+			sed_exp="-e $line""s/DMCE_PROBE\([0-9]*\)(TBD/DMCE_PROBE\1($probe_nbr/"
+		elif [ "$nextfile" == "$file" ]; then
+			# Same file, append 'sed' expression
+			sed_exp+=" -e $line""s/DMCE_PROBE\([0-9]*\)(TBD/DMCE_PROBE\1($probe_nbr/"
+		else
+			# Next file, remember sed command
+			sed_cmds+=("$sed_exp ${state[git_root]}/$nextfile")
+
+			# Remember 'sed' expression for next file
+			sed_exp="-e $line""s/DMCE_PROBE\([0-9]*\)(TBD/DMCE_PROBE\1($probe_nbr/"
+		fi
+
+		if [ "$file" != "$nextfile" ]; then
+			file_list+=("$file")
+		fi
+
+		nextfile=$file
+		str+=("$probe_nbr:$file:$line:$func")
+
+		((probe_nbr = probe_nbr + 1))
+	done <<<"$(find "${state[dmce_work_dir]}"/new/ -name '*.probedata' -type f ! -size 0 -print0 | xargs -0 cat | sort)"
+
+	printf "%s\n" "${str[@]}" >"${state[dmce_work_dir]}/probe-references.log"
+
+	# Last file, remember sed command
+	sed_cmds+=("$sed_exp ${state[git_root]}/$nextfile")
+
+	_echo "launch SED jobs"
+	for var in "${sed_cmds[@]}"; do
+		# shellcheck disable=SC2086
+		sed -i ${var} &
+		job_cap
+	done
+	wait
+
+	if [ "${state[cache]}" = "1" ]; then
+		# shellcheck disable=SC2046
+		sed -i -e "s,DMCE_NBR_OF_PROBES (TBD),DMCE_NBR_OF_PROBES (${state[nbrofprobesinserted]}),g" $(cut -d: -f2 "${state[dmce_work_dir]}"/probe-references.log | sort -u)
+	fi
+
+	# Aggregate the probe-expression information into <expr-references.log>
+	# Loop through the list of files and aggregate the info from
+	# all the <$file>.exprdata into a expr-references.log file
+	_echo "assemble and assign expression index for probes"
+	probe_nbr=${state[offset]}
+	declare -a str=()
+	for file in "${file_list[@]}"; do
+		while IFS=: read -r nop line exp_index full_exp; do
+			true "$nop"
+			line=$((line + state[size_of_user] + 1))
+			str+=("$probe_nbr:$file:$line:$exp_index:$full_exp")
+			((probe_nbr += 1))
+		done <"${state[dmce_work_dir]}"/new/"${file}".exprdata
+	done
+
+	for ((i = 0; i < ${#str[@]}; i++)); do
+		echo "${str[$i]}" >>"${state[dmce_work_dir]}/expr-references.log"
+	done
+
+	# Create a probe ref file with original line numbers
+	sed -e "s/:/ /g" ${state[dmce_work_dir]}/probe-references.log | awk -v len="${state[size_of_user]}" '{printf $1 " " $2 " " $3 - len " " $4; $1=$2=$3=$3=$4=""; print}' | sed -e "s/  */:/g" | sed -e "s/:*$//" >${state[dmce_work_dir]}/probe-references-original.log
+}
+
+function post() {
+	_echo "${FUNCNAME[0]}"
+
+	# run post hook
+	if [ "${DMCE_POST_HOOK}" != "" ] && ! $DMCE_POST_HOOK; then
+		exit 1
+	fi
+
+	# update config?
+	if [ "${state[update_config]}" = true ]; then
+		read -p "Press 'y' to update '${DMCE_CONFIG_PATH}'? (y/N) " -r
+		echo
+		if [[ ${REPLY} =~ ^[Yy]$ ]]; then
+			set +f
+			cp -v -a "${state[dmce_work_dir]}"/config/* "${DMCE_CONFIG_PATH}"/
+			set -f
+		fi
+	fi
+
+	if [ "${state[debug]}" = false ]; then
+		rm ${coreutils_args} -rf "${state[dmce_work_dir]}"/{old,new,inc,workarea} &>/dev/null
+	else
+		_echo "logs: ${state[dmce_work_dir]}"
+	fi
+}
+
+function main() {
+	_echo "${FUNCNAME[0]}"
+
+	init "$@"
+	setup
+	run
+	assemble
+	summary
+	post
+}
+
+main "$@"

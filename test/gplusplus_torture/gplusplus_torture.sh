@@ -12,7 +12,8 @@ fi
 #gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
 gcc_version="9.3.0"
 
-PROG_NAME=$(basename $0 .sh)
+PROG_NAME="$(basename $0 .sh)"
+REPO_NAME="${PROG_NAME}-${RANDOM}"
 
 function _echo() {
 	local a
@@ -87,16 +88,16 @@ trap - EXIT
 
 _echo "unpack GCC"
 tar --no-same-owner -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
-mkdir gcc-${gcc_version}/gcc/testsuite/${PROG_NAME}
+mkdir gcc-${gcc_version}/gcc/testsuite/${REPO_NAME}
 
 cd gcc-${gcc_version}/gcc/testsuite/g++.dg
 # shellcheck disable=SC2046
-cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry" ./*) ../${PROG_NAME}/
+cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry" ./*) ../${REPO_NAME}/
 cd -
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 
 _echo "create git"
-cd gcc-${gcc_version}/gcc/testsuite/$PROG_NAME || exit
+cd gcc-${gcc_version}/gcc/testsuite/$REPO_NAME || exit
 
 shopt -s globstar
 for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
@@ -356,7 +357,7 @@ git commit -q -m "DMCE config"
 git --no-pager log --oneline --shortstat --no-color
 
 _echo "launch DMCE"
-${dmce_exec_path}/dmce-launcher -a --debug
+${dmce_exec_path}/dmce -a -v
 
 ${dmce_exec_path}/dmce-stats
 
@@ -364,8 +365,8 @@ _echo "compile"
 true > ${my_work_path}/compile-errors
 find . -name '*.err' -exec rm {} \;
 
-if [ ! -s "${dmce_work_path}/${PROG_NAME}/workarea/probe-list" ]; then
-	echo "error: empty probe-list"
+if [ ! -s "${dmce_work_path}/${REPO_NAME}/probe-references.log" ]; then
+	echo "error: empty or none existing '${dmce_work_path}/${REPO_NAME}/probe-references.log'"
 	exit 1
 fi
 
@@ -376,7 +377,7 @@ while read -r f; do
 		fi
 	} &
 	cap_jobs $_max_jobs
-done < ${dmce_work_path}/${PROG_NAME}/workarea/probe-list
+done < <(cut -d: -f2 "${dmce_work_path}/${REPO_NAME}/probe-references.log" | sort -u)
 wait
 find . -name '*.err' -type f ! -size 0 -exec cat {} \;
 errors=$(wc -l < ${my_work_path}/compile-errors)

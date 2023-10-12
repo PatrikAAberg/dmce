@@ -232,8 +232,8 @@ function main() {
 	if [[ ${steps} =~ $re ]]; then
 		# restore source tree
 		for repo in ${!repo_hash[*]}; do
-			_echo "ove-dmce launch -c -q -- $repo"
-			ove-dmce launch -c -q -- "$repo"
+			_echo "ove-dmce launch -c -- $repo"
+			ove-dmce launch -c -- "$repo"
 		done
 	fi
 
@@ -317,8 +317,8 @@ function dmce_one_repo {
 		fi
 	fi
 
-	_echo "ove-dmce launch --ast-cache -a --offset=$offset -q -- $git_full"
-	if ! ove-dmce launch --ast-cache -a --offset="$offset" -q -- "$git_full"; then
+	_echo "ove-dmce launch --cache -a --offset=$offset -- $git_full"
+	if ! ove-dmce launch --cache -a --offset="$offset" -- "$git_full"; then
 		return 1
 	fi
 }

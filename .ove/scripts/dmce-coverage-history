@@ -40,9 +40,9 @@ function dmce_build_test() {
     local test_start
 
     if [ "$1" = "$first" ]; then
-        dmce_args="-q -a"
+        dmce_args="-a"
     else
-        dmce_args="-q -r $1"
+        dmce_args="-r $1"
     fi
 
     err_string=
@@ -54,7 +54,7 @@ function dmce_build_test() {
         if [[ ${out} == *error* ]]; then
             err_string="$(echo "${out}"| grep error: | sed 's,error: ,,g')"
         else
-            err_string="dmce-launcher -q -r $1 failed"
+            err_string="dmce -r $1 failed"
         fi
         ove-echo red "${err_string}"
         return 1
@@ -167,7 +167,7 @@ DESCRIPTION
             $ ove reset-hard p
             $ git clean -dfxq
             $ git checkout -q r
-            $ dmce-launcher -q -r r'
+            $ dmce -r r'
             $ ove buildme-parallel p
             $ ove test p
             # save results
@@ -350,8 +350,8 @@ function init() {
         exit 1
     fi
 
-    if ! ove dmce launch -c -q -- "$git"; then
-        echo "error: 'ove-dmce launch -c -q -- $git' failed"
+    if ! ove dmce launch -c -- "$git"; then
+        echo "error: 'ove-dmce launch -c -- $git' failed"
         exit 1
     fi
 
@@ -375,7 +375,7 @@ function init() {
 }
 
 function summary() {
-    ove-dmce launch -c -q -- "$git" || true
+    ove-dmce launch -c -- "$git" || true
     git checkout -q "${current_branch}" || true
 
     if [ -s "${logfile}" ] && grep -q ^iteration "${logfile}"; then
