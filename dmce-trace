@@ -380,6 +380,9 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
 
             # Special probe number hexdump header
             if pnum == 1024 * 1024 * 1024:
+                cpu = cpu.astype(int)
+                hdnum = cpu >> 32
+                cpu = cpu & 0xfff
                 size = data[n, 3]
                 num_entries = data[n, 4]
                 outstr = str(cpu) + args.delimiter
