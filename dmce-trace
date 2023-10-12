@@ -389,9 +389,9 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 outstr += str(ts) + args.delimiter
                 outstr += "---" + args.delimiter
                 outstr += "---" + args.delimiter
-                outstr += "dmce_hexdump" + args.delimiter
+                outstr += "dmce_hexdump_" + str(hdnum) + args.delimiter
                 outstr += "---" + args.delimiter
-                outstr += "dmce_hexdump "
+                outstr += "dmce_hexdump:" + str(hdnum) + " "
 #                print("Header, num entries: " + str(num_entries) + "   cpu: " + str(data[n, 2]), file=sys.stderr)
                 n += 1
                 while n < length and num_entries > 0:
