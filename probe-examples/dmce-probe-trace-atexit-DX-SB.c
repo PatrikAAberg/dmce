@@ -705,6 +705,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
         unsigned int index;
         unsigned int wrapped_index;
         int i;
+        char* aritbuf_p = (char*)buf_p;
 
         /* 3 times 64 bit fragment header, 5 times 64 bit for data */
         int num_payload_entries = size / (5 * sizeof(uint64_t)) + 1;
@@ -753,10 +754,10 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
 
             if (size >= 5 * sizeof(uint64_t))
                 /* Full entry */
-                memcpy(&(e_p->vars[0]), buf_p + (i * 5 * sizeof(uint64_t)), 5 * sizeof(uint64_t));
+                memcpy(&(e_p->vars[0]), aritbuf_p + (i * 5 * sizeof(uint64_t)), 5 * sizeof(uint64_t));
             else
                 /* Tail */
-                memcpy(&(e_p->vars[0]), buf_p + (i * 5 * sizeof(uint64_t)), size);
+                memcpy(&(e_p->vars[0]), aritbuf_p + (i * 5 * sizeof(uint64_t)), size);
             size -= 5 * sizeof(uint64_t);
         }
     }
