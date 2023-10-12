@@ -694,7 +694,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
     return 0;
 }
 
-static inline void dmce_hexdump(void* buf_p, uint64_t size) {
+static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
 
     if (dmce_likely(dmce_trace_is_enabled())) {
 
@@ -733,7 +733,7 @@ static inline void dmce_hexdump(void* buf_p, uint64_t size) {
         e_p->probenbr = 1024 * 1024 * 1024;
         e_p->vars[0] = size;
         e_p->vars[1] = num_payload_entries;
-        e_p->cpu = cpu;
+        e_p->cpu = cpu + ((uint64_t)hdnum << 32);
         index += 1;
 
         for (i = 0; i < num_payload_entries; i++) {
