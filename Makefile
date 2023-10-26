@@ -14,4 +14,7 @@ gplusplus_torture:
 gplusplus_torture_vars:
 	@test/gplusplus_torture/gplusplus_torture.sh 10 || true
 
-test: gcc_torture gcc_torture_vars gplusplus_torture gplusplus_torture_vars
+dmce_examples:
+	bash -c "cd test/dmce-examples; ./dmce-examples.sh" || true
+
+test: gcc_torture gcc_torture_vars gplusplus_torture gplusplus_torture_vars dmce_examples
