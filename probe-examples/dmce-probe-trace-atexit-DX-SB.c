@@ -644,6 +644,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
 
         timeend = __builtin_ia32_rdtscp(&cpu);
+        cpu = cpu & 0x0fff;
 
         /* Add two trace entries to reflect the time spent in init above */
         index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2, __ATOMIC_RELAXED);
