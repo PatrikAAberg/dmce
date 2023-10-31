@@ -77,7 +77,7 @@ function verify() {
 	else
 		f="${PWD}/${1}"
 	fi
-	git diff | sed -e "s,/tmp/${USER:?}/dmce,/tmp/USER/dmce,g" > "${f}"
+	git diff | sed -e "/^index /d" -e "s,/tmp/${USER:?}/dmce,/tmp/USER/dmce,g" > "${f}"
 
 	if [ "${_mode:?}" -eq 0 ]; then
 		if ! diff -q "${f}" "${_dir_ref:?}/${f##*/}"; then
