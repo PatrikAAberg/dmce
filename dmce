@@ -672,8 +672,8 @@ function with_worktree() {
 	fi
 
 	if [ $setup_worktree -eq 1 ]; then
-		_echo "git worktree add -f ${state[old_git_dir]} ${state[old]}"
-		git -C "${state[git_root]}" worktree add -f "${state[old_git_dir]}" "${state[old]}"
+		_echo "git worktree add -q -f ${state[old_git_dir]} ${state[old]}"
+		git -C "${state[git_root]}" worktree add -q -f "${state[old_git_dir]}" "${state[old]}"
 	fi
 
 	return 0

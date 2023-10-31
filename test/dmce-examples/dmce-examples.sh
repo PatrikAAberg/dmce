@@ -24,7 +24,6 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 set -e
-set -x
 
 _name="dmce-examples"
 
@@ -47,9 +46,9 @@ _dir_ref="${_dir_tst:?}/ref"
 _dir_src="${_dir_tst:?}/${_name:?}"
 
 function stash_and_checkout() {
-	git stash
-	git checkout "${_sha1:?}"
-	git clean -dfx
+	git stash -q
+	git checkout -q "${_sha1:?}"
+	git clean -dfxq
 	git worktree prune
 }
 
@@ -64,7 +63,7 @@ function cleanup() {
 }
 
 function pre() {
-	rm -rfv "${_dir_dmce:?}"/* "${_dir_tst:?}"/dmce-examples-*
+	rm -rf "${_dir_dmce:?}"/* "${_dir_tst:?}"/dmce-examples-*
 	stash_and_checkout
 	${dmce} -c
 }
@@ -84,7 +83,7 @@ function verify() {
 			exit 1
 		fi
 	else
-		cp -a -v "${f}" "${_dir_ref:?}/${f##*/}"
+		cp -a "${f}" "${_dir_ref:?}/${f##*/}"
 	fi
 }
 
@@ -115,7 +114,14 @@ function init() {
 		fi
 	done
 
-	mkdir -v -p "${_dir_ref}"
+	declare -A -g test_desc
+	for c in $(list_tests); do
+		test_desc[$c]=$(grep -B1 "^function $c()" dmce-examples.sh | \
+			grep -v ^function | \
+			sed -e 's,^# ,,g')
+	done
+
+	mkdir -p "${_dir_ref}"
 	if [ "${_mode:?}" -eq 0 ]; then
 		llvm_ver=$(clang-check --version | grep -o 'LLVM.*' | grep -o '[0-9].*' | cut -d'.' -f1)
 		if [ "${llvm_ver}" != "${_llvm_major_version:?}" ]; then
@@ -123,7 +129,7 @@ function init() {
 		fi
 
 		d=${PWD}
-		(cd "${_dir_ref}"; tar xvf "${d}"/"${_name:?}".tar.xz;)
+		(cd "${_dir_ref}"; tar xf "${d}"/"${_name:?}".tar.xz;)
 	else
 		rm -rf "${_dir_ref:?}"/*
 	fi
@@ -146,6 +152,18 @@ function init() {
 	dmce="dmce -j $(getconf _NPROCESSORS_ONLN) --file ${_dir_tst}/.dmceconfig"
 }
 
+function list_tests() {
+	compgen -A function | grep '^t[0-9]\+' | sort -V
+}
+
+function test_description() {
+	if [ "${test_desc[$t]}" != "" ]; then
+		echo "$t: ${test_desc[$t]}"
+	else
+		echo "$t: FIXME: add description"
+	fi
+}
+
 function main() {
 	local a="${PWD}"
 	local i=0
@@ -155,14 +173,18 @@ function main() {
 	init
 
 	if [ ${#} -eq 0 ]; then
-		for t in $(compgen -A function | grep '^t[0-9]\+' | sort -V); do
+		for t in $(list_tests); do
+			test_description
 			"${t}"
 			i=$((i + 1))
+			echo
 		done
 	else
 		for t in "${@}"; do
+			test_description
 			"${t}"
 			i=$((i + 1))
+			echo
 		done
 	fi
 
@@ -176,7 +198,7 @@ function main() {
 	exit 42
 }
 
-# purpose: exercise the --include option | profile: coverage
+# exercise the --include option | profile: coverage
 function t0() {
 	pre
 
@@ -188,7 +210,7 @@ function t0() {
 	grep -q '^main.c$' "${_dir_dmce}"/"${_name:?}"/config/dmce.include
 }
 
-# purpose: make sure that one untracked file is instrumented | profile: coverage
+# make sure that one untracked file is instrumented | profile: coverage
 function t1() {
 	pre
 
@@ -200,7 +222,7 @@ function t1() {
 	rm a.c
 }
 
-# purpose: exercise the --head option | profile: coverage
+# exercise the --head option | profile: coverage
 function t2() {
 	pre
 
@@ -212,7 +234,7 @@ function t2() {
 	stash_and_checkout
 }
 
-# purpose: exercise the -a/--all option | profile: coverage
+# exercise the -a/--all option | profile: coverage
 function t3() {
 	pre
 
@@ -226,7 +248,7 @@ function t3() {
 	verify
 }
 
-# purpose: exercise the --version and --help options | profile: coverage
+# exercise the --version and --help options | profile: coverage
 function t4() {
 	pre
 
@@ -234,7 +256,7 @@ function t4() {
 	${dmce} --help || true
 }
 
-# purpose: exercise the -v/--verbose option | profile: coverage
+# exercise the -v/--verbose option | profile: coverage
 function t5() {
 	pre
 
@@ -249,7 +271,7 @@ function t5() {
 	verify
 }
 
-# purpose: exercise the -n option | profile: coverage
+# exercise the -n option | profile: coverage
 function t6() {
 	local i
 
@@ -262,7 +284,7 @@ function t6() {
 	done
 }
 
-# purpose: conflicting options
+# conflicting options
 function t7() {
 	pre
 
@@ -275,7 +297,7 @@ function t7() {
 	fi
 }
 
-# purpose: untracked and constructs | profile: coverage
+# untracked and constructs | profile: coverage
 function t8() {
 	pre
 
@@ -290,7 +312,7 @@ function t8() {
 	rm a.c
 }
 
-# purpose: exercise the coverage probe | profile: coverage
+# exercise the coverage probe | profile: coverage
 function t9() {
 	pre
 
@@ -312,7 +334,7 @@ function t9() {
 	grep 'Probes executed:5/5' "${_dir_tst}/${FUNCNAME[0]}.log"
 }
 
-# purpose: exercise the heatmap probe | profile: heatmap
+# exercise the heatmap probe | profile: heatmap
 function t10() {
 	pre
 
@@ -341,7 +363,7 @@ function dmce_trace_helper() {
 		"${PWD}"
 }
 
-# purpose: exercise the trace-mc probe | profile: trace-mc
+# exercise the trace-mc probe | profile: trace-mc
 function t11() {
 	pre
 
@@ -358,7 +380,7 @@ function t11() {
 	dmce_trace_helper
 }
 
-# purpose: exercise the trace-mc probe together with a threaded program | profile: trace-mc
+# exercise the trace-mc probe together with a threaded program | profile: trace-mc
 function t12() {
 	pre
 
@@ -375,7 +397,7 @@ function t12() {
 	dmce_trace_helper
 }
 
-# purpose: exercise the trace-mc probe together with a threaded program | profile: trace-mc
+# exercise the trace-mc probe together with a threaded program | profile: trace-mc
 function t13() {
 	pre
 
@@ -392,7 +414,7 @@ function t13() {
 	dmce_trace_helper
 }
 
-# purpose: exercise the trace-mc probe together with a threaded program - hexdump version | profile: trace-mc
+# exercise the trace-mc probe together with a threaded program - hexdump version | profile: trace-mc
 function t14() {
 	pre
 
@@ -409,14 +431,14 @@ function t14() {
 	dmce_trace_helper
 }
 
-# purpose: exercise the --offset option | profile: trace-mc
+# exercise the --offset option | profile: trace-mc
 function t15() {
 	local a=${RANDOM}
 	local d="${_dir_tst:?}"/"${_name:?}"-"${a}"
 
 	pre
 
-	git worktree add "${d}"
+	git worktree add -q "${d}"
 	${dmce} \
 		--profile trace-mc \
 		-v
