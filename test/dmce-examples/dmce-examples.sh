@@ -63,7 +63,8 @@ function cleanup() {
 }
 
 function pre() {
-	rm -rf "${_dir_dmce:?}"/* "${_dir_tst:?}"/dmce-examples-*
+	rm -rf "${_dir_dmce:?}"/* \
+		"${_dir_tst:?}"/dmce-examples-*
 	stash_and_checkout
 	${dmce} -c
 }
@@ -76,7 +77,10 @@ function verify() {
 	else
 		f="${PWD}/${1}"
 	fi
-	git diff | sed -e "/^index /d" -e "s,/tmp/${USER:?}/dmce,/tmp/USER/dmce,g" > "${f}"
+	git diff | \
+		sed \
+		-e "/^index /d" \
+		-e "s,/tmp/${USER:?}/dmce,/tmp/USER/dmce,g" > "${f}"
 
 	if [ "${_mode:?}" -eq 0 ]; then
 		if ! diff -q "${f}" "${_dir_ref:?}/${f##*/}"; then
@@ -110,6 +114,7 @@ function init() {
 
 	for c in ${deps}; do
 		if ! command -v "${c}" >/dev/null; then
+			echo "error: command '${c}' is missing" 1>&2
 			exit 1
 		fi
 	done
@@ -157,6 +162,8 @@ function list_tests() {
 }
 
 function test_description() {
+	local t="${1}"
+
 	if [ "${test_desc[$t]}" != "" ]; then
 		echo "$t: ${test_desc[$t]}"
 	else
@@ -174,14 +181,21 @@ function main() {
 
 	if [ ${#} -eq 0 ]; then
 		for t in $(list_tests); do
-			test_description
+			test_description "$t"
 			"${t}"
 			i=$((i + 1))
 			echo
 		done
 	else
 		for t in "${@}"; do
-			test_description
+			if ! compgen -A function | grep -q "^$t$"; then
+				echo "error: test '${t}' not found, available tests:" 1>&2
+				for s in $(list_tests); do
+					test_description "$s"
+				done
+				exit 1
+			fi
+			test_description "$t"
 			"${t}"
 			i=$((i + 1))
 			echo
