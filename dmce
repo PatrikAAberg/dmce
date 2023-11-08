@@ -145,6 +145,13 @@ function prerequisites() {
 	done
 }
 
+function assert_uint() {
+	if [ $# -eq 1 ] && ! [[ "${1}" =~ ^[0-9]+$ ]]; then
+		echo "error: '$1' is not an unsigned integer" 1>&2
+		exit 1
+	fi
+}
+
 function argparse() {
 	local optspec
 	local val
@@ -253,6 +260,7 @@ function argparse() {
 						;;
 					offset=*)
 						val=${OPTARG#*=}
+						assert_uint "${val}"
 						state[offset]=$val
 						;;
 					profile)
@@ -297,6 +305,7 @@ function argparse() {
 				state[clear_cache]=true
 				;;
 			d)
+				assert_uint "${OPTARG}"
 				state[weeks]="$OPTARG"
 				state[search_method]="weeks"
 				;;
@@ -307,12 +316,15 @@ function argparse() {
 				usage
 				;;
 			j)
+				assert_uint "${OPTARG}"
 				state[j]=${OPTARG}
 				;;
 			m)
+				assert_uint "${OPTARG}"
 				state[m]=${OPTARG}
 				;;
 			n)
+				assert_uint "${OPTARG}"
 				state[number_of_commits]=${OPTARG}
 				state[search_method]="commits"
 				;;
@@ -336,6 +348,11 @@ function argparse() {
 				;;
 		esac
 	done
+
+	shift "$((OPTIND - 1))"
+	if [ $# -ne 0 ]; then
+		usage
+	fi
 }
 
 function print_cache_stats() {

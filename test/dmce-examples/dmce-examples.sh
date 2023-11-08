@@ -63,6 +63,7 @@ function cleanup() {
 }
 
 function pre() {
+	t_log="${_dir_tst:?}/${FUNCNAME[1]}.log"
 	rm -rf "${_dir_dmce:?}"/* \
 		"${_dir_tst:?}"/*.log \
 		"${_dir_tst:?}"/dmce-examples-*
@@ -173,6 +174,22 @@ function test_description() {
 	fi
 }
 
+function sanity_check_tests() {
+	local ret=0
+
+	compgen -A function | grep "^t[0-9]\+$" | sort > "${_dir_tst:?}"/a
+	printf "%s\n" "${@}" | sort -u > "${_dir_tst:?}"/b
+	comm -1 -3 "${_dir_tst:?}"/{a,b} > "${_dir_tst:?}"/c
+	if [ -s "${_dir_tst:?}"/c ]; then
+		echo "error: test(s) not found: $(xargs < "${_dir_tst:?}"/c)" 1>&2
+		ret=1
+	fi
+	rm "${_dir_tst:?}"/{a,b,c}
+	if [ "${ret}" -ne 0 ]; then
+		exit 1
+	fi
+}
+
 function main() {
 	local a="${PWD}"
 	local i=0
@@ -188,14 +205,8 @@ function main() {
 			i=$((i + 1))
 		done
 	else
+		sanity_check_tests "${@}"
 		for t in "${@}"; do
-			if ! compgen -A function | grep -q "^${t}$"; then
-				echo "error: test '${t}' not found, available tests:" 1>&2
-				for s in $(list_tests); do
-					test_description "${s}"
-				done
-				exit 1
-			fi
 			test_description "${t}"
 			"${t}"
 			i=$((i + 1))
@@ -220,7 +231,7 @@ function t0() {
 		--include main.c \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	grep -q '^main.c$' "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include
 }
@@ -234,7 +245,7 @@ function t1() {
 		-n 1 \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	grep -q '^int main.*DMCE_PROBE' "${FUNCNAME[0]}".c
 	rm "${FUNCNAME[0]}".c
 }
@@ -248,7 +259,7 @@ function t2() {
 		--head HEAD~10 \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	stash_and_checkout
 }
@@ -261,13 +272,13 @@ function t3() {
 		--all \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	${dmce:?} \
 		-a \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 }
 
@@ -276,9 +287,9 @@ function t4() {
 	pre
 
 	${dmce:?} --version \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	${dmce:?} --help \
-		>> "${_dir_tst:?}/${FUNCNAME[0]}.log" 2>&1 || true
+		>> "${t_log:?}" 2>&1 || true
 }
 
 # exercise the -v/--verbose option | profile: coverage
@@ -288,14 +299,14 @@ function t5() {
 	${dmce:?} \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	${dmce:?} -c \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	${dmce:?} \
 		--profile coverage \
 		--verbose \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 }
 
@@ -309,7 +320,7 @@ function t6() {
 			-n "${i}" \
 			--profile coverage \
 			-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log" || true
+		&> "${t_log:?}" || true
 		verify "${FUNCNAME[0]}.${i}.diff"
 	done
 }
@@ -318,11 +329,33 @@ function t6() {
 function t7() {
 	pre
 
-	if ${dmce:?} --include main.c --exclude main.c &> "${_dir_tst:?}/${FUNCNAME[0]}.log"; then
+	if ${dmce:?} --include main.c --exclude main.c &> "${t_log:?}"; then
 		exit 1
-	elif ${dmce:?} -d 52000 &> "${_dir_tst:?}/${FUNCNAME[0]}.log"; then
+	elif ${dmce:?} -d 52000 &> "${t_log:?}"; then
 		exit 1
-	elif dmce -f /dev/null &> "${_dir_tst:?}/${FUNCNAME[0]}.log"; then
+	elif ${dmce:?} -d -1 &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -d a &> "${t_log:?}"; then
+		exit 1
+	elif dmce -f /dev/null &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -m 1 &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -m a &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -m -1 &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -j -1 &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} -j a &> "${t_log:?}"; then
+		exit 1
+	elif dmce a &> "${t_log:?}"; then
+		exit 1
+	elif dmce a b &> "${t_log:?}"; then
+		exit 1
+	elif dmce -v a &> "${t_log:?}"; then
+		exit 1
+	elif dmce -v a b &> "${t_log:?}"; then
 		exit 1
 	fi
 }
@@ -337,7 +370,7 @@ function t8() {
 		-n 1 \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	if grep -q '^int main.*DMCE_PROBE' "${FUNCNAME[0]}".c; then
 		exit 1
 	fi
@@ -352,7 +385,7 @@ function t9() {
 		--include simple/main.c,simple/simple.c \
 		--profile coverage \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd simple
@@ -363,8 +396,8 @@ function t9() {
 		-v \
 		"${_dir_dmce}"/dmcebuffer.bin \
 		"${_dir_dmce}"/"${_name:?}"/probe-references.log \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
-	grep -q 'Probes executed:5/5' "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
+	grep -q 'Probes executed:5/5' "${t_log:?}"
 }
 
 # exercise the heatmap probe | profile: heatmap
@@ -375,7 +408,7 @@ function t10() {
 		--include simple/main.c,simple/simple.c \
 		--profile heatmap \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd simple
@@ -386,8 +419,8 @@ function t10() {
 		-v \
 		"${_dir_dmce}"/dmcebuffer.bin \
 		"${_dir_dmce}"/"${_name:?}"/probe-references.log \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
-	grep -q 'Probes executed:5/5' "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
+	grep -q 'Probes executed:5/5' "${t_log:?}"
 }
 
 function dmce_trace_helper() {
@@ -405,13 +438,13 @@ function t11() {
 		--include simple/main.c,simple/simple.c \
 		--profile trace-mc \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd simple
 		./build
 		./simple
-	) >> "${_dir_tst:?}/${FUNCNAME[0]}.log" 2>&1
+	) >> "${t_log:?}" 2>&1
 	dmce_trace_helper
 }
 
@@ -423,13 +456,13 @@ function t12() {
 		--include 'threads/.*' \
 		--profile trace-mc \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd threads
 		gcc -o threads -pthread main.c
 		./threads
-	) >> "${_dir_tst:?}/${FUNCNAME[0]}.log" 2>&1
+	) >> "${t_log:?}" 2>&1
 	dmce_trace_helper
 }
 
@@ -441,13 +474,13 @@ function t13() {
 		--include 'threads/.*' \
 		--profile trace-mc \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd threads
 		gcc -o trace-threads -pthread trace_threads.c
 		./trace-threads || true
-	) >> "${_dir_tst:?}/${FUNCNAME[0]}.log" 2>&1
+	) >> "${t_log:?}" 2>&1
 	dmce_trace_helper
 }
 
@@ -459,13 +492,13 @@ function t14() {
 		--include 'threads/.*' \
 		--profile trace-mc \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify
 	(
 		cd threads
 		gcc -o trace-threads-hexdump -pthread trace_threads_hexdump.c
 		./trace-threads-hexdump || true
-	) >> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+	) >> "${t_log:?}"
 	dmce_trace_helper
 }
 
@@ -480,17 +513,17 @@ function t15() {
 	${dmce:?} \
 		--profile trace-mc \
 		-v \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	verify "${FUNCNAME[0]}.0.diff"
 	${dmce:?} -c \
-		&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+		&> "${t_log:?}"
 	(
 		cd "${d}"
 		${dmce:?} \
 			--offset=100000 \
 			--profile trace-mc \
 			-v \
-			&> "${_dir_tst:?}/${FUNCNAME[0]}.log"
+			&> "${t_log:?}"
 		verify "${FUNCNAME[0]}.1.diff"
 	)
 	grep -q ^100000 "${_dir_dmce}"/"${_name:?}"-"${a}"/probe-references.log
