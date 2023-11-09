@@ -57,14 +57,6 @@ if not os.path.isfile(args.dfile + ".info"):
     print("dmce-trace: Could not find .info file: " + args.dfile + ".info", file = sys.stderr)
     exit(1)
 
-if not os.path.isfile(args.probefile):
-    print("dmce-trace: Could not find probe references file: " + args.probefile, file = sys.stderr)
-    exit(1)
-
-if not os.path.isdir(args.codetree):
-    print("dmce-trace: Could not find code tree: " + args.codetree, file = sys.stderr)
-    exit(1)
-
 outfile = sys.stdout
 
 if args.bundle:
@@ -176,6 +168,16 @@ numfrefs = len(probefile)
 if numfrefs != len(codetree):
     print("Number of probe reference files does not match number of code trees, abort", file = sys.stderr)
     exit(1)
+
+for pf in probefile:
+    if not os.path.isfile(pf):
+        print("dmce-trace: Could not find probe references file: " + pf, file = sys.stderr)
+        exit(1)
+
+for cd in codetree:
+    if not os.path.isdir(args.codetree):
+        print("dmce-trace: Could not find code tree: " + cd, file = sys.stderr)
+        exit(1)
 
 # Read probe refs files
 prefs = []
