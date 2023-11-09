@@ -35,6 +35,11 @@
 
 #define DMCE_PROBE_OUTPUT_FILE_BIN DMCE_PROBE_OUTPUT_PATH "/dmcebuffer.bin"
 
+#define DMCE_PNUM_HEXDUMP_HEADER        (1024 * 1024 * 1024)
+#define DMCE_PNUM_HEXDUMP_PAYLOAD       (1024 * 1024 * 1024 + 1)
+#define DMCE_PNUM_INITIAL_OVERHEAD      (1024 * 1024 * 1024 + 2)
+#define DMCE_PNUM_PRINTF                (1024 * 1024 * 1024 + 2)
+
 typedef struct {
 
     uint64_t timestamp;
@@ -651,14 +656,14 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
         e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = timestart;
-        e_p->probenbr = 1024 * 1024 * 1024 + 2;
+        e_p->probenbr = DMCE_PNUM_INITIAL_OVERHEAD;
         e_p->cpu = cpu;
 
         index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2, __ATOMIC_RELAXED);
         index = (index >> NBR_STATUS_BITS) % DMCE_MAX_HITS;
         e_p = &dmce_buf_p[index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = timeend;
-        e_p->probenbr = 1024 * 1024 * 1024 + 2;
+        e_p->probenbr = DMCE_PNUM_INITIAL_OVERHEAD;
         e_p->cpu = cpu;
      }
 
@@ -732,7 +737,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
 
         dmce_probe_entry_t* e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
         e_p->timestamp = time;
-        e_p->probenbr = 1024 * 1024 * 1024;
+        e_p->probenbr = DMCE_PNUM_HEXDUMP_HEADER;
         e_p->vars[0] = size;
         e_p->vars[1] = num_payload_entries;
         e_p->cpu = cpu + ((uint64_t)hdnum << 32);
@@ -750,7 +755,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
             e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
 
             e_p->timestamp = time;
-            e_p->probenbr = 1024 * 1024 * 1024 + 1;
+            e_p->probenbr = DMCE_PNUM_HEXDUMP_PAYLOAD;
             e_p->cpu = cpu;
 
             if (size >= 5 * sizeof(uint64_t))
