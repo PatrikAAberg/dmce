@@ -764,6 +764,19 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
     }
 }
 
+#include <stdarg.h>
+
+void DMCE_PRINTF(const char* fmt, ...) {
+
+    unsigned char buf[1024];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf (buf, sizeof(buf), fmt, args);
+    va_end(args);
+    printf("DMCE printf: %s \n", buf);
+}
+
 #include <signal.h>
 static inline __attribute__((unused)) void dmce_breakpoint(void) {
 

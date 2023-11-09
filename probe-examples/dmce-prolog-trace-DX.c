@@ -26,6 +26,7 @@ static inline __attribute__((unused)) void dmce_probe_body9(unsigned int dmce_pr
 static inline __attribute__((unused)) void dmce_probe_body10(unsigned int dmce_probenbr, uint64_t dmce_param_a, uint64_t dmce_param_b, uint64_t dmce_param_c, uint64_t dmce_param_d, uint64_t dmce_param_e, uint64_t dmce_param_f, uint64_t dmce_param_g, uint64_t dmce_param_h, uint64_t dmce_param_i, uint64_t dmce_param_j);
 static inline __attribute__((unused)) void dmce_breakpoint(void);
 static inline __attribute__((unused)) void dmce_hexdump(uint64_t hdnum, void* p, uint64_t size);
+void DMCE_PRINTF(const char* fmt, ...);
 
 #define DMCE_PROBE0(dmce_probenbr) (dmce_probe_body0(dmce_probenbr))
 #define DMCE_PROBE1(dmce_probenbr, dmce_param_a) (dmce_probe_body1(dmce_probenbr, dmce_param_a))
