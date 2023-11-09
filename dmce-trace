@@ -175,7 +175,7 @@ for pf in probefile:
         exit(1)
 
 for cd in codetree:
-    if not os.path.isdir(args.codetree):
+    if not os.path.isdir(cd):
         print("dmce-trace: Could not find code tree: " + cd, file = sys.stderr)
         exit(1)
 

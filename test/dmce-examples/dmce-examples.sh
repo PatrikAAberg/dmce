@@ -63,6 +63,7 @@ function cleanup() {
 }
 
 function pre() {
+	cd "${_dir_src:?}"
 	t_log="${_dir_tst:?}/${FUNCNAME[1]}.log"
 	rm -rf "${_dir_dmce:?}"/* \
 		"${_dir_tst:?}"/*.log \
@@ -142,7 +143,6 @@ function init() {
 	if [ ! -s "${_dir_src:?}"/.git ]; then
 		git clone "${_url:?}" "${_dir_src:?}"
 	fi
-	cd "${_dir_src:?}"
 	trap cleanup EXIT
 
 	dmce-setup "${_dir_tst:?}"
@@ -528,6 +528,46 @@ function t15() {
 	)
 	grep -q ^100000 "${_dir_dmce}"/"${_name:?}"-"${a}"/probe-references.log
 	grep -q -r 'DMCE_PROBE.*\(100000\)' "${d}"
+}
+
+# exercise the --offset option in a multi-repo scenario | profile: trace-mc
+function t16() {
+	local a=${RANDOM}
+	local d="${_dir_tst:?}"/"${_name:?}"-"${a}"
+
+	pre
+
+	git worktree add -q "${d}"
+	cd "${d}"/simple
+	${dmce:?} \
+		--include simple/simple.c \
+		--profile trace-mc \
+		--offset=100000 \
+		-v \
+		&> "${t_log:?}"
+	gcc -fPIC -shared simple.c -o libsimple.so
+	${dmce:?} -c \
+		&> "${t_log:?}"
+	cp -a libsimple.so "${_dir_src:?}"/simple
+	cd "${_dir_src:?}"/simple
+	${dmce:?} \
+		--include simple/main.c \
+		--profile trace-mc \
+		-v \
+		&> "${t_log:?}"
+	gcc -c main.c
+	gcc main.o -L. -lsimple -o simple
+	LD_LIBRARY_PATH=. ./simple
+	${dmce:?} -c \
+		&> "${t_log:?}"
+	dmce-trace \
+		"$(find "${_dir_dmce}" -maxdepth 1 -type f -name 'dmcebuffer*' -not -name '*.info')" \
+		"${_dir_dmce}"/"${_name:?}"/probe-references-original.log,"${_dir_dmce}"/"${_name:?}"-"${a}"/probe-references-original.log \
+		"${_dir_src:?}","${d}" > "${t_log:?}"
+	# assure that we have entries from the main repo in the trace
+	grep -q "${_dir_src:?}/" "${t_log:?}"
+	# assure that we have libsimple entries in the trace
+	grep -q "${d}/" "${t_log:?}"
 }
 
 main "${@}"
