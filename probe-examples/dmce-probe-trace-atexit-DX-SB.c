@@ -773,15 +773,95 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
 
 #include <stdarg.h>
 
-void DMCE_PRINTF(const char* fmt, ...) {
+static void DMCE_PRINTF(const char* fmt, ...) {
 
-    unsigned char buf[1024];
+    char printfbuf[1024];
     va_list args;
+    int retsize;
+    size_t size;
 
     va_start(args, fmt);
-    vsnprintf (buf, sizeof(buf), fmt, args);
+    retsize = vsnprintf (printfbuf, sizeof(printfbuf), fmt, args);
     va_end(args);
-    printf("DMCE printf: %s \n", buf);
+
+    if (retsize == -1) {
+
+        sprintf(printfbuf, "Erronous format string");
+        size = strlen(printfbuf);
+    }
+    else {
+
+        size = (size_t)retsize;
+        if (size > sizeof(printfbuf))
+            size = sizeof(printfbuf);
+    }
+
+    if (dmce_likely(dmce_trace_is_enabled())) {
+
+        uint32_t cpu;
+        uint32_t dummy;
+        uint64_t time;
+        uint64_t oldtime;
+        unsigned int index;
+        unsigned int wrapped_index;
+        int i;
+        char* aritbuf_p = (char*)printfbuf;
+
+        /* 3 times 64 bit fragment header, 5 times 64 bit for data */
+        int num_payload_entries = size / (5 * sizeof(uint64_t)) + 1;
+
+        /* What core are we on, and what is the time? */
+        time = __builtin_ia32_rdtscp(&cpu);
+        cpu = cpu & 0x0fff;
+
+        /* The counter itself is protected by the core, but we cant stop tracing if we do not use atomics
+        index = dmce_probe_hitcount_p[cpu];
+        dmce_probe_hitcount_p[cpu] += 2;
+        */
+
+        index = __atomic_fetch_add (&dmce_probe_hitcount_p[cpu].value, 2 * (num_payload_entries + 1), __ATOMIC_RELAXED);
+
+        /* lowest bit means trace is stopped */
+        if (index & 1) {
+            return;
+        }
+
+        index = index >> NBR_STATUS_BITS;
+        wrapped_index = index % DMCE_MAX_HITS;
+
+        dmce_probe_entry_t* e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
+        e_p->timestamp = time;
+        e_p->probenbr = DMCE_PNUM_PRINTF_HEADER;
+        e_p->vars[0] = size;
+        e_p->vars[1] = num_payload_entries;
+        e_p->cpu = cpu;
+        index += 1;
+
+        for (i = 0; i < num_payload_entries; i++) {
+
+            /* Time is used as sequence number for payload entries on the same core, so we need to get unique values */
+            oldtime = time;
+            while (time == oldtime) {
+
+                time = __builtin_ia32_rdtscp(&dummy);
+            }
+
+            wrapped_index = (index + i) % DMCE_MAX_HITS;
+            e_p = &dmce_buf_p[wrapped_index  + cpu * DMCE_MAX_HITS];
+
+            e_p->timestamp = time;
+            e_p->probenbr = DMCE_PNUM_PRINTF_PAYLOAD;
+            e_p->cpu = cpu;
+
+            if (size >= 5 * sizeof(uint64_t))
+                /* Full entry */
+                memcpy(&(e_p->vars[0]), aritbuf_p + (i * 5 * sizeof(uint64_t)), 5 * sizeof(uint64_t));
+            else
+                /* Tail */
+                memcpy(&(e_p->vars[0]), aritbuf_p + (i * 5 * sizeof(uint64_t)), size);
+            size -= 5 * sizeof(uint64_t);
+        }
+    }
 }
 
 #include <signal.h>
