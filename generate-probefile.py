@@ -1953,6 +1953,9 @@ while (i < expdb_index):
                     for re_exp in re_cxl_list:
                         j=0
                         while (ls + j) <= le:
+                            # Do not exclude any DMCE api functions from probing
+                            if "DMCE_" in pbuf[ls + j]:
+                                break
                             if do_print == 2:
                                 print("searching for '{}' in '{}'".format(re_exp.pattern, pbuf[ls + j]))
                             if (re_exp.match(pbuf[ls + j])):
