@@ -38,7 +38,8 @@
 #define DMCE_PNUM_HEXDUMP_HEADER        (1024 * 1024 * 1024)
 #define DMCE_PNUM_HEXDUMP_PAYLOAD       (1024 * 1024 * 1024 + 1)
 #define DMCE_PNUM_INITIAL_OVERHEAD      (1024 * 1024 * 1024 + 2)
-#define DMCE_PNUM_PRINTF                (1024 * 1024 * 1024 + 2)
+#define DMCE_PNUM_PRINTF_HEADER         (1024 * 1024 * 1024 + 3)
+#define DMCE_PNUM_PRINTF_PAYLOAD        (1024 * 1024 * 1024 + 4)
 
 typedef struct {
 
@@ -745,6 +746,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
 
         for (i = 0; i < num_payload_entries; i++) {
 
+            /* Time is used as sequence number for payload entries on the same core, so we need to get unique values */
             oldtime = time;
             while (time == oldtime) {
 
