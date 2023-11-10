@@ -433,6 +433,47 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 n += 1
                 continue
 
+            # Special probe number printf header
+            if pnum == 1024 * 1024 * 1024 + 3:
+                cpu = cpu.astype(int)
+                size = int(data[n, 3])
+                num_entries = data[n, 4]
+                outstr = str(cpu) + args.delimiter
+                outstr += str(ts) + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "dmce_printf_" + args.delimiter
+                outstr += "---" + args.delimiter
+                outstr += "dmce_printf:" + " "
+                headerlen = len(outstr)
+#                print("printf header, num entries: " + str(num_entries) + "   cpu: " + str(data[n, 2]) + " size (bytes): " + str(size), file=sys.stderr)
+                n += 1
+                while n < length and num_entries > 0:
+                    pnum = data[n, 1]
+#                    print("Check printf payload, pnum: " + str(pnum) + "  cpu: " + str(data[n, 2]), file=sys.stderr)
+                    if pnum  == 1024 * 1024 * 1024 + 4 and cpu == data[n, 2]:
+                        num_entries -= 1
+                        printstr = ""
+                        printstr += str(int(data[n,3]).to_bytes(8, "little"), encoding='ascii', errors="ignore")
+                        printstr += str(int(data[n,4]).to_bytes(8, "little"), encoding='ascii', errors="ignore")
+                        printstr += str(int(data[n,5]).to_bytes(8, "little"), encoding='ascii', errors="ignore")
+                        printstr += str(int(data[n,6]).to_bytes(8, "little"), encoding='ascii', errors="ignore")
+                        printstr += str(int(data[n,7]).to_bytes(8, "little"), encoding='ascii', errors="ignore")
+                        outstr += printstr
+#                        print("Payload, num_entries: " + str(num_entries), file=sys.stderr)
+#                        print(outstr)
+                    n += 1
+#                print("Done writing payload, num entries: " + str(num_entries), file=sys.stderr)
+                outstr = outstr[0: headerlen + size]
+                outbuf.append(outstr)
+                continue
+
+            # Special probe number hexdump data
+            # Just skip over, the thread catching the header will embed all data into one entry
+            if pnum == 1024 * 1024 * 1024 + 4:
+                n += 1
+                continue
+
              # Which ref file index?
             refindex = sys.maxsize
             for i in range(numfrefs):
