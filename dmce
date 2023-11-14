@@ -1720,8 +1720,12 @@ function assemble() {
 		echo "${str[$i]}" >>"${state[dmce_work_dir]}/expr-references.log"
 	done
 
-	# Create a probe ref file with original line numbers
-	sed -e "s/:/ /g" ${state[dmce_work_dir]}/probe-references.log | awk -v len="${state[size_of_user]}" '{printf $1 " " $2 " " $3 - len " " $4; $1=$2=$3=$3=$4=""; print}' | sed -e "s/  */:/g" | sed -e "s/:*$//" >${state[dmce_work_dir]}/probe-references-original.log
+	# create a probe ref file with original line numbers
+	sed -e "s/:/ /g" -e 's,%,%%,g' \
+		${state[dmce_work_dir]}/probe-references.log | \
+		awk -v len="${state[size_of_user]}" '{printf $1 " " $2 " " $3 - len " " $4; $1=$2=$3=$3=$4=""; print}' | \
+		sed -e "s/  */:/g" -e "s/:*$//" -e 's,%%,%,g' \
+		>${state[dmce_work_dir]}/probe-references-original.log
 }
 
 function post() {
