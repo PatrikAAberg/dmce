@@ -444,7 +444,6 @@ def produce_chunk(outbufs, outbufs_index, range_start, range_end):
                 outstr += "---" + args.delimiter
                 outstr += "dmce_printf_" + args.delimiter
                 outstr += "---" + args.delimiter
-                outstr += "dmce_printf:" + " "
                 headerlen = len(outstr)
 #                print("printf header, num entries: " + str(num_entries) + "   cpu: " + str(data[n, 2]) + " size (bytes): " + str(size), file=sys.stderr)
                 n += 1
