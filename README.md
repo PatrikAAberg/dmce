@@ -96,7 +96,7 @@ Modify the dmce configuration using the "dmce-set-profile tool" to use a printf 
 
 Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce-launcher -aq
+    $ dmce
 
 Check the diff. You should be able to see the inserted dmce probes.
 
@@ -111,10 +111,10 @@ It builds and runs. Nothing functional-wise is changed,  but we have inserted ho
 Of course you want to be able to go back to a non-probed state. You do this using the -c switch in the git root:
 
     $ cd ..
-    $ dmce-launcher -c
+    $ dmce -c
     $ git diff
 
-The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce-launcher --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
+The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
 
 ## Example 2: How to use dmce trace
 
@@ -130,7 +130,7 @@ Modify the dmce configuration to use a trace probe, including only the "simplecr
 
 Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce-launcher -aq
+    $ dmce
 
 Go into the simplecrash example folder, build the executable and run it.
 
@@ -161,7 +161,7 @@ You might want something fancier than less to view your trace. An interactive tr
     
     $ cd dmce-examples
     
-    $ dmce-launcher -aq
+    $ dmce
     
     $ cd threads
     
@@ -171,7 +171,7 @@ You might want something fancier than less to view your trace. An interactive tr
     
     $ cd ..
     
-    $ dmce-launcher -c    # Here we use a non-probed tree for increased visibility (and therefore we use the 'original' probe file below)
+    $ dmce -c    # Here we use a non-probed tree for increased visibility (and therefore we use the 'original' probe file below)
         
     $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
 
@@ -203,7 +203,7 @@ Apply the patch in the patchcov dir:
 
 Probe the untracked and modified files, nothing more:
 
-    $ dmce-launcher -n 1 --progress
+    $ dmce -n 1 --progress
 
 Check that the patch was probed:
 
@@ -243,7 +243,7 @@ Modify the dmce configuration to use a trace probe, including only the "loops" f
 
 Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce-launcher -aq
+    $ dmce -aq
 
 Go into the loops example folder, build the executable and run it.
 
@@ -252,7 +252,7 @@ Go into the loops example folder, build the executable and run it.
 
 Remove the dmce probes:
 
-    $ dmce-launcher -c
+    $ dmce -c
     
 Run dmce-trace with the sort option "heat" (notice we use the unprobed source tree, and therefore "probe-references-original.log"):
 
@@ -271,7 +271,7 @@ the same amount of cpu timestamps.
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
     $ dmce-set-profile racectrack
-    $ dmce-launcher -aq
+    $ dmce -aq
     $ cd simple && ./build && ./simple
 
 ## DMCE command summary
@@ -282,7 +282,7 @@ The following commands are listed in typical workflow order:
 |-------------------|---------------------------------------------------------------------------------------------------------------|
 | dmce-setup        | Create a .dmceconfig file and a config directory in /home/$USER and /home/$USER/.config                       |
 | dmce-set-profile  | Config file helper utility: Choose one of pre-defined configurations, add filters and change some behaviours  |
-| dmce-launcher     | Insert probes in current git directory                                                                        |
+| dmce              | Insert probes in current git directory                                                                        |
 | dmce-stats        | Get some stats (how many inserted probes etc.) from a probed git                                              |
 | dmce-summary-bin  | Get a coverage / heatmap report (using the "coverage" profile)                                                |
 | dmce-trace        | Generate a textual trace output (using the "trace" or "trace-mc" profile)                                     |
@@ -297,7 +297,7 @@ Configuration is stored in the file ".dmceconfig". If dmce finds this file in th
 (showing default values written by dmce-setup)
 
 #### DMCE exec path
-Where DMCE finds it's executables (dmce-launcher, dmce-trace):
+Where DMCE finds it's executables:
 
     DMCE_EXEC_PATH:/usr/share/dmce
 
