@@ -584,11 +584,25 @@ function prepare() {
 			touch "${f%%.dmceoriginal}"
 		} &
 		job_cap
-	done < <(find "${state[git_root]}" -name "*.dmceoriginal")
+	done < <(find "${state[git_root]}" \
+		! -readable \
+		-prune \
+		-o \
+		-type f \
+		-name "*.dmceoriginal" \
+		-print \
+		2> /dev/null)
 	wait
 
 	# removing any files containing dmce struct macros
-	find "${state[git_root]}" -name "*.probed.dmcestructs" -exec rm ${coreutils_args} {} \;
+	find "${state[git_root]}" \
+		! -readable \
+		-prune \
+		-o \
+		-type f \
+		-name "*.probed.dmcestructs" \
+		-exec rm ${coreutils_args} {} \; \
+		2> /dev/null
 
 	if [ "${state[restore]}" = true ]; then
 		_echo "restore source code state"
@@ -971,7 +985,9 @@ function setup() {
 	fi
 
 	# add modified/untracked files
-	git status -u --porcelain | cut -c4- | grep -E '\.c$|\.cpp$|\.cc$|\.h$' >"${state[dmce_work_dir]}"/modified-and-untracked.cache || :
+	git status -u --porcelain 2> /dev/null | \
+		cut -c4- | \
+		grep -E '\.c$|\.cpp$|\.cc$|\.h$' >"${state[dmce_work_dir]}"/modified-and-untracked.cache || :
 	if [ -s "${state[dmce_work_dir]}"/modified-and-untracked.cache ]; then
 		cat "${state[dmce_work_dir]}"/modified-and-untracked.cache >>"${state[dmce_work_dir]}"/latest.cache
 	fi
