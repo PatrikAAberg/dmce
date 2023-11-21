@@ -4,8 +4,6 @@ Source code level instrumentation tool that enables dynamic code execution track
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
-Latest stable tag: v1.7.4
-
 ## Probed code example
 
 Before dmce probing:
@@ -57,7 +55,14 @@ Currently recommended clang-check (llvm) version: 17
 ## How to get started
 
 ### Alternative 1: Install Using .deb package
-Find the latest released debian package in "releases" to the right on this page. Download it, install and set up dmce:
+
+Create the package
+
+    $ git clone https://github.com/PatrikAAberg/dmce.git
+    $ cd dmce
+    $ ./build-deb
+
+or find the latest released package in "releases" to the right on this page. Build or download it, install and set up dmce:
 
     $ dpkg -i dmce-X.Y-Z.deb    # To uninstall: $ dpkg -r dmce
 
@@ -65,22 +70,7 @@ Find the latest released debian package in "releases" to the right on this page.
 
 This will produce a .dmceconfig file at /home/$USER and a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" tool which has some pre-set profiles that handle common use-cases.
 
-### Alternative 2: Clone the git or download tarball
-
-Clone from github (make sure to checkout latest stable tag)
-
-    $ git clone https://github.com/PatrikAAberg/dmce.git
-
-or download the release tarball of choice found in "releases" to the right on this page.
-Enter the dmce directory (cloned or un-tar'ed) and run the local configure script:
-
-    $ cd dmce
-
-    $ ./dmce-configure-local
-
-This will produce a .dmceconfig file in the home directory which uses the dmce directory as source for all execution and configuration. Any call to dmce executables in the following examples need to be prepended by the path to the dmce directory.
-
-#### Please note! The examples below assume an alt. 1 installation above. If you choose alt. 2, you can use the -p flag for "dmce-set-profile" to not tamper with the paths to the dmce git, and the -d switch to point to the dmce git clone, using it as config directory.
+### Please note! The "dmce-launcher" executable in earlier versions (dmce 1.81 and lower) is now replaced by "dmce", se example 1 below. This is part of an ongoing refactoring that will lead up to v2.0.0 (coming soon!).
 
 ## Example 1: A simple, general example of probing
 
@@ -96,7 +86,7 @@ Modify the dmce configuration using the "dmce-set-profile tool" to use a printf 
 
 Run dmce for all commits in the git, making it probe everything:
 
-    $ dmce
+    $ dmce # for earlier verisions ( <= 1.8,1), use "dmce-launcher -aq"
 
 Check the diff. You should be able to see the inserted dmce probes.
 
