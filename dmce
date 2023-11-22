@@ -1369,55 +1369,122 @@ function remove_spaces() {
 	return 0
 }
 
+# $1 = filtereddiff
+function create_clang_diff() {
+	local add
+	local clang_file
+	local num_lines
+	local sed_exp
+	local start_pos
+	declare -a arr
+
+	clang_file=${1%/*}/${1##*/}
+	clang_file=${clang_file/.filtereddiff}
+	sed_exp="${clang_file}.sed_exp"
+
+	# rows starting with "@@"
+	while read -r line ; do
+		read -a arr -r <<<"${line//+/ }"
+		add=${arr[2]}
+
+		# multi or single line?
+		if [[ "${add}" =~ "," ]]; then
+			# multi line add, e.g. "126903,8"
+			read -a arr -r <<<"${add//,/ }"
+			start_pos=${arr[0]}
+			num_lines=${arr[1]}
+		else
+			# single line change, e.g.: "127505"
+			start_pos=${add}
+			num_lines=1
+		fi
+
+		echo "$start_pos,$((start_pos + num_lines - 1)){s/\(.*\)/+\1/};" >> "${sed_exp}"
+	done <<< "$(grep -n "^@@.*@@" "$1")"
+
+	if [ "${add}" != "" ]; then
+		sed -f "${sed_exp}" "${clang_file}" > "${clang_file}diff"
+	fi
+
+	rm ${coreutils_args} "${sed_exp}"
+
+	return 0
+}
+
 function run_one() {
+	local a
 	local cmd
 	local f=$1
 	local esc_c_file
 	local t0=$SECONDS
 
-	_echo "${FUNCNAME[0]}: $f"
+	_echo "${FUNCNAME[0]}: ${f}"
 
-	# run clang
-	run_clang "${state[dmce_work_dir]}"/old/"$f"
-	run_clang "${state[dmce_work_dir]}"/new/"$f"
+	# #skipped is based on number of probedata files
+	true >"${state[dmce_work_dir]}"/new/"${f}".probedata
+
+	# run clang on new
+	run_clang "${state[dmce_work_dir]}"/new/"${f}"
+	if [ ! -s "${state[dmce_work_dir]}"/new/"${f}".clang ]; then
+		_echo "run_one: ${f}: empty clang file"
+		return
+	fi
+
+	a="${state[dmce_work_dir]}/new/${f}.clang"
+	# probe all => skip old
+	if [ "${state[probe_all]}" -eq 0 ]; then
+		# run clang on old
+		run_clang "${state[dmce_work_dir]}"/old/"${f}"
+		a+=" ${state[dmce_work_dir]}/old/${f}.clang"
+	fi
 
 	# cut ast top
 	esc_c_file="<${f//\./\\\.}"
 	esc_c_file="${esc_c_file//\//\\\/}"
-	sed -i -n -e "/${esc_c_file}/,\$p" "${state[dmce_work_dir]}"/{old,new}/"$f".clang
-
-	# replace all hexnumbers and "branches" (in-place) on clang-files
-	sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' "${state[dmce_work_dir]}"/{old,new}/"$f".clang
-
-	# remove position dependent stuff (line numbers) from clang output
-	sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/old/"$f".clang >"${state[dmce_work_dir]}"/old/"$f".clang.filtered
-	sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/new/"${c_file}".clang >"${state[dmce_work_dir]}"/new/"${c_file}".clang.filtered
-
-	# create filtered clang diff
-	git --no-pager diff \
-		--diff-algorithm="${DMCE_GIT_DIFF_ALGORITHM-histogram}" \
-		-U0 \
-		"${state[dmce_work_dir]}"/old/"$f".clang.filtered \
-		"${state[dmce_work_dir]}"/new/"$f".clang.filtered >"${state[dmce_work_dir]}"/new/"$f".clang.filtereddiff || true
-
-	# producing clang diffs
-	"$DMCE_EXEC_PATH"/create-clang-diff "${state[dmce_work_dir]}"/new/"$f".clang.filtereddiff
-
-	# inserting probes
-	if [ ! -e "${state[dmce_work_dir]}"/new/"$f".clangdiff ]; then
+	# shellcheck disable=SC2086
+	sed -i -n -e "/${esc_c_file}/,\$p" ${a}
+	if [ ! -s "${state[dmce_work_dir]}"/new/"${f}".clang ]; then
+		_echo "run_one: ${f}: empty clang file after cut ast top"
 		return
 	fi
-	true >"${state[dmce_work_dir]}"/new/"${c_file}".probedata
+
+	# replace all hexnumbers and "branches" (in-place) on clang-files
+	# shellcheck disable=SC2086
+	sed -i -e "s/0x[0-9a-f]*/Hexnumber/g" -e 's/`-/|-/' ${a}
+
+	if [ "${state[probe_all]}" -eq 1 ]; then
+		sed -e 's,^,\+,g' "${state[dmce_work_dir]}"/new/"${f}".clang > "${state[dmce_work_dir]}"/new/"${f}".clangdiff
+	else
+		# remove position dependent stuff (line numbers) from clang output
+		sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/old/"${f}".clang >"${state[dmce_work_dir]}"/old/"${f}".clang.filtered
+		sed -e "s/<[^>]*>//g" "${state[dmce_work_dir]}"/new/"${f}".clang >"${state[dmce_work_dir]}"/new/"${f}".clang.filtered
+
+		# create filtered clang diff
+		git --no-pager diff \
+			--diff-algorithm="${DMCE_GIT_DIFF_ALGORITHM-histogram}" \
+			-U0 \
+			"${state[dmce_work_dir]}/old/${f}.clang.filtered" \
+			"${state[dmce_work_dir]}"/new/"${f}".clang.filtered >"${state[dmce_work_dir]}"/new/"${f}".clang.filtereddiff || true
+
+		# producing clang diffs
+		create_clang_diff "${state[dmce_work_dir]}"/new/"${f}".clang.filtereddiff
+	fi
+
+	if [ ! -e "${state[dmce_work_dir]}"/new/"${f}".clangdiff ]; then
+		return
+	fi
+
+	# insert probes
 	cmd+=" DMCE_CONFIG_PATH=${state[dmce_work_dir]}/config"
 	cmd+=" $DMCE_EXEC_PATH/generate-probefile.py"
-	cmd+=" $c_file"
-	cmd+=" $c_file.probed"
-	cmd+=" ${state[dmce_work_dir]}/new/$c_file.probedata"
-	cmd+=" ${state[dmce_work_dir]}/new/$c_file.exprdata"
-	cmd+=" <${state[dmce_work_dir]}/new/$c_file.clangdiff"
+	cmd+=" ${f}"
+	cmd+=" ${f}.probed"
+	cmd+=" ${state[dmce_work_dir]}/new/${f}.probedata"
+	cmd+=" ${state[dmce_work_dir]}/new/${f}.exprdata"
+	cmd+=" <${state[dmce_work_dir]}/new/${f}.clangdiff"
 	if [ "${state[debug]}" = true ]; then
 		# shellcheck disable=SC2086
-		eval $cmd >"${state[dmce_work_dir]}"/new/"${c_file}".probegen.log
+		eval $cmd >"${state[dmce_work_dir]}"/new/"${f}".probegen.log
 	else
 		# shellcheck disable=SC2086
 		eval $cmd >/dev/null
@@ -1425,7 +1492,7 @@ function run_one() {
 
 	# print a warning if this function takes more than 5 seconds
 	if [ "${state[debug]}" = true ] && [ $((SECONDS - t0)) -ge 5 ]; then
-		_echo "warning: $c_file took $((SECONDS - t0)) secs to process"
+		_echo "run_one: warning: ${f} took $((SECONDS - t0)) secs to process"
 	fi
 }
 
@@ -1534,8 +1601,18 @@ EOF
 function collect_results() {
 	_echo "${FUNCNAME[0]}"
 
-	state[files_probed]=$(wc -l <"${state[dmce_work_dir]}"/workarea/probe-list 2>/dev/null)
-	state[files_skipped]=$(wc -l <"${state[dmce_work_dir]}"/workarea/skip-list 2>/dev/null)
+	if [ -s "${state[dmce_work_dir]}/workarea/probe-list" ]; then
+		state[files_probed]=$(wc -l <"${state[dmce_work_dir]}"/workarea/probe-list 2>/dev/null)
+	else
+		state[files_probed]=0
+	fi
+
+	if [ -s "${state[dmce_work_dir]}/workarea/skip-list" ]; then
+		state[files_skipped]=$(wc -l <"${state[dmce_work_dir]}"/workarea/skip-list 2>/dev/null)
+	else
+		state[files_skipped]=0
+	fi
+
 	if [ "${state[verbose]}" = "true" ]; then
 		_echo "${state[files_probed]} file(s) probed:"
 		while read -r f; do
@@ -1550,6 +1627,8 @@ function collect_results() {
 		fi
 	fi
 
+	# correct #skipped (for cache)
+	state[files_skipped]=$((state[nbr_of_files] - state[files_probed]))
 	if [ -f "${state[dmce_work_dir]}/probe-references.log" ]; then
 		rm ${coreutils_args} -f "${state[dmce_work_dir]}/probe-references.log"
 	fi
