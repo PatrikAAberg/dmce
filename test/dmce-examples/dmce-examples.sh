@@ -229,6 +229,8 @@ function t0() {
 
 	${dmce:?} \
 		--include main.c \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
@@ -243,6 +245,8 @@ function t1() {
 	echo 'int main(){int i; i=42;}' > "${FUNCNAME[0]}".c
 	${dmce:?} \
 		-n 1 \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
@@ -257,6 +261,8 @@ function t2() {
 	${dmce:?} \
 		--all \
 		--head HEAD~10 \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
@@ -270,12 +276,16 @@ function t3() {
 
 	${dmce:?} \
 		--all \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
 	verify
 	${dmce:?} \
 		-a \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
@@ -297,6 +307,8 @@ function t5() {
 	pre
 
 	${dmce:?} \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
@@ -304,6 +316,8 @@ function t5() {
 	${dmce:?} -c \
 		&> "${t_log:?}"
 	${dmce:?} \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		--verbose \
 		&> "${t_log:?}"
@@ -318,6 +332,8 @@ function t6() {
 		pre
 		${dmce:?} \
 			-n "${i}" \
+			--noepilog \
+			--noprolog \
 			--profile coverage \
 			-v \
 		&> "${t_log:?}" || true
@@ -383,10 +399,17 @@ function t9() {
 
 	${dmce:?} \
 		--include simple/main.c,simple/simple.c \
+		--noepilog \
+		--noprolog \
 		--profile coverage \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include simple/main.c,simple/simple.c \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd simple
 		./build
@@ -406,10 +429,17 @@ function t10() {
 
 	${dmce:?} \
 		--include simple/main.c,simple/simple.c \
+		--noepilog \
+		--noprolog \
 		--profile heatmap \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include simple/main.c,simple/simple.c \
+		--profile heatmap \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd simple
 		./build
@@ -436,10 +466,17 @@ function t11() {
 
 	${dmce:?} \
 		--include simple/main.c,simple/simple.c \
+		--noepilog \
+		--noprolog \
 		--profile trace-mc \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include simple/main.c,simple/simple.c \
+		--profile trace-mc \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd simple
 		./build
@@ -454,10 +491,17 @@ function t12() {
 
 	${dmce:?} \
 		--include 'threads/.*' \
+		--noepilog \
+		--noprolog \
 		--profile trace-mc \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include 'threads/.*' \
+		--profile trace-mc \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd threads
 		gcc -o threads -pthread main.c
@@ -472,10 +516,17 @@ function t13() {
 
 	${dmce:?} \
 		--include 'threads/.*' \
+		--noepilog \
+		--noprolog \
 		--profile trace-mc \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include 'threads/.*' \
+		--profile trace-mc \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd threads
 		gcc -o trace-threads -pthread trace_threads.c
@@ -490,10 +541,17 @@ function t14() {
 
 	${dmce:?} \
 		--include 'threads/.*' \
+		--noepilog \
+		--noprolog \
 		--profile trace-mc \
 		-v \
 		&> "${t_log:?}"
 	verify
+	${dmce:?} \
+		--include 'threads/.*' \
+		--profile trace-mc \
+		-v \
+		&> "${t_log:?}"
 	(
 		cd threads
 		gcc -o trace-threads-hexdump -pthread trace_threads_hexdump.c
@@ -512,6 +570,8 @@ function t15() {
 	git worktree add -q "${d}"
 	${dmce:?} \
 		--profile trace-mc \
+		--noepilog \
+		--noprolog \
 		-v \
 		&> "${t_log:?}"
 	verify "${FUNCNAME[0]}.0.diff"
@@ -520,6 +580,8 @@ function t15() {
 	(
 		cd "${d}"
 		${dmce:?} \
+			--noepilog \
+			--noprolog \
 			--offset=100000 \
 			--profile trace-mc \
 			-v \

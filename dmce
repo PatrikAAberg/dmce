@@ -66,6 +66,8 @@ OPTIONS
 
     DEBUG
       --debug                Enable debug mode
+      --noepilog             No epilog
+      --noprolog             No prolog
 
   DESCRIPTION
     dmce is the main entry point for running DMCE. To be executed from within the git repo root:
@@ -159,12 +161,13 @@ function argparse() {
 
 	_echo "${FUNCNAME[0]}"
 
-	state[ast_cache]=false
 	state[ast_cache_compress]=false
 	state[ast_cache_dir]=
+	state[ast_cache]=false
 	state[cache]=0
 	state[checkout_head]=false
 	state[debug]=false
+	state[epilog]=1
 	state[file]=""
 	state[files_from_cache]=0
 	state[files_probed]=0
@@ -177,10 +180,11 @@ function argparse() {
 	state[number_of_commits]=1
 	state[offset]=0
 	state[old]=
-	state[print_version]=false
 	state[print_cache_stats]=false
+	state[print_version]=false
 	state[probe_all]=0
 	state[profile]=""
+	state[prolog]=1
 	state[restore]=false
 	state[search_method]=commit
 	state[update_config]=false
@@ -228,6 +232,12 @@ function argparse() {
 					debug)
 						set -x
 						state[debug]=true
+						;;
+					noepilog)
+						state[epilog]=0
+						;;
+					noprolog)
+						state[prolog]=0
 						;;
 					exclude)
 						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
@@ -1535,13 +1545,14 @@ function create_probe_skip_list() {
 function update_probed_files() {
 	_echo "${FUNCNAME[0]}"
 
-	if [ -e "$DMCE_PROBE_PROLOG" ]; then
-		_echo "using prolog file: $DMCE_PROBE_PROLOG"
-		cp ${coreutils_args} -a "$DMCE_PROBE_PROLOG" "${state[dmce_work_dir]}"/workarea/probe-header
-		# size_of_user compensates for the header put first in all source files by DMCE
-		state[size_of_user]=$((state[size_of_user] + $(wc -l <"$DMCE_PROBE_PROLOG")))
-	else
-		cat >"${state[dmce_work_dir]}"/workarea/probe-header <<EOF
+	if [ "${state[prolog]}" -eq 1 ]; then
+		if [ -e "$DMCE_PROBE_PROLOG" ]; then
+			_echo "using prolog file: $DMCE_PROBE_PROLOG"
+			cp ${coreutils_args} -a "$DMCE_PROBE_PROLOG" "${state[dmce_work_dir]}"/workarea/probe-header
+			# size_of_user compensates for the header put first in all source files by DMCE
+			state[size_of_user]=$((state[size_of_user] + $(wc -l <"$DMCE_PROBE_PROLOG")))
+		else
+			cat >"${state[dmce_work_dir]}"/workarea/probe-header <<EOF
 #ifndef __DMCE_PROBE_FUNCTION__HEADER__
 #define __DMCE_PROBE_FUNCTION__HEADER__
 static void dmce_probe_body(unsigned int probenbr);
@@ -1549,38 +1560,46 @@ static void dmce_probe_body(unsigned int probenbr);
 #define DMCE_PROBE(a) (dmce_probe_body(a))
 #endif
 EOF
-		# size_of_user compensates for the header put first in all source files by DMCE
-		state[size_of_user]=$((state[size_of_user] + $(wc -l <"${state[dmce_work_dir]}"/workarea/probe-header)))
+			# size_of_user compensates for the header put first in all source files by DMCE
+			state[size_of_user]=$((state[size_of_user] + $(wc -l <"${state[dmce_work_dir]}"/workarea/probe-header)))
+		fi
 	fi
 
+	if [ "${state[epilog]}" -eq 1 ]; then
+		_echo "using epilog file: $DMCE_PROBE_SOURCE"
+	fi
 	while read -r c_file; do
 		if [ ! -s "${c_file}".probed ]; then
 			continue
 		fi
 		{
-			# header
-			cat "${state[dmce_work_dir]}"/workarea/probe-header >"${state[dmce_work_dir]}"/workarea/"${c_file}"
+			if [ "${state[prolog]}" -eq 1 ]; then
+				# prolog
+				cat "${state[dmce_work_dir]}"/workarea/probe-header >"${state[dmce_work_dir]}"/workarea/"${c_file}"
+			fi
 
 			# the probed source file itself
 			cat "${c_file}".probed >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
 
-			# new line
-			echo "" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+			if [ "${state[epilog]}" -eq 1 ]; then
+				# epilog: new line
+				echo "" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
 
-			# any defines from the config file
-			if [ -s "${state[dmce_work_dir]}"/probedefines.h ]; then
-				cat "${state[dmce_work_dir]}"/probedefines.h >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+				# epilog: any defines from the config file
+				if [ -s "${state[dmce_work_dir]}"/probedefines.h ]; then
+					cat "${state[dmce_work_dir]}"/probedefines.h >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+				fi
+
+				# epilog: append built-in defines
+				{
+					echo "#ifndef DMCE_NBR_OF_PROBES"
+					echo "#define DMCE_NBR_OF_PROBES (${state[nbrofprobesinserted]})"
+					echo "#endif"
+				} >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
+
+				# epilog: put the probe in the end
+				cat "$DMCE_PROBE_SOURCE" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
 			fi
-
-			# append built-in defines
-			{
-				echo "#ifndef DMCE_NBR_OF_PROBES"
-				echo "#define DMCE_NBR_OF_PROBES (${state[nbrofprobesinserted]})"
-				echo "#endif"
-			} >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
-
-			# put the probe in the end
-			cat "$DMCE_PROBE_SOURCE" >>"${state[dmce_work_dir]}"/workarea/"${c_file}"
 
 			# make copy of original file and replace it with the probed one
 			cp ${coreutils_args} "${c_file}" "${c_file}".dmceoriginal
