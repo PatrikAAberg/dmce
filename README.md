@@ -1,8 +1,11 @@
 # dmce (did my code execute?)
 
-Source code level instrumentation tool that enables dynamic code execution tracking *without build tool chain dependencies*.
+Source code level instrumentation tool that enables dynamic code execution tracking *without HW or build tool chain dependencies*.
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
+
+
+![Guis](https://github.com/PatrikAAberg/dmce/assets/22773714/c79a168f-6049-4ab6-bb0a-9574ef8c73a8)
 
 ## Probed code example
 
