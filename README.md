@@ -57,7 +57,7 @@ Currently recommended clang-check (llvm) version: 17
 
 ## Install and setup
 
-DMCE is currently installed using Ubuntu/Debian packages. To build an installable dmce package from source:
+DMCE is currently installed using Ubuntu/Debian packages. To build an installable dmce package from latest source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
@@ -138,12 +138,12 @@ It crashes! Let's find out why.
 
     $ dmce-trace -t /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
-## Example 3: Interactive trace viewer
+## Terminal UI
 <img width="1180" alt="tgui" src="https://user-images.githubusercontent.com/22773714/169835252-d0d9716f-2dfc-447c-ae8d-b23a39bae3d0.png">
 
-You might want something fancier than less to view your trace. An interactive trace viewer can be invoked instead of using the dmce-trace command in the previous example. This time we will use the "threads" example program (this example assumes you have installed the .deb package followed by executing 'dmce-setup'):
+You might want something fancier than less to view your trace:
     
-    $ dmce-set-profile trace
+    $ dmce-set-profile trace-mc
     
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     
@@ -159,18 +159,8 @@ You might want something fancier than less to view your trace. An interactive tr
     
     $ cd ..
     
-    $ dmce -c    # Here we use a non-probed tree for increased visibility (and therefore we use the 'original' probe file below)
-        
-    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references-original.log $(pwd)
+    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
-The profile 'trace' uses a single trace buffer for all cores in a multi-threaded program running on multiple cores. This minimizes slack, reducing the size of the trace buffer file but at the same time have a penalty on performance. The profile 'trace-mc' uses separate RAM buffers and thereby increases performance at the cost of additional RAM usage. To use the 'trace-mc' buffer:  
-
-    $ dmce-set-profile trace-mc
-
-There are multiple output formats and GUIs to choose from, for more information please see the help text:
-
-    $ dmce-trace-viewer
-    
 ## Patch code coverage
 
 This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
