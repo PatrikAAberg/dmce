@@ -55,25 +55,21 @@ Normally works with clang-check (llvm) versions 10+
 
 Currently recommended clang-check (llvm) version: 17 
 
-## How to get started
+### Install and setup
 
-### Alternative 1: Install Using .deb package
-
-Create the package
+dmce is currently installed using Ubuntu/Debian packages. To build an installable dmce package from source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
     $ ./build-deb
 
-or find the latest released package in "releases" to the right on this page. Build or download it, install and set up dmce:
+You can also find the latest released package in "releases" to the right on this page. To install on Ubuntu/Debian:
 
     $ dpkg -i dmce-X.Y-Z.deb    # To uninstall: $ dpkg -r dmce
 
     $ dmce-setup
 
-This will produce a .dmceconfig file at /home/$USER and a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" tool which has some pre-set profiles that handle common use-cases.
-
-### Please note! The "dmce-launcher" executable in earlier versions (dmce 1.81 and lower) is now replaced by "dmce", se example 1 below. This is part of an ongoing refactoring that will lead up to v2.0.0 (coming soon!).
+The above will install the neccesary executables, create a default .dmceconfig file at /home/$USER and a set up a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" tool AND/OR use override switches available in the (dmce) tool itself. The first two will be persistent, and the latter will be be used one-time only.
 
 ## Example 1: A simple, general example of probing
 
