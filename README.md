@@ -55,9 +55,9 @@ Normally works with clang-check (llvm) versions 10+
 
 Currently recommended clang-check (llvm) version: 17 
 
-### Install and setup
+## Install and setup
 
-dmce is currently installed using Ubuntu/Debian packages. To build an installable dmce package from source:
+DMCE is currently installed using Ubuntu/Debian packages. To build an installable dmce package from source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
@@ -71,7 +71,15 @@ You can also find the latest released package in "releases" to the right on this
 
 The above will install the neccesary executables, create a default .dmceconfig file at /home/$USER and a set up a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" tool AND/OR use override switches available in the (dmce) tool itself. The first two will be persistent, and the latter will be be used one-time only.
 
-## Example 1: A simple, general example of probing
+## Contents
+
+#### [Start here: A simple probing workflow example](#a-simple-probing-workflow-example) 
+#### [Trace](#trace) 
+#### [Patch coverage](#patch-coverage) 
+#### [Heatmap and data code coverage](#heatmap-and-data-code-coverage) 
+#### [Provoke race conditions](#provoke-race-conditions) 
+
+## A simple probing workflow example
 
 This is a basic example just showing how DMCE probes are inserted without changing SW behaviour with respect to the original function.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
@@ -105,7 +113,7 @@ Of course you want to be able to go back to a non-probed state. You do this usin
 
 The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
 
-## Example 2: How to use dmce trace
+## Trace
 
 DMCE can be used as a trace tool. The following example shows how to find a null-pointer bug in an example program.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
@@ -172,7 +180,7 @@ There are multiple output formats and GUIs to choose from, for more information 
 
     $ dmce-trace-viewer
     
-## Example 4: Patch code coverage
+## Patch code coverage
 
 This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
@@ -213,7 +221,7 @@ Use dmce summary to display the results. For this example, we use a binary forma
 The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones.
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
-## Example 5: Heatmap and data code coverage
+## Heatmap and data code coverage
 
 DMCE can be used to view frequently visited parts of your code as well as provide a form of data code coverage for your tests. To enable these features, simply use the --sort switch together with the dmce-trace command. Current available options for --sort are:
 
@@ -251,7 +259,7 @@ You should now be able to see the most visited parts of our program. Replace "he
 
 Please note! For larger execution runs, the DMCE trace buffer size need to be increased to get the full view and not just the last part of the ring buffer. How to adjust the size of the DMCE trace buffer is further descibred in the config section.
 
-## Example 6: Test for race conditions
+## Provoke race conditions
 
 DMCE can also be used to provoke potential race conditions by intentionally insert randomized delays
 through out the code. Each probe gets an individual randomized number between 0..32767 upon which it will spin
