@@ -1,4 +1,4 @@
-# dmce (did my code execute?)
+# DMCE (Did My Code Execute?)
 
 Source code level instrumentation tool that enables dynamic code execution tracking *without HW or build tool chain dependencies*.
 
@@ -9,7 +9,7 @@ Probes c/c++ expressions added between two git revisions. Consists of a bunch of
 
 ## Probed code example
 
-Before dmce probing:
+Before DMCE probing:
 
     int foo(int a) {
 
@@ -24,7 +24,7 @@ Before dmce probing:
         return c + 42;
     }
 
-After dmce probing:
+After DMCE probing:
 
 
     int foo(int a) {
@@ -57,7 +57,7 @@ Currently recommended clang-check (llvm) version: 17
 
 ## Install and setup
 
-DMCE is currently installed using Ubuntu/Debian packages. To build an installable dmce package from latest source:
+DMCE is currently installed using Ubuntu/Debian packages. To build an installable DMCE package from latest source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
@@ -69,7 +69,7 @@ You can also find the latest released package in "releases" to the right on this
 
     $ dmce-setup
 
-The above will install the neccesary executables, create a default .dmceconfig file at /home/$USER and a set up a dmce configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" utility AND/OR use override switches available for the (dmce) tool itself. The first two will be persistent, the last one will be be used one-time only.
+The above will install the neccesary executables, create a default .dmceconfig file at /home/$USER and a set up a DMCE configuration directory at /home/$USER/.config. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" utility AND/OR use override switches available for the (dmce) tool itself. The first two will be persistent, the last one will be be used one-time only.
 
 ## Contents
 
@@ -83,36 +83,33 @@ The above will install the neccesary executables, create a default .dmceconfig f
 ## A simple probing workflow example
 
 This is a basic example just showing how DMCE probes are inserted without changing SW behaviour with respect to the original function.
-Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Modify the dmce configuration using the "dmce-set-profile tool" to use a printf probe. We want to include the "simple" directory and exclude the "simplecrash" directory:
+Modify the DMCE configuration using the "dmce-set-profile" utility to use a printf probe. We want to include the "simple" directory and exclude the "simplecrash" directory:
 
     $ dmce-set-profile printf -i simple -e simplecrash
 
-Run dmce for all commits in the git, making it probe everything:
+Run DMCE for all commits in the git, making it probe everything:
 
     $ dmce # for earlier verisions ( <= 1.8,1), use "dmce-launcher -aq"
 
-Check the diff. You should be able to see the inserted dmce probes.
+Check the diff. You should be able to see the inserted DMCE probes.
 
     $ git diff
 
-Go into the simple example folder, build the executable and run it.
+Go into the "simple" example folder, build the executable and run it.
 
     $ cd simple && ./build && ./simple
 
-It builds and runs. Nothing functional-wise is changed,  but we have inserted hooks at all do-something-expressions. Using dmce-probe-XYZ.c files we can now extract information from code execution without tampering with build chains or using target- or OS specifics. In this example, we have used a probe that simply prints to stderr the first time that position in the code is passed, and keep silent after that.
+It builds and runs. Nothing functional-wise is changed,  but we have inserted hooks at all do-something-expressions. Using dmce-probe-XYZ.c files we can now extract information from code execution without tampering witch build tool chains. In this example, we have used a probe that simply prints to stderr the first time that position in the code is passed, and keep silent after that.
 
-Of course you want to be able to go back to a non-probed state. You do this using the -c switch in the git root:
+To go back to a non-probed state:
 
     $ cd ..
     $ dmce -c
     $ git diff
-
-The probes are now removed. A note: -n 1 means "probe everyting untracked and/or modified". -n 2 means "probe everything untracked, and/or modified and the last commit". Increasing the number will increase the number of commits backwards in time. Please run dmce --help for additional ways of stating revision delta. In this example, we want to probe everything, so a larger number (10000) than the number of available commits is used.
 
 ## Trace
 
@@ -122,11 +119,11 @@ Dependencies:
 
     $ pip3 install colorama numpy
 
-Set the dmce profile to trace-mc, include only the "simplecrash" folder when inserting probes:
+Set the DMCE profile to trace-mc, include only the "simplecrash" folder when inserting probes:
 
     $ dmce-set-profile trace-mc -i simplecrash
 
-Run dmce for all commits in the git:
+Run DMCE for all commits in the git:
 
     $ dmce
 
@@ -164,13 +161,13 @@ You might want something fancier than less to view your trace:
 
 ## Patch code coverage
 
-This was the original use case for dmce. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
+This was the original use case for DMCE. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
 Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Set up dmce to do coverage, including only the "patchcov" directory:
+Set up DMCE to do coverage, including only the "patchcov" directory:
 
     $ dmce-set-profile coverage -i patchcov
 
@@ -196,7 +193,7 @@ Go into the patchcov directory again to build and run the tests. Note! Since the
     $ cd patchcov
     $ ./build && ./test-patchcov
 
-Use dmce summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
+Use DMCE summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
 
     $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
 
@@ -216,11 +213,11 @@ A simple example for the "heat" option:
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
 
-Modify the dmce configuration to use a trace probe, including only the "loops" folder:
+Modify the DMCE configuration to use a trace probe, including only the "loops" folder:
 
     $ dmce-set-profile trace -i loops
 
-Run dmce for all commits in the git, making it probe everything:
+Run DMCE for all commits in the git, making it probe everything:
 
     $ dmce -aq
 
@@ -229,7 +226,7 @@ Go into the loops example folder, build the executable and run it.
     $ cd loops && ./build && ./loops
     $ cd -
 
-Remove the dmce probes:
+Remove the DMCE probes:
 
     $ dmce -c
     
