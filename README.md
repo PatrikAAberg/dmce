@@ -73,12 +73,12 @@ The above will install the neccesary executables, create a default .dmceconfig f
 
 ## Contents
 
-#### [Start here: A simple probing workflow example](#a-simple-probing-workflow-example) 
-#### [Trace](#trace) 
-#### [Trace GUI](https://github.com/PatrikAAberg/dmce-gui)
-#### [Patch coverage](#patch-coverage) 
-#### [Heatmap and data code coverage](#heatmap-and-data-code-coverage) 
-#### [Provoke race conditions](#provoke-race-conditions) 
+#### [- Start here: A simple probing workflow example](#a-simple-probing-workflow-example) 
+#### [- Trace](#trace) 
+#### [- Trace GUI](https://github.com/PatrikAAberg/dmce-gui)
+#### [- Patch coverage](#patch-code-coverage) 
+#### [- Heatmap and data code coverage](#heatmap-and-data-code-coverage) 
+#### [- Provoke race conditions](#provoke-race-conditions) 
 
 ## A simple probing workflow example
 
