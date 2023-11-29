@@ -85,10 +85,6 @@ The above will install the neccesary executables, create a default .dmceconfig f
 #### [- DMCE API functions](#dmce-api-functions)
 #### [- Frequently asked questions (FAQ)](#frequently-asked-questions)
 
-### DMCE API functions
-### Frequently asked questions
-
-
 ## A simple probing workflow example
 
 This is a basic example just showing how DMCE probes are inserted without changing SW behaviour with respect to the original function.
