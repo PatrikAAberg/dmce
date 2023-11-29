@@ -163,8 +163,7 @@ You might want something fancier than less to view your trace:
 
 ## Patch code coverage
 
-This was the original use case for DMCE. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? An example of how this can be done is shown below.
-Please note that this walkthrough assumes you use the install alternative 1 above. Let's go: Clone the dmce-examples git and enter the directory:
+This was the original use case for DMCE. How to check delta (between two git revisions) code coverage in gits without messing with their respective build or test systems? See example below.
 
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
@@ -254,7 +253,7 @@ the same amount of cpu timestamps.
 
 ## DMCE command summary
 
-The following commands are listed in typical workflow order:
+The following commands are listed in typical workflow order. For each command, please see their respective --help for further details.
 
 | Command           | Description                                                                                                   |
 |-------------------|---------------------------------------------------------------------------------------------------------------|
@@ -263,113 +262,47 @@ The following commands are listed in typical workflow order:
 | dmce              | Insert probes in current git directory                                                                        |
 | dmce-stats        | Get some stats (how many inserted probes etc.) from a probed git                                              |
 | dmce-summary-bin  | Get a coverage / heatmap report (using the "coverage" profile)                                                |
-| dmce-trace        | Generate a textual trace output (using the "trace" or "trace-mc" profile)                                     |
-| dmce-trace-viewer | Launch an interactive trace viewer (using the "trace" or "trace-mc" profile)                                  |
+| dmce-trace        | Generate a textual trace output (using the "trace-mc" or "trace" profile)                                     |
+| dmce-trace-viewer | Launch an interactive trace viewer (using the "trace-mc" or "trace" profile)                                  |
 
-## Mandatory entries in .dmceconfig
+## Entries in .dmceconfig
 
-Valid for both alternatives above:
-Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-configure-local or dmce-setup). This way, in a multi-git project, each git can have its own dmce configuration.
+### Probing pass configuration
+Configuration is stored in the file ".dmceconfig". If dmce finds this file in the root of the git being probed this copy will be used. If not found there, it will pick the one in the user's home directory (initially put there by dmce-setup, and later modified by dmce-set-profile).
 
-### .dmceconfig walkthrough
-(showing default values written by dmce-setup)
+| Entry                          | Description                                                                                           |
+|--------------------------------|-------------------------------------------------------------------------------------------------------|
+DMCE_MEMORY_LIMIT                |
+DMCE_EXEC_PATH                   | 
+DMCE_WORK_PATH                   |
+DMCE_CONFIG_PATH                 |
+DMCE_CMD_LOOKUP_HOOK             |
+DMCE_DEFAULT_C_COMMAND_LINE      |
+DMCE_DEFAULT_CPP_COMMAND_LINE    |
+DMCE_DEFAULT_H_COMMAND_LINE      |
+DMCE_NUM_DATA_VARS               |
+DMCE_ALLOW_DEREFERENCES          |
+DMCE_PROBE_SOURCE                |
+DMCE_PROBE_PROLOG                |
+DMCE_POST_HOOK                   |
+DMCE_SYS_INCLUDES                |
+DMCE_PROBE_TEMPLATES             |
+DMCE_FIX_NULLPTR                 |
+DMCE_TOP_LEVEL_VARS              |
+DMCE_GIT_DIFF_ALGORITHM          |
 
-#### DMCE exec path
-Where DMCE finds it's executables:
+### Execution pass configuration
+It is possible to pass information to the running code by using DMCE_PROBE_DEFINE: statements. These key-value pairs will travel down to the actual source code as #define directives and can be used in the actual probe code to control it's behaviour.
 
-    DMCE_EXEC_PATH:/usr/share/dmce
+| Entry                                               | Description                                                                                           |
+|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES        |
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS    |
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH              |
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY           |
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT            |
+DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED            |
+DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS           |
+DMCE_EDITOR                                           |
+DMCE_CACHE                                            |
 
-#### Working directory
-A lot of temporary files are being created by DMCE, this is where they end up:
-
-    DMCE_WORK_PATH:/tmp/$USER/dmce
-
-#### Configuration files path
-A DMCE run can be configured using the files in this directory:
-
-    DMCE_CONFIG_PATH:/home/$USER/.config/dmce
-        constructs.exclude          # Regular expressions to textually filter out lines that should not be probed
-        dmce.exclude                # Regular expressions used to exclude files and functions (myfile:myfunction), function can be omitted
-        dmce.include                # Regular expressions used to include files and functions (myfile:myfunction), function can be omitted
-        recognizedexpressions.py    # Advanced usage: Python regexps to choose what types of expressions to probe
-        cmdlookuphook.sh            # Advanced usage: This hook makes it possible to produce file-specific compiler switches (typically #ifdefs)
-
-#### Command line lookup hook
-See above.
-
-    DMCE_CMD_LOOKUP_HOOK:/home/$USER/.config/dmce/cmdlookuphook.sh
-
-#### Default compiler command line for c files
-These compiler command line switches is passed to clang-check if no specific switches are returned from the lookup hook for a specific file
-
-    DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
-
-#### Default compiler command line for cpp files
-Same as above but for C++ files
-
-    DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++11 -I/usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
-
-#### Default compiler command line for h files
-Same as above but for include files
-
-    DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++11 -I/usr/include -isystem /tmp/$USER/dmce/inc -I/tmp/$USER/dmce/inc
-
-#### Number of data variables to probe
-If this value is set (5 is supported by existing trace probe), DMCE will insert probes that except for the probe number also contain the last 5 declared variables available in the current scope.
-
-    DMCE_NUM_DATA_VARS:0
-
-#### Probe definition c file
-This is the probe file. It is appended at the end of all probed files and contains code that will be exececuted every time a probe is passed.
-
-    DMCE_PROBE_SOURCE:/usr/share/dmce/dmce-probe-user.c
-
-#### Prologue definition c file
-This is the prolouge file. It is inserted at the top of all probed files and should only contain macro and headers that makes the probe accessible in the probed file.
-
-    DMCE_PROBE_PROLOG:/usr/share/dmce/dmce-prolog-default.c
-
-#### Log files
-
-    DMCE_LOG_FILES:/tmp/$USER/dmce
-
-#### git diff algorithm
-When dmce is searching for added expressions between two git revisions it uses git diff, which comes with several different diff algorithms. Somewhat different behaviours can be noticed using different ones.
-
-    DMCE_GIT_DIFF_ALGORITHM:histogram
-
-    Available algorithms:
-        myers
-        histogram
-        minimal
-        patience
-
-#### Text editor
-Some utilities (e.g. the dmce-trace-viewer) use an editor to view code. Specify the editor preference using this config.
-
-    DMCE_EDITOR:vim
-
-### Optional entries in .dmceconfig
-
-#### Changing the type of traced variables
-The dmce trace probe normally cast all variables to uint64_t. However, a custom probe might want to use a different data type. Below is an example of how to change type to unsigned long:
-
-    DMCE_TRACE_VAR_TYPE:unsigned long
-
-#### Passing defines to dmce probes
-Sometimes it is useful to be able to pass custom information from the .dmceconfig file to the currently used probe. Below is an example:
-
-    DMCE_PROBE_DEFINE:FOO
-    DMCE_PROBE_DEFINE:BAR (42)
-
-These lines will insert the following after the probed c-file but before the probe code:
-
-    #define FOO
-    #define BAR (42)
-
-#### Changing the size of the DMCE trace buffer
-The dmce trace buffer in the dmce default trace example probe "dmce-probe-trace-atexit-D5-CB.c" is set up as a ringbuffer. The number of entries (64 bytes each) can be adjusted by using the following DMCE define:
-
-    DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 32)
-    
-The value will be passed to the probe as described in the previous section. Using the default value above (written by dmce-setup or dmce-configure-local) will thus generate a dmcebuffer.bin file with a size around 2MB.
