@@ -79,6 +79,9 @@ The above will install the neccesary executables, create a default .dmceconfig f
 #### [- Patch coverage](#patch-code-coverage) 
 #### [- Heatmap and data code coverage](#heatmap-and-data-code-coverage) 
 #### [- Provoke race conditions](#provoke-race-conditions) 
+#### [- DMCE command summary](#dmce-command-summary)
+#### [- Probing pass configuration](#probing-pass-configuration)
+#### [- Execution pass configuration](#execution-pass-configuration)
 
 ## A simple probing workflow example
 
