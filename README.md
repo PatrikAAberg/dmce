@@ -82,6 +82,12 @@ The above will install the neccesary executables, create a default .dmceconfig f
 #### [- DMCE command summary](#dmce-command-summary)
 #### [- Probing pass configuration](#probing-pass-configuration)
 #### [- Execution pass configuration](#execution-pass-configuration)
+#### [- DMCE API functions](#dmce-api-functions)
+#### [- Frequently asked questions (FAQ)](#frequently-asked-questions)
+
+### DMCE API functions
+### Frequently asked questions
+
 
 ## A simple probing workflow example
 
@@ -297,15 +303,24 @@ DMCE_GIT_DIFF_ALGORITHM          | Select what git diff algorithm should be used
 ### Execution pass configuration
 It is possible to pass information to the running code by using DMCE_PROBE_DEFINE: statements. These key-value pairs will travel down to the actual source code as #define directives and can be used in the actual probe code to control it's behaviour.
 
-| Entry                                               | Description                                                                                           |
-|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES        |
-DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS    |
-DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH              |
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY           |
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT            |
-DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED            |
-DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS           |
-DMCE_EDITOR                                           |
-DMCE_CACHE                                            |
+| Entry                                               | Description                                                                                               |
+|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES        | Used by trace probes: How many trace entries per buffer (multiple with number of used cores for trace-mc)
+DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS    | Used by trace probes: How many optional elements within each trace entry
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH              | Where probes should put any out files
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY           | If needed by the probe: Path to where to put the mkdir lock for init code
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT            | If needed by the probe: Path to where to put the mkdir lock for exit code
+DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED            | Decides if trace should be enabled from start of the program or not
+DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS           | Probes can use this to know if they should register a signal handler
+DMCE_EDITOR                                           | Utilities (currently the terminal UI) use this to pick source code editor
+DMCE_CACHE                                            | Experimental: Enable DMCE caches for speeding up consecutive runs
+
+### DMCE API functions
+
+To be updated
+
+### Frequently asked questions
+
+To be updated
+
 
