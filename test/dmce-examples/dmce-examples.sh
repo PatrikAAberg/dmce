@@ -782,4 +782,27 @@ function t21() {
 	fi
 }
 
+# exercise through all probes | profile: all
+function t22() {
+	local i
+	local p
+
+	i=0
+	for p in $(dmce-set-profile -l); do
+		pre
+		${dmce:?} \
+			--include main.c \
+			--noepilog \
+			--noprolog \
+			--profile "${p}" \
+			-v \
+		&> "${t_log:?}" || true
+		# racetrace adds random delay => skip verification
+		if [ "$p" != "racetrack" ]; then
+			verify "${FUNCNAME[0]}.${i}.diff"
+		fi
+		i=$((i + 1))
+	done
+}
+
 main "${@}"
