@@ -69,6 +69,9 @@ function pre() {
 		"${_dir_tst:?}"/*.log \
 		"${_dir_tst:?}"/dmce-examples-*
 	stash_and_checkout
+	dmce-setup "${_dir_tst:?}"
+	# shellcheck disable=SC2086
+	dmce-set-profile ${dmce_set_profile_opts:?} trace-mc
 	${dmce:?} -c &> /dev/null
 }
 
@@ -145,17 +148,14 @@ function init() {
 	fi
 	trap cleanup EXIT
 
-	dmce-setup "${_dir_tst:?}"
-	dmce-set-profile \
-		--configdir "${_dir_tst:?}"/.config/dmce \
-		--file "${_dir_tst:?}"/.dmceconfig \
-		--keeppaths \
-		-E $((1024 * 64)) \
-		trace-mc
-
 	dmce+="dmce"
 	dmce+="	--file ${_dir_tst:?}/.dmceconfig"
 	dmce+=" -j $(getconf _NPROCESSORS_ONLN)"
+	dmce_set_profile_opts=
+	dmce_set_profile_opts+=" --configdir ${_dir_tst:?}/.config/dmce"
+	dmce_set_profile_opts+=" --file ${_dir_tst:?}/.dmceconfig"
+	dmce_set_profile_opts+=" --keeppaths"
+	dmce_set_profile_opts+=" -E $((1024 * 64))"
 
 	pre
 }
@@ -485,7 +485,7 @@ function t11() {
 	dmce_trace_helper
 }
 
-# exercise the trace-mc probe (threads) | profile: trace-mc
+# exercise the trace-mc probe - threads | profile: trace-mc
 function t12() {
 	pre
 
@@ -510,7 +510,7 @@ function t12() {
 	dmce_trace_helper
 }
 
-# exercise the trace-mc probe (trace-threads) | profile: trace-mc
+# exercise the trace-mc probe - trace-threads | profile: trace-mc
 function t13() {
 	pre
 
@@ -535,7 +535,7 @@ function t13() {
 	dmce_trace_helper
 }
 
-# exercise the trace-mc probe (trace-threads-hexdump) | profile: trace-mc
+# exercise the trace-mc probe - trace-threads-hexdump | profile: trace-mc
 function t14() {
 	pre
 
@@ -630,6 +630,156 @@ function t16() {
 	grep -q "${_dir_src:?}/" "${t_log:?}"
 	# assure that we have libsimple entries in the trace
 	grep -q "${d}/" "${t_log:?}"
+}
+
+# exercise the --include option - one function in one file | profile: coverage
+function t17() {
+	pre
+
+	${dmce:?} \
+		--include threads/main.c:tfunc0 \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	fi
+	# shellcheck disable=SC2086
+	dmce-set-profile ${dmce_set_profile_opts:?} \
+		-i threads/main.c:tfunc0 \
+		coverage
+	${dmce:?} \
+		--noepilog \
+		--noprolog \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	fi
+}
+
+# exercise the --include option - multiple functions in one file | profile: coverage
+function t18() {
+	pre
+
+	${dmce:?} \
+		--include threads/main.c:tfunc0,threads/main.c:tfunc1,threads/main.c:tfunc2 \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 3 ]; then
+		exit 1
+	fi
+
+	# shellcheck disable=SC2086
+	dmce-set-profile ${dmce_set_profile_opts:?} \
+		-i threads/main.c:tfunc0,threads/main.c:tfunc1,threads/main.c:tfunc2 \
+		coverage
+	${dmce:?} \
+		--noepilog \
+		--noprolog \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 3 ]; then
+		exit 1
+	fi
+}
+
+# exercise the --exclude option - exclude one file | profile: coverage
+function t19() {
+	pre
+
+	${dmce:?} \
+		--include 'threads/.*' \
+		--exclude threads/main.c \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+}
+
+# exercise the --exclude option - exclude one function in one file | profile: coverage
+function t20() {
+	pre
+
+	${dmce:?} \
+		--include threads/main.c \
+		--exclude threads/main.c:tfunc0 \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	elif [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.exclude)" -ne 1 ]; then
+		exit 1
+	fi
+
+	# shellcheck disable=SC2086
+	dmce-set-profile ${dmce_set_profile_opts:?} \
+		-i threads/main.c \
+		-e threads/main.c:tfunc0 \
+		coverage
+	${dmce:?} \
+		--noepilog \
+		--noprolog \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	elif [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.exclude)" -ne 1 ]; then
+		exit 1
+	fi
+}
+
+# exercise the --exclude option - exclude multiple function in one file | profile: coverage
+function t21() {
+	pre
+
+	${dmce:?} \
+		--include threads/main.c \
+		--exclude threads/main.c:tfunc0,threads/main.c:tfunc1,threads/main.c:tfunc2 \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	elif [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.exclude)" -ne 3 ]; then
+		exit 1
+	fi
+
+	# shellcheck disable=SC2086
+	dmce-set-profile ${dmce_set_profile_opts:?} \
+		-i threads/main.c \
+		-e threads/main.c:tfunc0,threads/main.c:tfunc1,threads/main.c:tfunc2 \
+		coverage
+	${dmce:?} \
+		--noepilog \
+		--noprolog \
+		-v \
+		&> "${t_log:?}"
+	verify
+	if [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.include)" -ne 1 ]; then
+		exit 1
+	elif [ "$(wc -l < "${_dir_dmce:?}"/"${_name:?}"/config/dmce.exclude)" -ne 3 ]; then
+		exit 1
+	fi
 }
 
 main "${@}"
