@@ -113,7 +113,9 @@ To go back to a non-probed state:
 
 ## Trace
 
-DMCE can be used as a trace tool. The following example shows how to find a null-pointer bug in an example program.
+DMCE can be used as a trace tool. There are two UIs, a terminal (see below) and a [graphical one](https://github.com/PatrikAAberg/dmce-gui).  
+
+The following example shows how to find a null-pointer bug in an example program.
 
 Dependencies:
 
