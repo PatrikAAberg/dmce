@@ -276,23 +276,23 @@ Configuration is stored in the file ".dmceconfig". If dmce finds this file in th
 | Entry                          | Description                                                                                           |
 |--------------------------------|-------------------------------------------------------------------------------------------------------|
 DMCE_MEMORY_LIMIT                |
-DMCE_EXEC_PATH                   | 
-DMCE_WORK_PATH                   |
-DMCE_CONFIG_PATH                 |
-DMCE_CMD_LOOKUP_HOOK             |
-DMCE_DEFAULT_C_COMMAND_LINE      |
-DMCE_DEFAULT_CPP_COMMAND_LINE    |
-DMCE_DEFAULT_H_COMMAND_LINE      |
-DMCE_NUM_DATA_VARS               |
-DMCE_ALLOW_DEREFERENCES          |
-DMCE_PROBE_SOURCE                |
-DMCE_PROBE_PROLOG                |
-DMCE_POST_HOOK                   |
-DMCE_SYS_INCLUDES                |
-DMCE_PROBE_TEMPLATES             |
-DMCE_FIX_NULLPTR                 |
-DMCE_TOP_LEVEL_VARS              |
-DMCE_GIT_DIFF_ALGORITHM          |
+DMCE_EXEC_PATH                   | Where DMCE finds it's internal executables
+DMCE_WORK_PATH                   | A lot of temporary files are being created by DMCE, this is where they end up
+DMCE_CONFIG_PATH                 | A DMCE run can uses configuration coming from files in this directory
+DMCE_CMD_LOOKUP_HOOK             | This hook makes it possible to produce file-specific compile command lines
+DMCE_DEFAULT_C_COMMAND_LINE      | Default compile command line for C files
+DMCE_DEFAULT_CPP_COMMAND_LINE    | Default compile command line for C++ files
+DMCE_DEFAULT_H_COMMAND_LINE      | Default compile command line for include files
+DMCE_NUM_DATA_VARS               | Some probes (trace) needs to know how many variables to store. Needs to be the same as DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS
+DMCE_ALLOW_DEREFERENCES          | When fecthing variables, determines if de-referenced pointer values should be picked up
+DMCE_PROBE_SOURCE                | The source file containing the probe entry
+DMCE_PROBE_PROLOG                | The source file containing anything the probe needs to be defined before the probed file
+DMCE_POST_HOOK                   | An executable that is run after the probing pass
+DMCE_SYS_INCLUDES                | Use host system include files or not
+DMCE_PROBE_TEMPLATES             | Probe C++ Templates or not
+DMCE_FIX_NULLPTR                 | Try to replace "return 0" with "return nullptr" for functions returning a pointer or not
+DMCE_TOP_LEVEL_VARS              | Fetch contents of top level variables or not
+DMCE_GIT_DIFF_ALGORITHM          | Select what git diff algorithm should be used when searching for code additions
 
 ### Execution pass configuration
 It is possible to pass information to the running code by using DMCE_PROBE_DEFINE: statements. These key-value pairs will travel down to the actual source code as #define directives and can be used in the actual probe code to control it's behaviour.
