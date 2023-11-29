@@ -398,7 +398,21 @@ function command_line_overrides_comma_separated() {
 			continue
 		fi
 
-		printf "%s\n" ${state[$a]/,/$'\n'} >"${state[dmce_work_dir]}"/config/${arg2file[$a]}
+		if [ "$a" = "exclude" ]; then
+			# exclude file:function lines
+			printf "%s\n" ${state[$a]//,/$'\n'} | \
+				sort -u | \
+				grep -v ':' \
+				>"${state[dmce_work_dir]}"/config/${arg2file[$a]} || true
+		elif [ "$a" = "include" ]; then
+			# dont care about eventual function names"
+			printf "%s\n" ${state[$a]//,/$'\n'} | \
+				cut -d: -f1 | \
+				sort -u \
+				>"${state[dmce_work_dir]}"/config/${arg2file[$a]}
+		else
+			printf "%s\n" ${state[$a]/,/$'\n'} >"${state[dmce_work_dir]}"/config/${arg2file[$a]}
+		fi
 	done
 }
 
@@ -1028,9 +1042,9 @@ function setup() {
 	fi
 
 	if [ "${state[verbose]}" = "true" ]; then
-		_echo "includes: "
+		_echo "includes: ${state[dmce_work_dir]}/config/dmce.include"
 		cat "${state[dmce_work_dir]}"/config/dmce.include
-		_echo "excludes: "
+		_echo "excludes: ${state[dmce_work_dir]}/config/dmce.exclude"
 		cat "${state[dmce_work_dir]}"/config/dmce.exclude
 	fi
 
@@ -1050,6 +1064,18 @@ function setup() {
 	if [ "${state[nbr_of_files]}" -eq 0 ]; then
 		echo "error: no files after include and exclude filter" 1>&2
 		exit 1
+	fi
+
+	# make sure to respect file:function constructs for --include and --exclude
+	if [ "${state[include]}" = "" ]; then
+		grep -E -v '^#|^$' "$DMCE_CONFIG_PATH"/dmce.include >"${state[dmce_work_dir]}"/config/dmce.include
+	else
+		printf "%s\n" "${state[include]//,/$'\n'}" | sort -u > "${state[dmce_work_dir]}"/config/dmce.include
+	fi
+	if [ "${state[exclude]}" = "" ]; then
+		grep -E -v '^#|^$' "$DMCE_CONFIG_PATH"/dmce.exclude >"${state[dmce_work_dir]}"/config/dmce.exclude
+	else
+		printf "%s\n" "${state[exclude]//,/$'\n'}" | sort -u > "${state[dmce_work_dir]}"/config/dmce.exclude
 	fi
 
 	populate_file_list
