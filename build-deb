@@ -59,6 +59,7 @@ cp -a "${gitdir}"/dmce.pos.include dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/dmce.var.exclude dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/dmce.var.include dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/recognizedexpressions.py dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/dmce-completion.bash dmce-"${version}"/usr/share/dmce/
 
 echo "${version}" > dmce-"${version}"/usr/share/dmce/version
 

@@ -142,3 +142,12 @@ cp $installpath/share/dmce/dmce.var.exclude /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/dmce.var.include  /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
 cp $installpath/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
+
+# bash completion
+mkdir \
+	-p \
+	"${HOME:?}"/.local/share/bash-completion/completions
+cp \
+	-a \
+	"$installpath"/share/dmce/dmce-completion.bash \
+	"${HOME:?}"/.local/share/bash-completion/completions/dmce
