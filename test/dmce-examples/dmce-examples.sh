@@ -213,10 +213,18 @@ function main() {
 		done
 	fi
 
-	if [ ${#} -eq 0 ] && [ ${_mode:?} -eq 1 ]; then
+	if [ ${_mode:?} -eq 1 ]; then
 		(
 			cd "${_dir_ref:?}"
-			tar --owner=0 --group=0 -cvJf "${a}"/"${_name:?}".tar.xz -- *.diff
+			if [ ${#} -eq 0 ]; then
+				# create archive
+				tar --owner=0 --group=0 -cvJf "${a}"/"${_name:?}".tar.xz -- *.diff
+			else
+				xz -d "${a}"/"${_name:?}".tar.xz
+				# update archive
+				tar --owner=0 --group=0 -uvf "${a}"/"${_name:?}".tar -- *.diff
+				xz -z "${a}"/"${_name:?}".tar
+			fi
 		)
 	fi
 
