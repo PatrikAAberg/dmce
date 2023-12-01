@@ -41,6 +41,24 @@ After DMCE probing:
         return(DMCE_PROBE(2), c + 42);
     }
 
+## Contents
+
+#### [- Dependencies](#dependencies) 
+#### [- Install and setup](#install-and-setup) 
+#### [- A simple probing workflow example](#a-simple-probing-workflow-example) 
+#### [- Trace](#trace) 
+#### [- Trace GUI](https://github.com/PatrikAAberg/dmce-gui)
+#### [- Patch coverage](#patch-code-coverage) 
+#### [- Traditional code coverage](#traditional-code-coverage) 
+#### [- Heatmaps and code execution patterns](#heatmaps-and-code-execution-patterns) 
+#### [- Use the trace-mc profile for data code coverage](#use-the-trace-mc-profile-for-data-code-coverage) 
+#### [- Provoke race conditions](#provoke-race-conditions) 
+#### [- DMCE command summary](#dmce-command-summary)
+#### [- Probing pass configuration](#probing-pass-configuration)
+#### [- Execution pass configuration](#execution-pass-configuration)
+#### [- DMCE API functions](#dmce-api-functions)
+#### [- FAQ](#faq)
+
 ## Dependencies
 
 git 2.10+
@@ -71,22 +89,6 @@ To install on Ubuntu / Debian:
 Latest stable tag: (to be updated to v2.0.0)
 
 The above will install the neccesary executables and create a default .dmceconfig file and a .config/dmce directory at $HOME. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" utility AND/OR use override switches available for the (dmce) tool itself. The first two will be persistent, the last one will be be used one-time only.
-
-## Contents
-
-#### [- A simple probing workflow example](#a-simple-probing-workflow-example) 
-#### [- Trace](#trace) 
-#### [- Trace GUI](https://github.com/PatrikAAberg/dmce-gui)
-#### [- Patch coverage](#patch-code-coverage) 
-#### [- Traditional code coverage](#traditional-code-coverage) 
-#### [- Heatmaps and code execution patterns](#heatmaps-and-code-execution-patterns) 
-#### [- Use the trace-mc profile for data code coverage](#use-the-trace-mc-profile-for-data-code-coverage) 
-#### [- Provoke race conditions](#provoke-race-conditions) 
-#### [- DMCE command summary](#dmce-command-summary)
-#### [- Probing pass configuration](#probing-pass-configuration)
-#### [- Execution pass configuration](#execution-pass-configuration)
-#### [- DMCE API functions](#dmce-api-functions)
-#### [- FAQ](#faq)
 
 ## A simple probing workflow example
 
