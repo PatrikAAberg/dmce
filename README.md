@@ -99,7 +99,7 @@ This is a basic example just showing how DMCE probes are inserted without changi
 
 Modify the DMCE configuration using the "dmce-set-profile" utility to use a printf probe. We want to include the "simple" directory and exclude the "simplecrash" directory:
 
-    $ dmce-set-profile printf -i simple -e simplecrash
+    $ dmce-set-profile -i simple -e simplecrash printf
 
 Run DMCE for all commits in the git, making it probe everything:
 
@@ -182,7 +182,7 @@ Apply the patch in the patchcov dir:
 
 Probe the untracked and modified files, nothing more:
 
-    $ dmce -n 1 --progress
+    $ dmce -n 1
 
 Check that the patch was probed:
 
@@ -268,7 +268,7 @@ the same amount of cpu timestamps.
     $ git clone https://github.com/PatrikAAberg/dmce-examples.git
     $ cd dmce-examples
     $ dmce-set-profile racectrack
-    $ dmce -aq
+    $ dmce
     $ cd simple && ./build && ./simple
 
 ## DMCE command summary
@@ -277,7 +277,7 @@ For each command, please see their respective --help for further details.
 
 | Command           | Description                                                                                                   |
 |-------------------|---------------------------------------------------------------------------------------------------------------|
-| dmce-setup        | Create a .dmceconfig file and a config directory in /home/$USER and /home/$USER/.config                       |
+| dmce-setup        | Create a .dmceconfig file and a config directory in $HOME and $HOME/.config                       |
 | dmce-set-profile  | Config file helper utility: Choose one of pre-defined configurations, add filters and change some behaviours  |
 | dmce              | Insert probes in current git directory                                                                        |
 | dmce-stats        | Get some stats (how many inserted probes etc.) from a probed git                                              |
