@@ -328,7 +328,11 @@ It is possible to pass information to the running code by using DMCE_PROBE_DEFIN
 
 ### DMCE API functions
 
-To be updated
+| Name                                                        | Description                                                                 |
+|-------------------------------------------------------------|-----------------------------------------------------------------------------|
+| DMCE_BP()                                                   | Raise a SIGTRAP signal, making the process stop and produce a dmce trace    |
+| DMCE_HEXDUMP(uint64_t hdnum, void* p, uint64_t size)        | Insert a hexdump into the trace buffer. hdnum can contain an arbitrary value for identification at later stages |
+| void DMCE_PRINTF(const char* fmt, ...)                      | Insert a formatted printf like text into the trace buffer                   |
 
 ### FAQ
 
