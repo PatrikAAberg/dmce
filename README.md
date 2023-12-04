@@ -1,3 +1,5 @@
+<img src="https://github.com/PatrikAAberg/dmce/assets/22773714/d6224f16-d9d3-4d42-bbe6-895805b20dfe" width=40% height=40%>
+
 # DMCE (Did My Code Execute?)
 
 Source code level instrumentation tool that enables dynamic code execution tracking *without HW or build tool chain dependencies*.
