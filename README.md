@@ -277,7 +277,7 @@ For each command, please see their respective --help for further details.
 
 | Command           | Description                                                                                                   |
 |-------------------|---------------------------------------------------------------------------------------------------------------|
-| dmce-setup        | Create a .dmceconfig file and a config directory in $HOME and $HOME/.config                       |
+| dmce-setup        | Create a .dmceconfig file and a config directory in $HOME and $HOME/.config                                   |
 | dmce-set-profile  | Config file helper utility: Choose one of pre-defined configurations, add filters and change some behaviours  |
 | dmce              | Insert probes in current git directory                                                                        |
 | dmce-stats        | Get some stats (how many inserted probes etc.) from a probed git                                              |
@@ -292,39 +292,39 @@ Configuration is stored in the file ".dmceconfig". If dmce finds this file in th
 
 | Entry                            | Description                                                                                           |
 |----------------------------------|-------------------------------------------------------------------------------------------------------|
-| DMCE_MEMORY_LIMIT                |
-| DMCE_EXEC_PATH                   | Where DMCE finds it's internal executables
-| DMCE_WORK_PATH                   | A lot of temporary files are being created by DMCE, this is where they end up
-| DMCE_CONFIG_PATH                 | A DMCE run can uses configuration coming from files in this directory
-| DMCE_CMD_LOOKUP_HOOK             | This hook makes it possible to produce file-specific compile command lines
-| DMCE_DEFAULT_C_COMMAND_LINE      | Default compile command line for C files
-| DMCE_DEFAULT_CPP_COMMAND_LINE    | Default compile command line for C++ files
-| DMCE_DEFAULT_H_COMMAND_LINE      | Default compile command line for include files
-| DMCE_NUM_DATA_VARS               | Some probes (trace) needs to know how many variables to store. Needs to be the same as DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS
-| DMCE_ALLOW_DEREFERENCES          | When fecthing variables, determines if de-referenced pointer values should be picked up
-| DMCE_PROBE_SOURCE                | The source file containing the probe entry
-| DMCE_PROBE_PROLOG                | The source file containing anything the probe needs to be defined before the probed file
-| DMCE_POST_HOOK                   | An executable that is run after the probing pass
-| DMCE_SYS_INCLUDES                | Use host system include files or not
-| DMCE_PROBE_TEMPLATES             | Probe C++ Templates or not
-| DMCE_FIX_NULLPTR                 | Try to replace "return 0" with "return nullptr" for functions returning a pointer or not
-| DMCE_TOP_LEVEL_VARS              | Fetch contents of top level variables or not
-| DMCE_GIT_DIFF_ALGORITHM          | Select what git diff algorithm should be used when searching for code additions
-| DMCE_EDITOR                      | Utilities (currently the terminal UI) use this to pick source code editor
-| DMCE_CACHE                       | Experimental: Enable DMCE caches for speeding up consecutive runs
+| DMCE_MEMORY_LIMIT                | How much memory (in percent) DMCE is allowed to use during probing pass                                                                                                       |
+| DMCE_EXEC_PATH                   | Where DMCE finds it's internal executables                                                            |
+| DMCE_WORK_PATH                   | A lot of temporary files are being created by DMCE, this is where they end up                         |
+| DMCE_CONFIG_PATH                 | A DMCE run can uses configuration coming from files in this directory                                 |
+| DMCE_CMD_LOOKUP_HOOK             | This hook makes it possible to produce file-specific compile command lines                            |
+| DMCE_DEFAULT_C_COMMAND_LINE      | Default compile command line for C files                                                              |
+| DMCE_DEFAULT_CPP_COMMAND_LINE    | Default compile command line for C++ files                                                            |
+| DMCE_DEFAULT_H_COMMAND_LINE      | Default compile command line for include files                                                        |
+| DMCE_NUM_DATA_VARS               | Some probes (trace) needs to know how many variables to store. Needs to be the same as DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS |
+| DMCE_ALLOW_DEREFERENCES          | When fecthing variables, determines if de-referenced pointer values should be picked up               |
+| DMCE_PROBE_SOURCE                | The source file containing the probe entry                                                            |
+| DMCE_PROBE_PROLOG                | The source file containing anything the probe needs to be defined before the probed file              |
+| DMCE_POST_HOOK                   | An executable that is run after the probing pass                                                      |
+| DMCE_SYS_INCLUDES                | Use host system include files or not                                                                  |
+| DMCE_PROBE_TEMPLATES             | Probe C++ Templates or not                                                                            |
+| DMCE_FIX_NULLPTR                 | Try to replace "return 0" with "return nullptr" for functions returning a pointer or not              |
+| DMCE_TOP_LEVEL_VARS              | Fetch contents of top level variables or not                                                          |
+| DMCE_GIT_DIFF_ALGORITHM          | Select what git diff algorithm should be used when searching for code additions                       |
+| DMCE_EDITOR                      | Utilities (currently the terminal UI) use this to pick source code editor                             |
+| DMCE_CACHE                       | Experimental: Enable DMCE caches for speeding up consecutive runs                                     |
 
 ### Execution pass configuration
 It is possible to pass information to the running code by using DMCE_PROBE_DEFINE: statements. These key-value pairs will travel down to the actual source code as #define directives and can be used in the actual probe code to control it's behaviour.
 
 | Entry                                                 | Description                                                                                               |
 |-------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES        | Used by trace probes: How many trace entries per buffer (multiple with number of used cores for trace-mc)
-| DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS    | Used by trace probes: How many optional elements within each trace entry
-| DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH              | Where probes should put any out files
-| DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY           | If needed by the probe: Path to where to put the mkdir lock for init code
-| DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT            | If needed by the probe: Path to where to put the mkdir lock for exit code
-| DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED            | Decides if trace should be enabled from start of the program or not
-| DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS           | Probes can use this to know if they should register a signal handler
+| DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES        | Used by trace probes: How many trace entries per buffer (multiple with number of used cores for trace-mc) |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS    | Used by trace probes: How many optional elements within each trace entry                                  |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH              | Where probes should put any out files                                                                     |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY           | If needed by the probe: Path to where to put the mkdir lock for init code                                 |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT            | If needed by the probe: Path to where to put the mkdir lock for exit code                                 |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED            | Decides if trace should be enabled from start of the program or not                                       |
+| DMCE_PROBE_DEFINE:DMCE_PROBE_HANDLE_SIGNALS           | Probes can use this to know if they should register a signal handler                                      |
 
 ### DMCE API functions
 
