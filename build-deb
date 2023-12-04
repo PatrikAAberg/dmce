@@ -44,12 +44,12 @@ cp -a "${gitdir}"/bin/dmce-stats dmce-"${version}"/usr/bin/
 cp -a "${gitdir}"/probe-examples/dmce-probe*   dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/probe-examples/dmce-prolog*   dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/dmce-post-hook*   dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/cmdlookuphook.sh dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce-copy-headers dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce-remove-relpaths.sh dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.sh dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/generate-compile-commands.py dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/generate-probefile.py dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/cmdlookuphook.sh dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/dmce-copy-headers dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/dmce-remove-relpaths.sh dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/dmce.sh dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/generate-compile-commands.py dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/share/generate-probefile.py dmce-"${version}"/usr/share/dmce/
 
 cp -a "${gitdir}"/constructs.exclude dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/dmce.exclude dmce-"${version}"/usr/share/dmce/
