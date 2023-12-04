@@ -2,7 +2,7 @@
 
 # DMCE (Did My Code Execute?)
 
-Source code level instrumentation tool that enables dynamic code execution tracking *without HW or build tool chain dependencies*.
+Source code level instrumentation tool that enables dynamic code execution tracking *with minimal HW or build tool chain dependencies*.
 
 Probes c/c++ expressions added between two git revisions. Consists of a bunch of bash and python scripts on top of clang-check and git.
 
