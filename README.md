@@ -105,7 +105,7 @@ Modify the DMCE configuration using the "dmce-set-profile" utility to use a prin
 
 Run DMCE for all commits in the git, making it probe everything:
 
-    $ dmce # for earlier verisions ( <= 1.8,1), use "dmce-launcher -aq"
+    $ dmce
 
 Check the diff. You should be able to see the inserted DMCE probes.
 

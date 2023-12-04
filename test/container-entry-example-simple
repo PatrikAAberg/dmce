@@ -12,7 +12,7 @@ export USER="root" # not set in docker container
 dmce-setup
 cd dmce-examples
 dmce-set-profile printf -i simple -e simplecrash
-dmce-launcher -n 10000
+dmce -n 10000
 git diff
 cd simple
 ./build

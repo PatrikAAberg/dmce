@@ -16,7 +16,7 @@ dmce-set-profile coverage -i patchcov
 pushd patchcov
 git apply 000-patchcov.patch
 popd
-dmce-launcher -n 1
+dmce -n 1
 git diff
 rm -f /tmp/${USER}/dmce/dmcebuffer.bin
 cd patchcov

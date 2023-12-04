@@ -72,7 +72,7 @@ if [ -f $probe_file ] && [ -f $expr_file ]; then
 else
     echo
     echo "Could not find the correct files."
-    echo "You need to run '../dmce/dmce-launcher' before running this test."
+    echo "You need to run '../dmce/dmce' before running this test."
 fi
 
 #############################

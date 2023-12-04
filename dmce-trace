@@ -210,7 +210,7 @@ for i in range(numfrefs):
         print("Probed code tree: no", file = outfile)
 
     if state_probed and original:
-        print("dmce trace: Detected a probed code tree " + codetree[i] + " combined with " + probefile[i]  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
+        print("dmce trace: Detected a probed code tree " + codetree[i] + " combined with " + probefile[i]  + "   Please run dmce -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
         exit (1)
 
     if not state_probed and not original:

@@ -13,7 +13,7 @@ export USER="root" # not set in docker container
 dmce-setup
 cd dmce-examples
 dmce-set-profile trace -i threads
-dmce-launcher -n 10000
+dmce -n 10000
 pushd threads
 ./build
 set +e

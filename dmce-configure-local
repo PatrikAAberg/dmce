@@ -27,7 +27,7 @@ echo "dmce local configurator"
 echo "-----------------------"
 echo "Creating .dmceconfig file in $HOME"
 echo "dmce will look for executables and filters in $install_path"
-# Add dmce git repo to path so that we can call dmce-launcher from within gits
+# Add dmce git repo to path so that we can call dmce from within gits
 PATH="$install_path $PATH"
 export PATH
 

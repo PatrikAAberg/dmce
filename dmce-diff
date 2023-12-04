@@ -86,7 +86,7 @@ def read_and_filter(filter_mask):
             state_probed  = True
 
         if state_probed and original:
-            print("error: Detected a probed code tree combined with " + probefile  + "   Please run dmce-launcher -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
+            print("error: Detected a probed code tree combined with " + probefile  + "   Please run dmce -c to clear probes or use probe-references.log instead, abort", file=sys.stderr)
             exit (1)
 
         if not state_probed and not original:
