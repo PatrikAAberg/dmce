@@ -134,6 +134,7 @@ function init() {
 	if [ "${_mode:?}" -eq 0 ]; then
 		llvm_ver=$(clang-check --version | grep -o 'LLVM.*' | grep -o '[0-9].*' | cut -d'.' -f1)
 		if [ "${llvm_ver}" != "${_llvm_major_version:?}" ]; then
+			echo "error: llvm/clang-check version mismatch: installed: ${llvm_ver} required: ${_llvm_major_version:?}" 1>&2
 			exit 1
 		fi
 
