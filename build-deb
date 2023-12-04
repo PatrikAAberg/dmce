@@ -51,14 +51,14 @@ cp -a "${gitdir}"/share/dmce.sh dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/share/generate-compile-commands.py dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/share/generate-probefile.py dmce-"${version}"/usr/share/dmce/
 
-cp -a "${gitdir}"/constructs.exclude dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.exclude dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.include dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.pos.exclude dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.pos.include dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.var.exclude dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/dmce.var.include dmce-"${version}"/usr/share/dmce/
-cp -a "${gitdir}"/recognizedexpressions.py dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/constructs.exclude dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.exclude dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.include dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.pos.exclude dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.pos.include dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.var.exclude dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/dmce.var.include dmce-"${version}"/usr/share/dmce/
+cp -a "${gitdir}"/filters/recognizedexpressions.py dmce-"${version}"/usr/share/dmce/
 cp -a "${gitdir}"/dmce-completion.bash dmce-"${version}"/usr/share/dmce/
 
 echo "${version}" > dmce-"${version}"/usr/share/dmce/version
