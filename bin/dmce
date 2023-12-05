@@ -513,7 +513,7 @@ function set_version() {
 
 	dmce_dir="${BASH_SOURCE[0]}"
 	dmce_dir="${dmce_dir%/*}"
-	dmce_dir="$(cd "${dmce_dir}" && pwd -P)"
+	dmce_dir="$(cd "${dmce_dir}/.." && pwd -P)"
 	if [ -d "${dmce_dir}"/.git ]; then
 		state[version]=$(GIT_CEILING_DIRECTORIES="$dmce_dir" git -C "$dmce_dir" describe --tags --always --dirty --long 2>/dev/null)
 	elif [ -s "${dmce_dir}/debian/control" ]; then
