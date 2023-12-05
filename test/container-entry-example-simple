@@ -4,7 +4,7 @@ apt update
 apt install -y git python3 clang-tools python3-pip
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
-./build-deb
+./build-pkg
 dpkg -i dmce-*.deb
 cd ..
 git clone https://github.com/PatrikAAberg/dmce-examples.git

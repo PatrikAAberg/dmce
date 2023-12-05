@@ -5,7 +5,7 @@ apt install -y build-essential pkg-config libtool libevent-dev libncurses5-dev l
 pip3 install numpy colorama
 git clone https://github.com/PatrikAAberg/dmce.git
 cd dmce
-./build-deb
+./build-pkg
 dpkg -i dmce-1.2-0.deb
 cd ..
 git clone https://github.com/tmux/tmux.git

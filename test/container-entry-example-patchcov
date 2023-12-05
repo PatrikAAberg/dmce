@@ -5,7 +5,7 @@ apt install -y git python3 clang-tools python3-pip
 git clone https://github.com/PatrikAAberg/dmce.git
 pip3 install numpy
 cd dmce
-./build-deb
+./build-pkg
 dpkg -i dmce-*.deb
 cd ..
 git clone https://github.com/PatrikAAberg/dmce-examples.git

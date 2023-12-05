@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+# Copyright (c) 2023 Ericsson AB
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+set -e
+
+function usage() {
+	echo "usage: build-pkg [bz2|deb|gz|xz]" 1>&2
+	exit 1
+}
+
+function cleanup() {
+	rm -rf "${d:?}"
+}
+
+if [[ $* == *--help* ]] || [ $# -gt 1 ]; then
+	usage
+elif [ ! -s "debian/control" ]; then
+	echo "error: cd to DMCE base dir" 1>&2
+	exit 1
+fi
+
+version=$(grep ^Version debian/control | cut -d' ' -f2)
+gitdir=${PWD}
+
+trap cleanup EXIT
+
+# tree structure
+d=$(mktemp -d)
+cd "${d}" || exit
+mkdir -p dmce-"${version}"/DEBIAN \
+	dmce-"${version}"/usr/bin \
+	dmce-"${version}"/usr/share/dmce
+
+# deb files
+cp -a \
+	"${gitdir}"/debian/* \
+	dmce-"${version}"/DEBIAN
+
+# bin
+cp -a \
+	"${gitdir}"/bin/dmce \
+	"${gitdir}"/bin/dmce-configure-local \
+	"${gitdir}"/bin/dmce-diff \
+	"${gitdir}"/bin/dmce-launcher \
+	"${gitdir}"/bin/dmce-set-profile \
+	"${gitdir}"/bin/dmce-setup \
+	"${gitdir}"/bin/dmce-stats \
+	"${gitdir}"/bin/dmce-summary* \
+	"${gitdir}"/bin/dmce-trace \
+	"${gitdir}"/bin/dmce-trace-tgui \
+	"${gitdir}"/bin/dmce-trace-viewer \
+	dmce-"${version}"/usr/bin/
+
+# share
+cp -a \
+	"${gitdir}"/dmce-completion.bash \
+	"${gitdir}"/dmce-post-hook* \
+	"${gitdir}"/filters/constructs.exclude \
+	"${gitdir}"/filters/dmce.exclude \
+	"${gitdir}"/filters/dmce.include \
+	"${gitdir}"/filters/dmce.pos.exclude \
+	"${gitdir}"/filters/dmce.pos.include \
+	"${gitdir}"/filters/dmce.var.exclude \
+	"${gitdir}"/filters/dmce.var.include \
+	"${gitdir}"/filters/recognizedexpressions.py \
+	"${gitdir}"/probe-examples/dmce-probe* \
+	"${gitdir}"/probe-examples/dmce-prolog* \
+	"${gitdir}"/share/cmdlookuphook.sh \
+	"${gitdir}"/share/dmce-copy-headers \
+	"${gitdir}"/share/dmce-remove-relpaths.sh \
+	"${gitdir}"/share/dmce.sh \
+	"${gitdir}"/share/generate-compile-commands.py \
+	"${gitdir}"/share/generate-probefile.py \
+	dmce-"${version}"/usr/share/dmce/
+
+# version
+echo "${version}" > dmce-"${version}"/usr/share/dmce/version
+
+# build package
+if [ $# -eq 1 ]; then
+	o="$1"
+else
+	o="auto"
+	if command -v dpkg-deb > /dev/null; then
+		o="deb"
+	fi
+fi
+
+if [ "$o" = "deb" ]; then
+	if ! command -v dpkg-deb > /dev/null; then
+		echo "error: command 'dpkg-deb' missing"
+		exit 1
+	elif ! command -v fakeroot > /dev/null; then
+		echo "error: command 'fakeroot' missing"
+		exit 1
+	fi
+	fakeroot \
+		dpkg-deb \
+		--build dmce-"${version}" \
+		"${gitdir}"/dmce-"${version}".deb \
+		> /dev/null
+	echo "${gitdir}"/dmce-"${version}".deb
+	exit 0
+elif [ "$o" = "auto" ]; then
+	if command -v xz > /dev/null; then
+		opt="J"
+		ext="xz"
+	elif command -v bzip2 > /dev/null; then
+		opt="j"
+		ext="bz2"
+	elif command -v gzip > /dev/null; then
+		opt="z"
+		ext="gz"
+	else
+		echo "error: no compression tools (xz, bzip2 nor gzip) found"
+		exit 1
+	fi
+else
+	ext="$o"
+	case "$o" in
+		xz)
+			opt="J";;
+		bz2)
+			opt="j";;
+		gz)
+			opt="z";;
+		*)
+			usage
+			;;
+	esac
+fi
+
+rm -rf dmce-"${version}"/DEBIAN
+tar \
+	--owner=0 \
+	--group=0 \
+	-c \
+	-${opt:?} \
+	-f "${gitdir}"/dmce-"${version}".tar.${ext} \
+	.
+echo "${gitdir}"/dmce-"${version}".tar.${ext}

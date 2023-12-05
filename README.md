@@ -81,7 +81,7 @@ DMCE is currently installed using Ubuntu/Debian packages. To build an installabl
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
-    $ ./build-deb
+    $ ./build-pkg
 
 To install on Ubuntu / Debian:
 
