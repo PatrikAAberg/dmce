@@ -70,8 +70,6 @@ cp -a \
 
 # share
 cp -a \
-	"${gitdir}"/dmce-completion.bash \
-	"${gitdir}"/dmce-post-hook* \
 	"${gitdir}"/filters/constructs.exclude \
 	"${gitdir}"/filters/dmce.exclude \
 	"${gitdir}"/filters/dmce.include \
@@ -80,9 +78,11 @@ cp -a \
 	"${gitdir}"/filters/dmce.var.exclude \
 	"${gitdir}"/filters/dmce.var.include \
 	"${gitdir}"/filters/recognizedexpressions.py \
+	"${gitdir}"/hooks/dmce-post-hook* \
 	"${gitdir}"/probe-examples/dmce-probe* \
 	"${gitdir}"/probe-examples/dmce-prolog* \
 	"${gitdir}"/share/cmdlookuphook.sh \
+	"${gitdir}"/share/dmce-completion.bash \
 	"${gitdir}"/share/dmce-copy-headers \
 	"${gitdir}"/share/dmce-remove-relpaths.sh \
 	"${gitdir}"/share/dmce.sh \
