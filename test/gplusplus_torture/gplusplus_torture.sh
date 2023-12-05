@@ -53,8 +53,15 @@ if ! dmce_exec_path="$(git rev-parse --show-toplevel 2> /dev/null)"; then
 		_echo "fetch DMCE"
 		git -C ${my_work_path} clone --depth 1 https://github.com/PatrikAAberg/dmce.git
 	fi
-	dmce_exec_path=${PWD}/dmce
+	dmce_exec_path=${PWD}/dmce/share
+	dmce_git_path=${PWD}/dmce/dmce
+	dmce_install_path=${PWD}/dmce/bin
+else
+	dmce_git_path=${dmce_exec_path}
+	dmce_install_path=${dmce_exec_path}/bin
+	dmce_exec_path=${dmce_exec_path}/share
 fi
+
 set -e
 
 cd ${my_work_path}
@@ -335,7 +342,7 @@ if [ -s ${my_work_path}/compile-timeouts ]; then
 fi
 
 # add DMCE config and update paths
-cp -v ${dmce_exec_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
+cp -v ${dmce_git_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
 sed -i "s|DMCE_WORK_PATH:.*|DMCE_WORK_PATH:${dmce_work_path}|" .dmceconfig
 sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:${dmce_exec_path}|" .dmceconfig
 sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:${my_test_path}|" .dmceconfig
@@ -357,9 +364,9 @@ git commit -q -m "DMCE config"
 git --no-pager log --oneline --shortstat --no-color
 
 _echo "launch DMCE"
-${dmce_exec_path}/dmce -a -v
+${dmce_install_path}/dmce -a -v
 
-${dmce_exec_path}/dmce-stats
+${dmce_install_path}/dmce-stats
 
 _echo "compile"
 true > ${my_work_path}/compile-errors
