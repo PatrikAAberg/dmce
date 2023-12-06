@@ -21,7 +21,7 @@
 set -e
 
 function usage() {
-	echo "usage: build-pkg [bz2|deb|gz|xz]" 1>&2
+	echo "usage: build-pkg [bz2|deb|gz|rpm|xz]" 1>&2
 	exit 1
 }
 
@@ -43,6 +43,7 @@ trap cleanup EXIT
 
 # tree structure
 d=$(mktemp -d)
+e=${PWD}
 cd "${d}" || exit
 mkdir -p dmce-"${version}"/DEBIAN \
 	dmce-"${version}"/usr/bin \
@@ -103,6 +104,14 @@ else
 	fi
 fi
 
+if [ "$o" = "rpm" ]; then
+	if ! command -v alien > /dev/null; then
+		echo "error: command 'alien' missing"
+		exit 1
+	fi
+	o="gz"
+fi
+
 if [ "$o" = "deb" ]; then
 	if ! command -v dpkg-deb > /dev/null; then
 		echo "error: command 'dpkg-deb' missing"
@@ -155,4 +164,21 @@ tar \
 	-${opt:?} \
 	-f "${gitdir}"/dmce-"${version}".tar.${ext} \
 	.
-echo "${gitdir}"/dmce-"${version}".tar.${ext}
+if [ "$1" != "rpm" ]; then
+	echo "${gitdir}"/dmce-"${version}".tar.${ext}
+else
+	cd "${e:?}" || exit 1
+	fakeroot \
+		alien \
+		--to-rpm \
+		--keep-version \
+		--target="$(uname -m)" \
+		"${gitdir}"/dmce-"${version}".tar.${ext} > /dev/null
+	rm "${gitdir}"/dmce-"${version}".tar.${ext}
+	find \
+		"${e:?}" \
+		-maxdepth 1 \
+		-type f \
+		-name '*.rpm' \
+		-exec readlink -f {} \;
+fi
