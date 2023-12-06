@@ -815,4 +815,20 @@ function t22() {
 	done
 }
 
+# exercise the racetrack probe - trace-threads | profile: trace-mc
+function t23() {
+	pre
+
+	${dmce:?} \
+		--include 'threads/.*' \
+		--profile racetrack \
+		-v \
+		&> "${t_log:?}"
+	(
+		cd threads
+		gcc -o trace-threads -pthread trace_threads.c
+		./trace-threads || true
+	) >> "${t_log:?}" 2>&1
+}
+
 main "${@}"
