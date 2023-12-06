@@ -56,6 +56,7 @@ function cleanup() {
 	if [ "${?}" -eq 42 ]; then
 		stash_and_checkout
 		echo "OK | ${i} test(s) | $((SECONDS - s)) seconds"
+		exit 0
 	else
 		find "${_dir_tst:?}"/ -maxdepth 1 -name '*.log' -print -exec cat {} \;
 		echo "NOK | ${i} test(s) | $((SECONDS - s)) seconds"
