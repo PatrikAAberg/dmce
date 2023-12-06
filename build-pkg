@@ -160,6 +160,7 @@ rm -rf dmce-"${version}"/DEBIAN
 tar \
 	--owner=0 \
 	--group=0 \
+	-C dmce-"${version}" \
 	-c \
 	-${opt:?} \
 	-f "${gitdir}"/dmce-"${version}".tar.${ext} \
