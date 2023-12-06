@@ -50,6 +50,7 @@ After DMCE probing:
 #### [- A simple probing workflow example](#a-simple-probing-workflow-example) 
 #### [- Trace](#trace) 
 #### [- Trace GUI](https://github.com/PatrikAAberg/dmce-gui)
+#### [- Code execution pattern diff](#code-execution-pattern-diff) 
 #### [- Patch coverage](#patch-code-coverage) 
 #### [- Traditional code coverage](#traditional-code-coverage) 
 #### [- Heatmaps and code execution patterns](#heatmaps-and-code-execution-patterns) 
@@ -164,6 +165,20 @@ You might want something fancier than less to view your trace:
     $ ./threads
     $ cd ..
     $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+
+## Code execution pattern diff
+
+![dmce-diff](https://github.com/PatrikAAberg/dmce/assets/22773714/84a81ea3-e440-479d-939b-c4674d06adbe)
+
+A DMCE code execution pattern (generated using the "heatmap" profile) consists of an array of counters, each counter representing the number of times each probe has been hit. During a debug session, it can be quite valuable to compare patterns for e.g. passed / failed runs:
+
+    $ cd dmce-examples/diff
+    $ dmce && ./build && ./diffthis
+    $ cp /tmp/$USER/dmce/dmcebuffer.bin buf1
+    $ rm /tmp/$USER/dmce/dmcebuffer.bin
+    $ ./diffthis foo
+    $ cp /tmp/$USER/dmce/dmcebuffer.bin buf2
+    $ dmce-diff buf1,buf2 /tmp/$USER/dmce/dmce-examples/probe-references.log ../
 
 ## Patch code coverage
 
@@ -284,6 +299,7 @@ For each command, please see their respective --help for further details.
 | dmce-summary-bin  | Get a coverage / heatmap report (using the "coverage" profile)                                                |
 | dmce-trace        | Generate a textual trace output (using the "trace-mc" or "trace" profile)                                     |
 | dmce-trace-viewer | Launch an interactive trace viewer (using the "trace-mc" or "trace" profile)                                  |
+| dmce-diff         | Diff tool for comparing code execution pattern buffers generated with the heatmap profile                     |
 
 ## Entries in .dmceconfig
 
