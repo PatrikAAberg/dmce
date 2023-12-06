@@ -85,7 +85,7 @@ DMCE is currently installed using Ubuntu/Debian packages. To build an installabl
 
 To install on Ubuntu / Debian:
 
-    $ dpkg -i dmce-X.Y-Z.deb    # To uninstall: $ dpkg -r dmce
+    $ dpkg -i dmce-X.Y.Z.deb    # To uninstall: $ dpkg -r dmce
     $ dmce-setup
 
 Latest stable tag: (to be updated to v2.0.0)
