@@ -68,7 +68,7 @@ git 2.10+
 
 bash 4+
 
-python 3+
+python 3.7+
 
 clang-tools
 
