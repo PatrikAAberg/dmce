@@ -25,13 +25,13 @@
 
 set -e
 
-_name="dmce-examples"
+_name="unittest"
 
-# mode 0 = compare/verify git diffs after each test vs. reference diff files within 'dmce-examples.tar.xz'
-# mode 1 = create a new 'dmce-examples.tar.xz' file - no verfication is performed in this mode
+# mode 0 = compare/verify git diffs after each test vs. reference diff files within 'unittest.tar.xz'
+# mode 1 = create a new 'unittest.tar.xz' file - no verfication is performed in this mode
 _mode=0
 
-# reference diff files (within 'dmce-examples.tar.xz') are dependent on LLVM version
+# reference diff files (within 'unittest.tar.xz') are dependent on LLVM version
 _llvm_major_version=17
 
 # use a fixed revision
@@ -125,7 +125,7 @@ function init() {
 
 	declare -A -g test_desc
 	for c in $(list_tests); do
-		test_desc[${c}]=$(grep -B1 "^function ${c}()" dmce-examples.sh | \
+		test_desc[${c}]=$(grep -B1 "^function ${c}()" unittest.sh | \
 			grep -v ^function | \
 			sed -e 's,^# ,,g')
 	done
