@@ -9,21 +9,33 @@ elif ! command -v shellcheck > /dev/null; then
 	exit 1
 fi
 
-mapfile -t sc_list < <(git ls-files | xargs file | grep 'Bourne-Again shell script' | cut -d: -f1)
+# for all bash shell scripts
+mapfile -t sc_list < <(\
+	git ls-files | \
+	xargs file | \
+	grep 'Bourne-Again shell script' | \
+	cut -d: -f1)
+
 for f in "${sc_list[@]}"; do
+	# check shebang
 	if ! head -1 "${f}" | grep -q '#!/usr/bin/env bash'; then
 		echo "error: '$f': wrong shebang" 1>&2
 		exit 1
 	fi
+
+	# pretty print
 	if command -v figlet > /dev/null; then
 		figlet -t "shellcheck: $f"
 	else
 		echo "shellcheck: $f"
 	fi
+
+	# run shellcheck
 	if ! shellcheck "$f"; then
 		exit 1
 	fi
 done
 
+# run tests
 cd test
 ./run-all.sh
