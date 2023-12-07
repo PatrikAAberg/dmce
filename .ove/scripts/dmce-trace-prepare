@@ -166,7 +166,7 @@ function main() {
 				n=$(git -C "$repo" grep 'DMCE_NBR_OF_PROBES ('| cut -d: -f2 | sort -u | wc -l)
 				# assert
 				if [ "$n" -ne 1 ]; then
-					echo "error: more than one DMCE_NBR_OF_PROBES in '${repo_short}'"
+					echo "error: more than one DMCE_NBR_OF_PROBES in '${repo_short}'" 1>&2
 					exit 1
 				fi
 
@@ -302,7 +302,7 @@ function dmce_one_repo {
 				profiles="$(dmce-set-profile -l)"
 				re=\\b$profile\\b
 				if [[ ! "${profiles}" =~ ${re} ]]; then
-					echo "error: wrong profile '$profile' - available: $profiles"
+					echo "error: wrong profile '$profile' - available: $profiles" 1>&2
 					return 1
 				fi
 			fi

@@ -24,7 +24,7 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 if [ ! -e "${OVE_BASE_DIR:?}/.dmceconfig" ]; then
-    echo "error: '\$OVE_BASE_DIR/.dmceconfig' not found, try to install DMCE by running 'ove install dmce'"
+    echo "error: '\$OVE_BASE_DIR/.dmceconfig' not found, try to install DMCE by running 'ove install dmce'" 1>&2
     exit 1
 fi
 
@@ -124,7 +124,7 @@ function _find {
     fi
 
     if [ ! -e "${prog}" ]; then
-        echo "error: can not find '${1}'"
+        echo "error: can not find '${1}'" 1>&2
         exit 1
     fi
 }
@@ -204,7 +204,7 @@ function main {
             exit 1
         fi
     elif [ "x$(type -t "${1/-/_}")" != "xfunction" ]; then
-        echo "error: '$1' unknown command"
+        echo "error: '$1' unknown command" 1>&2
         exit 1
     else
         if ! ${1/-/_} "$@"; then

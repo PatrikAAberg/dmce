@@ -244,11 +244,11 @@ function init() {
         usage
         exit 1
     elif [ ! -d "${git_full}" ]; then
-        echo "error: ${git_full} is not a directory"
+        echo "error: ${git_full} is not a directory" 1>&2
         usage
         exit 1
     elif [ ! -d "${git_full}"/.git ]; then
-        echo "error: ${git_full} does not appear to be a git repo"
+        echo "error: ${git_full} does not appear to be a git repo" 1>&2
         usage
         exit 1
     fi
@@ -271,7 +271,7 @@ function init() {
         mode="$1"
         shift
         if [[ ! "${mode}" =~ ^[1-7]$ ]]; then
-            echo "error: unknown mode: '$mode'"
+            echo "error: unknown mode: '$mode'" 1>&2
 
             #usage
             exit 1
@@ -299,17 +299,17 @@ function init() {
 
     nbr_revs=${#revs[@]}
     if [ "${nbr_revs}" -eq 0 ]; then
-        echo "error: no revs"
+        echo "error: no revs" 1>&2
         exit 1
     elif [ "${nbr_revs}" -eq 1 ]; then
-        echo "error: provide at least two revisions"
+        echo "error: provide at least two revisions" 1>&2
         exit 1
     fi
 
     # sanity check
     for i in $(seq 0 $((nbr_revs - 1))); do
         if ! git -C "${git_full}" cat-file -e "${revs[i]}" &> /dev/null; then
-            echo "error: '${revs[i]}' is not a valid rev"
+            echo "error: '${revs[i]}' is not a valid rev" 1>&2
             exit 1
         fi
 
@@ -329,40 +329,40 @@ function init() {
     ove-worktree remove "$worktree" || true
     ove-echo cyan "ove-worktree add ${worktree}"
     if ! ove-worktree add "$worktree"; then
-        echo "error: 'ove-worktree add ${worktree}' failed"
+        echo "error: 'ove-worktree add ${worktree}' failed" 1>&2
         exit 1
     fi
 
     if ! cd "${worktree}"; then
-        echo "error: 'cd ${worktree}' failed, weird!"
+        echo "error: 'cd ${worktree}' failed, weird!" 1>&2
         exit 1
     fi
 
     # shellcheck disable=SC1091
     source ove
     if ! ove buildme dmce; then
-        echo "error: 'ove buildme dmce' failed, weird!"
+        echo "error: 'ove buildme dmce' failed, weird!" 1>&2
         exit 1
     fi
 
     if ! cd "${worktree}/${git}"; then
-        echo "error: 'cd ${worktree}/${git}' failed, weird!"
+        echo "error: 'cd ${worktree}/${git}' failed, weird!" 1>&2
         exit 1
     fi
 
     if ! ove dmce launch -c -- "$git"; then
-        echo "error: 'ove-dmce launch -c -- $git' failed"
+        echo "error: 'ove-dmce launch -c -- $git' failed" 1>&2
         exit 1
     fi
 
     ove-echo cyan "ove-dmce set-profile syslog"
     if ! ove dmce set-profile syslog; then
-        echo "error: 'ove-dmce set-profile syslog' failed"
+        echo "error: 'ove-dmce set-profile syslog' failed" 1>&2
         exit 1
     fi
 
     if ! command -v journalctl > /dev/null; then
-        echo "error: command 'journalctl' is missing"
+        echo "error: command 'journalctl' is missing" 1>&2
         exit 1
     fi
 

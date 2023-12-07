@@ -3,6 +3,7 @@
 set -e
 
 if [ ! -d .git ]; then
+	echo "error: run from git root" 1>&2
 	exit 1
 elif ! command -v shellcheck > /dev/null; then
 	echo "error: command 'shellcheck' missing" 1>&2
@@ -16,21 +17,32 @@ mapfile -t sc_list < <(\
 	grep 'Bourne-Again shell script' | \
 	cut -d: -f1)
 
+function _echo() {
+	if command -v figlet > /dev/null; then
+		figlet -t "$*"
+	else
+		echo "$*"
+	fi
+}
+
 for f in "${sc_list[@]}"; do
-	# check shebang
+	_echo "shebangcheck: $f"
 	if ! head -1 "${f}" | grep -q '#!/usr/bin/env bash'; then
 		echo "error: '$f': wrong shebang" 1>&2
 		exit 1
 	fi
 
-	# pretty print
-	if command -v figlet > /dev/null; then
-		figlet -t "shellcheck: $f"
-	else
-		echo "shellcheck: $f"
+	# ignore self
+	if [ "$f" != "bin/pre-push" ]; then
+		_echo "stderrcheck: $f"
+		if grep 'echo "error:' "${f}" | grep -q -v '1>&2$'; then
+			echo "error: '$f': redirect errors to stderr" 1>&2
+			grep -H -n 'echo "error:' "${f}" | grep -v '1>&2$'
+			exit 1
+		fi
 	fi
 
-	# run shellcheck
+	_echo "shellcheck: $f"
 	if ! shellcheck "$f"; then
 		exit 1
 	fi

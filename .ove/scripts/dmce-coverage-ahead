@@ -75,11 +75,11 @@ main() {
         usage
         exit 1
     elif [ ! -d "${git_full}" ]; then
-        echo "error: ${git_full} is not a directory"
+        echo "error: ${git_full} is not a directory" 1>&2
         usage
         exit 1
     elif [ ! -d "${git_full}"/.git ]; then
-        echo "error: ${git_full} does not appear to be a git repo"
+        echo "error: ${git_full} does not appear to be a git repo" 1>&2
         usage
         exit 1
     fi
@@ -92,10 +92,10 @@ main() {
     mapfile -t revs <<<"$(ove-ahead "$git" | \grep -o '^[a-f0-9]\+')"
     nbr_revs=${#revs[@]}
     if [ "${nbr_revs}" -eq 0 ]; then
-        echo "error: no revs"
+        echo "error: no revs" 1>&2
         exit 1
     elif [ "${nbr_revs}" -eq 1 ] && [ "x${revs[0]}" = "x" ]; then
-        echo "error: no revs"
+        echo "error: no revs" 1>&2
         exit 1
     fi
 
@@ -109,7 +109,7 @@ main() {
     # sanity check
     for i in $(seq 0 $((nbr_revs - 1))); do
         if ! git -C "$git_full" cat-file -e "${revs[i]}" &> /dev/null; then
-            echo "error: '${revs[i]}' is not a valid rev"
+            echo "error: '${revs[i]}' is not a valid rev" 1>&2
             exit 1
         fi
     done

@@ -89,7 +89,7 @@ function main() {
 	proj="$1"
 
 	if [ ! -d "/tmp/$OVE_USER/dmce" ]; then
-		echo "error: no '/tmp/$OVE_USER/dmce' directory"
+		echo "error: no '/tmp/$OVE_USER/dmce' directory" 1>&2
 		usage
 		exit 1
 	fi
@@ -98,7 +98,7 @@ function main() {
 		grep "[0-9]$" | \
 		LC_ALL=C sort > "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post"
 	if [ ! -s "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post" ]; then
-		echo "error: no dmcebuffer files found"
+		echo "error: no dmcebuffer files found" 1>&2
 		usage
 		exit 1
 	fi
@@ -119,7 +119,7 @@ function main() {
 	# go through each trace
 	for b in $b_list; do
 		if [ ! -s "$b.info" ]; then
-			echo "error: no '$b.info' file"
+			echo "error: no '$b.info' file" 1>&2
 			continue
 		fi
 

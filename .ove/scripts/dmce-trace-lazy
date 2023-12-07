@@ -53,7 +53,7 @@ function init() {
 	if ! path=$(ove-proj2val "${proj}" path); then
 		exit 1
 	elif ! repo=$(git -C "${path}" rev-parse --show-toplevel 2> /dev/null); then
-		echo "error: can not get git toplevel for '${path}'"
+		echo "error: can not get git toplevel for '${path}'" 1>&2
 		exit 1
 	fi
 
@@ -63,7 +63,7 @@ function init() {
 
 function instrument() {
 	if ! ove dmce-trace-prepare-auto "${proj}"; then
-		echo "error: 'ove dmce-trace-prepare-auto ${proj}' failed"
+		echo "error: 'ove dmce-trace-prepare-auto ${proj}' failed" 1>&2
 		exit 1
 	fi
 }
@@ -142,7 +142,7 @@ function execute() {
 		i=$((i + 1))
 	done
 	if [ "${i}" -eq 0 ]; then
-		echo "error: no executables found"
+		echo "error: no executables found" 1>&2
 		exit 1
 	fi
 

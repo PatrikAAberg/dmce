@@ -134,7 +134,7 @@ function sanity_checks() {
 		usage
 		exit 1
 	elif [ ! -e "${OVE_BASE_DIR:?}/.config/dmce/constructs.exclude" ]; then
-		echo "error: run 'ove install dmce' and try again"
+		echo "error: run 'ove install dmce' and try again" 1>&2
 		exit 1
 	elif [ ! -s "${profile_db}" ]; then
 		echo "creating '${profile_db}'"
@@ -148,11 +148,11 @@ function sanity_checks() {
 		# first save previous entry then update it with '-e foo.c'
 		if ! sed -i -e "s,^\($1:trace:.*trace-mc\),#\1\n\1,g" \
 			"${profile_db}"; then
-			echo "error: could not save previous entry in '${profile_db}'"
+			echo "error: could not save previous entry in '${profile_db}'" 1>&2
 			exit 1
 		elif ! sed -i -e "s,^\($1:trace:.*\) trace-mc,\1 -e foo.c trace-mc,g" \
 			"${profile_db}"; then
-			echo "error: failed to update '${profile_db}'"
+			echo "error: failed to update '${profile_db}'" 1>&2
 			exit 1
 		fi
 	fi

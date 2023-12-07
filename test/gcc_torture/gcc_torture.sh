@@ -84,7 +84,7 @@ else
 	if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz; then
 		# then gz
 		if ! wget -q https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.gz; then
-			echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'"
+			echo "error: can not find gcc version: ${gcc_version} at 'ftp.gnu.org'" 1>&2
 			exit 1
 		fi
 		archive="gz"
@@ -227,7 +227,7 @@ true > "${my_work_path}"/compile-errors
 find . -name '*.err' -exec rm {} \;
 
 if [ ! -s "${dmce_work_path}/${REPO_NAME}/probe-references.log" ]; then
-	echo "error: empty or none existing '${dmce_work_path}/${REPO_NAME}/probe-references.log'"
+	echo "error: empty or none existing '${dmce_work_path}/${REPO_NAME}/probe-references.log'" 1>&2
 	exit 1
 fi
 

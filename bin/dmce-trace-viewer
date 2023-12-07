@@ -82,7 +82,7 @@ function init() {
 
 # TODO: remove or check comma-separated list
 #    if [ ! -d "${git_full}" ]; then
-#        echo "error: ${git_full} is not a directory"
+#        echo "error: ${git_full} is not a directory" 1>&2
 #        usage
 #    fi
 }
@@ -118,13 +118,13 @@ function main() {
     dmce_trace_args+=" ${git_full}"
 
     if ! eval dmce-trace "${dmce_trace_args}" > "${dmce_trace_log:?}"; then
-        echo "error: 'dmce-trace ${dmce_trace_args}' failed"
+        echo "error: 'dmce-trace ${dmce_trace_args}' failed" 1>&2
         exit 1
     fi
 
     # sanity check
     if [ ! -s "${dmce_trace_log:?}" ]; then
-        echo "error: dmce-trace was successful but we got no output"
+        echo "error: dmce-trace was successful but we got no output" 1>&2
         exit 1
     fi
     files+=" ${dmce_trace_log}"
@@ -132,7 +132,7 @@ function main() {
     # TODO: Remove or make work with comma-separated list
 #    echo "$ cd ${git_full}"
 #    if ! cd "${git_full}"; then
-#        echo "error: 'cd ${git_full}' failed, weird!"
+#        echo "error: 'cd ${git_full}' failed, weird!" 1>&2
 #        exit 1
 #    fi
 
