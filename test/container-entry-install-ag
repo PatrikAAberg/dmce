@@ -1,4 +1,6 @@
-#!/bin/bash -ex
+#!/usr/bin/env bash
+
+set -ex
 
 apt update
 apt install -y git build-essential pkg-config automake make python3 clang-tools liblzma-dev libpcre3-dev python3-pip python3-cram zlib1g-dev

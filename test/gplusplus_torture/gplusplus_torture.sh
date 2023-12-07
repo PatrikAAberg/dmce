@@ -314,7 +314,8 @@ _max_jobs=200
 set +e
 while read -r f; do
 	{
-		timeout $_timeout g++ -w -c "$gcc_opts" "${f}" &> /dev/null
+		# shellcheck disable=SC2086
+		timeout $_timeout g++ -w -c $gcc_opts "${f}" &> /dev/null
 		ret=$?
 		if [ $ret -eq 124 ]; then
 			echo "${f}" >> "${my_work_path}"/compile-timeouts

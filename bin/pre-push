@@ -5,12 +5,16 @@ set -e
 if [ ! -d .git ]; then
 	exit 1
 elif ! command -v shellcheck > /dev/null; then
-	echo "error: command 'shellcheck' missing"
+	echo "error: command 'shellcheck' missing" 1>&2
 	exit 1
 fi
 
 mapfile -t sc_list < <(git ls-files | xargs file | grep 'Bourne-Again shell script' | cut -d: -f1)
 for f in "${sc_list[@]}"; do
+	if ! head -1 "${f}" | grep -q '#!/usr/bin/env bash'; then
+		echo "error: '$f': wrong shebang" 1>&2
+		exit 1
+	fi
 	if command -v figlet > /dev/null; then
 		figlet -t "shellcheck: $f"
 	else
