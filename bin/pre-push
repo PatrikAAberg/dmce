@@ -48,6 +48,17 @@ for f in "${sc_list[@]}"; do
 	fi
 done
 
+# build packages
+packs=$(./build-pkg --help |& sed -e 's,usage: build-pkg \[,,g' -e 's,|, ,g' -e 's,]$,,g')
+if [ "$packs" = "" ]; then
+	echo "error: no packs" 1>&2
+	exit 1
+fi
+for p in ${packs}; do
+	_echo "build $p package"
+	du -hs "$(./build-pkg "$p")"
+done
+
 # run tests
 cd test
 ./run-all.sh
