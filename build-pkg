@@ -84,8 +84,6 @@ cp -a \
 	"${gitdir}"/share/cmdlookuphook.sh \
 	"${gitdir}"/share/dmce-completion.bash \
 	"${gitdir}"/share/dmce-copy-headers \
-	"${gitdir}"/share/dmce-remove-relpaths.sh \
-	"${gitdir}"/share/dmce.sh \
 	"${gitdir}"/share/generate-compile-commands.py \
 	"${gitdir}"/share/generate-probefile.py \
 	dmce-"${version}"/usr/share/dmce/
