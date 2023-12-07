@@ -24,33 +24,41 @@
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 if [ ! -e run-all.sh ]; then
-	echo "error: run from test dir"
+	echo "error: run from test dir" 1>&2
 	exit 1
 fi
 
-declare -a t_list
+declare -A t_list
 declare -a ok
 declare -a nok
 
-t_list+=('gcc_torture')
-t_list+=('gplusplus_torture')
-t_list+=('unittest')
+t_list[gcc_torture]=""
+t_list[gcc_torture-10-vars]="10"
+t_list[gplusplus_torture]=""
+t_list[gplusplus_torture-10-vars]="10"
+t_list[unittest]=""
 
 d="${PWD}"
 trap true SIGINT
-for t in ${t_list[*]}; do
+for t in $(printf "%s\n" "${!t_list[@]}" | sort); do
 	if command -v figlet > /dev/null; then
 		figlet -t "test: $t" 2> /dev/null
 	else
 		echo "test: $t"
 	fi
-	t_exe="${t}.sh"
-	if [ ! -s "${d}/${t}/${t_exe:?}" ]; then
-		echo "error: '${t_exe:?}' not found for test '$t'"
+	if [[ "${t_list[$t]}" != "" ]]; then
+		args="${t_list[$t]}"
+	else
+		args=""
+	fi
+	v=${t//-*}
+	t_exe="${v}.sh"
+	if [ ! -s "${d}/${v}/${t_exe:?}" ]; then
+		echo "error: '${t_exe:?}' not found for test '$t'" 1>&2
 		exit 1
 	fi
-	cd "${d}/${t}" || exit 1
-	if ! "./${t_exe:?}"; then
+	cd "${d}/${v}" || exit 1
+	if ! "./${t_exe:?}" $args; then
 		nok+=("$t")
 	else
 		ok+=("$t")
