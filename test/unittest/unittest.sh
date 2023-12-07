@@ -70,7 +70,7 @@ function pre() {
 		"${_dir_tst:?}"/*.log \
 		"${_dir_tst:?}"/dmce-examples-*
 	stash_and_checkout
-	dmce-setup "${_dir_tst:?}"
+	dmce-setup "${_dir_tst:?}" > /dev/null
 	# shellcheck disable=SC2086
 	dmce-set-profile ${dmce_set_profile_opts:?} trace-mc
 	${dmce:?} -c &> /dev/null

@@ -23,6 +23,11 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+if [ ! -e run-all.sh ]; then
+	echo "error: run from test dir"
+	exit 1
+fi
+
 declare -a t_list
 declare -a ok
 declare -a nok
@@ -35,9 +40,9 @@ d="${PWD}"
 trap true SIGINT
 for t in ${t_list[*]}; do
 	if command -v figlet > /dev/null; then
-		figlet -t "$t" 2> /dev/null
+		figlet -t "test: $t" 2> /dev/null
 	else
-		echo "$t"
+		echo "test: $t"
 	fi
 	t_exe="${t}.sh"
 	if [ ! -s "${d}/${t}/${t_exe:?}" ]; then
