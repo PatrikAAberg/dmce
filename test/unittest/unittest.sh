@@ -119,7 +119,7 @@ function init() {
 
 	for c in ${deps}; do
 		if ! command -v "${c}" >/dev/null; then
-			echo "error: command '${c}' is missing" 1>&2
+			echo "error: command '${c}' not found" 1>&2
 			exit 1
 		fi
 	done

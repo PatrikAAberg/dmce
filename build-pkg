@@ -103,7 +103,7 @@ fi
 
 if [ "$o" = "rpm" ]; then
 	if ! command -v alien > /dev/null; then
-		echo "error: command 'alien' missing" 1>&2
+		echo "error: command 'alien' not found" 1>&2
 		exit 1
 	fi
 	o="gz"
@@ -111,10 +111,10 @@ fi
 
 if [ "$o" = "deb" ]; then
 	if ! command -v dpkg-deb > /dev/null; then
-		echo "error: command 'dpkg-deb' missing" 1>&2
+		echo "error: command 'dpkg-deb' not found" 1>&2
 		exit 1
 	elif ! command -v fakeroot > /dev/null; then
-		echo "error: command 'fakeroot' missing" 1>&2
+		echo "error: command 'fakeroot' not found" 1>&2
 		exit 1
 	fi
 	fakeroot \

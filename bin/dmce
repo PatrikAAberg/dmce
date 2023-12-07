@@ -1123,10 +1123,10 @@ function populate_file_list() {
 				fi
 				# sanity check and apply the diff
 				if ! git apply --check --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
-					echo "fatal: '${md5_root}/${c_file}.diff' does not apply"
+					echo "fatal: '${md5_root}/${c_file}.diff' does not apply" 1>&2
 					exit 1
 				elif ! git apply --whitespace=nowarn -- "${md5_root}/${c_file}.diff"; then
-					echo "fatal: '${md5_root}/${c_file}.diff' does not apply"
+					echo "fatal: '${md5_root}/${c_file}.diff' does not apply" 1>&2
 					exit 1
 				fi
 
@@ -1147,7 +1147,7 @@ function populate_file_list() {
 			fi
 		elif [ -s "${state[dmce_cache_root]}/${c_file}.probedata" ]; then
 			if [ ! -s "${state[dmce_cache_root]}/${c_file}.diff" ]; then
-				echo "fatal: '${state[dmce_cache_root]}/${c_file}.diff' missing"
+				echo "fatal: '${state[dmce_cache_root]}/${c_file}.diff' not found" 1>&2
 				exit 1
 			fi
 
@@ -1749,7 +1749,7 @@ function cache_populate() {
 			fi
 		else
 			if ! git diff -- "$f" >"${dst}/${f##*/}".diff; then
-				echo "fatal: 'git diff $f' failed"
+				echo "fatal: 'git diff $f' failed" 1>&2
 				exit 1
 			fi
 		fi

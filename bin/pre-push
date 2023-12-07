@@ -5,10 +5,14 @@ set -e
 if [ ! -d .git ]; then
 	echo "error: run from git root" 1>&2
 	exit 1
-elif ! command -v shellcheck > /dev/null; then
-	echo "error: command 'shellcheck' missing" 1>&2
-	exit 1
 fi
+
+for c in shellcheck dmce alien; do
+	if ! command -v "${c}" > /dev/null; then
+		echo "error: command '${c}' not found" 1>&2
+		exit 1
+	fi
+done
 
 # for all bash shell scripts
 mapfile -t sc_list < <(\
@@ -38,6 +42,10 @@ for f in "${sc_list[@]}"; do
 		if grep 'echo "error:' "${f}" | grep -q -v '1>&2$'; then
 			echo "error: '$f': redirect errors to stderr" 1>&2
 			grep -H -n 'echo "error:' "${f}" | grep -v '1>&2$'
+			exit 1
+		elif grep 'echo "fatal:' "${f}" | grep -q -v '1>&2$'; then
+			echo "error: '$f': redirect fatal errors to stderr" 1>&2
+			grep -H -n 'echo "fatal:' "${f}" | grep -v '1>&2$'
 			exit 1
 		fi
 	fi

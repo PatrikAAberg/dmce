@@ -170,7 +170,7 @@ function main() {
 
 			# sanity check
 			if [ ! -s "${ref_f}" ]; then
-				echo "trace-decode: ${ref_f} missing, skip ${d}"
+				echo "trace-decode: ${ref_f} not found, skip ${d}"
 				continue
 			fi
 			repos+="$d,"

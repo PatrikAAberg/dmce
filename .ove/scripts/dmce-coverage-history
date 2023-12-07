@@ -362,7 +362,7 @@ function init() {
     fi
 
     if ! command -v journalctl > /dev/null; then
-        echo "error: command 'journalctl' is missing" 1>&2
+        echo "error: command 'journalctl' not found" 1>&2
         exit 1
     fi
 
