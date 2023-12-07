@@ -19,7 +19,7 @@ branch=$(git rev-parse --abbrev-ref HEAD)
 ahead=$(git branch -v --format="%(upstream:track,nobracket)" --list "${branch:?}")
 ahead=${ahead/ahead /}
 if [ "${ahead}" != "" ]; then
-	git show --oneline --check -$ahead
+	git show --oneline --check -"$ahead"
 fi
 
 # for all bash shell scripts
