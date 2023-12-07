@@ -58,7 +58,7 @@ for t in $(printf "%s\n" "${!t_list[@]}" | sort); do
 		exit 1
 	fi
 	cd "${d}/${v}" || exit 1
-	if ! "./${t_exe:?}" $args; then
+	if ! eval "./${t_exe:?}" "${args}"; then
 		nok+=("$t")
 	else
 		ok+=("$t")

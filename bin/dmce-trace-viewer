@@ -103,12 +103,12 @@ function main() {
     dmce_trace_log="$(mktemp -p "$WORKAREA" --suffix=-dmce-trace-"${git}".log)"
     dmce_trace_args=
     # not set, select tgui
-    if [ "x$DMCE_TRACE_VIEWER" = "x" ]; then
+    if [ "$DMCE_TRACE_VIEWER" = "" ]; then
         DMCE_TRACE_VIEWER="tgui"
     fi
 
     dmce_trace_args+=" --delimiter @"
-    if [ "x$DMCE_TRACE_VIEWER" = "xgui" ]; then
+    if [ "$DMCE_TRACE_VIEWER" = "gui" ]; then
         dmce_trace_args+=" --bundle"
     fi
     dmce_trace_args+=" -t"
@@ -137,15 +137,15 @@ function main() {
 #    fi
 
     # display the log
-if [ "x$DMCE_TRACE_VIEWER" = "x" ] || [ "x$DMCE_TRACE_VIEWER" = "xstdout" ]; then
+if [ "$DMCE_TRACE_VIEWER" = "" ] || [ "$DMCE_TRACE_VIEWER" = "stdout" ]; then
     column -t -s'@' "${dmce_trace_log:?}"
-elif [ "x$DMCE_TRACE_VIEWER" = "xless" ]; then
+elif [ "$DMCE_TRACE_VIEWER" = "less" ]; then
     column -t -s'@' "${dmce_trace_log:?}" | less -r
-elif [ "x$DMCE_TRACE_VIEWER" = "xstderr" ]; then
+elif [ "$DMCE_TRACE_VIEWER" = "stderr" ]; then
     column -t -s'@' "${dmce_trace_log:?}" 1>&2
-elif [ "x$DMCE_TRACE_VIEWER" = "xtgui" ]; then
+elif [ "$DMCE_TRACE_VIEWER" = "tgui" ]; then
     dmce-trace-tgui "${dmce_trace_log:?}"
-elif [ "x$DMCE_TRACE_VIEWER" = "xgui" ]; then
+elif [ "$DMCE_TRACE_VIEWER" = "gui" ]; then
     if command -v dmce-wgui.sh > /dev/null; then
 	dmce-wgui.sh "$(awk '{print $NF}' "${dmce_trace_log:?}")"
     fi

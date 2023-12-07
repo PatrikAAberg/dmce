@@ -476,7 +476,7 @@ function main() {
             fi
 
             if [ "x$err_string" != "x" ]; then
-                if [ "x$overall_err_string" = "x" ]; then
+                if [ "$overall_err_string" = "" ]; then
                     overall_err_string="d@$err_string"
                 else
                     overall_err_string+=" d@$err_string"
@@ -501,7 +501,7 @@ function main() {
             fi
 
             if [ "x$err_string" != "x" ]; then
-                if [ "x$overall_err_string" = "x" ]; then
+                if [ "$overall_err_string" = "" ]; then
                     overall_err_string="s@$err_string"
                 else
                     overall_err_string+=" s@$err_string"
@@ -526,7 +526,7 @@ function main() {
             fi
 
             if [ "x$err_string" != "x" ]; then
-                if [ "x$overall_err_string" = "x" ]; then
+                if [ "$overall_err_string" = "" ]; then
                     overall_err_string="f@$err_string"
                 else
                     overall_err_string+=" f@$err_string"
@@ -539,7 +539,7 @@ function main() {
         echo "---"
     done
 
-    if [ $_errors -ge $((i+1)) ]; then
+    if [ "$_errors" -ge $((i+1)) ]; then
         exit 1
     fi
 

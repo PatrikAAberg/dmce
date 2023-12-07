@@ -94,7 +94,7 @@ main() {
     if [ "${nbr_revs}" -eq 0 ]; then
         echo "error: no revs" 1>&2
         exit 1
-    elif [ "${nbr_revs}" -eq 1 ] && [ "x${revs[0]}" = "x" ]; then
+    elif [ "${nbr_revs}" -eq 1 ] && [ "${revs[0]}" = "" ]; then
         echo "error: no revs" 1>&2
         exit 1
     fi

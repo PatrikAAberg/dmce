@@ -162,7 +162,7 @@ function launch {
     for r in $repos; do
         [ -d "$OVE_BASE_DIR"/"$r" ] || continue
         cd "$OVE_BASE_DIR/$r" || continue
-        if [ "x$PWD" = "x${OVE_ACTIVE_REPO_DIR}" ]; then
+        if [ "$PWD" = "${OVE_ACTIVE_REPO_DIR}" ]; then
             continue
         fi
         run
