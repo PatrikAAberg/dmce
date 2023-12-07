@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [ ! -d .git ]; then
+	exit 1
+elif ! command -v shellcheck > /dev/null; then
+	echo "error: command 'shellcheck' missing"
+	exit 1
+fi
+
+mapfile -t sc_list < <(git ls-files | xargs file | grep 'Bourne-Again shell script' | cut -d: -f1)
+for f in "${sc_list[@]}"; do
+	if command -v figlet > /dev/null; then
+		figlet -t "shellcheck: $f"
+	else
+		echo "shellcheck: $f"
+	fi
+	if ! shellcheck "$f"; then
+		exit 1
+	fi
+done
+
+cd test
+./run-all.sh
