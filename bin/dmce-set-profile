@@ -69,8 +69,6 @@ if args.file is None:
         print("Could not find a dmce configuration in " + homeDirectory)
         print("Please run dmce-setup")
         print("     or")
-        print("./dmce-configure-local # from the dmce git root")
-        print("     or")
         print("manually create:")
         print(homeDirectory + "/.dmceconfig")
         print(homeDirectory + "/.config/dmce/dmce.exclude")
