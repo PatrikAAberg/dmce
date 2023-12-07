@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
 # Copyright (c) 2016 Ericsson AB
 #
@@ -19,23 +19,40 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-cfgpath=$1
-installpath=$(which dmce-setup | sed -e 's/\/bin\/dmce-setup//')
+set -e
 
-if [ "$cfgpath" == "--help" ]; then
-    echo "Usage: dmce-setup [--help | Path ]"
-    echo "Default configuration path (where to setup dmce configuration) is $cfgpath, but can be specified with an optional argument"
-    exit
+if [[ $* == *--help* ]] || [ $# -gt 1 ]; then
+	echo "usage: dmce-setup [path|--help]"
+	exit 1
+elif ! c=$(command -v dmce-setup); then
+	echo "error: command 'dmce-setup' not found - install DMCE!" 1>&2
+	exit 1
 fi
 
-if [ "$cfgpath" == "" ]; then
-    cfgpath=$HOME
+if [ $# -eq 1 ]; then
+	cfg_dir="$1"
+else
+	cfg_dir="${HOME:?}"
 fi
 
-# Remove old config
-[ -e $cfgpath/.dmceconfig ] && rm $cfgpath/.dmceconfig
-[ -e $cfgpath/.config/dmce ] && rm -r $cfgpath/.config/dmce
-mkdir -p $cfgpath/.config/dmce
+# sanity check
+if [[ "${cfg_dir:?}" == -* ]]; then
+	echo "error: path can not start with '-'"  1>&2
+	exit 1
+fi
+install_dir="${c/\/bin\/dmce-setup}"
+
+# remove old config
+if [ -e "${cfg_dir:?}"/.dmceconfig ]; then
+	rm -- "${cfg_dir:?}"/.dmceconfig
+fi
+if [ -e "${cfg_dir:?}"/.config/dmce ]; then
+	rm -r -- "${cfg_dir:?}"/.config/dmce
+fi
+
+# re-create dirs
+mkdir -p -- "${cfg_dir:?}"/.config/dmce
+cfg_dir=$(readlink -f "${cfg_dir:?}")
 
 _user=
 if [ "x${USER}" != "x" ]; then
@@ -48,31 +65,36 @@ else
 	_user="dmce"
 fi
 
-# Create config file in home directory
-cat > $cfgpath/.dmceconfig <<- NoWord
+wd="/tmp/${_user}/dmce"
+if ! mkdir -p "${wd:?}" 2> /dev/null; then
+	wd="$(mktemp -d --suffix -DMCE)"
+fi
+
+# create config file
+cat > "${cfg_dir:?}"/.dmceconfig <<- NoWord
 # Memory limit (in %) where dmce will halt until launching additional jobs
 DMCE_MEMORY_LIMIT:50
 
 # DMCE install path
-DMCE_EXEC_PATH:$installpath/share/dmce
+DMCE_EXEC_PATH:${install_dir:?}/share/dmce
 
 # Working directory root
-DMCE_WORK_PATH:/tmp/${_user}/dmce
+DMCE_WORK_PATH:${wd:?}
 
 # config files path. (dmce.exclude, dmce.include etc.)
-DMCE_CONFIG_PATH:$cfgpath/.config/dmce
+DMCE_CONFIG_PATH:${cfg_dir:?}/.config/dmce
 
 # Command line lookup hook (builds list of individual compile commands per file if not enough with the default ones)
-DMCE_CMD_LOOKUP_HOOK:$cfgpath/.config/dmce/cmdlookuphook.sh
+DMCE_CMD_LOOKUP_HOOK:${cfg_dir:?}/.config/dmce/cmdlookuphook.sh
 
 # Default compiler command line for c files
-DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -I/usr/include/sys -isystem /tmp/${_user}/dmce/inc -I/tmp/${_user}/dmce/inc
+DMCE_DEFAULT_C_COMMAND_LINE:gcc -I/usr/include -I/usr/include/sys -isystem ${wd:?}/inc -I${wd:?}/inc
 
 # Default compiler command line for cpp files
-DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem /tmp/${_user}/dmce/inc -I/tmp/${_user}/dmce/inc
+DMCE_DEFAULT_CPP_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem ${wd:?}/inc -I${wd:?}inc
 
 # Default compiler command line for h files
-DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem /tmp/${_user}/dmce/inc -I/tmp/${_user}/dmce/inc
+DMCE_DEFAULT_H_COMMAND_LINE:gcc -std=c++17 -I/usr/include -I/usr/include/sys -isystem ${wd:?}/inc -I${wd:?}/inc
 
 # Number of data variables to probe
 DMCE_NUM_DATA_VARS:0
@@ -81,13 +103,13 @@ DMCE_NUM_DATA_VARS:0
 DMCE_ALLOW_DEREFERENCES:YES
 
 # Probe definition c file
-DMCE_PROBE_SOURCE:$installpath/share/dmce/dmce-probe-user.c
+DMCE_PROBE_SOURCE:${install_dir:?}/share/dmce/dmce-probe-user.c
 
 # Prolog definition c file
-DMCE_PROBE_PROLOG:$installpath/share/dmce/dmce-prolog-default.c
+DMCE_PROBE_PROLOG:${install_dir:?}/share/dmce/dmce-prolog-default.c
 
 # Post hook for running script after probing
-DMCE_POST_HOOK:$installpath/share/dmce/dmce-post-hook-null
+DMCE_POST_HOOK:${install_dir:?}/share/dmce/dmce-post-hook-null
 
 # Use system inlcude files (YES | NO)
 DMCE_SYS_INCLUDES:NO
@@ -101,9 +123,6 @@ DMCE_FIX_NULLPTR:NO
 # Pick up toplevel variables (YES | NO)
 DMCE_TOP_LEVEL_VARS:NO
 
-# Log files
-DMCE_LOG_FILES:/tmp/${_user}/dmce
-
 # git diff algorithm
 DMCE_GIT_DIFF_ALGORITHM:histogram
 
@@ -114,11 +133,11 @@ DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_TRACE_ENTRIES (1024 * 64)
 DMCE_PROBE_DEFINE:DMCE_PROBE_NBR_OPTIONAL_ELEMENTS 10
 
 # Some probes need a path for output files
-DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH "/tmp/${_user}/dmce"
+DMCE_PROBE_DEFINE:DMCE_PROBE_OUTPUT_PATH "${wd:?}"
 
 # Some probes need system wide lock dirs for entry and exit
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY "/tmp/${_user}/dmce/dmce-trace-buffer-lock-entry"
-DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT "/tmp/${_user}/dmce/dmce-trace-buffer-lock-exit"
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_ENTRY "${wd:?}/dmce-trace-buffer-lock-entry"
+DMCE_PROBE_DEFINE:DMCE_PROBE_LOCK_DIR_EXIT "${wd:?}/dmce-trace-buffer-lock-exit"
 
 # Some probes need a default setting for trace enabled at program entry
 DMCE_PROBE_DEFINE:DMCE_PROBE_TRACE_ENABLED (1)
@@ -133,15 +152,17 @@ DMCE_EDITOR:vim
 DMCE_CACHE:0
 NoWord
 
-cp $installpath/share/dmce/constructs.exclude /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.exclude /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.include  /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.pos.exclude /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.pos.include  /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.var.exclude /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/dmce.var.include  /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/recognizedexpressions.py /$cfgpath/.config/dmce/
-cp $installpath/share/dmce/cmdlookuphook.sh /$cfgpath/.config/dmce/
+cp -a \
+	"${install_dir:?}"/share/dmce/constructs.exclude \
+	"${install_dir:?}"/share/dmce/dmce.exclude \
+	"${install_dir:?}"/share/dmce/dmce.include \
+	"${install_dir:?}"/share/dmce/dmce.pos.exclude \
+	"${install_dir:?}"/share/dmce/dmce.pos.include \
+	"${install_dir:?}"/share/dmce/dmce.var.exclude \
+	"${install_dir:?}"/share/dmce/dmce.var.include \
+	"${install_dir:?}"/share/dmce/recognizedexpressions.py \
+	"${install_dir:?}"/share/dmce/cmdlookuphook.sh \
+	"${cfg_dir:?}"/.config/dmce/
 
 # bash completion
 mkdir \
@@ -149,5 +170,12 @@ mkdir \
 	"${HOME:?}"/.local/share/bash-completion/completions
 cp \
 	-a \
-	"$installpath"/share/dmce/dmce-completion.bash \
+	"${install_dir:?}"/share/dmce/dmce-completion.bash \
 	"${HOME:?}"/.local/share/bash-completion/completions/dmce
+
+# end with a list of created files
+find \
+	"${cfg_dir:?}"/.dmceconfig \
+	"${cfg_dir:?}"/.config/dmce \
+	"${HOME:?}"/.local/share/bash-completion/completions/dmce \
+	-type f
