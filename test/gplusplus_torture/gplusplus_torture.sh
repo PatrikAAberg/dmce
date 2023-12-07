@@ -12,7 +12,7 @@ fi
 #gcc_version=$(gcc --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed -e 's|[0-9]\+$|0|g')
 gcc_version="9.3.0"
 
-PROG_NAME="$(basename $0 .sh)"
+PROG_NAME="$(basename "$0" .sh)"
 REPO_NAME="${PROG_NAME}-${RANDOM}"
 
 function _echo() {
@@ -33,15 +33,17 @@ if ! mkdir -pv "$p"; then
 	exit 1
 elif [ "$UNIQ_WORK_PATH" = "" ]; then
 	dmce_work_path="${p}"
-elif ! dmce_work_path="$(mktemp -d -p ${p})"; then
+elif ! dmce_work_path="$(mktemp -d -p "${p}")"; then
 	exit 1
 fi
 
 # test work directory
 my_work_path="${dmce_work_path}/test/${PROG_NAME}"
-my_test_path=$(dirname ${PWD}/$0)
-mkdir -v -p ${my_work_path}
-[ -d ${my_work_path}/gcc-${gcc_version} ] && rm -rf ${my_work_path}/gcc-${gcc_version}
+my_test_path=$(dirname "${PWD}"/"$0")
+mkdir -v -p "${my_work_path}"
+if [ -d "${my_work_path}"/gcc-${gcc_version} ]; then
+	rm -rf "${my_work_path}"/gcc-${gcc_version}
+fi
 
 # temporary hide errors
 set +e
@@ -51,7 +53,7 @@ if ! dmce_exec_path="$(git rev-parse --show-toplevel 2> /dev/null)"; then
 	set -e
 	if ! [ -e dmce/.git ]; then
 		_echo "fetch DMCE"
-		git -C ${my_work_path} clone --depth 1 https://github.com/PatrikAAberg/dmce.git
+		git -C "${my_work_path}" clone --depth 1 https://github.com/PatrikAAberg/dmce.git
 	fi
 	dmce_exec_path=${PWD}/dmce/share
 	dmce_git_path=${PWD}/dmce/dmce
@@ -64,7 +66,7 @@ fi
 
 set -e
 
-cd ${my_work_path}
+cd "${my_work_path}"
 
 function cleanup() {
 	if [ -e gcc-${gcc_version}.tar.xz ]; then
@@ -94,17 +96,17 @@ fi
 trap - EXIT
 
 _echo "unpack GCC"
-tar --no-same-owner -C ${my_work_path} -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
-mkdir gcc-${gcc_version}/gcc/testsuite/${REPO_NAME}
+tar --no-same-owner -C "${my_work_path}" -xf gcc-${gcc_version}.tar.${archive} gcc-${gcc_version}/gcc/testsuite/g++.dg
+mkdir gcc-${gcc_version}/gcc/testsuite/"${REPO_NAME}"
 
 cd gcc-${gcc_version}/gcc/testsuite/g++.dg
 # shellcheck disable=SC2046
-cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry" ./*) ../${REPO_NAME}/
+cp -a --parents $(grep -rLE "dg-error|deprecated|concepts|sorry" ./*) ../"${REPO_NAME}"/
 cd -
 rm -rf gcc-${gcc_version}/gcc/testsuite/g++.dg
 
 _echo "create git"
-cd gcc-${gcc_version}/gcc/testsuite/$REPO_NAME || exit
+cd gcc-${gcc_version}/gcc/testsuite/"$REPO_NAME" || exit
 
 shopt -s globstar
 for f in ../**/*.C; do mv "$f" "${f%.C}.cpp"; done
@@ -270,7 +272,7 @@ rm_file_list+=" pr31863.cpp"                          # recursive
 
 set +e
 for f in $rm_file_list; do
-	find . -not -path '*.git*' -name $f -exec git rm -q -- {} \;
+	find . -not -path '*.git*' -name "$f" -exec git rm -q -- {} \;
 done
 set -e
 git commit -q -m "broken"
@@ -288,14 +290,14 @@ gcc_opts_candidates+=" -fpermissive"
 gcc_opts_candidates+=" -fgnu-tm"
 gcc_opts_candidates+=" -std=c++17"
 for opt in $gcc_opts_candidates; do
-        if ! gcc $opt |& grep -q 'unrecognized command'; then
+        if ! gcc "$opt" |& grep -q 'unrecognized command'; then
                 gcc_opts+=" $opt"
         fi
 done
 echo "gcc options: $gcc_opts"
 
 cap_jobs() {
-	if [ $# -ne 1 ] || [ $1 -eq 0 ]; then
+	if [ $# -ne 1 ] || [ "$1" -eq 0 ]; then
 		return
 	fi
 
@@ -305,44 +307,44 @@ cap_jobs() {
 	fi
 }
 
-true > ${my_work_path}/compile-errors
-true > ${my_work_path}/compile-timeouts
+true > "${my_work_path}"/compile-errors
+true > "${my_work_path}"/compile-timeouts
 _timeout=10
 _max_jobs=200
 set +e
 while read -r f; do
 	{
-		timeout $_timeout g++ -w -c $gcc_opts ${f} &> /dev/null
+		timeout $_timeout g++ -w -c "$gcc_opts" "${f}" &> /dev/null
 		ret=$?
 		if [ $ret -eq 124 ]; then
-			echo ${f} >> ${my_work_path}/compile-timeouts
+			echo "${f}" >> "${my_work_path}"/compile-timeouts
 		elif [ $ret -ne 0 ]; then
-			echo ${f} >> ${my_work_path}/compile-errors
+			echo "${f}" >> "${my_work_path}"/compile-errors
 		fi
 	} &
 	cap_jobs $_max_jobs
 done < <(git ls-files | grep -E '\.cpp$|\.cc$|\.c$')
 wait
 set -e
-if [ -s ${my_work_path}/compile-errors ]; then
+if [ -s "${my_work_path}"/compile-errors ]; then
 	echo compile errors:
-	cat -n ${my_work_path}/compile-errors
+	cat -n "${my_work_path}"/compile-errors
 	while read -r f; do
-		git rm -q $f
-	done <${my_work_path}/compile-errors
+		git rm -q "$f"
+	done <"${my_work_path}"/compile-errors
 	git commit -q -m "does not compile"
 fi
-if [ -s ${my_work_path}/compile-timeouts ]; then
+if [ -s "${my_work_path}"/compile-timeouts ]; then
 	echo timeout errors:
-	cat -n ${my_work_path}/compile-timeouts
+	cat -n "${my_work_path}"/compile-timeouts
 	while read -r f; do
-		git rm -q $f
-	done <${my_work_path}/compile-timeouts
+		git rm -q "$f"
+	done <"${my_work_path}"/compile-timeouts
 	git commit -q -m "takes more than $_timeout s to compile"
 fi
 
 # add DMCE config and update paths
-cp -v ${dmce_git_path}/test/${PROG_NAME}/dmceconfig .dmceconfig
+cp -v "${dmce_git_path}"/test/"${PROG_NAME}"/dmceconfig .dmceconfig
 sed -i "s|DMCE_WORK_PATH:.*|DMCE_WORK_PATH:${dmce_work_path}|" .dmceconfig
 sed -i "s|DMCE_EXEC_PATH:.*|DMCE_EXEC_PATH:${dmce_exec_path}|" .dmceconfig
 sed -i "s|DMCE_CONFIG_PATH:.*|DMCE_CONFIG_PATH:${my_test_path}|" .dmceconfig
@@ -364,12 +366,12 @@ git commit -q -m "DMCE config"
 git --no-pager log --oneline --shortstat --no-color
 
 _echo "launch DMCE"
-${dmce_install_path}/dmce -a -v
+"${dmce_install_path}"/dmce -a -v
 
-${dmce_install_path}/dmce-stats
+"${dmce_install_path}"/dmce-stats
 
 _echo "compile"
-true > ${my_work_path}/compile-errors
+true > "${my_work_path}"/compile-errors
 find . -name '*.err' -exec rm {} \;
 
 if [ ! -s "${dmce_work_path}/${REPO_NAME}/probe-references.log" ]; then
@@ -379,14 +381,14 @@ fi
 
 while read -r f; do
 	{
-		if ! g++ -w -c $gcc_opts ${f} 2>> "${f}".err; then
-			echo ${f} >> ${my_work_path}/compile-errors;
+		if ! eval g++ -w -c "$gcc_opts" "${f}" 2>> "${f}".err; then
+			echo "${f}" >> "${my_work_path}"/compile-errors;
 		fi
 	} &
 	cap_jobs $_max_jobs
 done < <(cut -d: -f2 "${dmce_work_path}/${REPO_NAME}/probe-references.log" | sort -u)
 wait
 find . -name '*.err' -type f ! -size 0 -exec cat {} \;
-errors=$(wc -l < ${my_work_path}/compile-errors)
+errors=$(wc -l < "${my_work_path}"/compile-errors)
 _echo "exit: ${errors}"
-exit ${errors}
+exit "${errors}"

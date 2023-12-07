@@ -1,11 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -ex
 
 echo "Probes inserted per type"
 echo "---------------------------"
-echo "DMCE_PROBE: " $(git grep -P "DMCE_PROBE\(\d" | wc -l)
+echo "DMCE_PROBE: " "$(git grep -P "DMCE_PROBE\(\d" | wc -l)"
 for i in {0..9}
 do
-   echo "DMCE_PROBE${i}: " $(git grep -P "DMCE_PROBE${i}\(\d" | wc -l)
+   echo "DMCE_PROBE${i}: " "$(git grep -P "DMCE_PROBE${i}\(\d" | wc -l)"
 done
 
 # Disable these for now, maybe put under switch later

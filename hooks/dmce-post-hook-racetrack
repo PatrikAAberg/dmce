@@ -19,24 +19,26 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-echo "DMCE Post hook:" $0 $DMCE_PROBE_REFERENCES
-
-if [ -f "$DMCE_PROBE_REFERENCES" ]; then
-    # read filecontent into variable
-    content=$(cat $DMCE_PROBE_REFERENCES)
-
-    # use awk to retrive filename column, then sort the names
-    files=$(awk -F':' '{print $2}' <<< $content|sort|uniq)
-
-    for f in $files; do
-        SED_CMD=""
-        # grep on specific filename and retrieve all line numbers
-        lines=$(grep :$f: <<< $content | awk -F':' '{print $3}')
-        for l in $lines; do
-            SED_CMD+=" -e ${l}s/DMCE_PROBE\([0-9]*\)(\([0-9]\+\)/DMCE_PROBE\1(\2,$RANDOM/"
-        done
-        echo $f
-        sed -i $SED_CMD $f &
-    done
-    wait
+if [ ! -f "$DMCE_PROBE_REFERENCES" ]; then
+	exit 0
 fi
+echo "DMCE Post hook: $0 $DMCE_PROBE_REFERENCES"
+
+# read filecontent into variable
+content=$(cat "$DMCE_PROBE_REFERENCES")
+
+# use awk to retrive filename column, then sort the names
+files=$(awk -F':' '{print $2}' <<< "${content}"|sort|uniq)
+
+for f in $files; do
+	SED_CMD=""
+	# grep on specific filename and retrieve all line numbers
+	lines=$(grep ":${f}:" <<< "${content}" | awk -F':' '{print $3}')
+	for l in $lines; do
+		SED_CMD+=" -e ${l}s/DMCE_PROBE\([0-9]*\)(\([0-9]\+\)/DMCE_PROBE\1(\2,$RANDOM/"
+	done
+	echo "$f"
+	# shellcheck disable=SC2086
+	sed -i $SED_CMD "$f" &
+done
+wait
