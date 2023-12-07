@@ -166,6 +166,9 @@ if [ "$1" != "rpm" ]; then
 	echo "${gitdir}"/dmce-"${version}".tar.${ext}
 else
 	cd "${e:?}" || exit 1
+	if [ -d "${gitdir}"/dmce-"${version}" ]; then
+		rm -rf "${gitdir}"/dmce-"${version}"
+	fi
 	fakeroot \
 		alien \
 		--to-rpm \
