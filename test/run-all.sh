@@ -41,11 +41,7 @@ t_list[unittest]=""
 d="${PWD}"
 trap true SIGINT
 for t in $(printf "%s\n" "${!t_list[@]}" | sort); do
-	if command -v figlet > /dev/null; then
-		figlet -t "test: $t" 2> /dev/null
-	else
-		echo "test: $t"
-	fi
+	echo "test: $t"
 	if [[ "${t_list[$t]}" != "" ]]; then
 		args="${t_list[$t]}"
 	else

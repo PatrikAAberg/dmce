@@ -30,10 +30,10 @@ mapfile -t sc_list < <(\
 	cut -d: -f1)
 
 function _echo() {
-	if command -v figlet > /dev/null; then
-		figlet -t "$*"
+	if [ "$EPOCHREALTIME" != "" ]; then
+		echo "${EPOCHREALTIME}: $*"
 	else
-		echo "$*"
+		echo "$(date '+%Y-%m-%d %H:%M:%S'): $*"
 	fi
 }
 

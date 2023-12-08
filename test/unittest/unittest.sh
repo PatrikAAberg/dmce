@@ -166,13 +166,22 @@ function list_tests() {
 	compgen -A function | grep '^t[0-9]\+' | sort -V
 }
 
+function _echo() {
+	if [ "$EPOCHREALTIME" != "" ]; then
+		echo "${EPOCHREALTIME}: $*"
+	else
+		echo "$(date '+%Y-%m-%d %H:%M:%S'):$*"
+	fi
+}
+
 function test_description() {
 	local t="${1}"
 
 	if [ "${test_desc[${t}]}" != "" ]; then
-		echo "${t}: ${test_desc[${t}]}"
+		_echo "${t}: ${test_desc[${t}]}"
 	else
-		echo "${t}: FIXME: add description"
+		_echo "${t}: FIXME: add description"
+		sleep 3
 	fi
 }
 

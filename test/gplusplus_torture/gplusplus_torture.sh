@@ -24,7 +24,11 @@ function _echo() {
 		a="${PROG_NAME}"
 	fi
 
-	echo "$(date '+%Y-%m-%d %H:%M:%S'):${a}:$*"
+	if [ "$EPOCHREALTIME" != "" ]; then
+		echo "${EPOCHREALTIME}: $*"
+	else
+		echo "$(date '+%Y-%m-%d %H:%M:%S'):${a}:$*"
+	fi
 }
 _echo "running $PROG_NAME"
 
