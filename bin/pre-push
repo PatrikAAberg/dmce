@@ -2,9 +2,31 @@
 
 set -e
 
+function _echo() {
+	if [ "$EPOCHREALTIME" != "" ]; then
+		echo "${EPOCHREALTIME}: $*"
+	else
+		echo "$(date '+%Y-%m-%d %H:%M:%S'): $*"
+	fi
+}
+
 if [ ! -d .git ]; then
 	echo "error: run from git root" 1>&2
 	exit 1
+fi
+
+i=0
+for f in $(git ls-files -- bin/); do
+	if ! ff="$(command -v "${f##*/}")"; then
+		continue
+	elif ! cmp -s -- "${f}" "${ff}"; then
+		i=$((i + 1))
+	fi
+done
+
+if [ "$i" -ne 0 ]; then
+	echo "warning: installed DMCE version does not match DMCE bin-files in git repo"
+	sleep 3
 fi
 
 for c in shellcheck dmce alien; do
@@ -19,7 +41,11 @@ branch=$(git rev-parse --abbrev-ref HEAD)
 ahead=$(git branch -v --format="%(upstream:track,nobracket)" --list "${branch:?}")
 ahead=${ahead/ahead /}
 if [ "${ahead}" != "" ]; then
-	git show --oneline --check -"$ahead"
+	_echo "gitshowcheck: $(git log -"${ahead}" --oneline --format='%h'| xargs)"
+	if ! git show --color=never --oneline --check -"$ahead"; then
+		echo "error: command 'git show --check -$ahead' failed" 1>&2
+		exit 1
+	fi
 fi
 
 # for all bash shell scripts
@@ -28,14 +54,6 @@ mapfile -t sc_list < <(\
 	xargs file | \
 	grep 'Bourne-Again shell script' | \
 	cut -d: -f1)
-
-function _echo() {
-	if [ "$EPOCHREALTIME" != "" ]; then
-		echo "${EPOCHREALTIME}: $*"
-	else
-		echo "$(date '+%Y-%m-%d %H:%M:%S'): $*"
-	fi
-}
 
 for f in "${sc_list[@]}"; do
 	_echo "shebangcheck: $f"
