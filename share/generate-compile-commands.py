@@ -70,20 +70,20 @@ path = sys.argv[1] + "/"
 includes = "-I" + workpath + "/" + gitname + "/inc/" + sys.argv[1].rsplit('/', 1)[1]
 # Retrieve individual command line
 def IndividualCmdLine( sourcefile ):
-   cmdline=""
+    cmdline=""
 
 # For now, special treatment for all regexp special characters. How is this done properly?!
-   sourcefile = re.sub(r'\/', r'\/', sourcefile)
-   sourcefile = re.sub(r'\.', r'\.', sourcefile)
-   sourcefile = re.sub(r'\-', r'\-', sourcefile)
-   sourcefile = re.sub(r'\+', r'\+', sourcefile)
-   exp = sourcefile + r'\s(.*)$'
-   for file in lookupfile:
-      found = re.match( exp, file.decode('utf-8'), re.M|re.I)
-      if (found):
-          cmdline=found.group(1)
-          break
-   return cmdline
+    sourcefile = re.sub(r'\/', r'\/', sourcefile)
+    sourcefile = re.sub(r'\.', r'\.', sourcefile)
+    sourcefile = re.sub(r'\-', r'\-', sourcefile)
+    sourcefile = re.sub(r'\+', r'\+', sourcefile)
+    exp = sourcefile + r'\s(.*)$'
+    for file in lookupfile:
+        found = re.match( exp, file.decode('utf-8'), re.M|re.I)
+        if found:
+            cmdline=found.group(1)
+            break
+    return cmdline
 
 print("[")
 
@@ -94,9 +94,9 @@ filename = ""
 # Find any referenced system include paths
 def pathsearch(basepath):
     global sysIncludePaths
-    for dirpath, dirnames, filenames in os.walk(basepath):
-        for fname in filenames:
-            if fname in includefiles:
+    for dirpath, _, filenames in os.walk(basepath):
+        for _fname in filenames:
+            if _fname in includefiles:
                 if dirpath.rstrip() not in sysIncludePathsList:
                     sysIncludePathsList.append(dirpath.rstrip())
 
@@ -117,9 +117,9 @@ if useSysIncludes:
                 for sline in srclines:
                     m = re_sysinclude.match(sline)
                     if m:
-                        fname = os.path.basename(m.group(1))
-                        if fname not in includefiles:
-                            includefiles.append(fname)
+                        _fname = os.path.basename(m.group(1))
+                        if _fname not in includefiles:
+                            includefiles.append(_fname)
 
     # find what syspaths they have (if any)
     pathsearch("/usr/local/include")
@@ -129,32 +129,32 @@ if useSysIncludes:
     for incpath in sysIncludePathsList:
         sysIncludePaths = sysIncludePaths + " -I" + incpath
 
-while (lineindex<linestotal):
-      directory = path
-      filename = linebuf[lineindex].strip()
-      command = IndividualCmdLine(filename)
-      if (command == ""):
-          m_c = re.match( r'.*\.c$', linebuf[lineindex], re.M|re.I)
-          m_cc = re.match( r'.*\.cc$', linebuf[lineindex], re.M|re.I)
-          m_cpp = re.match( r'.*\.cpp$', linebuf[lineindex], re.M|re.I)
-          m_h = re.match( r'.*\.h$', linebuf[lineindex], re.M|re.I)
+while lineindex < linestotal:
+    directory = path
+    filename = linebuf[lineindex].strip()
+    command = IndividualCmdLine(filename)
+    if command == "":
+        m_c = re.match( r'.*\.c$', linebuf[lineindex], re.M|re.I)
+        m_cc = re.match( r'.*\.cc$', linebuf[lineindex], re.M|re.I)
+        m_cpp = re.match( r'.*\.cpp$', linebuf[lineindex], re.M|re.I)
+        m_h = re.match( r'.*\.h$', linebuf[lineindex], re.M|re.I)
 
-          if (m_c):
-              command = defaultcmdline_c + " " + includes + " " + sysIncludePaths + " " + filename
-          elif (m_cc or m_cpp):
-              command = defaultcmdline_cpp + " " + includes + " " + sysIncludePaths + " " + filename
-          elif (m_h):
-              command = defaultcmdline_h + " " + includes + " " + sysIncludePaths + " " + filename
-          else:
-              print("file cache corrupt!")
-              exit(-1)
+        if m_c:
+            command = defaultcmdline_c + " " + includes + " " + sysIncludePaths + " " + filename
+        elif m_cc or m_cpp:
+            command = defaultcmdline_cpp + " " + includes + " " + sysIncludePaths + " " + filename
+        elif m_h:
+            command = defaultcmdline_h + " " + includes + " " + sysIncludePaths + " " + filename
+        else:
+            print("file cache corrupt!")
+            exit(-1)
 
-      print("{")
-      print("\"directory\": \"" + directory + "\",")
-      print("\"command\": \"" + command + "\",")
-      print("\"file\": \"" + filename + "\"")
-      print("},")
+    print("{")
+    print("\"directory\": \"" + directory + "\",")
+    print("\"command\": \"" + command + "\",")
+    print("\"file\": \"" + filename + "\"")
+    print("},")
 
-      lineindex+=1
+    lineindex+=1
 
 print("]")
