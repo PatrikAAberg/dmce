@@ -78,7 +78,7 @@ Currently recommended clang-check (llvm) version: 17
 
 ## Install and setup
 
-DMCE is currently installed using Ubuntu/Debian packages. To build an installable DMCE package from latest source:
+To build an installable DMCE .deb package from latest source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
     $ cd dmce
@@ -88,6 +88,11 @@ To install on Ubuntu / Debian:
 
     $ dpkg -i dmce-X.Y.Z.deb    # To uninstall: $ dpkg -r dmce
     $ dmce-setup
+
+Other distros:
+
+    $ ./build-pkg --help
+    usage: build-pkg [bz2|deb|gz|rpm|xz]
 
 Latest stable tag: (to be updated to v2.0.0)
 
