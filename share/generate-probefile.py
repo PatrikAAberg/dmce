@@ -22,7 +22,6 @@
 import os
 import sys
 import re
-import argparse
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
@@ -1162,7 +1161,7 @@ while (lineindex < linestotal):
         i = lineindex + 1
         if (i < len(linebuf) - 1):
             if re_integer_literal.match(linebuf[i]):
-                    function_returns_pointer = True
+                function_returns_pointer = True
             else:
                 while (i < len(linebuf) - 1) and linebuf[i].find("|-") > rettabpos:
                     i += 1
@@ -1224,9 +1223,9 @@ while (lineindex < linestotal):
             if ftrace_infunc:
                 m = re_ftrace_compound.match(linebuf[lineindex])
                 if m:
-                     if do_print:
+                    if do_print:
                         print("Compound detected (ending at " + m.group(1) + ":" + m.group(2) + ") : " + linebuf[lineindex])
-                     if ftrace_lend == m.group(1) and ftrace_cend == m.group(2):
+                    if ftrace_lend == m.group(1) and ftrace_cend == m.group(2):
                         ftrace_infunc = False
                         if do_print:
                             print("Compound detected for endmark: " + ftrace_lend + ":" + ftrace_cend)
@@ -1279,83 +1278,83 @@ while (lineindex < linestotal):
             while (i < len(re_exppatternlist)):
                 re_exp = re_exppatternlist[i]
                 if (re_exp.match(linebuf[lineindex])):
-                   if do_print:
-                       print("FOUND EXP: start: (" + lstart.rstrip() + "," + cstart.rstrip() + ")" + linebuf[lineindex].rstrip())
+                    if do_print:
+                        print("FOUND EXP: start: (" + lstart.rstrip() + "," + cstart.rstrip() + ")" + linebuf[lineindex].rstrip())
 
-                   # Sanity check
-                   if (int(lstart) > int(cf_len)):
+                    # Sanity check
+                    if (int(lstart) > int(cf_len)):
                         if do_print:
                             print("ERROR: Got line position passed eof, file: " + parsed_file, file=sys.stderr)
                         sys.exit(1)
-                   # save current function to use when expression is finally saved
-                   current_function_sticky = current_function
+                    # save current function to use when expression is finally saved
+                    current_function_sticky = current_function
 
-                   # Self contained expression
-                   if (exppatternmode[i] == 1):
-                       #if do_print == 1:
-                           #print "Self contained"
-                       expdb_linestart.append(int(lstart))
-                       expdb_colstart.append(int(cstart))
-                       expdb_lineend.append(int(lend))
-                       expdb_colend.append(int(cend))
-                       expdb_elineend.append(int(lend))
-                       expdb_ecolend.append(int(cend))
-                       expdb_exptext.append(linebuf[lineindex])
-                       expdb_in_c_file.append(in_parsed_file)
-                       expdb_tab.append(tab)
-                       expdb_frp.append(function_returns_pointer)
-                       expdb_exppatternmode.append(1)
-                       expdb_func.append(current_function)
-                       if not in_parmdecl:
-                           expdb_secstackvars.append(secStackVars.copy())
-                           expdb_secstackpos.append(secStackPos.copy())
-                           expdb_reffedvars.append(reffedVars.copy())
-                       else:
-                           expdb_secstackvars.append([])
-                           expdb_secstackpos.append(secStackPos.copy())
-                           expdb_reffedvars.append([])
-                       clean_stackvars()
-                       expdb_index +=1
+                    # Self contained expression
+                    if (exppatternmode[i] == 1):
+                        #if do_print == 1:
+                            #print "Self contained"
+                        expdb_linestart.append(int(lstart))
+                        expdb_colstart.append(int(cstart))
+                        expdb_lineend.append(int(lend))
+                        expdb_colend.append(int(cend))
+                        expdb_elineend.append(int(lend))
+                        expdb_ecolend.append(int(cend))
+                        expdb_exptext.append(linebuf[lineindex])
+                        expdb_in_c_file.append(in_parsed_file)
+                        expdb_tab.append(tab)
+                        expdb_frp.append(function_returns_pointer)
+                        expdb_exppatternmode.append(1)
+                        expdb_func.append(current_function)
+                        if not in_parmdecl:
+                            expdb_secstackvars.append(secStackVars.copy())
+                            expdb_secstackpos.append(secStackPos.copy())
+                            expdb_reffedvars.append(reffedVars.copy())
+                        else:
+                            expdb_secstackvars.append([])
+                            expdb_secstackpos.append(secStackPos.copy())
+                            expdb_reffedvars.append([])
+                        clean_stackvars()
+                        expdb_index +=1
 
-                   # Need to look for last sub expression
-                   if (exppatternmode[i] == 2):
-                       cur_lstart = int(lstart)
-                       cur_cstart = int(cstart)
-                       cur_lend = int(lend)
-                       cur_cend = int(cend)
-                       cur_tab = tab
-                       expdb_linestart.append(int(lstart))
-                       expdb_colstart.append(int(cstart))
-                       expdb_elineend.append(int(lend))
-                       expdb_ecolend.append(int(cend))
-                       expdb_exptext.append(linebuf[lineindex])
-                       expdb_in_c_file.append(in_parsed_file)
-                       expdb_exppatternmode.append(2)
-                       expdb_frp.append(function_returns_pointer)
-                       #if do_print == 1:
+                    # Need to look for last sub expression
+                    if (exppatternmode[i] == 2):
+                        cur_lstart = int(lstart)
+                        cur_cstart = int(cstart)
+                        cur_lend = int(lend)
+                        cur_cend = int(cend)
+                        cur_tab = tab
+                        expdb_linestart.append(int(lstart))
+                        expdb_colstart.append(int(cstart))
+                        expdb_elineend.append(int(lend))
+                        expdb_ecolend.append(int(cend))
+                        expdb_exptext.append(linebuf[lineindex])
+                        expdb_in_c_file.append(in_parsed_file)
+                        expdb_exppatternmode.append(2)
+                        expdb_frp.append(function_returns_pointer)
+                        #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
-                       inside_expression = lineindex
-                       in_parmdecl_sticky = in_parmdecl
+                        inside_expression = lineindex
+                        in_parmdecl_sticky = in_parmdecl
 
-                   # Need to look for last sub expression. Also need to add length of keyword
-                   if (exppatternmode[i] > 2):
-                       cur_lstart = int(lstart)
-                       cur_cstart = int(cstart) + exppatternmode[i]
-                       cur_lend = int(lend)
-                       cur_cend = int(cend)
-                       cur_tab = tab
-                       expdb_linestart.append(int(lstart))
-                       expdb_colstart.append(int(cstart) + exppatternmode[i])
-                       expdb_elineend.append(int(lend))
-                       expdb_ecolend.append(int(cend))
-                       expdb_exptext.append(linebuf[lineindex])
-                       expdb_in_c_file.append(in_parsed_file)
-                       expdb_exppatternmode.append(2)
-                       expdb_frp.append(function_returns_pointer)
-                       #if do_print == 1:
+                    # Need to look for last sub expression. Also need to add length of keyword
+                    if (exppatternmode[i] > 2):
+                        cur_lstart = int(lstart)
+                        cur_cstart = int(cstart) + exppatternmode[i]
+                        cur_lend = int(lend)
+                        cur_cend = int(cend)
+                        cur_tab = tab
+                        expdb_linestart.append(int(lstart))
+                        expdb_colstart.append(int(cstart) + exppatternmode[i])
+                        expdb_elineend.append(int(lend))
+                        expdb_ecolend.append(int(cend))
+                        expdb_exptext.append(linebuf[lineindex])
+                        expdb_in_c_file.append(in_parsed_file)
+                        expdb_exppatternmode.append(2)
+                        expdb_frp.append(function_returns_pointer)
+                        #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
-                       inside_expression = lineindex
-                       in_parmdecl_sticky = in_parmdecl
+                        inside_expression = lineindex
+                        in_parmdecl_sticky = in_parmdecl
 
                 i+=1
 
@@ -1747,7 +1746,7 @@ while (i < expdb_index):
     #    if (ls==le):
     if not out_of_position_scope:
         if (expdb_exppatternmode[i] < 0):
-           if (ls not in probed_lines):
+            if (ls not in probed_lines):
                 line = pbuf[ls]
                 if not line.isascii():
                     bail_out=1
