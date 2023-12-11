@@ -40,7 +40,7 @@ t_list[unittest]=""
 
 d="${PWD}"
 trap true SIGINT
-for t in $(printf "%s\n" "${!t_list[@]}" | sort); do
+for t in $(printf "%s\n" "${!t_list[@]}" | sort -r); do
 	echo "test: $t"
 	if [[ "${t_list[$t]}" != "" ]]; then
 		args="${t_list[$t]}"
