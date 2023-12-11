@@ -66,11 +66,16 @@ function cleanup() {
 function pre() {
 	cd "${_dir_src:?}"
 	t_log="${_dir_tst:?}/${FUNCNAME[1]}.log"
-	rm -rf "${_dir_dmce:?}"/* \
+	rm -rf \
 		"${_dir_tst:?}"/*.log \
 		"${_dir_tst:?}"/dmce-examples-*
 	stash_and_checkout
 	dmce-setup "${_dir_tst:?}" > /dev/null
+	_dir_dmce=$( \
+		grep ^DMCE_WORK_PATH: "${_dir_tst:?}"/.dmceconfig | \
+		cut -d: -f2)
+	rm -rf \
+		"${_dir_dmce:?}"/*
 	# shellcheck disable=SC2086
 	dmce-set-profile ${dmce_set_profile_opts:?} trace-mc
 	${dmce:?} -c &> /dev/null
