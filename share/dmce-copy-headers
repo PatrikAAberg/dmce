@@ -45,8 +45,8 @@ if not os.path.exists(args.dirdest):
     sys.exit(1)
 
 files_to_parse = []
-re_files_to_parse   = re.compile(".*(\.h|\.hh|\.hpp|\.c|\.cc|\.cpp|\.inc)$")
-re_includes         = re.compile(".*#include\s*(<|\")((\w|\.|\-|\/|\s)*)((>|\")*)")
+re_files_to_parse   = re.compile(r'.*(\.h|\.hh|\.hpp|\.c|\.cc|\.cpp|\.inc)$')
+re_includes         = re.compile(r'.*#include\s*(<|\")((\w|\.|\-|\/|\s)*)((>|\")*)')
 
 includes_array = []
 

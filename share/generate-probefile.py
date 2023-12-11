@@ -351,11 +351,11 @@ for line in rawlinebuf:
         c_plusplus=1
 
     # Make built-in functions look like lib functions
-    line = re.sub("<built\-in>", "dmce_built_in.h", line)
+    line = re.sub(r'<built\-in>', r'dmce_built_in.h', line)
     # Make scratch space look like include file ref
-    line = re.sub("<scratch space>", "dmce_scratch_space.h", line)
+    line = re.sub(r'<scratch space>', r'dmce_scratch_space.h', line)
     # Remove all "nice info" pointing to include files
-    line = re.sub("\(.* at .*\)", "", line)
+    line = re.sub(r'\(.* at .*\)', r'', line)
     linebuf.append(line)
 
 # ..and the same for the AST file
@@ -386,40 +386,40 @@ elif configpath != None and os.path.isfile(configpath + '/recognizedexpressions.
     exppatternlist = recognizedexpressions.exppatternlist
     exppatternmode = recognizedexpressions.exppatternmode
 else:
-    exppatternlist = ['.*-CallExpr\sHexnumber\s<.*\,.*>.*',
-                      '.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
-                      '.*-CXXNewExpr\sHexnumber\s<.*\,.*>.*',
-                      '.*-CXXDeleteExpr\sHexnumber\s<.*\,.*>.*',
-                      '.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
-                      '.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\/\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\-\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\+\'.*',
-                      '.*UnaryOperator Hexnumber <.*\,.*>.*\'\+\+\'.*',
-                      '.*UnaryOperator Hexnumber <.*\,.*>.*\'\-\-\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'=\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'<\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'>\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'>=\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'<=\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
-                      '.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\*\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\/\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\%\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\&\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\|\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\^\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\<<\=\'.*',
-                      '.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\>>\=\'.*',
-                      '.*ReturnStmt Hexnumber <.*\,.*>.*']
+    exppatternlist = [r'.*-CallExpr\sHexnumber\s<.*\,.*>.*',
+                      r'.*-CXXMemberCallExpr\sHexnumber\s<.*\,.*>.*',
+                      r'.*-CXXNewExpr\sHexnumber\s<.*\,.*>.*',
+                      r'.*-CXXDeleteExpr\sHexnumber\s<.*\,.*>.*',
+                      r'.*-StaticAssertDecl\sHexnumber\s<.*\,.*>.*',
+                      r'.*-ConditionalOperator\sHexnumber\s<.*\,.*>.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\*\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\/\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\-\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\+\'.*',
+                      r'.*UnaryOperator Hexnumber <.*\,.*>.*\'\+\+\'.*',
+                      r'.*UnaryOperator Hexnumber <.*\,.*>.*\'\-\-\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'=\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'<\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'>\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'==\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'!=\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'>=\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'<=\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\&\&\'.*',
+                      r'.*BinaryOperator Hexnumber <.*\,.*>.*\'\|\|\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\+\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\-\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\*\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\/\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\%\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\&\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\|\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\^\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\<<\=\'.*',
+                      r'.*CompoundAssignOperator Hexnumber <.*\,.*>.*\'\>>\=\'.*',
+                      r'.*ReturnStmt Hexnumber <.*\,.*>.*']
 
     # Modes:
     #  1    Contained space, use as is
@@ -433,13 +433,13 @@ for exp in exppatternlist:
     re_exppatternlist.append(re.compile(exp))
 
 # Used to extract expression type and operator type
-exp_pat = re.compile('.*-(.*)\sHexnumber\s<.*\d>(.*)')
+exp_pat = re.compile(r'.*-(.*)\sHexnumber\s<.*\d>(.*)')
 
 # Escape some characters
-parsed_file_exp = re.sub("\/", "\/", parsed_file_exp)
-parsed_file_exp = re.sub("\.", "\.", parsed_file_exp)
-parsed_file_exp = re.sub("\-", "\-", parsed_file_exp)
-parsed_file_exp = re.sub("\+", "\+", parsed_file_exp)
+parsed_file_exp = re.sub(r'\/', r'\/', parsed_file_exp)
+parsed_file_exp = re.sub(r'\.', r'\.', parsed_file_exp)
+parsed_file_exp = re.sub(r'\-', r'\-', parsed_file_exp)
+parsed_file_exp = re.sub(r'\+', r'\+', parsed_file_exp)
 
 cf = open(parsed_file)
 pbuf = cf.readlines()
@@ -594,9 +594,9 @@ re_is_attribute = re.compile(r'.*Attr Hexnumber.*')
 
 
 # Populate struct database
-re_recorddecl = re.compile('.*RecordDecl.*(struct) (\S*).*')
-re_typedefdecl = re.compile('.*-TypedefDecl.* referenced (\w*) \'.*')
-re_fielddecl = re.compile('.*-FieldDecl .* (.*) \'(size_t|int|unsigned int|long|unsigned long|.* \*)\'.*')
+re_recorddecl = re.compile(r'.*RecordDecl.*(struct) (\S*).*')
+re_typedefdecl = re.compile(r'.*-TypedefDecl.* referenced (\w*) \'.*')
+re_fielddecl = re.compile(r'.*-FieldDecl .* (.*) \'(size_t|int|unsigned int|long|unsigned long|.* \*)\'.*')
 
 def find_data_structures():
     if (in_parsed_file):
@@ -1626,7 +1626,7 @@ def afterburner(line, frp):
     return line
 
 # Used in probe insertion pass for regrets
-re_regret_insertion         = re.compile(".*case.*DMCE.*:.*|.*return.*\{.*|.*::\(DMCE_PROBE.*|.*\)::.*")
+re_regret_insertion         = re.compile(r'.*case.*DMCE.*:.*|.*return.*\{.*|.*::\(DMCE_PROBE.*|.*\)::.*')
 
 def check_regrets(line):
 
@@ -1850,7 +1850,7 @@ while (i < expdb_index):
 
                     # Replace everything within /*...*/ with xxx
                     line_no_strings = list(line)
-                    p = re.compile("\/\*.*?\*\/")
+                    p = re.compile(r'\/\*.*?\*\/')
                     for m in p.finditer(line):
                         j=0
                         while (j < len(m.group())):

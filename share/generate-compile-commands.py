@@ -73,11 +73,11 @@ def IndividualCmdLine( sourcefile ):
    cmdline=""
 
 # For now, special treatment for all regexp special characters. How is this done properly?!
-   sourcefile = re.sub("\/", "\/", sourcefile)
-   sourcefile = re.sub("\.", "\.", sourcefile)
-   sourcefile = re.sub("\-", "\-", sourcefile)
-   sourcefile = re.sub("\+", "\+", sourcefile)
-   exp = sourcefile + "\s(.*)$"
+   sourcefile = re.sub(r'\/', r'\/', sourcefile)
+   sourcefile = re.sub(r'\.', r'\.', sourcefile)
+   sourcefile = re.sub(r'\-', r'\-', sourcefile)
+   sourcefile = re.sub(r'\+', r'\+', sourcefile)
+   exp = sourcefile + r'\s(.*)$'
    for file in lookupfile:
       found = re.match( exp, file.decode('utf-8'), re.M|re.I)
       if (found):
@@ -100,8 +100,8 @@ def pathsearch(basepath):
                 if dirpath.rstrip() not in sysIncludePathsList:
                     sysIncludePathsList.append(dirpath.rstrip())
 
-re_srcfile = re.compile(".*\.c$|.*\.cc$|.*\.cpp$|.*\.h$|.*\.hh$")
-re_sysinclude = re.compile("#include.*<(.*)>.*")
+re_srcfile = re.compile(r'.*\.c$|.*\.cc$|.*\.cpp$|.*\.h$|.*\.hh$')
+re_sysinclude = re.compile(r'#include.*<(.*)>.*')
 includefiles = []
 sysIncludePathsList = []
 sysIncludePaths = ""
