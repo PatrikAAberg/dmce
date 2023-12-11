@@ -54,7 +54,8 @@ function macros_a() {
 	local m
 
 	if grep "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
-		macros=$(grep --binary-files=text "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | \
+		# shellcheck disable=SC2086
+		macros=$(grep ${grep_opt:} "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | \
 			grep -o '"[a-zA-Z_]\+"' | \
 			sort -u | \
 			tr -d '"' | \
@@ -71,14 +72,16 @@ function macros_a() {
 function macro_helper() {
 	local m
 
-	if ! grep --binary-files=text -q "$1" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
+	# shellcheck disable=SC2086
+	if ! grep ${grep_opt:?} -q "$1" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
 		return
 	fi
 
+	# shellcheck disable=SC2086
 	while read -r m; do
 		echo "$m" | tr -dc '[:print:]'
 		echo
-	done <<<"$(grep --binary-files=text "$1" "${OVE_TMP}/dmce-trace-prepare-auto.log" | \
+	done <<<"$(grep ${grep_opt:?} "$1" "${OVE_TMP}/dmce-trace-prepare-auto.log" | \
 		awk '{print $NF}' | \
 		grep -v DMCE_PROBE | \
 		sort -u)"
@@ -159,12 +162,17 @@ function sanity_checks() {
 }
 
 function main() {
+	local grep_opt
 	local i
 	local nbr_macros_fixed
 	declare -A -g ignored
 	profile_db="${OVE_OWEL_DIR:?}/projects/dmce/profile.db"
 
 	sanity_checks "$@"
+
+	if grep --help | grep -q "binary-files"; then
+		grep_opt="--binary-files=text"
+	fi
 
 	export GCC_COLORS=""
 	i=0
