@@ -39,8 +39,10 @@ _url="https://github.com/PatrikAAberg/dmce-examples"
 _sha1="098bec3a53cc7d71388bca60673ca5f67bc2e505"
 
 # directories
-_dir_tmp="/tmp/${USER:?}"
-_dir_dmce="${_dir_tmp:?}/dmce"
+_dir_tmp="/tmp/$(whoami)"
+if [ ! -w "${_dir_tmp:?}" ]; then
+	_dir_tmp=$(mktemp -d)
+fi
 _dir_tst="${_dir_tmp:?}/${_name:?}"
 _dir_ref="${_dir_tst:?}/ref"
 _dir_src="${_dir_tst:?}/${_name:?}"
@@ -92,7 +94,7 @@ function verify() {
 	git diff | \
 		sed \
 		-e "/^index /d" \
-		-e "s,/tmp/${USER:?}/dmce,/tmp/USER/dmce,g" > "${f}"
+		-e "s,/tmp/$(whoami)/dmce,/tmp/USER/dmce,g" > "${f}"
 
 	if [ "${_mode:?}" -eq 0 ] && ! diff "${f}" "${_dir_ref:?}/${f##*/}"; then
 		exit 1
