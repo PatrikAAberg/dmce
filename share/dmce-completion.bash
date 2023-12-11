@@ -79,7 +79,9 @@ _dmce() {
 	opts+=('--verbose')
 	opts+=('--version')
 
-	if ! _init_completion -n =; then
+	if [ "$(type -t _init_completion)" != "function" ]; then
+		return
+	elif ! _init_completion -n =; then
 		return
 	fi
 
