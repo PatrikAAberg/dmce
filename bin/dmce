@@ -588,6 +588,8 @@ function read_config_file() {
 }
 
 function prepare() {
+	local find_opt
+
 	_echo "${FUNCNAME[0]}"
 
 	# extract any probe defines
@@ -601,6 +603,13 @@ function prepare() {
 	# for dmce-post-hook-racetrack
 	export DMCE_PROBE_REFERENCES="${state[dmce_work_dir]}/probe-references.log"
 
+	# does the program 'find' have a -readable option?
+	if find --help |& grep -q '-readable'; then
+		find_opt+="! -readable -prune -o"
+	else
+		find_opt=""
+	fi
+
 	# restoring old probe state
 	while read -r f; do
 		{
@@ -609,9 +618,7 @@ function prepare() {
 		} &
 		job_cap
 	done < <(find "${state[git_root]}" \
-		! -readable \
-		-prune \
-		-o \
+		${find_opt} \
 		-type f \
 		-name "*.dmceoriginal" \
 		-print \
@@ -620,9 +627,7 @@ function prepare() {
 
 	# removing any files containing dmce struct macros
 	find "${state[git_root]}" \
-		! -readable \
-		-prune \
-		-o \
+		${find_opt} \
 		-type f \
 		-name "*.probed.dmcestructs" \
 		-exec rm ${coreutils_args} {} \; \
