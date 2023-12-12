@@ -88,25 +88,30 @@ function main() {
 	fi
 	proj="$1"
 
-	if [ ! -d "/tmp/$OVE_USER/dmce" ]; then
-		echo "error: no '/tmp/$OVE_USER/dmce' directory" 1>&2
+	if [ ! -s "${OVE_BASE_DIR:?}"/.dmceconfig ]; then
+		echo "error: no '${OVE_BASE_DIR:?}/.dmceconfig' file, try 'ove install dmce'" 1>&2
 		usage
 		exit 1
 	fi
 
-	find "/tmp/$OVE_USER/dmce" -maxdepth 1 -name 'dmcebuffer.bin*' | \
+	if ! dmce_work_dir=$(ove-dmce-get-work-dir); then
+		echo "error: could not get dmce work dir" 1>&2
+		exit 1
+	fi
+
+	find "${dmce_work_dir:?}/" -maxdepth 1 -name 'dmcebuffer.bin*' | \
 		grep "[0-9]$" | \
-		LC_ALL=C sort > "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post"
-	if [ ! -s "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post" ]; then
+		LC_ALL=C sort > "${dmce_work_dir:?}/dmce-trace-prepare.post"
+	if [ ! -s "${dmce_work_dir:?}/dmce-trace-prepare.post" ]; then
 		echo "error: no dmcebuffer files found" 1>&2
 		usage
 		exit 1
 	fi
 
 	# here we had some old dmcebuffers laying around, just take the new ones
-	if [ ! -s "/tmp/$OVE_USER/dmce/dmce-trace-prepare.pre" ]; then
-		b_list="$(cat "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post")"
-	elif ! b_list="$(LC_ALL=C comm -1 -3 "/tmp/$OVE_USER/dmce/dmce-trace-prepare.pre" "/tmp/$OVE_USER/dmce/dmce-trace-prepare.post")"; then
+	if [ ! -s "${dmce_work_dir:?}/dmce-trace-prepare.pre" ]; then
+		b_list="$(cat "${dmce_work_dir:?}/dmce-trace-prepare.post")"
+	elif ! b_list="$(LC_ALL=C comm -1 -3 "${dmce_work_dir:?}/dmce-trace-prepare.pre" "${dmce_work_dir:?}/dmce-trace-prepare.post")"; then
 		exit 1
 	fi
 
@@ -161,7 +166,7 @@ function main() {
 				fi
 			fi
 
-			ref_f="/tmp/$OVE_USER/dmce/${d/${OVE_BASE_DIR}\/}/probe-references"
+			ref_f="${dmce_work_dir:?}/${d/${OVE_BASE_DIR}\/}/probe-references"
 			# detect if tree is probed or not
 			if [ ! -e "$d"/.dmce_state_probed ]; then
 				ref_f+="-original"

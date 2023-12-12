@@ -69,14 +69,28 @@ function instrument() {
 }
 
 function cleanup() {
-	mkdir -pv "${OVE_ARCHIVE_DIR}"
-	find /tmp/"${OVE_USER}"/dmce/ -maxdepth 1 -name 'dmcebuffer.bin-*' -exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
-	find . -maxdepth 1 -name 'dmce-trace*.zip' -exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+	local dmce_work_dir
+
+	if ! dmce_work_dir="$(ove-dmce-get-work-dir)"; then
+		exit 1
+	fi
+	mkdir -pv "${OVE_ARCHIVE_DIR:?}"
+	find \
+		"${dmce_work_dir:?}"/ \
+		-maxdepth 1 \
+		-name 'dmcebuffer.bin-*' \
+		-exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+	find \
+		. \
+		-maxdepth 1 \
+		-name 'dmce-trace*.zip' \
+		-exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
 }
 
 function _exit() {
 	exit
 }
+
 function decode() {
 	local f
 

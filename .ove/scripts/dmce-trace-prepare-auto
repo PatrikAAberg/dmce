@@ -170,7 +170,7 @@ function main() {
 
 	sanity_checks "$@"
 
-	if grep --help | grep -q "binary-files"; then
+	if grep --help |& grep -q "binary-files"; then
 		grep_opt="--binary-files=text"
 	fi
 

@@ -237,16 +237,19 @@ function main() {
 		done
 	fi
 
+	if ! dmce_work_dir="$(ove-dmce-get-work-dir)"; then
+		exit 1
+	fi
 	# remember all dmcebuffer.bin files
-	if [ -d /tmp/"${OVE_USER}"/dmce ]; then
-		find /tmp/"${OVE_USER}"/dmce -maxdepth 1 -name 'dmcebuffer.bin*' | \
+	if [ -d "${dmce_work_dir}" ]; then
+		find "${dmce_work_dir}" -maxdepth 1 -name 'dmcebuffer.bin*' | \
 			grep '[0-9]$' | \
-			LC_ALL=C sort > /tmp/"${OVE_USER}"/dmce/dmce-trace-prepare.pre
+			LC_ALL=C sort > "${dmce_work_dir}"/dmce-trace-prepare.pre
 	fi
 
-	# remove any already existing trace lock file at dmce-configure-local default path
-	if [ -e /tmp/"${OVE_USER}"/dmce-trace-buffer-lock ]; then
-		rm -rf /tmp/"${OVE_USER}"/dmce-trace-buffer-lock
+	# remove any already existing trace lock file
+	if [ -e "${dmce_work_dir}"/dmce-trace-buffer-lock ]; then
+		rm -rf "${dmce_work_dir}"/dmce-trace-buffer-lock
 	fi
 
 	exit 0

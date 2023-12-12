@@ -23,10 +23,11 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
 # OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-if [ ! -s "${OVE_OWEL_DIR:?}"/projects/dmce/profile.db ]; then
-	echo "no '${OVE_OWEL_DIR:?}/projects/dmce/profile.db' file found"
-	exit 0
-fi
+set -e
 
-grep -v '^#' "${OVE_OWEL_DIR:?}"/projects/dmce/profile.db | \
-	column -t -s:
+if [ ! -s "${OVE_BASE_DIR:?}"/.dmceconfig ]; then
+	exit 1
+elif ! _dir=$(grep ^DMCE_WORK_PATH: "${OVE_BASE_DIR:?}"/.dmceconfig); then
+	exit 1
+fi
+echo "${_dir#*:}"
