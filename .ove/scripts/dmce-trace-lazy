@@ -38,6 +38,9 @@ OPTIONS
 DESCRIPTION
 	Interactive guide to DMCE Trace.
 
+CONFIGURATION
+	TRACE_LAZY_TIMEOUT (default: 5 sec)
+
 EXAMPLES
 	ove dmce trace-lazy ag
 EOF
@@ -49,6 +52,11 @@ function init() {
 		exit 1
 	fi
 
+	if [ "${TRACE_LAZY_TIMEOUT}" != "" ]; then
+		to=${TRACE_LAZY_TIMEOUT}
+	else
+		to=5
+	fi
 	proj="$1"
 	if ! path=$(ove-proj2val "${proj}" path); then
 		exit 1
@@ -95,7 +103,14 @@ function decode() {
 	local f
 
 	trap _exit INT
-	read -r -p "decode? (g/t/N) "
+	read \
+		-r \
+		-p "decode? (g/t/N) " \
+		-t "${to}"
+	if [ "$?" -eq 142 ]; then
+		REPLY="t"
+		echo "${REPLY}"
+	fi
 	if [ "${REPLY}" = "t" ] || [ "${REPLY}" = "g" ]; then
 		if [ "${REPLY}" = "t" ]; then
 			export DMCE_TRACE_VIEWER="tgui"
@@ -123,10 +138,19 @@ function decode() {
 		fi
 	fi
 
-	read -r -p "cleanup? (y/N) "
+	read \
+		-r \
+		-p "cleanup? (y/N) " \
+		-t "${to}"
+	if [ "$?" -eq 142 ]; then
+		REPLY="y"
+		echo "${REPLY}"
+	fi
 	if [ "${REPLY}" = "y" ]; then
 		cleanup
 	fi
+
+	return 0
 }
 
 function execute() {
@@ -163,8 +187,17 @@ function execute() {
 	if [ "${#elfs[@]}" -eq 1 ]; then
 		bin=${elfs[0]}
 		echo "program: ${bin}"
-		read -r -p "args: "
-		args="${REPLY}"
+		read \
+			-r \
+			-p "args: " \
+			-t "${to}"
+		if [ "$?" -eq 142 ]; then
+			args="--help"
+			echo "${args}"
+		else
+			args="${REPLY}"
+		fi
+
 		trap decode EXIT
 		time eval "${bin}" "${args}"
 	else
@@ -203,12 +236,27 @@ function execute() {
 function main() {
 	init "$@"
 
-	read -r -p "instrument? (y/N) "
+	echo "info: all dialogs will timeout in ${to} seconds"
+	read \
+		-r \
+		-p "instrument? (y/N) " \
+		-t "${to}"
+	if [ "$?" -eq 142 ]; then
+		REPLY="y"
+		echo "${REPLY}"
+	fi
 	if [ "${REPLY}" = "y" ]; then
 		instrument
 	fi
 
-	read -r -p "execute? (y/N) "
+	read \
+		-r \
+		-p "execute? (y/N) " \
+		-t "${to}"
+	if [ "$?" -eq 142 ]; then
+		REPLY="y"
+		echo "${REPLY}"
+	fi
 	if [ "${REPLY}" = "y" ]; then
 		execute
 	fi
