@@ -88,11 +88,16 @@ function cleanup() {
 		-maxdepth 1 \
 		-name 'dmcebuffer.bin-*' \
 		-exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
-	find \
-		. \
-		-maxdepth 1 \
-		-name 'dmce-trace*.zip' \
-		-exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+
+	if [ "${_scp}" != "1" ]; then
+		find \
+			. \
+			-maxdepth 1 \
+			-name 'dmce-trace*.zip' \
+			-exec mv -v {} "${OVE_ARCHIVE_DIR}" \;
+	fi
+
+	return 0
 }
 
 function _exit() {
@@ -101,6 +106,7 @@ function _exit() {
 
 function decode() {
 	local f
+	local p
 
 	trap _exit INT
 	read \
@@ -130,7 +136,13 @@ function decode() {
 			find . -maxdepth 1 -type f -name 'dmce-trace*.zip' | sort > "${OVE_TMP}/after"
 			for f in $(comm -1 -3 "${OVE_TMP}/before" "${OVE_TMP}/after"); do
 				if ! command -v dmce-gui > /dev/null; then
-					echo "scp -p ${HOSTNAME}:${PWD}/${f} /var/tmp/${f} && dmce-gui -f /var/tmp/${f}"
+					if command -v rsync > /dev/null; then
+						p="rsync -avz"
+					else
+						p="scp -p"
+					fi
+					echo "$p ${HOSTNAME}:${PWD}/${f} /var/tmp/${f} && dmce-gui -f /var/tmp/${f}"
+					_scp=1
 				else
 					dmce-gui -f "${f}"
 				fi
