@@ -77,8 +77,6 @@ function init() {
 	probes=$2
 	git_full=$3
 	git=$(basename "$git_full")
-	WORKAREA="/tmp/$USER"
-	mkdir -p "$WORKAREA"
 
 # TODO: remove or check comma-separated list
 #    if [ ! -d "${git_full}" ]; then
@@ -100,7 +98,7 @@ function main() {
 
     trap cleanup EXIT
 
-    dmce_trace_log="$(mktemp -p "$WORKAREA" --suffix=-dmce-trace-"${git}".log)"
+    dmce_trace_log="$(mktemp --suffix=-dmce-trace-"${git}".log)"
     dmce_trace_args=
     # not set, select tgui
     if [ "$DMCE_TRACE_VIEWER" = "" ]; then
