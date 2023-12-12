@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 
 # This is a template for a bash script that takes
 # as input on stdin  : A list of files to be examined (one per line, provided by DMCE)
