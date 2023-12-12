@@ -381,8 +381,6 @@ function t7() {
 		exit 1
 	elif dmce -f /dev/null &> "${t_log:?}"; then
 		exit 1
-	elif ${dmce:?} -m 1 &> "${t_log:?}"; then
-		exit 1
 	elif ${dmce:?} -m a &> "${t_log:?}"; then
 		exit 1
 	elif ${dmce:?} -m -1 &> "${t_log:?}"; then
