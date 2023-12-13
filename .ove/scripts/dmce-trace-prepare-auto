@@ -55,7 +55,7 @@ function macros_a() {
 
 	if grep "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
 		# shellcheck disable=SC2086
-		macros=$(grep ${grep_opt:} "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | \
+		macros=$(grep ${grep_opt} "error: macro" "${OVE_TMP:?}/dmce-trace-prepare-auto.log" | \
 			grep -o '"[a-zA-Z_]\+"' | \
 			sort -u | \
 			tr -d '"' | \
@@ -73,7 +73,7 @@ function macro_helper() {
 	local m
 
 	# shellcheck disable=SC2086
-	if ! grep ${grep_opt:?} -q "$1" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
+	if ! grep ${grep_opt} -q "$1" "${OVE_TMP:?}/dmce-trace-prepare-auto.log"; then
 		return
 	fi
 
@@ -81,7 +81,7 @@ function macro_helper() {
 	while read -r m; do
 		echo "$m" | tr -dc '[:print:]'
 		echo
-	done <<<"$(grep ${grep_opt:?} "$1" "${OVE_TMP}/dmce-trace-prepare-auto.log" | \
+	done <<<"$(grep ${grep_opt} "$1" "${OVE_TMP}/dmce-trace-prepare-auto.log" | \
 		awk '{print $NF}' | \
 		grep -v DMCE_PROBE | \
 		sort -u)"
