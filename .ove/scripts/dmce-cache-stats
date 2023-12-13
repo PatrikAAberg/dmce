@@ -30,7 +30,9 @@ function list_cache() {
 
 	if ! dmce_work_dir=$(ove-dmce-get-work-dir); then
 		return 1
-	elif ! find "${dmce_work_dir:?}"/dmce/*/cache -type d -maxdepth 0 2> /dev/null; then
+	elif [ ! -d "${dmce_work_dir:?}" ]; then
+		return 1
+	elif ! find "${dmce_work_dir:?}"/*/cache -type d -maxdepth 0 2> /dev/null; then
 		return 1
 	fi
 

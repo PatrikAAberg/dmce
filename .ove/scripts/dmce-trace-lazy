@@ -272,6 +272,8 @@ function main() {
 	if [ "${REPLY}" = "y" ]; then
 		execute
 	fi
+
+	return 0
 }
 
 main "$@"
