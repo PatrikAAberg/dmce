@@ -79,6 +79,8 @@ EOF
 
 function main() {
 	local b
+	local b_stat
+	local now
 	local repos
 	local probe_refs
 
@@ -142,7 +144,17 @@ function main() {
 			fi
 		fi
 
-		echo "trace-decode: proj: $proj buffer: $b"
+		b_stat=$(stat --format '%Y' "${b}")
+		now=$(date +%s)
+		echo -n "trace-decode"
+		echo -n " proj: $proj"
+		echo -n " buffer: $b"
+		echo -n " ($(du -hs "$b" | awk '{print $1}'))"
+		echo -n " created: $((now - b_stat)) sec ago"
+		if [ -s "${b}.info" ]; then
+			echo -n " $(grep -i exit "${b}.info" | xargs | tr '[:upper:]' '[:lower:]')"
+		fi
+		echo
 
 		repos=
 		probe_refs=
