@@ -150,7 +150,7 @@ else:
     entrysize64 = 42
     for infoline in info:
         if "te size:" in infoline:
-            entrysize64 = int(int(re.search("te size: (\d+)", infoline)[1]) / 8)
+            entrysize64 = int(int(re.search(r'te size: (\d+)', infoline)[1]) / 8)
             args.numvars = entrysize64 - TRACE_ENTRY_HEADER
             break
     if entrysize64 == 42:
@@ -273,14 +273,14 @@ if args.verbose:
 data = data[data[:, 0].argsort()]
 
 def stripProbe(s):
-    substr = '\(DMCE_PROBE\(\d*'
+    substr = r'\(DMCE_PROBE\(\d*'
     for i in range(0, args.numvars):
-        substr = substr + '\,[^\,]*'
+        substr = substr + r'\,[^\,]*'
 
-    substr = substr + '\), '
+    substr = substr + r'\), '
     s = re.sub(substr, '', s)
     # last paren
-    m = re.search('.*(\(.*\))*(\))',s)
+    m = re.search(r'.*(\(.*\))*(\))',s)
     if m:
         s = s[:m.start(2)] + s[m.end(2):]
     return s
@@ -300,9 +300,9 @@ def stripProbeExtractVars(sl, vs):
     regexp = r'(.*)\(DMCE_PROBE\(\d*'
 
     for i in range (0, args.numvars):
-        regexp = regexp + '\,(?:\(uint64_t\))*([^\,]*)'
+        regexp = regexp + r'\,(?:\(uint64_t\))*([^\,]*)'
 
-    regexp = regexp + "\)\, (.*)"
+    regexp = regexp + r'\)\, (.*)'
     richvs = args.delimiter
 
     slm = re.match(regexp, sl)
@@ -310,7 +310,7 @@ def stripProbeExtractVars(sl, vs):
         sl = slm.group(1) + slm.group(args.numvars + 2)
 
         # last paren
-        m = re.search('.*(\(.*\))*(\))', sl)
+        m = re.search(r'.*(\(.*\))*(\))', sl)
         if m:
             sl = sl[:m.start(2)] + sl[m.end(2):]
 
@@ -337,7 +337,7 @@ for i in range(numfrefs):
     tree_tmp = glob.glob(codetree[i] + "/**", recursive = True)
     treedict_tmp = {}
     probedtree_tmp = False
-    re_source = re.compile('\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
+    re_source = re.compile(r'\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
 
     for filename in tree_tmp:
         if os.path.isfile(filename) and re_source.search(filename):
