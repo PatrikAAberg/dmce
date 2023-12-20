@@ -198,7 +198,7 @@ Set up DMCE to do coverage, including only the "patchcov" directory:
 
 Apply the patch in the patchcov dir:
 
-    $ git apply patchcov/000-patchcov.path
+    $ git apply patchcov/000-patchcov.patch
 
 Probe the untracked and modified files, nothing more:
 
