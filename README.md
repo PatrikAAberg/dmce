@@ -154,7 +154,7 @@ Go into the simplecrash example folder, build the executable and run it.
 
 It crashes! Let's find out why.
 
-    $ dmce-trace -t /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+    $ dmce-trace -t /tmp/${USER}/dmce/dmcebuffer.bin-[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
 ## Terminal UI
 <img width="1180" alt="tgui" src="https://user-images.githubusercontent.com/22773714/169835252-d0d9716f-2dfc-447c-ae8d-b23a39bae3d0.png">
@@ -169,7 +169,7 @@ You might want something fancier than less to view your trace:
     $ ./build
     $ ./threads
     $ cd ..
-    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin.[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
+    $ dmce-trace-viewer /tmp/${USER}/dmce/dmcebuffer.bin-[program name.pid] /tmp/${USER}/dmce/dmce-examples/probe-references.log $(pwd)
 
 ## Code execution pattern diff
 
@@ -183,7 +183,7 @@ A DMCE code execution pattern (generated using the "heatmap" profile) consists o
     $ rm /tmp/$USER/dmce/dmcebuffer.bin
     $ ./diffthis foo
     $ cp /tmp/$USER/dmce/dmcebuffer.bin buf2
-    $ dmce-diff buf1,buf2 /tmp/$USER/dmce/dmce-examples/probe-references.log ../
+    $ dmce-diff buf1,buf2 /tmp/${USER}/dmce/dmce-examples/probe-references.log ../
 
 ## Patch code coverage
 
@@ -210,17 +210,17 @@ Check that the patch was probed:
 
 Note, doxygen annotations are treated as code. Changing a doxygen comments may result in that following source code declaration gets instrumented.
 
-Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/$USER/dmce/dmcebuffer.bin file if it is not the intention to collect several runs in the same file:
+Go into the patchcov directory again to build and run the tests. Note! Since the probe being used here can collect data from several executables, make sure to remove any old /tmp/${USER}/dmce/dmcebuffer.bin file if it is not the intention to collect several runs in the same file:
 
-    $ rm -f /tmp/$USER/dmce/dmcebuffer.bin
+    rm -f /tmp/${USER}/dmce/dmcebuffer.bin
     $ cd patchcov
     $ ./build && ./test-patchcov
 
 Use DMCE summary to display the results. For this example, we use a binary format probe, so the same goes for the summary:
 
-    $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
+    dmce-summary-bin -v /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log
 
-The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/$USER/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones.
+The probe that was set up by "dmce-set-profile coverage" writes its output to /tmp/${USER}/dmce/dmcebuffer.bin, so that's where we pick it up. Also note that the probe reference file used here is "probe-references-original.log" as opposed to "probe-references.log" that was used for the trace example. This is becasue for coverage, you want the line numbers coming from the original source code files and not the probed ones.
 Anyway, the test passes with success! But wait, we also see that only half of the added probes were executed. And it could have been much worse...
 
 ## Traditional code coverage
@@ -230,7 +230,7 @@ DMCE can be used as a traditional code coverage tool. This is done by using the 
     $ dmce-set-profile coverage
     $ dmce
     $ # execute program here
-    $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
+    dmce-summary-bin -v /tmp/${USER}/dmce/dmcebuffer.bin /tmp/${USER}/dmce/dmce-examples/probe-references-original.log
 
 ## Heatmaps and code execution patterns
 
@@ -239,7 +239,7 @@ Using the heatmap profile, in the same way as when doing code coverage, heatmaps
     $ dmce-set-profile heatmap
     $ dmce
     $ # execute program here
-    $ dmce-summary-bin -v /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
+    dmce-summary-bin -v /tmp/${USER}/dmce/dmcebuffer.bin /tmp/$USER/dmce/dmce-examples/probe-references-original.log
 
 ## Use the trace-mc profile for data code coverage
 
