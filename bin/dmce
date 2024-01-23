@@ -461,6 +461,7 @@ function init() {
 		exit 0
 	elif [ "${r}" = "" ]; then
 		# exit if we are not within a git repository
+		echo "error: current directory does not contain a git repository"
 		exit 0
 	elif [ "$(readlink -f "${DMCE_EXEC_PATH}")" = "${state[git_root]}" ] || [ -x "${state[git_root]}"/dmce ]; then
 		echo "error: do not run DMCE on DMCE" 1>&2
