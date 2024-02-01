@@ -106,6 +106,7 @@ while count < len(clines):
             if args.includepaths != '':
                 for path in args.includepaths.split(","):
                     clines[count] = clines[count].rstrip() + " -I" + path
+                clines[count] += "\n"
 
         # Check if register signal handler
         if "DMCE_PROBE_HANDLE_SIGNALS" in clines[count]:
