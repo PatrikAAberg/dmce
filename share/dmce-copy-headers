@@ -61,6 +61,9 @@ def parse_file(f, index):
         try:
             fp = open(f, errors="replace")
             open_succeeded = True
+        except FileNotFoundError as exn:
+            includes_array[index] = exn
+            return
         except:
             time.sleep(1)
 
@@ -96,7 +99,9 @@ threads = []
 uniq_includes_array = []
 
 for i in range(len(includes_array)):
-    if includes_array[i] == None:
+    if isinstance(includes_array[i], Exception):
+        raise includes_array[i]
+    elif includes_array[i] is None:
         break
     for include in includes_array[i]:
         if include not in uniq_includes_array:
