@@ -55,7 +55,7 @@ function init() {
 	if [ "${TRACE_LAZY_TIMEOUT}" != "" ]; then
 		to=${TRACE_LAZY_TIMEOUT}
 	else
-		to=5
+		to=30
 	fi
 	proj="$1"
 	if ! path=$(ove-proj2val "${proj}" path); then
@@ -168,22 +168,34 @@ function decode() {
 function execute() {
 	local args
 	local bin
+	local cmd
+	local f
 	local i
 	local j
-	local f
+	local opts
 	declare -a elfs
 
 	i=0
-	# search for ELF executables
+	cmd=
+	opts="--wide"
+	if command -v readelf > /dev/null; then
+		cmd="readelf"
+		opts+=" -a"
+	elif command -v objdump > /dev/null; then
+		cmd="objdump"
+		opts+=" -x"
+	fi
+
+	# search for ELF files
 	for f in $(find "${path}" -type f -perm -u=x -print0 | \
 		xargs -0 file | \
-		grep 'ELF.*interpreter' | \
+		grep 'ELF' | \
 		cut -d: -f1 | \
 		sort); do
 
-		if command -v readelf > /dev/null; then
-			if ! readelf -a "${f}" | grep -q -m 1 dmce_probe_body; then
-				# an ELF without DMCE symbols => next
+		if [ "$cmd" != "" ]; then
+			if ! eval $cmd "$opts" "${f}" | grep -q -m 1 dmce_probe_body; then
+				echo "no DMCE symbols within ${f}"
 				continue
 			fi
 		fi
@@ -191,6 +203,7 @@ function execute() {
 		elfs[${i}]="${f}"
 		i=$((i + 1))
 	done
+
 	if [ "${i}" -eq 0 ]; then
 		echo "error: no executables found" 1>&2
 		exit 1
