@@ -39,7 +39,10 @@ DESCRIPTION
 	Interactive guide to DMCE Trace.
 
 CONFIGURATION
-	TRACE_LAZY_TIMEOUT (default: 5 sec)
+                                    default
+	TRACE_LAZY_GUI_ARGS         -f
+	TRACE_LAZY_TIMEOUT          30
+	TRACE_LAZY_VIEWER           t
 
 EXAMPLES
 	ove dmce trace-lazy ag
@@ -57,6 +60,19 @@ function init() {
 	else
 		to=30
 	fi
+
+	if [ "${TRACE_LAZY_VIEWER}" != "" ]; then
+		viewer=${TRACE_LAZY_VIEWER}
+	else
+		viewer="t"
+	fi
+
+	if [ "${TRACE_LAZY_GUI_ARGS}" != "" ]; then
+		dmce_gui_args=${TRACE_LAZY_GUI_ARGS}
+	else
+		dmce_gui_args="-f"
+	fi
+
 	proj="$1"
 	if ! path=$(ove-proj2val "${proj}" path); then
 		exit 1
@@ -109,14 +125,19 @@ function decode() {
 	local p
 
 	trap _exit INT
-	read \
-		-r \
-		-p "decode? (g/t/N) " \
-		-t "${to}"
-	if [ "$?" -eq 142 ]; then
-		REPLY="t"
-		echo "${REPLY}"
+	if [ "${to}" -eq 0 ]; then
+		REPLY="${viewer}"
+	else
+		read \
+			-r \
+			-p "decode? (g/t/N) " \
+			-t "${to}"
+		if [ "$?" -eq 142 ]; then
+			REPLY="${viewer}"
+			echo "${REPLY}"
+		fi
 	fi
+
 	if [ "${REPLY}" = "t" ] || [ "${REPLY}" = "g" ]; then
 		if [ "${REPLY}" = "t" ]; then
 			export DMCE_TRACE_VIEWER="tgui"
@@ -141,23 +162,29 @@ function decode() {
 					else
 						p="scp -p"
 					fi
-					echo "$p ${HOSTNAME}:${PWD}/${f} /var/tmp/${f} && dmce-gui -f /var/tmp/${f}"
+					echo "$p ${HOSTNAME}:${PWD}/${f} /var/tmp/${f} && dmce-gui ${dmce_gui_args:?} /var/tmp/${f}"
 					_scp=1
 				else
-					dmce-gui -f "${f}"
+					dmce-gui ${dmce_gui_args:?} "${f}"
 				fi
 			done
 		fi
 	fi
 
-	read \
-		-r \
-		-p "cleanup? (y/N) " \
-		-t "${to}"
-	if [ "$?" -eq 142 ]; then
+
+	if [ "${to}" -eq 0 ]; then
 		REPLY="y"
-		echo "${REPLY}"
+	else
+		read \
+			-r \
+			-p "cleanup? (y/N) " \
+			-t "${to}"
+		if [ "$?" -eq 142 ]; then
+			REPLY="y"
+			echo "${REPLY}"
+		fi
 	fi
+
 	if [ "${REPLY}" = "y" ]; then
 		cleanup
 	fi
@@ -261,27 +288,37 @@ function execute() {
 function main() {
 	init "$@"
 
-	echo "info: all dialogs will timeout in ${to} seconds"
-	read \
-		-r \
-		-p "instrument? (y/N) " \
-		-t "${to}"
-	if [ "$?" -eq 142 ]; then
+	if [ "${to}" -eq 0 ]; then
 		REPLY="y"
-		echo "${REPLY}"
+	else
+		echo "info: all dialogs will timeout in ${to} seconds"
+		read \
+			-r \
+			-p "instrument? (y/N) " \
+			-t "${to}"
+		if [ "$?" -eq 142 ]; then
+			REPLY="y"
+			echo "${REPLY}"
+		fi
 	fi
+
 	if [ "${REPLY}" = "y" ]; then
 		instrument
 	fi
 
-	read \
-		-r \
-		-p "execute? (y/N) " \
-		-t "${to}"
-	if [ "$?" -eq 142 ]; then
+	if [ "${to}" -eq 0 ]; then
 		REPLY="y"
-		echo "${REPLY}"
+	else
+		read \
+			-r \
+			-p "execute? (y/N) " \
+			-t "${to}"
+		if [ "$?" -eq 142 ]; then
+			REPLY="y"
+			echo "${REPLY}"
+		fi
 	fi
+
 	if [ "${REPLY}" = "y" ]; then
 		execute
 	fi
