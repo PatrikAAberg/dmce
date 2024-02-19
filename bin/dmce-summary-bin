@@ -28,9 +28,10 @@ from operator import itemgetter
 descr = 'Print DMCE coverage, hit and total number of instrumentation probes.'
 
 parser = argparse.ArgumentParser(description=descr)
-parser.add_argument('dfile',            type=str,                   help='Binary input file')
-parser.add_argument('probefile',        type=str,                   help='mypath/probe-references.log')
-parser.add_argument('-v', '--verbose',  action='store_true',        help='verbose output')
+parser.add_argument('dfile',             type=str,                   help='Binary input file')
+parser.add_argument('probefile',         type=str,                   help='mypath/probe-references.log')
+parser.add_argument('-v', '--verbose',   action='store_true',        help='verbose output')
+parser.add_argument('-u', '--functions', action='store_true',        help='print function names')
 parser.add_argument('-f', '--filter',
                     required=False,
                     type=float,
@@ -41,7 +42,13 @@ args = parser.parse_args()
 dfile = args.dfile
 probefile = args.probefile
 printverbose = args.verbose
+printfunctions = args.functions
 filterlimit = args.filter
+
+def function_line_str(entries):
+     if printfunctions:
+          return '{}:{}'.format(entries[3], entries[2])
+     return entries[2]
 
 # parse the probe reference
 with open(probefile, 'r') as pf:
@@ -99,7 +106,8 @@ if filterlimit != None:
           nselected += probe[4]
           if nselected >= nlimit:
                break
-          print(filterfmt.format(probe[1],probe[2],probe[2]))
+          function_line = probe[2]
+          print(filterfmt.format(probe[1],function_line_str(probe),probe[2]))
      sys.exit(0)
 
 # find the probes not executed
@@ -123,6 +131,6 @@ if printverbose:
      for entry in res:
           nacchits += entry[4]
           if entry[4] == 0:
-               print(linefmt.format(entry[0], 'MISS', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], entry[2]))
+               print(linefmt.format(entry[0], 'MISS', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], function_line_str(entry)))
           else:
-               print(linefmt.format(entry[0], 'HIT', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], entry[2]))
+               print(linefmt.format(entry[0], 'HIT', entry[4], entry[4]/ntothits, nacchits/ntothits, entry[1], function_line_str(entry)))
