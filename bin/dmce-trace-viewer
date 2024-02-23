@@ -136,11 +136,11 @@ function main() {
 
     # display the log
 if [ "$DMCE_TRACE_VIEWER" = "" ] || [ "$DMCE_TRACE_VIEWER" = "stdout" ]; then
-    column -t -s'@' "${dmce_trace_log:?}"
+    cat "${dmce_trace_log:?}"
 elif [ "$DMCE_TRACE_VIEWER" = "less" ]; then
-    column -t -s'@' "${dmce_trace_log:?}" | less -r
+    less -r "${dmce_trace_log:?}"
 elif [ "$DMCE_TRACE_VIEWER" = "stderr" ]; then
-    column -t -s'@' "${dmce_trace_log:?}" 1>&2
+    cat "${dmce_trace_log:?}" 1>&2
 elif [ "$DMCE_TRACE_VIEWER" = "tgui" ]; then
     dmce-trace-tgui "${dmce_trace_log:?}"
 elif [ "$DMCE_TRACE_VIEWER" = "gui" ]; then
