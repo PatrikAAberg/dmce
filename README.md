@@ -78,6 +78,8 @@ Currently recommended clang-check (llvm) version: 17
 
 ## Install and setup
 
+### Latest stable tag: v2.0.0
+
 To build an installable DMCE .deb package from latest source:
 
     $ git clone https://github.com/PatrikAAberg/dmce.git
@@ -93,8 +95,6 @@ Other distros:
 
     $ ./build-pkg --help
     usage: build-pkg [bz2|deb|gz|rpm|xz]
-
-Latest stable tag: (to be updated to v2.0.0)
 
 The above will install the neccesary executables and create a default .dmceconfig file and a .config/dmce directory at $HOME. Modify the files in this directory to directly control DMCE behaviour OR use the "dmce-set-profile" utility AND/OR use override switches available for the (dmce) tool itself. The first two will be persistent, the last one will be be used one-time only.
 
