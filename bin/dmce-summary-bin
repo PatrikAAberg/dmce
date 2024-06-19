@@ -104,10 +104,10 @@ if filterlimit != None:
      filterfmt="{}:{}-{}"
      for probe in res:
           nselected += probe[4]
-          if nselected >= nlimit:
-               break
           function_line = probe[2]
           print(filterfmt.format(probe[1],function_line_str(probe),probe[2]))
+          if nselected >= nlimit:
+               break
      sys.exit(0)
 
 # find the probes not executed
