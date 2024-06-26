@@ -92,10 +92,6 @@ static dmce_time_info_t* dmce_time_info_p = 0;
 #endif
 static int dmce_buffer_setup_done = 0;
 
-#ifndef __x86_64__
-#error Time stamp for this dmce probe only available on __x86_64__ arch!
-#endif
-
 static int dmce_signal_core = 4242;
 static int dmce_signo = 4242;
 
@@ -131,6 +127,30 @@ static inline int dmce_num_cores(void) {
                 dmce_nproc_copy = get_nprocs();
 
             return dmce_nproc_copy;
+#endif
+}
+
+static __inline__ uint64_t dmce_read_time_and_core(unsigned int* core_p) {
+
+#if defined(__x86_64__)
+
+        return __builtin_ia32_rdtscp(core_p);
+
+#elif defined(__ARM_ARCH)
+
+        uint64_t tcval;
+        uint64_t core;
+
+        /* Read time */
+        asm volatile("mrs %0, cntvct_el0" : "=r" (tcval));
+
+        /* Read core */
+        *core_p = sched_getcpu();
+
+        return tcval;
+
+#else
+#error Unsupported architecture: Timestamps cannot be retrieved
 #endif
 }
 
@@ -223,7 +243,7 @@ static void dmce_dump_trace(int status) {
             }
 
             clock_gettime(CLOCK_MONOTONIC, &(dmce_time_info_p->end_monotonic));
-            dmce_time_info_p->end_tsc = __builtin_ia32_rdtscp(&cpu);
+            dmce_time_info_p->end_tsc = dmce_read_time_and_core(&cpu);
 
             sprintf(info,   "Timestamp unit: Nanoseconds\n"
                             "Probe: dmce-probe-trace-atexit-DX-SB.c, te size: %zu\n"
@@ -551,7 +571,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         char entrydirname[256];
         sprintf(entrydirname, "%s-%s.%d", DMCE_PROBE_LOCK_DIR_ENTRY, program_invocation_short_name, getpid());
 
-        timestart = __builtin_ia32_rdtscp(&cpu);
+        timestart = dmce_read_time_and_core(&cpu);
         cpu = cpu & 0x0fff;
 
         if (dmce_unlikely(! (mkdir(entrydirname, 0)))) {
@@ -649,7 +669,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         }
         __atomic_store_n (&dmce_buffer_setup_done, 1, __ATOMIC_SEQ_CST);
 
-        timeend = __builtin_ia32_rdtscp(&cpu);
+        timeend = dmce_read_time_and_core(&cpu);
         cpu = cpu & 0x0fff;
 
         /* Add two trace entries to reflect the time spent in init above */
@@ -675,7 +695,7 @@ static inline dmce_probe_entry_t* dmce_probe_body(unsigned int dmce_probenbr) {
         unsigned int index;
 
         /* What core are we on, and what is the time? */
-        time = __builtin_ia32_rdtscp(&cpu);
+        time = dmce_read_time_and_core(&cpu);
         cpu = cpu & 0x0fff;
 
         /* The counter itself is protected by the core, but we cant stop tracing if we do not use atomics
@@ -718,7 +738,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
         int num_payload_entries = size / (5 * sizeof(uint64_t)) + 1;
 
         /* What core are we on, and what is the time? */
-        time = __builtin_ia32_rdtscp(&cpu);
+        time = dmce_read_time_and_core(&cpu);
         cpu = cpu & 0x0fff;
 
         /* The counter itself is protected by the core, but we cant stop tracing if we do not use atomics
@@ -750,7 +770,7 @@ static inline void dmce_hexdump(uint64_t hdnum, void* buf_p, uint64_t size) {
             oldtime = time;
             while (time == oldtime) {
 
-                time = __builtin_ia32_rdtscp(&dummy);
+                time = dmce_read_time_and_core(&dummy);
             }
 
             wrapped_index = (index + i) % DMCE_MAX_HITS;
@@ -811,7 +831,7 @@ static void DMCE_PRINTF(const char* fmt, ...) {
         int num_payload_entries = size / (5 * sizeof(uint64_t)) + 1;
 
         /* What core are we on, and what is the time? */
-        time = __builtin_ia32_rdtscp(&cpu);
+        time = dmce_read_time_and_core(&cpu);
         cpu = cpu & 0x0fff;
 
         /* The counter itself is protected by the core, but we cant stop tracing if we do not use atomics
@@ -843,7 +863,7 @@ static void DMCE_PRINTF(const char* fmt, ...) {
             oldtime = time;
             while (time == oldtime) {
 
-                time = __builtin_ia32_rdtscp(&dummy);
+                time = dmce_read_time_and_core(&dummy);
             }
 
             wrapped_index = (index + i) % DMCE_MAX_HITS;
