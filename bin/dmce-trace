@@ -46,6 +46,7 @@ parser.add_argument('-t',               action='store_true',        help='Show t
 parser.add_argument('--hl',             action='store_true',        help='Highlight current source code line')
 parser.add_argument('--bundle',         action='store_true',        help='Generate bundle .zip file in current directory, implies -t --delimiter @')
 parser.add_argument('--nocompress',     action='store_true',        help='Used together with --bundle creates uncompressed .zip archive')
+parser.add_argument('--nosrc',          action='store_true',        help='Used together with --bundle to avoid source files within .zip archive')
 
 args = parser.parse_args()
 
@@ -700,15 +701,18 @@ if args.bundle:
                 z.write(of, of, compress_type=zipfile.ZIP_DEFLATED)
             count += 1
 
-        print("Picking relevant source files")
-        for fname in uniqsourcefiles:
-            for c in codetree:
-                if c in fname:
-                    dest = fname.replace(os.path.dirname(c) + "/", "")
-                    if args.nocompress:
-                        z.write(fname, dest)
-                    else:
-                        z.write(fname, dest, compress_type=zipfile.ZIP_DEFLATED)
+        if args.nosrc:
+            print("info: --nosrc: skip source files in zip bundle")
+        else:
+            print("info: include source files in zip bundle")
+            for fname in uniqsourcefiles:
+                for c in codetree:
+                    if c in fname:
+                        dest = fname.replace(os.path.dirname(c) + "/", "")
+                        if args.nocompress:
+                            z.write(fname, dest)
+                        else:
+                            z.write(fname, dest, compress_type=zipfile.ZIP_DEFLATED)
         z.close()
 
     # zipfile needs a barrier
