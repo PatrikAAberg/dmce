@@ -25,7 +25,7 @@ import re
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
-do_print=0
+do_print=1
 parsed_file = sys.argv[1]
 
 if do_print:
@@ -233,9 +233,6 @@ for var in varincludelines:
         re_varincl.append(re.compile(var.strip() + "$"))
 
 parsed_file_exp = parsed_file
-probe_prolog = "(DMCE_PROBE(TBD),"
-probe_epilog = ")"
-
 current_function = ""
 current_function_sticky = ""
 expdb_exptext = []
@@ -248,6 +245,7 @@ expdb_ecolend = []
 expdb_in_c_file= []
 expdb_tab = []
 expdb_exppatternmode = []
+expdb_probetype = []
 expdb_secstackvars = []
 expdb_reffedvars = []
 expdb_secstackpos = []
@@ -1247,6 +1245,7 @@ while (lineindex < linestotal):
                         expdb_tab.append(tab)
                         expdb_frp.append(function_returns_pointer)
                         expdb_exppatternmode.append(-1)
+                        expdb_probetype.append(0)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_secstackpos.append(secStackPos.copy())
@@ -1268,6 +1267,7 @@ while (lineindex < linestotal):
                         expdb_tab.append(tab)
                         expdb_frp.append(function_returns_pointer)
                         expdb_exppatternmode.append(-2)
+                        expdb_probetype.append(0)
                         expdb_func.append(current_function)
                         expdb_secstackvars.append(secStackVars.copy())
                         expdb_secstackpos.append(secStackPos.copy())
@@ -1306,6 +1306,7 @@ while (lineindex < linestotal):
                         expdb_tab.append(tab)
                         expdb_frp.append(function_returns_pointer)
                         expdb_exppatternmode.append(1)
+                        expdb_probetype.append(0)
                         expdb_func.append(current_function)
                         if not in_parmdecl:
                             expdb_secstackvars.append(secStackVars.copy())
@@ -1332,6 +1333,28 @@ while (lineindex < linestotal):
                         expdb_exptext.append(linebuf[lineindex])
                         expdb_in_c_file.append(in_parsed_file)
                         expdb_exppatternmode.append(2)
+                        expdb_probetype.append(0)
+                        expdb_frp.append(function_returns_pointer)
+                        #if do_print == 1:
+                            #print("START: (" + lstart + "," + cstart + ")")
+                        inside_expression = lineindex
+                        in_parmdecl_sticky = in_parmdecl
+
+                    # Need to look for last sub expression, use do while instead of comma notation
+                    if (exppatternmode[i] == 3):
+                        cur_lstart = int(lstart)
+                        cur_cstart = int(cstart)
+                        cur_lend = int(lend)
+                        cur_cend = int(cend)
+                        cur_tab = tab
+                        expdb_linestart.append(int(lstart))
+                        expdb_colstart.append(int(cstart))
+                        expdb_elineend.append(int(lend))
+                        expdb_ecolend.append(int(cend))
+                        expdb_exptext.append(linebuf[lineindex])
+                        expdb_in_c_file.append(in_parsed_file)
+                        expdb_exppatternmode.append(2)
+                        expdb_probetype.append(1)
                         expdb_frp.append(function_returns_pointer)
                         #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
@@ -1339,7 +1362,7 @@ while (lineindex < linestotal):
                         in_parmdecl_sticky = in_parmdecl
 
                     # Need to look for last sub expression. Also need to add length of keyword
-                    if (exppatternmode[i] > 2):
+                    if (exppatternmode[i] > 3):
                         cur_lstart = int(lstart)
                         cur_cstart = int(cstart) + exppatternmode[i]
                         cur_lend = int(lend)
@@ -1352,6 +1375,7 @@ while (lineindex < linestotal):
                         expdb_exptext.append(linebuf[lineindex])
                         expdb_in_c_file.append(in_parsed_file)
                         expdb_exppatternmode.append(2)
+                        expdb_probetype.append(0)
                         expdb_frp.append(function_returns_pointer)
                         #if do_print == 1:
                             #print("START: (" + lstart + "," + cstart + ")")
@@ -1661,10 +1685,18 @@ while (i < expdb_index):
     ce = expdb_colend[i] #- 1
     ele = expdb_elineend[i] - 1
     frp = expdb_frp[i]
+    probetype = expdb_probetype[i]
+
     if do_print:
         print("___________FRP " + str(i) + "___________:" + str(frp))
         print(str(expdb_frp))
-    probe_prolog = "(DMCE_PROBE(TBD"
+
+    if probetype == 0:
+        probe_prolog = "(DMCE_PROBE(TBD"
+        probe_epilog = ")"
+    else:
+        probe_prolog = "{ do { DMCE_PROBE(TBD"
+        probe_epilog = "} while (0);}"
 
     if numDataVars > 0:
         vlist = []
@@ -1717,7 +1749,10 @@ while (i < expdb_index):
 #                probe_prolog = probe_prolog + "0,"
         probe_prolog = probe_prolog.replace("DMCE_PROBE", "DMCE_PROBE" + str(count))
 
-    probe_prolog = probe_prolog + "), "
+    if probetype == 0:
+        probe_prolog = probe_prolog + "), "
+    else:
+        probe_prolog = probe_prolog + "); "
 
     if (expdb_exppatternmode[i] == 2 ):
         ece = expdb_ecolend[i]
@@ -1994,9 +2029,26 @@ while (i < expdb_index):
                             if do_print:
                                 print("Multi line INSERTION end: (" + str(le+1) +"," + str(ce) + ")" + ": " + line.rstrip())
                             line = pbuf[le]
+
+                            # In case of statement, we just want to find and include the semicolon (for do-while macro)
+                            no_semicolon_found = False
+                            if probetype == 1:
+                                print("Probetype=1, looking for semicolon, ce:" + str(ce) + " line to look for semicolon: " + line)
+                                while line[ce] != ';' and ce < len(line) - 1:
+                                    ce+=1
+
+                                if line[ce] != ';':
+                                    no_semicolon_found = True
+                                else:
+                                    ce += 1
+
+                            print("no_semicolon_found: " + str(no_semicolon_found))
+
+                            # insert epilog
                             iline_end = line[:ce] + probe_epilog + line[ce:]
 
                             # check for regrets on ending line
+                            #if check_regrets(iline_end) or no_semicolon_found:
                             if check_regrets(iline_end):
                                 # restore start line and bail out
                                 pbuf.pop(ls)
@@ -2009,7 +2061,7 @@ while (i < expdb_index):
                             if do_print:
                                 print("New ending line: " + iline_end.rstrip())
 
-                            # Insert epilog
+                            # Pop the old line and insert the new one
                             pbuf.pop(le)
                             iline_end = afterburner(iline_end, frp)
                             pbuf.insert(le,iline_end)

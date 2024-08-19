@@ -13,8 +13,3 @@ CPU_
 ASSERT
 assert
 LOG
-return 0
-return \(0\)
-return \(NULL\)
-return\(NULL\)
-return NULL

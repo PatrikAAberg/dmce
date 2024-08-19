@@ -37,5 +37,6 @@ exppatternlist = [r'.*-CallExpr\sHexnumber\s<.*\,.*>.*',
 # Modes:
 #  1    Contained space, use as is
 #  2    Free, need to look for next
+#  3    Free, look for next, use do-while instead of comma notation. If we need to probe certain statements (as opposed to expressions)
 #  x    Free, look for next at colpos + x
-exppatternmode = [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6]
+exppatternmode = [2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3]
