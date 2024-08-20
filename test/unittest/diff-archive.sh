@@ -25,7 +25,7 @@
 
 set -e
 
-n="dmce-examples"
+n="unittest"
 f="${n}.tar.xz"
 if [ ! -s "${f:?}" ]; then
 	echo "error: run from the 'test/${n:?}/' directory" 1>&2

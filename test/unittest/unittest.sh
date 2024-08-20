@@ -397,6 +397,10 @@ function t7() {
 		exit 1
 	elif dmce -v a b &> "${t_log:?}"; then
 		exit 1
+	elif ${dmce:?} -o asdf &> "${t_log:?}"; then
+		exit 1
+	elif ${dmce:?} --output-format asdf &> "${t_log:?}"; then
+		exit 1
 	fi
 }
 
@@ -843,6 +847,30 @@ function t23() {
 		gcc -o trace-threads -pthread trace_threads.c
 		./trace-threads || true
 	) >> "${t_log:?}" 2>&1
+}
+
+# exercise the -o/--output-format option | profile: coverage
+function t24() {
+	pre
+
+	${dmce:?} \
+		-a \
+		--output-format txt \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
+	${dmce:?} \
+		-a \
+		--output-format json \
+		--noepilog \
+		--noprolog \
+		--profile coverage \
+		-v \
+		&> "${t_log:?}"
+	verify
 }
 
 main "${@}"

@@ -36,6 +36,7 @@ OPTIONS
       -c                     Restore source code state
       -f, --file file        Manually point out a custom .dmceconfig file
       -h, --help             This help
+      -o, --output-format    Output format. Available: txt, json (default: txt)
       --update-config        Update config. USE WITH CARE!
       -v, --verbose          Explain what is being done
       --version              Print version and exit
@@ -181,6 +182,7 @@ function argparse() {
 	state[number_of_commits]=1
 	state[offset]=0
 	state[old]=
+	state[output_format]="txt"
 	state[print_cache_stats]=false
 	state[print_version]=false
 	state[probe_all]=0
@@ -205,6 +207,7 @@ function argparse() {
 	optspec+="j:"
 	optspec+="m:"
 	optspec+="n:"
+	optspec+="o:"
 	optspec+="p:"
 	optspec+="r:"
 	optspec+="s"
@@ -247,6 +250,10 @@ function argparse() {
 					file)
 						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
 						state[file]=$val
+						;;
+					output-format)
+						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
+						state[output_format]=$val
 						;;
 					head)
 						val="${!OPTIND}"; OPTIND=$(( OPTIND + 1 ))
@@ -338,6 +345,9 @@ function argparse() {
 				assert_uint "${OPTARG}"
 				state[number_of_commits]=${OPTARG}
 				state[search_method]="commits"
+				;;
+			o)
+				state[output_format]=${OPTARG}
 				;;
 			p)
 				state[profile]=${OPTARG}
@@ -864,36 +874,75 @@ function cache_prepare() {
 	setup_ast_cache
 }
 
-function summary() {
-	_echo "${FUNCNAME[0]}"
+function summary_body() {
+	printf "git repository@%s\n" "${state[git_root]}"
+	if [ "${state[old]}" != "${state[old_rev]}" ]; then
+		printf "Old SHA-1 abbrev@%s\n" "${state[old]}"
+		printf "Old SHA-1 full@%s\n" "${state[old_rev]}"
+	else
+		printf "Old SHA-1@%s\n" "${state[old]}"
+	fi
+	if [ "${state[new]}" != "${state[new_rev]}" ]; then
+		printf "New SHA-1 abbrev@%s\n" "${state[new]}"
+		printf "New SHA-1 full@%s\n" "${state[new_rev]}"
+	else
+		printf "New SHA-1@%s\n" "${state[new]}"
+	fi
+	printf "Files examined@%s\n" "${state[nbr_of_files]}"
+	printf "Files probed@%s\n" "$((state[files_probed] - state[files_from_cache]))"
+	printf "Files from cache@%s\n" "${state[files_from_cache]}"
+	printf "Files skipped@%s\n" "${state[files_skipped]}"
+	printf "Probes inserted@%s\n" "${state[nbrofprobesinserted]}"
+	printf "Config directory@%s\n" "${state[dmce_work_dir]}"/config
+	if [ "${state[nbrofprobesinserted]}" -ne 0 ]; then
+		printf "Probe metadata@%s\n" "${state[dmce_work_dir]}/probe-references.log"
+		printf "Probe metadata original@%s\n" "${state[dmce_work_dir]}/probe-references-original.log"
+		printf "Expressions@%s\n" "${state[dmce_work_dir]}/expr-references.log"
+	fi
+	printf "DMCE version@%s\n" "${state[version]}"
+}
 
-	printf "===============================================\n"
-	{
-		printf "git repository@%s\n" "${state[git_root]}"
-		if [ "${state[old]}" != "${state[old_rev]}" ]; then
-			printf "Old SHA-1@%s (%s)\n" "${state[old]}" "${state[old_rev]}"
-		else
-			printf "Old SHA-1@%s\n" "${state[old]}"
-		fi
-		if [ "${state[new]}" != "${state[new_rev]}" ]; then
-			printf "New SHA-1@%s (%s)\n" "${state[new]}" "${state[new_rev]}"
-		else
-			printf "New SHA-1@%s\n" "${state[new]}"
-		fi
-		printf "Files examined@%s\n" "${state[nbr_of_files]}"
-		printf "Files probed@%s\n" "$((state[files_probed] - state[files_from_cache]))"
-		printf "Files from cache@%s\n" "${state[files_from_cache]}"
-		printf "Files skipped@%s\n" "${state[files_skipped]}"
-		printf "Probes inserted@%s\n" "${state[nbrofprobesinserted]}"
-		printf "Config directory@%s\n" "${state[dmce_work_dir]}"/config
-		if [ "${state[nbrofprobesinserted]}" -ne 0 ]; then
-			printf "Probe metadata@%s\n" "${state[dmce_work_dir]}/probe-references.log"
-			printf "Probe metadata (original files)@%s\n" "${state[dmce_work_dir]}/probe-references-original.log"
-			printf "Expressions@%s\n" "${state[dmce_work_dir]}/expr-references.log"
-		fi
-		printf "DMCE version@%s\n" "${state[version]}"
-	} | column -t -s@
-	printf "===============================================\n"
+function summary() {
+	local f_res
+
+	_echo "${FUNCNAME[0]}"
+	if [ "${state[output_format]}" = "txt" ]; then
+		printf "===============================================\n"
+		{
+			summary_body
+		} | column -t -s@
+		printf "===============================================\n"
+	elif [ "${state[output_format]}" = "json" ]; then
+		f_res="${state[dmce_work_dir]}"/results.json
+		true > "${f_res}"
+		echo "{" >> "${f_res}"
+		echo '    "results": {' >> "${f_res}"
+
+		# results
+		while IFS="@" read -r key val; do
+			echo "        \"$key\": \"$val\","
+		done < <(summary_body | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | sort) >> "${f_res}"
+
+		# remove last comma
+		sed -i '$ s/.$//' "${f_res}"
+		echo "    }," >> "${f_res}"
+		echo '    "state": {' >> "${f_res}"
+
+		# state
+		for key in "${!state[@]}"; do
+			val="${state[$key]}"
+			echo "        \"$key\": \"$val\","
+		done | sort >> "${f_res}"
+
+		sed -i '$ s/.$//' "${f_res}"
+		echo "    }" >> "${f_res}"
+		echo "}" >> "${f_res}"
+
+		cat "${f_res}"
+	else
+		echo "error: unsupported output format '${state[output_format]}'" 1>&2
+		exit 1
+	fi
 }
 
 function job_cap() {
