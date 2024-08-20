@@ -25,7 +25,7 @@ import re
 import time
 
 # Log prints from this program are expensive and therefore normally disabled
-do_print=1
+do_print=0
 parsed_file = sys.argv[1]
 
 if do_print:
