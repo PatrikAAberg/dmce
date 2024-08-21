@@ -58,6 +58,13 @@ if not os.path.isfile(args.dfile + ".info"):
     print("dmce-trace: Could not find .info file: " + args.dfile + ".info", file = sys.stderr)
     exit(1)
 
+if args.sort == "seq":
+    trace_out = True
+else:
+    trace_out = False
+    if args.bundle:
+        print("dmce-trace: Can not combine --bundle and --sort, abort", file = sys.stderr)
+
 outfile = sys.stdout
 
 if args.bundle:
@@ -609,7 +616,8 @@ if not args.bundle:
         if outbuf == None:
             break
         for outstr in outbuf:
-            print(outstr.encode(encoding="ascii",errors="ignore").decode(), file = outfile)
+            if trace_out:
+                print(outstr.encode(encoding="ascii",errors="ignore").decode(), file = outfile)
 else:
     # In bundles, create several numbered data files for easier handling of large traces at later stages
     filecount = 1
