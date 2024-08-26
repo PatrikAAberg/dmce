@@ -485,6 +485,7 @@ re_sections_to_skip.append(re.compile(r'.*UnaryOperator Hexnumber.*lvalue prefix
 re_sections_to_skip.append(re.compile(r'.*-ConditionalOperator.*')) # TODO: a < b ? a : b invoked by macro in the same file needs more logic
 re_sections_to_skip.append(re.compile(r'.*-CXXMethodDecl.*const.*'))
 re_sections_to_skip.append(re.compile(r'.*-CXXOperatorCallExpr.*'))
+re_sections_to_skip.append(re.compile(r'.*-BinaryOperator Hexnumber.*dependent type.*contains-errors.*\'<<\'.*'))
 
 re_macro_guard = re.compile(r'.*-RecoveryExpr.*')
 re_macro_guard_outside = re.compile(r'.*(-DoStmt|-IfStmt|-CompoundStmt).*')
