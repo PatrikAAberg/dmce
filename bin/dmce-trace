@@ -26,6 +26,7 @@ import os
 import re
 import glob
 import multiprocessing
+import subprocess
 from colorama import Fore, Back, Style
 
 parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)), epilog='\nPlease note: use --bundle only together with the 3 required parameters')
@@ -47,6 +48,7 @@ parser.add_argument('--hl',             action='store_true',        help='Highli
 parser.add_argument('--bundle',         action='store_true',        help='Generate bundle .zip file in current directory, implies -t --delimiter @')
 parser.add_argument('--nocompress',     action='store_true',        help='Used together with --bundle creates uncompressed .zip archive')
 parser.add_argument('--nosrc',          action='store_true',        help='Used together with --bundle to avoid source files within .zip archive')
+parser.add_argument('--followsymlinks', action='store_true',        help='Also follow symbolic links when adding source tree files into the bundle')
 
 args = parser.parse_args()
 
@@ -340,12 +342,27 @@ def notComplete(timestamp):
 tree = []
 treedict = []
 probedtree = []
+symlinks = []
 
 for i in range(numfrefs):
-    tree_tmp = glob.glob(codetree[i] + "/**", recursive = True)
+
     treedict_tmp = {}
     probedtree_tmp = False
     re_source = re.compile(r'\.c$|\.cpp$|\.cc$|\.h$|\.hh$')
+
+    searchpath = codetree[i]
+
+    if args.followsymlinks:
+        tree_tmp = glob.glob(searchpath + "/**", recursive = True)
+
+    else:
+        cmd = (
+            f'find {searchpath} -type f ! -path '
+            f'"$(find {searchpath} -type l -exec readlink -f {{}} \\; | sed \'s|$|/*|\' | tr \'\\n\' \':\')"'
+        )
+
+        result = subprocess.run(cmd, shell=True, text=True, capture_output=True, check=True)
+        tree_tmp = result.stdout.splitlines()
 
     for filename in tree_tmp:
         if os.path.isfile(filename) and re_source.search(filename):
