@@ -29,7 +29,23 @@ import multiprocessing
 import subprocess
 from colorama import Fore, Back, Style
 
-parser = argparse.ArgumentParser(description='{}'.format(os.path.basename(__file__)), epilog='\nPlease note: use --bundle only together with the 3 required parameters')
+desc_gen = '''
+
+general:
+
+  Parameters \'probefile\' and \'codetree\' can be comma separated lists if tracing code from more than one repo.
+
+  In order for dmce-trace to obtain unique probe numbers for dmce passes on multiple repos separate probe number
+  ranges shall be used, please see dmce --help for more info.
+
+'''
+
+desc_epi = '''
+
+
+'''
+
+parser = argparse.ArgumentParser(description = desc_gen, epilog = desc_epi, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('dfile',            type=str,                   help='default: /tmp/$USER/dmce/dmcebuffer.bin-[program invocation short name].[pid]')
 parser.add_argument('probefile',        type=str,                   help='default: /tmp/$USER/dmce/name-of-git/probe-references.log')
 parser.add_argument('codetree',         type=str,                   help='path to code tree (git)')
@@ -709,14 +725,30 @@ if args.sort != "seq":
 
 outfile.close()
 
-
 # If bundle, zip it!
 if args.bundle:
     import zipfile
     import fnmatch
 
+    print("Recreating probe references...")
+    merged_probe_references = []
+    for i in range(len(prefs)):
+        ct = os.path.basename(codetree[i])
+        for line in prefs[i]:
+            ltmp = line.split(':')
+            ltmp[1] = ct + "/" + ltmp[1]
+            ltmp = ":".join(ltmp)
+            merged_probe_references.append(ltmp)
+
+    # Prepare recreated probefile to be added to zip
+    with open("global_probe_references.log", "w") as pfo:
+        pfo.writelines(merged_probe_references)
+        outfilenames.append("global_probe_references.log")
+
     with zipfile.ZipFile(outzip, 'w') as z:
         count = 0
+
+        # Write output files (fragmented trace file, global probe refs file) to zip
         for of in outfilenames:
             if args.nocompress:
                 print("Adding to archive: frag " + str(count) + " out of " + str(len(outfilenames)))
@@ -726,6 +758,7 @@ if args.bundle:
                 z.write(of, of, compress_type=zipfile.ZIP_DEFLATED)
             count += 1
 
+        # Write source files to zip
         if args.nosrc:
             print("info: --nosrc: skip source files in zip bundle")
         else:
