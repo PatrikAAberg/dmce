@@ -2,7 +2,7 @@ Package: dmce
 Version: 2.0.0
 Section: unknown
 Priority: optional
-Architecture: amd64
+Architecture: all
 Depends: git (>=2.0.0), clang-tools (>=10.0.0), python3 (>=3.0.0)
 Maintainer: Patrik Aberg <patrik.aberg@ericsson.com>
 Description: dmce
