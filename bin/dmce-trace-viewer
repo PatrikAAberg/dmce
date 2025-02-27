@@ -31,7 +31,7 @@ NAME
         Decode DMCE trace buffer
 
 SYNOPSIS
-        dmce-trace-view [data file] [probe file] [code tree path]
+        dmce-trace-viewer data-file probe-file code-tree-path
 
 OPTIONS
 
@@ -48,35 +48,37 @@ CONFIGURATION
         export DMCE_TRACE_VIEWER gui|tgui|stdout|stderr|less|<file>
 
 EXAMPLES
-        # decode the trace buffer and launch an interactive gui (defaults to tgui)
-        $ dmce-trace-viewer [data file] [probe file] [code tree path]
+        All examples below assume that the current working directory is your git repository root.
+
+        $ cd mygit
+
+        # decode the trace buffer and launch an interactive terminal gui (tgui)
+        $ dmce-trace-viewer /tmp/\$USER/dmce/dmcebuffer.bin /tmp/\$USER/dmce/mygit/probe-references.log \$PWD
 
         # decode the trace buffer and display the trace on stdout
-        $ DMCE_TRACE_VIEWER=stdout dmce-trace-viewer [data file] [probe file] [code tree path]
+        $ DMCE_TRACE_VIEWER=stdout dmce-trace-viewer /tmp/\$USER/dmce/dmcebuffer.bin /tmp/\$USER/dmce/mygit/probe-references.log \$PWD
 
         # decode the trace buffer and save the trace to a file '/tmp/a.trace'
-        $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-viewer [data file] [probe file] [code tree path]
+        $ DMCE_TRACE_VIEWER=/tmp/a.trace dmce-trace-viewer /tmp/\$USER/dmce/dmcebuffer.bin /tmp/\$USER/dmce/mygit/probe-references.log \$PWD
 
-        # Typical example including paths to default file locations using a __non-probed__ tree
-        $ cd mygit
-        $ dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references-original.log $(pwd)
+        # decode the trace buffer using a _non-probed_ tree and display the trace using tgui
+        $ DMCE_TRACE_VIEWER=tgui dmce-trace-viewer /tmp/\$USER/dmce/dmcebuffer.bin /tmp/\$USER/dmce/mygit/probe-references-original.log \$PWD
 
-        # Typical example including paths to standard file locations using a __probed__ tree using less
-        $ cd mygit
-        $ DMCE_TRACE_VIEWER=less dmce-trace-viewer /tmp/$USER/dmce/dmcebuffer.bin /tmp/$USER/dmce/mygit/probe-references.log $(pwd)
+        # decode the trace buffer using a _probed_ tree and display the trace using less
+        $ DMCE_TRACE_VIEWER=less dmce-trace-viewer /tmp/\$USER/dmce/dmcebuffer.bin /tmp/\$USER/dmce/mygit/probe-references.log \$PWD
 EOF
     exit 1
 }
 
 function init() {
-	# usage and sanity checks
-	if [ $# -ne 3 ]; then
-		usage
-	fi
-	data=$1
-	probes=$2
-	git_full=$3
-	git=$(basename "$git_full")
+    # usage and sanity checks
+    if [ $# -ne 3 ]; then
+        usage
+    fi
+    data=$1
+    probes=$2
+    git_full=$3
+    git=$(basename "$git_full")
 
 # TODO: remove or check comma-separated list
 #    if [ ! -d "${git_full}" ]; then
@@ -86,11 +88,11 @@ function init() {
 }
 
 function cleanup() {
-	for f in $files; do
-		if [ -e "$f" ]; then
-			rm "$f"
-		fi
-	done
+    for f in $files; do
+        if [ -e "$f" ]; then
+            rm "$f"
+        fi
+    done
 }
 
 function main() {
@@ -145,12 +147,12 @@ elif [ "$DMCE_TRACE_VIEWER" = "tgui" ]; then
     dmce-trace-tgui "${dmce_trace_log:?}"
 elif [ "$DMCE_TRACE_VIEWER" = "gui" ]; then
     if command -v dmce-wgui.sh > /dev/null; then
-	dmce-wgui.sh "$(awk '{print $NF}' "${dmce_trace_log:?}")"
+        dmce-wgui.sh "$(awk '{print $NF}' "${dmce_trace_log:?}")"
     fi
 else
     echo "saving trace as '$(readlink -f $DMCE_TRACE_VIEWER)'"
     if ! column -t -s'@' "${dmce_trace_log:?}" > $DMCE_TRACE_VIEWER; then
-	exit 1
+        exit 1
     fi
 fi
 }
