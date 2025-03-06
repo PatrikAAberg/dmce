@@ -915,8 +915,10 @@ function summary() {
 	elif [ "${state[output_format]}" = "json" ]; then
 		f_res="${state[dmce_work_dir]}"/results.json
 		true > "${f_res}"
-		echo "{" >> "${f_res}"
-		echo '    "results": {' >> "${f_res}"
+		{
+			echo "{"
+			echo '    "results": {'
+		} >> "${f_res}"
 
 		# results
 		while IFS="@" read -r key val; do
@@ -925,8 +927,10 @@ function summary() {
 
 		# remove last comma
 		sed -i '$ s/.$//' "${f_res}"
-		echo "    }," >> "${f_res}"
-		echo '    "state": {' >> "${f_res}"
+		{
+			echo "    },"
+			echo '    "state": {'
+		} >> "${f_res}"
 
 		# state
 		for key in "${!state[@]}"; do
@@ -1491,7 +1495,7 @@ function create_clang_diff() {
 			num_lines=1
 		fi
 
-		echo "$start_pos,$((start_pos + num_lines - 1)){s/\(.*\)/+\1/};" >> "${sed_exp}"
+		printf "%d,%d{s/\(.*\)/+\\\1/};\n" "${start_pos}" "$((start_pos + num_lines - 1))" >> "${sed_exp}"
 	done <<< "$(grep -n "^@@.*@@" "$1")"
 
 	if [ "${add}" != "" ]; then
