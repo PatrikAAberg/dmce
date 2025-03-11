@@ -136,6 +136,7 @@ function prerequisites() {
 	_echo "${FUNCNAME[0]}"
 
 	deps+=("clang-check")
+	deps+=("column")
 	deps+=("dmce-set-profile")
 	deps+=("getconf")
 	deps+=("git")
