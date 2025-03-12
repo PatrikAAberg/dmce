@@ -32,7 +32,7 @@ _name="unittest"
 _mode=0
 
 # reference diff files (within 'unittest.tar.xz') are dependent on LLVM version
-_llvm_major_version=17
+_llvm_major_version=20
 
 # use a fixed revision
 _url="https://github.com/PatrikAAberg/dmce-examples"
