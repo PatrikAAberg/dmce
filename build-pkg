@@ -38,7 +38,7 @@ elif [ ! -s "debian/control" ]; then
 	exit 1
 fi
 
-version=$(grep ^Version debian/control | cut -d' ' -f2)
+version=$(git describe  --tags --always --dirty)
 gitdir=${PWD}
 
 trap cleanup EXIT
