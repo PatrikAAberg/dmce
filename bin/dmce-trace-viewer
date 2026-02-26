@@ -146,12 +146,19 @@ elif [ "$DMCE_TRACE_VIEWER" = "stderr" ]; then
 elif [ "$DMCE_TRACE_VIEWER" = "tgui" ]; then
     dmce-trace-tgui "${dmce_trace_log:?}"
 elif [ "$DMCE_TRACE_VIEWER" = "gui" ]; then
-    if command -v dmce-wgui.sh > /dev/null; then
-        dmce-wgui.sh "$(awk '{print $NF}' "${dmce_trace_log:?}")"
+    if ! command -v dmce-gui > /dev/null; then
+        echo "error: command 'dmce-gui' not found" 1>&2
+        exit 1
     fi
+    f="$(grep ' /.*\.zip$' "${dmce_trace_log:?}" | awk '{print $NF}')"
+    if [ "$f" = "" ]; then
+        echo "error: zip bundle not found" 1>&2
+        exit 1
+    fi
+    dmce-gui "${f}"
 else
-    echo "saving trace as '$(readlink -f $DMCE_TRACE_VIEWER)'"
-    if ! column -t -s'@' "${dmce_trace_log:?}" > $DMCE_TRACE_VIEWER; then
+    echo "saving trace as '$(readlink -f "$DMCE_TRACE_VIEWER")'"
+    if ! column -t -s'@' "${dmce_trace_log:?}" > "$DMCE_TRACE_VIEWER"; then
         exit 1
     fi
 fi
