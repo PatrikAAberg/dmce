@@ -253,6 +253,9 @@ def check_and_clean_probes(line):
         cline = re.sub(r'{DMCE_PROBE\d\(.*\/\* Function entry.*\*\/', "{", cline)
         cline = re.sub(r'DMCE_PROBE\d\(.*\/\* Function exit.*\*\/ }', "}", cline)
 
+        # Special case for return statements
+        cline = re.sub(r"{ do { DMCE_PROBE.*?\;(.*\;)} while \(0\)\;}", r"\1", cline)
+
     return cline
 
 def highlight_search_out(stdscr, ypos, xpos, string):
