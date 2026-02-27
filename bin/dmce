@@ -617,7 +617,7 @@ function prepare() {
 	export DMCE_PROBE_REFERENCES="${state[dmce_work_dir]}/probe-references.log"
 
 	# does the program 'find' have a -readable option?
-	if find --help |& grep -q '-readable'; then
+	if find --help |& grep -q -- '-readable'; then
 		find_opt+="! -readable -prune -o"
 	else
 		find_opt=""
